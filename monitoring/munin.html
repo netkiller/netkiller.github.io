@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>3. Munin</title><link rel="stylesheet" href="/docbook.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.75.2" /><link rel="home" href="index.html" title="Netkiller Linux Monitoring 手札" /><link rel="up" href="network.monitor.html" title="第 4 章 Network" /><link rel="prev" href="nagios.html" title="2. Nagios" /><link rel="next" href="zabbix.html" title="4. Zabbix" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">3. Munin</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="nagios.html">上一页</a> </td><th width="60%" align="center">第 4 章 Network</th><td width="20%" align="right"> <a accesskey="n" href="zabbix.html">下一页</a></td></tr></table><hr /></div><div class="section" title="3. Munin"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="munin"></a>3. Munin</h2></div></div></div><div class="section" title="3.1. Installation Monitor Server"><div class="titlepage"><div><div><h3 class="title"><a id="id1295141"></a>3.1. Installation Monitor Server</h3></div></div></div><pre class="screen">
+$ sudo apt-get install munin
+
+neo@monitor:~$ sudo vim /etc/munin/munin.conf
+neo@monitor:~$ sudo service munin-node restart
+
+
+[example.com]
+        address 127.0.0.1
+        use_node_name yes
+        
+[web2]
+    address 172.16.1.2
+    use_node_name yes
+
+[web3]
+    address 172.16.1.3
+    use_node_name yes
+
+[database]
+    address 172.16.1.10
+    use_node_name yes
+
+		</pre></div><div class="section" title="3.2. Installation Node"><div class="titlepage"><div><div><h3 class="title"><a id="id1295152"></a>3.2. Installation Node</h3></div></div></div><pre class="screen">
+sudo apt-get install munin-node
+
+vim /etc/munin/munin-node.conf
+
+allow ^172\.16\.1\.2$
+		</pre></div><div class="section" title="3.3. Additional Plugins"><div class="titlepage"><div><div><h3 class="title"><a id="id1295160"></a>3.3. Additional Plugins</h3></div></div></div><pre class="screen">
+sudo apt-get install munin-plugins-extra
+		</pre></div><div class="section" title="3.4. plugins"><div class="titlepage"><div><div><h3 class="title"><a id="id1295169"></a>3.4. plugins</h3></div></div></div><div class="section" title="3.4.1. mysql"><div class="titlepage"><div><div><h4 class="title"><a id="id1295172"></a>3.4.1. mysql</h4></div></div></div><pre class="screen">
+ln -s /usr/share/munin/plugins/mysql_* /etc/munin/plugins/
+			</pre><p>/etc/munin/plugin-conf.d/munin-node</p><pre class="screen">
+$ sudo vim /etc/munin/plugin-conf.d/munin-node
+
+[mysql*]
+user root
+env.mysqlopts --defaults-file=/etc/mysql/debian.cnf
+env.mysqluser debian-sys-maint
+env.mysqlconnection DBI:mysql:mysql;mysql_read_default_file=/etc/mysql/debian.cnf
+
+[mysql*]
+env.mysqlopts -h 192.168.3.40 -uneo -pchen
+			</pre></div><div class="section" title="3.4.2. apache"><div class="titlepage"><div><div><h4 class="title"><a id="id1295191"></a>3.4.2. apache</h4></div></div></div><pre class="screen">
+$ sudo vim /etc/munin/plugin-conf.d/munin-node
+			
+[apache_*]
+env.url   http://127.0.0.1/server-status?auto
+env.ports 80			
+			</pre></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="nagios.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="network.monitor.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="zabbix.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">2. Nagios </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 4. Zabbix</td></tr></table></div></body></html>

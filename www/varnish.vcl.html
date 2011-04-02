@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>4. Varnish Configuration Language - VCL</title><link rel="stylesheet" href="/docbook.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.75.2" /><link rel="home" href="index.html" title="Netkiller Linux Web 手札" /><link rel="up" href="varnish.html" title="第 10 章 varnish - a state-of-the-art, high-performance HTTP accelerator" /><link rel="prev" href="varnish.log.html" title="3. log file" /><link rel="next" href="varnish.example.html" title="5. example" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">4. Varnish Configuration Language - VCL</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="varnish.log.html">上一页</a> </td><th width="60%" align="center">第 10 章 varnish - a state-of-the-art, high-performance HTTP accelerator</th><td width="20%" align="right"> <a accesskey="n" href="varnish.example.html">下一页</a></td></tr></table><hr /></div><div class="section" title="4. Varnish Configuration Language - VCL"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="varnish.vcl"></a>4. Varnish Configuration Language - VCL</h2></div></div></div><p>Varnish配置文件VCL中的函数详解</p><pre class="screen">
+     
+		</pre><p>内置的例程</p><pre class="screen">
+vcl_recv
+有请求到达后成功接收并分析时被调用，一般以以下几个关键字结束。
+error code [reason] 返回code给客户端，并放弃处理该请求
+pass 进入pass模式，把控制权交给vcl_pass
+pipe 进入pipe模式，把控制权交给vcl_pipe
+lookup 在缓存里查找被请求的对象，根据查找结果把控制权交给vcl_hit或vcl_miss
+
+vcl_pipe
+进入pipe模式时被调用。请求被直接发送到backend，后端和客户端之间的后继数据不进行处理，只是简单传递，直到一方关闭连接。一般以以下几个关键字结束。
+error code [reason]
+pipe
+
+vcl_pass
+进入pass模式时被调用。请求被送到后端，后端应答数据送给客户端，但不进入缓存。同一连接的后继请求正常处理。一般以以下几个关键字结束。
+error code [reason]
+pass
+
+vcl_hash
+目前不使用
+
+vcl_hit
+在lookup以后如果在cache中找到请求的内容事调用。一般以以下几个关键字结束。
+error code [reason]
+pass
+deliver 将找到的内容发送给客户端，把控制权交给vcl_deliver.
+
+vcl_miss
+lookup后但没有找到缓存内容时调用，可以用于判断是否需要从后端服务器取内容。一般以以下几个关键字结束。
+error code [reason]
+pass
+fetch 从后端取得请求的内容，把控制权交给vcl_fetch.
+
+
+vcl_fetch
+从后端取得内容后调用。一般以以下几个关键字结束。
+error code [reason]
+pass
+insert 将取到的内容插入缓存，然后发送给客户端，把控制权交给vcl_deliver
+
+
+vcl_deliver
+缓存内容发动给客户端前调用。一般以以下几个关键字结束。
+error code [reason]
+deliver 内容发送给客户端
+
+vcl_timeout
+在缓存内容到期前调用。一般以以下几个关键字结束。
+fetch 从后端取得该内容
+discard 丢弃该内容
+
+
+
+vcl_discard
+由于到期或者空间不足而丢弃缓存内容时调用。一般以以下几个关键字结束。
+discard 丢弃
+keep 继续保留在缓存里
+
+如果这些内置例程没有被定义，则执行缺省动作
+
+
+一些内置的变量
+now 当前时间，标准时间点（1970？）到现在的秒数
+
+backend.host 后端的IP或主机名
+backend.port 后端的服务名或端口
+
+请求到达后有效的变量
+client.ip 客户端IP
+server.ip 服务端IP
+req.request 请求类型，比如GET或者HEAD或者POST
+req.url 请求的URL
+req.proto 请求的HTTP版本号
+req.backend 请求对应的后端
+req.http.header 对应的HTTP头
+
+往后段的请求时有效的变量
+bereq.request 比如GET或HEAD
+bereq.url URL
+bereq.proto 协议版本
+bereq.http.header HTTP头
+
+从cache或后端取到内容后有效的变量
+obj.proto HTTP协议版本
+obj.status HTTP状态代码
+obj.response HTTP状态信息
+obj.valid 是否有效的HTTP应答
+obj.cacheable 是否可以缓存的内容，也就是说如果HTTP返回是200、203、300、301、302、404、410并且有非0的生存期，则为可缓存
+obj.ttl 生存期，秒
+obj.lastuse 上一次请求到现在间隔秒数
+
+对客户端应答时有效的变量
+resp.proto response的HTTP版本
+resp.status 回给客户端的HTTP状态代码
+resp.response 回给客户端的HTTP状态信息
+resp.http.header HTTP头
+		</pre></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="varnish.log.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="varnish.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="varnish.example.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">3. log file </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 5. example</td></tr></table></div></body></html>

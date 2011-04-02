@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>3. inotify-tools + rsync</title><link rel="stylesheet" href="/docbook.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.75.2" /><link rel="home" href="../index.html" title="Netkiller Linux 手札" /><link rel="up" href="inotify.html" title="第 62 章 inotify" /><link rel="prev" href="incron.html" title="2. Incron - cron-like daemon which handles filesystem events" /><link rel="next" href="ch62s04.html" title="4. pyinotify" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">3. inotify-tools + rsync</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="incron.html">上一页</a> </td><th width="60%" align="center">第 62 章 inotify</th><td width="20%" align="right"> <a accesskey="n" href="ch62s04.html">下一页</a></td></tr></table><hr /></div><div class="section" title="3. inotify-tools + rsync"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id1390533"></a>3. inotify-tools + rsync</h2></div></div></div><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>-m 是保持一直监听</p></li><li class="listitem"><p>-r 是递归查看目录</p></li><li class="listitem"><p>-q 是打印出事件～</p></li><li class="listitem"><p>-e create,move,delete,modify 监听 创建 移动 删除 写入 事件</p></li></ol></div><pre class="screen">
+		
+inotifywait -mrq --event create,delete,modify,move --format '%w %e' /your_path | while read w e; do
+    if [ "$e" = "IGNORED" ]; then
+        continue
+    fi
+    rsync -az --delete $w username@your_ip:$w
+done		
+		
+		</pre><pre class="screen">
+		
+#!/bin/sh
+# A slightly complex but actually useful example
+inotifywait -mrq --timefmt '%d/%m/%y %H:%M' --format '%T %f' \
+-e close_write /home/billy | while read date time file; do
+    rsync /home/billy/${file} rsync://billy@example.com/backup/${file} &amp;&amp; \
+    echo "At ${time} on ${date}, file ${file} was backed up via rsync"
+done 		
+		
+		</pre><pre class="screen">
+		
+[root@development ~]# cat inotify-rsync
+#!/bin/bash
+# $Id$ #
+# Author neo&lt;openunix@163.com&gt; #
+
+# monitor path
+monitor_path=cms
+#inotifywait path
+INOTIFYWAIT=inotifywait
+
+# rsync image file
+function images {
+        local file=$1
+        rsync -az --delete $file /tmp/images/$file
+#       rsync ${file} ${rsync_url}/${file}
+}
+
+# rsync html file
+function html {
+        local file=$1
+        rsync -az --delete $file /tmp/$file
+}
+
+
+$INOTIFYWAIT -mrq --event close_write --format '%w%f %e' $monitor_path | while read file event; do
+    if [ "$event" = "CLOSE_WRITE,CLOSE" ]; then
+        ext=$(echo $file | awk -F'.' '{print $2}')
+        if [ $ext = 'jpg' ]; then
+                images $file
+        fi
+        if [ $ext = 'html' ]; then
+                html $file
+        fi
+    fi
+done &amp;
+		
+		</pre><pre class="screen">
+		</pre></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="incron.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="inotify.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ch62s04.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">2. Incron - cron-like daemon which handles filesystem events </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 4. pyinotify</td></tr></table></div></body></html>

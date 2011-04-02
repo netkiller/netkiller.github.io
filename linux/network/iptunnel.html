@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>7. ip tunnel</title><link rel="stylesheet" href="/docbook.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.75.2" /><link rel="home" href="../index.html" title="Netkiller Linux 手札" /><link rel="up" href="network.html" title="第 28 章 Linux IP And Router" /><link rel="prev" href="ch28s06.html" title="6. MASQUERADE" /><link rel="next" href="ch28s08.html" title="8. VLAN" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">7. ip tunnel</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ch28s06.html">上一页</a> </td><th width="60%" align="center">第 28 章 Linux IP And Router</th><td width="20%" align="right"> <a accesskey="n" href="ch28s08.html">下一页</a></td></tr></table><hr /></div><div class="section" title="7. ip tunnel"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="iptunnel"></a>7. ip tunnel</h2></div></div></div><p>ipip 是IP隧道模块</p><div class="procedure" title="过程 28.1. ip tunnel IP隧道配置步骤"><a id="id1376513"></a><p class="title"><b>过程 28.1. ip tunnel IP隧道配置步骤</b></p><ol class="procedure" type="1"><li class="step" title="步骤 1"><p>server 1</p><pre class="screen">
+modprobe ipip
+ip tunnel add mytun mode ipip remote 220.201.35.11 local 211.100.37.167 ttl 255
+ifconfig mytun 10.42.1.1
+route add -net 10.42.1.0/24 dev mytun
+				</pre></li><li class="step" title="步骤 2"><p>server 2</p><pre class="screen">
+modprobe ipip
+ip tunnel add mytun mode ipip remote 211.100.37.167 local 220.201.35.11 ttl 255
+ifconfig mytun 10.42.1.2
+route add -net 10.42.1.0/24 dev mytun
+				</pre></li><li class="step" title="步骤 3"><p>nat</p><pre class="screen">
+/sbin/iptables -t nat -A POSTROUTING -s 10.42.1.0/24 -j MASQUERADE
+/sbin/iptables -t nat -A POSTROUTING -s 211.100.37.0/24 -j MASQUERADE
+				</pre></li></ol></div><p>删除路由表</p><pre class="screen">
+route del -net 10.42.1.0/24 dev mytun
+		</pre><p>修改IP隧道的IP</p><pre class="screen">
+ifconfig mytun 10.10.10.220
+route add -net 10.10.10.0/24 dev mytun
+		</pre><p>ip 伪装</p><pre class="screen">
+/sbin/iptables -t nat -A POSTROUTING -s 10.10.10.0/24 -j MASQUERADE
+		</pre></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ch28s06.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="network.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ch28s08.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">6. MASQUERADE </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 8. VLAN</td></tr></table></div></body></html>

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>第 22 章 Daemon</title><link rel="stylesheet" href="/docbook.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.75.2" /><link rel="home" href="../index.html" title="Netkiller Developer 手札" /><link rel="up" href="python.html" title="部分 IV. Python" /><link rel="prev" href="ch21s02.html" title="2. Format" /><link rel="next" href="python.pipe.html" title="第 23 章 Pipe" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">第 22 章 Daemon</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ch21s02.html">上一页</a> </td><th width="60%" align="center">部分 IV. Python</th><td width="20%" align="right"> <a accesskey="n" href="python.pipe.html">下一页</a></td></tr></table><hr /></div><div class="chapter" title="第 22 章 Daemon"><div class="titlepage"><div><div><h2 class="title"><a id="id1250264"></a>第 22 章 Daemon</h2></div></div></div><p>http://www.myelin.co.nz/post/2003/3/13/#200303135</p><pre class="screen">
+	
+#!/usr/bin/env python
+
+import os, sys
+
+print "I'm going to fork now - the child will write something to a pipe, and the parent will read it back"
+
+r, w = os.pipe()           # r,w是文件描述符, 不是文件对象
+
+pid = os.fork()
+if pid:
+    # 父进程
+    os.close(w)           # 关闭一个文件描述符
+    r = os.fdopen(r)      # 将r转化为文件对象
+    print "parent: reading"
+    txt = r.read()
+    os.waitpid(pid, 0)   # 确保子进程被撤销
+else:
+    # 子进程             
+    os.close(r)
+    w = os.fdopen(w, 'w')
+    print "child: writing"
+    w.write("here's some text from the child")
+    w.close()
+    print "child: closing"
+    sys.exit(0)
+
+print "parent: got it; text =", txt	
+	
+	</pre><pre class="screen">
+	
+import sys, os 
+
+if __name__ == "__main__":
+    # do the UNIX double-fork magic, see Stevens' "Advanced 
+    # Programming in the UNIX Environment" for details (ISBN 0201563177)
+    try: 
+        pid = os.fork() 
+        if pid &gt; 0:
+            # exit first parent
+            sys.exit(0) 
+    except OSError, e: 
+        print &gt;&gt;sys.stderr, "fork #1 failed: %d (%s)" % (e.errno, e.strerror) 
+        sys.exit(1)
+
+    # decouple from parent environment
+    os.chdir("/") 
+    os.setsid() 
+    os.umask(0) 
+
+    # do second fork
+    try: 
+        pid = os.fork() 
+        if pid &gt; 0:
+            # exit from second parent, print eventual PID before
+            print "Daemon PID %d" % pid 
+            sys.exit(0) 
+    except OSError, e: 
+        print &gt;&gt;sys.stderr, "fork #2 failed: %d (%s)" % (e.errno, e.strerror) 
+        sys.exit(1) 
+
+    # start the daemon main loop
+	
+	</pre><p></p><pre class="screen">
+# Redirect standard file descriptors 
+sys.stdin = open('/dev/null', 'r') 
+sys.stdout = open('/dev/null', 'w') 
+sys.stderr = open('/dev/null', 'w')
+	</pre></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ch21s02.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="python.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="python.pipe.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">2. Format </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 23 章 Pipe</td></tr></table></div></body></html>

@@ -1,0 +1,402 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>2. Nagios</title><link rel="stylesheet" href="/docbook.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.75.2" /><link rel="home" href="../index.html" title="Netkiller Linux 手札" /><link rel="up" href="network.monitor.html" title="第 66 章 Network" /><link rel="prev" href="network.monitor.html" title="第 66 章 Network" /><link rel="next" href="munin.html" title="3. Munin" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">2. Nagios</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="network.monitor.html">上一页</a> </td><th width="60%" align="center">第 66 章 Network</th><td width="20%" align="right"> <a accesskey="n" href="munin.html">下一页</a></td></tr></table><hr /></div><div class="section" title="2. Nagios"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="nagios"></a>2. Nagios</h2></div></div></div><p>homepage: http://www.nagios.org/</p><div class="section" title="2.1. Install Nagios"><div class="titlepage"><div><div><h3 class="title"><a id="id1391354"></a>2.1. Install Nagios</h3></div></div></div><p>
+	Nagios 是一种开放源代码监视软件，它可以扫描主机、服务、网络方面存在的问题。Nagios 与其他类似的包之间的主要区别在于，Nagios 将所有的信息简化为“工作（working）”、“可疑的（questionable）”和“故障（failure）”状态，并且 Nagios 支持由插件组成的非常丰富的“生态系统”。这些特性使得用户能够进行有效安装，在此过程中无需过多地关心细节内容，只提供他们所需的信息即可。
+	</p><p>install</p><pre class="screen">
+$ sudo apt-get install nagios3 nagios-nrpe-plugin
+	</pre><p>add user nagiosadmin for nagios</p><pre class="screen">
+$ sudo htpasswd -c /etc/nagios2/htpasswd.users nagiosadmin
+New password:
+Re-type new password:
+Adding password for user nagiosadmin		
+	</pre><p>Create a new nagcmd group for allowing external commands to be submitted through the web interface. Add both the nagios user and the apache user to the group. </p><pre class="screen">
+$ groupadd nagcmd
+$ sudo usermod -a -G nagcmd nagios
+$ sudo usermod -a -G nagcmd www-data
+$ cat /etc/group
+nagcmd:x:1003:nagios,www-data		
+	</pre><p>reload apache</p><pre class="screen">
+$ sudo /etc/init.d/apache2 reload
+ * Reloading web server config apache2                    [ OK ]		
+	</pre></div><div class="section" title="2.2. 配置 Nagios"><div class="titlepage"><div><div><h3 class="title"><a id="id1391355"></a>2.2. 配置 Nagios</h3></div></div></div><pre class="screen">
+$ sudo vim /etc/nagios3/nagios.cfg
+
+cfg_dir=/etc/nagios3/hosts
+cfg_dir=/etc/nagios3/servers
+cfg_dir=/etc/nagios3/switches
+cfg_dir=/etc/nagios3/routers
+
+admin_email=nagios, neo.chen@zoshow.com
+		</pre><div class="section" title="2.2.1. authorized"><div class="titlepage"><div><div><h4 class="title"><a id="id1391411"></a>2.2.1. authorized</h4></div></div></div><p>add user neo for nagios</p><pre class="screen">
+$ sudo htpasswd /etc/nagios3/htpasswd.users neo
+New password:
+Re-type new password:
+Adding password for user neo
+			</pre><p></p><pre class="screen">
+			
+$ sudo vim /etc/nagios3/cgi.cfg
+
+authorized_for_all_services=nagiosadmin,neo
+authorized_for_all_hosts=nagiosadmin,neo
+			
+			</pre></div><div class="section" title="2.2.2. contacts"><div class="titlepage"><div><div><h4 class="title"><a id="id1391430"></a>2.2.2. contacts</h4></div></div></div><pre class="screen">
+$ sudo vim /etc/nagios3/conf.d/contacts_nagios2.cfg
+
+###############################################################################
+# contacts.cfg
+###############################################################################
+
+define contact{
+        contact_name                    neo
+        alias                           Neo
+        service_notification_period     24x7
+        host_notification_period        24x7
+        service_notification_options    w,u,c,r
+        host_notification_options       d,r
+        service_notification_commands   notify-service-by-email
+        host_notification_commands      notify-host-by-email
+        email                           neo.chen@example.com
+        }
+
+###############################################################################
+###############################################################################
+#
+# CONTACT GROUPS
+#
+###############################################################################
+###############################################################################
+
+# We only have one contact in this simple configuration file, so there is
+# no need to create more than one contact group.
+
+define contactgroup{
+        contactgroup_name       admins
+        alias                   Nagios Administrators
+        members                 root, neo
+        }
+			
+			</pre><p>当服务出现w—报警(warning),u—未知(unkown),c—严重(critical),r—从异常恢复到正常，在这四种情况下通知联系人</p><p>当主机出现d－当机(down),u—返回不可达(unreachable),r—从异常情况恢复正常,在这3种情况下通知联系人</p><p>确认 contact_groups 已经设置</p><pre class="screen">
+neo@monitor:/etc/nagios3$ grep admins conf.d/generic-host_nagios2.cfg
+                contact_groups                  admins
+neo@monitor:/etc/nagios3$ grep admins conf.d/generic-service_nagios2.cfg
+                contact_groups                  admins			
+			</pre></div><div class="section" title="2.2.3. hostgroups"><div class="titlepage"><div><div><h4 class="title"><a id="id1391465"></a>2.2.3. hostgroups</h4></div></div></div><pre class="screen">
+$ sudo vim /etc/nagios3/conf.d/hostgroups_nagios2.cfg
+
+define hostgroup {
+        hostgroup_name  mysql-servers
+                alias           MySQL Servers
+                members         *
+        }
+			
+			</pre></div><div class="section" title="2.2.4. generic-service"><div class="titlepage"><div><div><h4 class="title"><a id="id1391475"></a>2.2.4. generic-service</h4></div></div></div><pre class="screen">
+$ cat /etc/nagios3/conf.d/generic-service_nagios2.cfg
+# generic service template definition
+define service{
+        name                            generic-service ; The 'name' of this service template
+        active_checks_enabled           1       ; Active service checks are enabled
+        passive_checks_enabled          1       ; Passive service checks are enabled/accepted
+        parallelize_check               1       ; Active service checks should be parallelized (disabling this can lead to major performance problems)
+        obsess_over_service             1       ; We should obsess over this service (if necessary)
+        check_freshness                 0       ; Default is to NOT check service 'freshness'
+        notifications_enabled           1       ; Service notifications are enabled
+        event_handler_enabled           1       ; Service event handler is enabled
+        flap_detection_enabled          1       ; Flap detection is enabled
+        failure_prediction_enabled      1       ; Failure prediction is enabled
+        process_perf_data               1       ; Process performance data
+        retain_status_information       1       ; Retain status information across program restarts
+        retain_nonstatus_information    1       ; Retain non-status information across program restarts
+                notification_interval           0               ; Only send notifications on status change by default.
+                is_volatile                     0
+                check_period                    24x7
+                normal_check_interval           5
+                retry_check_interval            1
+                max_check_attempts              4
+                notification_period             24x7
+                notification_options            w,u,c,r
+                contact_groups                  admins
+        register                        0       ; DONT REGISTER THIS DEFINITION - ITS NOT A REAL SERVICE, JUST A TEMPLATE!
+        }
+			</pre><div class="itemizedlist"><ul class="itemizedlist" type="disc"><li class="listitem"><p>normal_check_interval 	间隔时间</p></li><li class="listitem"><p>retry_check_interval	重试间隔时间</p></li><li class="listitem"><p>max_check_attempts 		检查次数，4次失败后报警</p></li></ul></div></div><div class="section" title="2.2.5. SOUND OPTIONS"><div class="titlepage"><div><div><h4 class="title"><a id="id1391512"></a>2.2.5. SOUND OPTIONS</h4></div></div></div><p>发出警报声</p><pre class="screen">
+			
+$ sudo vim /etc/nagios3/cgi.cfg
+
+# SOUND OPTIONS
+# These options allow you to specify an optional audio file
+# that should be played in your browser window when there are
+# problems on the network.  The audio files are used only in
+# the status CGI.  Only the sound for the most critical problem
+# will be played.  Order of importance (higher to lower) is as
+# follows: unreachable hosts, down hosts, critical services,
+# warning services, and unknown services. If there are no
+# visible problems, the sound file optionally specified by
+# 'normal_sound' variable will be played.
+#
+#
+# &lt;varname&gt;=&lt;sound_file&gt;
+#
+# Note: All audio files must be placed in the /media subdirectory
+# under the HTML path (i.e. /usr/local/nagios/share/media/).
+
+host_unreachable_sound=hostdown.wav
+host_down_sound=hostdown.wav
+service_critical_sound=critical.wav
+service_warning_sound=warning.wav
+service_unknown_sound=warning.wav
+normal_sound=noproblem.wav
+			
+			</pre></div><div class="section" title="2.2.6. SMS 短信"><div class="titlepage"><div><div><h4 class="title"><a id="id1391530"></a>2.2.6. SMS 短信</h4></div></div></div><pre class="screen">
+vim /etc/nagios3/commands.cfg
+
+# 'notify-host-by-sms' command definition
+define command{
+        command_name    notify-host-by-sms
+        command_line    /srv/sms/sms "Host: $HOSTNAME$\nState: $HOSTSTATE$\nAddress: $HOSTADDRESS$\nInfo: $HOSTOUTPUT$\n\nDate/Time: $LONGDATETIME$\n"
+        }
+
+# 'notify-service-by-sms' command definition
+define command{
+        command_name    notify-service-by-sms
+        command_line    /srv/sms/sms "Service: $SERVICEDESC$\nHost: $HOSTALIAS$\nAddress: $HOSTADDRESS$\nState: $SERVICESTATE$\n\nDate/Time: $LONGDATETIME$\n\nAdditional Info:\n\n$SERVICEOUTPUT$"
+        }
+			</pre><pre class="screen">
+sudo vim /etc/nagios3/conf.d/contacts_nagios2.cfg			
+define contact{
+        contact_name                    neo
+        alias                           Neo
+        service_notification_period     24x7
+        host_notification_period        24x7
+        service_notification_options    w,u,c,r
+        host_notification_options       d,r
+        service_notification_commands   notify-service-by-email, notify-service-by-sms
+        host_notification_commands      notify-host-by-email, notify-host-by-sms
+        email                           neo.chen@xiu.com
+        }
+			
+			</pre></div></div><div class="section" title="2.3. 配置监控设备"><div class="titlepage"><div><div><h3 class="title"><a id="id1391553"></a>2.3. 配置监控设备</h3></div></div></div><div class="section" title="2.3.1. routers"><div class="titlepage"><div><div><h4 class="title"><a id="id1391556"></a>2.3.1. routers</h4></div></div></div><pre class="screen">
+vim /etc/nagios3/routers/firewall.cfg
+			
+define host{
+
+        use             generic-host; Inherit default values from a template
+
+        host_name       firewall         ; The name we're giving to this switch
+
+        alias           Cisco PIX 515E Firewall ; A longer name associated with the switch
+
+        address         172.16.1.254            ; IP address of the switch
+
+        hostgroups      all,networks            ; Host groups this switch is associated with
+
+        }
+
+define service{
+
+        use                     generic-service ; Inherit values from a template
+
+        host_name                       firewall ; The name of the host the service is associated with
+
+        service_description     PING            ; The service description
+
+        check_command           check_ping!200.0,20%!600.0,60%  ; The command used to monitor the service
+
+        normal_check_interval   5       ; Check the service every 5 minutes under normal conditions
+
+        retry_check_interval    1       ; Re-check the service every minute until its final/hard state is determined
+
+        }
+
+define service{
+
+        use                     generic-service ; Inherit values from a template
+
+        host_name                       firewall
+
+        service_description     Uptime
+
+        check_command           check_snmp!-C public -o sysUpTime.0
+
+        }
+		
+			</pre></div><div class="section" title="2.3.2. hosts / service"><div class="titlepage"><div><div><h4 class="title"><a id="id1391576"></a>2.3.2. hosts / service</h4></div></div></div><div class="section" title="2.3.2.1. http"><div class="titlepage"><div><div><h5 class="title"><a id="id1391579"></a>2.3.2.1. http</h5></div></div></div><p>hosts</p><pre class="screen">
+$ cat /etc/nagios3/hosts/www.example.com.cfg
+define host{
+
+        use             generic-host            ; Inherit default values from a template
+
+        host_name       www.example.com             ; The name we're giving to this host
+
+        alias           Some Remote Host        ; A longer name associated with the host
+
+        address         120.132.14.6           ; IP address of the host
+
+        hostgroups      all,http-servers        ; Host groups this host is associated with
+
+        }
+
+define service{
+
+        use             generic-service         ; Inherit default values from a template
+
+        host_name               www.example.com
+
+        service_description     HTTP
+
+        check_command   check_http
+
+        }
+			
+				</pre></div><div class="section" title="2.3.2.2. mysql hosts"><div class="titlepage"><div><div><h5 class="title"><a id="id1391596"></a>2.3.2.2. mysql hosts</h5></div></div></div><pre class="screen">
+$ sudo vim /etc/nagios3/hosts/mysql.cfg
+
+
+define host{
+
+        use             generic-host            ; Inherit default values from a template
+
+        host_name       mysql-master.example.com            ; The name we're giving to this host
+
+        alias           Some Remote Host        ; A longer name associated with the host
+
+        address         172.16.1.6             ; IP address of the host
+
+        hostgroups      all,mysql-servers       ; Host groups this host is associated with
+
+        }
+
+define service{
+
+        use             generic-service         ; Inherit default values from a template
+
+        host_name               mysql-master.example.com
+
+        service_description     MySQL
+
+        check_command   check_mysql_database!user!passwd!database
+
+        }
+			
+				</pre></div></div></div><div class="section" title="2.4. Monitor Client nrpe"><div class="titlepage"><div><div><h3 class="title"><a id="id1391611"></a>2.4. Monitor Client nrpe</h3></div></div></div><div class="section" title="2.4.1. Nagios3 nrpe plugins"><div class="titlepage"><div><div><h4 class="title"><a id="id1391614"></a>2.4.1. Nagios3 nrpe plugins</h4></div></div></div><p>nrpe 插件接收来自nagios-nrpe-server数据报告</p><pre class="screen">
+cat /etc/nagios3/hosts/host.example.org.cfg
+
+define host{
+
+        use             generic-host            ; Inherit default values from a template
+
+        host_name       host.example.org        ; The name we're giving to this host
+
+        alias           Some Remote Host        ; A longer name associated with the host
+
+        address         172.16.1.3              ; IP address of the host
+
+        hostgroups      all                     ; Host groups this host is associated with
+
+        }
+
+# NRPE disk check.
+define service {
+        use                             generic-service
+        host_name                       backup
+        service_description             nrpe-disk
+        check_command                   check_nrpe_1arg!check_all_disks!172.16.1.3
+}
+define service {
+        use                             generic-service
+        host_name                       backup
+        service_description             nrpe-users
+        check_command                   check_nrpe_1arg!check_users!172.16.1.3
+}
+define service {
+        use                             generic-service
+        host_name                       backup
+        service_description             nrpe-swap
+        check_command                   check_nrpe_1arg!check_swap!172.16.1.3
+}
+define service {
+        use                             generic-service
+        host_name                       backup
+        service_description             nrpe-procs
+        check_command                   check_nrpe_1arg!check_procs!172.16.1.3
+}
+
+			</pre></div><div class="section" title="2.4.2. nagios-nrpe-server"><div class="titlepage"><div><div><h4 class="title"><a id="id1391637"></a>2.4.2. nagios-nrpe-server</h4></div></div></div><p>nagios-nrpe-server 的功能是向服务器发送监控数据</p><pre class="screen">
+sudo apt-get install nagios-nrpe-server nagios-plugins
+			</pre><p>/etc/nagios/nrpe.cfg</p><pre class="screen">
+$ sudo vim /etc/nagios/nrpe_local.cfg
+allowed_hosts=172.16.1.2
+
+command[check_users]=/usr/lib/nagios/plugins/check_users -w 5 -c 10
+command[check_load]=/usr/lib/nagios/plugins/check_load -w 15,10,5 -c 30,25,20
+command[check_zombie_procs]=/usr/lib/nagios/plugins/check_procs -w 5 -c 10 -s Z
+command[check_total_procs]=/usr/lib/nagios/plugins/check_procs -w 150 -c 200
+command[check_procs]=/usr/lib/nagios/plugins/check_procs -w 150 -c 200
+command[check_swap]=/usr/lib/nagios/plugins/check_swap -w 20% -c 10%
+command[check_all_disks]=/usr/lib/nagios/plugins/check_disk -w 20% -c 10% -e
+command[check_disk_root]=/usr/lib/nagios/plugins/check_disk -w 20% -c 10% -p /
+command[check_disk_home]=/usr/lib/nagios/plugins/check_disk -w 20% -c 10% -p /home
+command[check_sda_iostat]=/usr/lib/nagios/plugins/check_iostat -d sda -w 100 -c 200
+command[check_sdb_iostat]=/usr/lib/nagios/plugins/check_iostat -d sdb -w 100 -c 200
+# command[check_uri_user]=/usr/lib/nagios/plugins/check_http -I 127.0.0.1 -p 80 -u http://example.com/test/ok.php
+# command[check_mysql]=/usr/lib/nagios/plugins/check_mysql -H localhost -u root -ppassword test -P 3306
+
+			</pre><p>重启后生效</p><pre class="screen">
+/etc/init.d/nagios-nrpe-server restart	
+			</pre></div></div><div class="section" title="2.5. Monitoring Windows Machines"><div class="titlepage"><div><div><h3 class="title"><a id="id1391672"></a>2.5. Monitoring Windows Machines</h3></div></div></div><div class="section" title="2.5.1. NSClient++"><div class="titlepage"><div><div><h4 class="title"><a id="id1391675"></a>2.5.1. NSClient++</h4></div></div></div><p>http://sourceforge.net/projects/nscplus</p></div><div class="section" title="2.5.2. check_nt"><div class="titlepage"><div><div><h4 class="title"><a id="id1391681"></a>2.5.2. check_nt</h4></div></div></div><p>Define windows services that should be monitored.</p><pre class="screen">
+# Define a host for the Windows machine we'll be monitoring
+# Change the host_name, alias, and address to fit your situation
+
+define host{
+use             windows-server              ; Inherit default values from a template
+host_name   remote-windows-host      ; The name we're giving to this host
+alias            Remote Windows Host     ; A longer name associated with the host
+address       192.168.1.4                   ; IP address of the remote windows host
+}
+			
+define service{
+use                     generic-service
+host_name               remote-windows-host
+service_description     NSClient++ Version
+check_command           check_nt!CLIENTVERSION
+}
+define service{
+use                     generic-service
+host_name               remote-windows-host
+service_description     Uptime
+check_command           check_nt!UPTIME
+}
+define service{
+use                     generic-service
+host_name               remote-windows-host
+service_description     CPU Load
+check_command           check_nt!CPULOAD!-l 5,80,90
+}
+define service{
+use                     generic-service
+host_name               remote-windows-host
+service_description     Memory Usage
+check_command           check_nt!MEMUSE!-w 80 -c 90
+}
+define service{
+use                     generic-service
+host_name               remote-windows-host
+service_description     C:\ Drive Space
+check_command           check_nt!USEDDISKSPACE!-l c -w 80 -c 90
+}
+define service{
+use                     generic-service
+host_name               remote-windows-host
+service_description     W3SVC
+check_command           check_nt!SERVICESTATE!-d SHOWALL -l W3SVC
+}
+define service{
+use                     generic-service
+host_name               remote-windows-host
+service_description     Explorer
+check_command           check_nt!PROCSTATE!-d SHOWALL -l Explorer.exe
+}
+			</pre></div><div class="section" title="2.5.3. Enable Password Protection"><div class="titlepage"><div><div><h4 class="title"><a id="id1391707"></a>2.5.3. Enable Password Protection</h4></div></div></div><pre class="screen">
+define command{
+command_name	check_nt
+command_line	$USER1$/check_nt -H $HOSTADDRESS$ -p 12489 -s My2Secure$Password -v $ARG1$ $ARG2$
+}
+			</pre></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="network.monitor.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="network.monitor.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="munin.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 66 章 Network </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 3. Munin</td></tr></table></div></body></html>

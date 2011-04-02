@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>第 33 章 OpenVPN (openvpn - Virtual Private Network daemon)</title><link rel="stylesheet" href="/docbook.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.75.2" /><link rel="home" href="../index.html" title="Netkiller Linux 手札" /><link rel="up" href="network.application.html" title="部分 III. Network Application" /><link rel="prev" href="stunnel.html" title="第 32 章 Stunnel - universal SSL tunnel" /><link rel="next" href="ch33s02.html" title="2. Openvpn Server" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">第 33 章 OpenVPN (openvpn - Virtual Private Network daemon)</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="stunnel.html">上一页</a> </td><th width="60%" align="center">部分 III. Network Application</th><td width="20%" align="right"> <a accesskey="n" href="ch33s02.html">下一页</a></td></tr></table><hr /></div><div class="chapter" title="第 33 章 OpenVPN (openvpn - Virtual Private Network daemon)"><div class="titlepage"><div><div><h2 class="title"><a id="openvpn"></a>第 33 章 OpenVPN (openvpn - Virtual Private Network daemon)</h2></div></div></div><div class="toc"><p><b>目录</b></p><dl><dt><span class="section"><a href="openvpn.html#id1378119">1. 源码安装</a></span></dt><dt><span class="section"><a href="ch33s02.html">2. Openvpn Server</a></span></dt><dd><dl><dt><span class="section"><a href="ch33s02.html#id1378323">2.1. create keys for the server</a></span></dt><dt><span class="section"><a href="ch33s02.html#id1378446">2.2. create keys for the clients</a></span></dt></dl></dd><dt><span class="section"><a href="ch33s03.html">3. 吊销(revoke)用户证书</a></span></dt><dt><span class="section"><a href="ch33s04.html">4. Openvpn Client</a></span></dt><dt><span class="section"><a href="ch33s05.html">5. OpenVPN GUI for Windows</a></span></dt><dd><dl><dt><span class="section"><a href="ch33s05.html#id1378783">5.1. Windows Server</a></span></dt><dt><span class="section"><a href="ch33s05.html#id1379009">5.2. Windows Client</a></span></dt></dl></dd><dt><span class="section"><a href="ch33s06.html">6. point-to-point VPNs</a></span></dt><dt><span class="section"><a href="ch33s07.html">7. VPN 案例</a></span></dt><dd><dl><dt><span class="section"><a href="ch33s07.html#id1379150">7.1. server and client vpn</a></span></dt><dt><span class="section"><a href="ch33s07.html#id1379302">7.2. Ethernet Bridging Example</a></span></dt><dt><span class="section"><a href="ch33s07.html#id1379396">7.3. IDC Example</a></span></dt></dl></dd></dl></div><div><img src="images/vpn/openvpn.png" /></div><p>http://openvpn.net/</p><div class="section" title="1. 源码安装"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id1378119"></a>1. 源码安装</h2></div></div></div><div class="procedure" title="过程 33.1. OpenVPN 编译安装步骤"><a id="id1378123"></a><p class="title"><b>过程 33.1. OpenVPN 编译安装步骤</b></p><ol class="procedure" type="1"><li class="step" title="步骤 1"><p>安装liblzo,libssl支持库</p><pre class="screen">
+netkiller@neo:~$ sudo apt-get install liblzo-dev
+netkiller@neo:~$ sudo apt-get install libssl-dev
+				</pre></li><li class="step" title="步骤 2"><p>取得安装包</p><pre class="screen">
+netkiller@neo:/usr/local$ sudo chmod 777 /usr/local/src/
+netkiller@neo:~$ cd /usr/local/src/
+netkiller@neo:/usr/local/src$ wget http://openvpn.net/release/openvpn-2.0.9.tar.gz
+netkiller@neo:/usr/local/src$ tar zxvf openvpn-2.0.9.tar.gz
+netkiller@neo:/usr/local/src$ cd openvpn-2.0.9/
+netkiller@neo:/usr/local/src/openvpn-2.0.9$
+				</pre></li><li class="step" title="步骤 3"><p>编译安装</p><pre class="screen">
+netkiller@neo:/usr/local/src/openvpn-2.0.9$ ./configure --prefix=/usr/local/openvpn-2.0.9 --enable-pthread
+netkiller@neo:/usr/local/src/openvpn-2.0.9$ make
+netkiller@neo:/usr/local/src/openvpn-2.0.9$ sudo make install
+				</pre></li><li class="step" title="步骤 4"><p>配置文件</p><pre class="screen">
+netkiller@neo:/usr/local/src/openvpn-2.0.9$ sudo ln -s /usr/local/openvpn-2.0.9/ /usr/local/openvpn
+netkiller@neo:/usr/local/src/openvpn-2.0.9$ cd /usr/local/openvpn
+netkiller@neo:/usr/local/openvpn$ sudo mkdir etc
+netkiller@neo:/usr/local/openvpn$ sudo mkdir log
+netkiller@neo:/usr/local/openvpn$ sudo vi etc/openvpn.conf
+				</pre><div class="example"><a id="id1378177"></a><p class="title"><b>例 33.1. openvpn.conf</b></p><div class="example-contents"><pre class="screen">
+
+					</pre><p>sudo cp ca.crt dh1024.pem server.crt server.key /usr/local/openvpn/etc/</p></div></div><br class="example-break" /></li><li class="step" title="步骤 5"><p>创建证书</p><p>修改vars文件的环境变量</p><pre class="screen">
+netkiller@neo:/usr/share/openvpn$ sudo vi vars
+export KEY_COUNTRY=CN
+export KEY_PROVINCE=GD
+export KEY_CITY=Shenzhen
+export KEY_ORG=netkiller.org.cn
+export KEY_EMAIL=openunix@163.com
+				</pre><pre class="screen">
+netkiller@neo:/usr/local/openvpn$ cd /usr/share/openvpn/
+netkiller@neo:/usr/share/openvpn$
+
+netkiller@neo:~/openvpn-2.1_rc1/easy-rsa/2.0$ sudo make install DESTDIR=/usr/share/openvpn
+install -c --directory "/usr/share/openvpn/"
+install -c --mode=0755 build-* "/usr/share/openvpn/"
+install -c --mode=0755 clean-all list-crl inherit-inter pkitool revoke-full sign-req whichopensslcnf "/usr/share/openvpn/"
+install -c --mode=0644 openssl-0.9.6.cnf openssl.cnf README vars "/usr/share/openvpn/"
+netkiller@neo:~/openvpn-2.1_rc1/easy-rsa/2.0$
+
+netkiller@neo:/usr/share/openvpn$ sudo chmod +x vars
+netkiller@neo:/usr/share/openvpn$
+netkiller@neo:/usr/share/openvpn$ sudo ./clean-all
+
+netkiller@neo:/usr/share/openvpn$ sudo ./build-ca
+netkiller@neo:/usr/share/openvpn$ sudo ./build-key-server server
+netkiller@neo:/usr/share/openvpn$ sudo ./build-key client1
+
+netkiller@neo:/usr/share/openvpn$ sudo mkdir /etc/openvpn
+netkiller@neo:/usr/share/openvpn$ cd /etc/openvpn/
+netkiller@neo:/etc/openvpn$ sudo vi server.ovpn
+netkiller@neo:/etc/openvpn$ sudo cp /usr/share/openvpn/keys/dh1024.pem .
+netkiller@neo:/etc/openvpn$ sudo cp /usr/share/openvpn/keys/server.crt .
+netkiller@neo:/etc/openvpn$ sudo cp /usr/share/openvpn/keys/server.key .
+netkiller@neo:/etc/openvpn$ sudo cp /usr/share/openvpn/keys/ca.crt .
+
+root@neo:/home/netkiller/openvpn-2.1_rc1/sample-config-files# cp * /etc/openvpn/
+root@neo:/home/netkiller/openvpn-2.1_rc1/sample-config-files# cd /etc/openvpn/
+				</pre></li><li class="step" title="步骤 6"><p>启动</p><pre class="screen">
+/usr/local/openvpn/sbin/openvpn --config /usr/local/openvpn/etc/openvpn.conf
+				</pre></li><li class="step" title="步骤 7"><p>Script</p><p>/etc/init.d/openvpn</p><pre class="screen">
+				
+#!/bin/bash
+# vpn init file for OpenVPN
+#
+# chkconfig: - 100 100
+# description: OpenVPN is a full-featured SSL VPN solution which can accomodate a wide range of configurations,
+#				including remote access, site-to-site VPNs, WiFi security,
+#				and enterprise-scale remote access solutions with load balancing, failover,
+#				and fine-grained access-controls
+#				as it is designed and optimized for high performance environments.
+# author: Neo Chen&lt;openunix@163.com&gt;
+#
+# processname: $PROG
+# config:
+# pidfile: /var/run/openvpn
+
+# source function library
+. /etc/init.d/functions
+
+PREFIX=/usr/local/openvpn
+PROG=$PREFIX/sbin/openvpn
+OPTIONS="-f /usr/local/openvpn/etc/openvpn.conf"
+USER=daemon
+RETVAL=0
+prog="openvpn"
+
+start() {
+        echo -n $"Starting $prog: "
+        if [ $UID -ne 0 ]; then
+                RETVAL=1
+                failure
+        else
+                daemon --user=$USER $PROG $OPTIONS
+                RETVAL=$?
+                [ $RETVAL -eq 0 ] &amp;&amp; touch /var/lock/subsys/openvpn
+        fi;
+        echo
+        return $RETVAL
+}
+
+stop() {
+        echo -n $"Stopping $prog: "
+        if [ $UID -ne 0 ]; then
+                RETVAL=1
+                failure
+        else
+                killproc $PROG
+                RETVAL=$?
+                [ $RETVAL -eq 0 ] &amp;&amp; rm -f /var/lock/subsys/openvpn
+        fi;
+        echo
+        return $RETVAL
+}
+
+reload(){
+        echo -n $"Reloading $prog: "
+        killproc $PROG -HUP
+        RETVAL=$?
+        echo
+        return $RETVAL
+}
+
+restart(){
+	stop
+	start
+}
+
+condrestart(){
+    [ -e /var/lock/subsys/openvpn ] &amp;&amp; restart
+    return 0
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  restart)
+	restart
+        ;;
+  reload)
+	reload
+        ;;
+  condrestart)
+	condrestart
+	;;
+  status)
+        status openvpn
+	RETVAL=$?
+        ;;
+  *)
+	echo $"Usage: $0 {start|stop|status|restart|condrestart|reload}"
+	RETVAL=1
+esac
+
+exit $RETVAL
+				
+				</pre><p>添加x权限</p><pre class="screen">
+sudo chmod +x /etc/init.d/openvpn
+				</pre></li></ol></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="stunnel.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="network.application.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ch33s02.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 32 章 Stunnel - universal SSL tunnel </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 2. Openvpn Server</td></tr></table></div></body></html>

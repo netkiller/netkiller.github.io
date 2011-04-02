@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>2. Zend Framework</title><link rel="stylesheet" href="/docbook.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.75.2" /><link rel="home" href="../index.html" title="Netkiller Developer 手札" /><link rel="up" href="frameworks.html" title="第 17 章 Frameworks" /><link rel="prev" href="frameworks.html" title="第 17 章 Frameworks" /><link rel="next" href="ch18.html" title="第 18 章 Application" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">2. Zend Framework</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="frameworks.html">上一页</a> </td><th width="60%" align="center">第 17 章 Frameworks</th><td width="20%" align="right"> <a accesskey="n" href="ch18.html">下一页</a></td></tr></table><hr /></div><div class="section" title="2. Zend Framework"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="php.frameworks.zend_framework"></a>2. Zend Framework</h2></div></div></div><div class="section" title="2.1. Install Zend Framework"><div class="titlepage"><div><div><h3 class="title"><a id="id1249948"></a>2.1. Install Zend Framework</h3></div></div></div><pre class="screen">
+			
+sudo mv ZendFramework-1.10.2 /usr/local/share/
+sudo ln -s
+/usr/local/share/ZendFramework-1.10.2 /usr/local/share/zend
+			
+			</pre><p>~/.bashrc</p><p>alias zf.sh=path/to/ZendFramework/bin/zf.sh</p><pre class="screen">
+			
+alias zf.sh=/usr/local/share/zend/bin/zf.sh
+			
+			</pre></div><div class="section" title="2.2. Create Your Project"><div class="titlepage"><div><div><h3 class="title"><a id="id1249967"></a>2.2. Create Your Project</h3></div></div></div><pre class="screen">
+			
+$ zf.sh create project quickstart
+			
+			</pre><p></p><pre class="screen">
+			
+$ cd quickstart/library; ln -s
+/usr/local/share/zend/library/Zend .
+			
+			</pre><p>Rewrite</p><p>.htaccess内容如下：</p><pre class="screen">
+			
+RewriteEngine on
+RewriteRule !".(js|ico|gif|jpg|png|css)$ index.php
+						
+			</pre></div><div class="section" title="2.3. Create a virtual host"><div class="titlepage"><div><div><h3 class="title"><a id="id1249991"></a>2.3. Create a virtual host</h3></div></div></div><pre class="screen">
+		
+&lt;VirtualHost *:80&gt;
+    ServerName quickstart.local
+    DocumentRoot /path/to/quickstart/public
+ 
+    SetEnv APPLICATION_ENV "development"
+ 
+    &lt;Directory /path/to/quickstart/public&gt;
+        DirectoryIndex index.php
+        AllowOverride All
+        Order allow,deny
+        Allow from all
+    &lt;/Directory&gt;
+&lt;/VirtualHost&gt;
+		
+			</pre><p>/etc/hosts</p><pre class="screen">
+			
+127.0.0.1 quickstart.local
+			
+			</pre></div><div class="section" title="2.4. Database"><div class="titlepage"><div><div><h3 class="title"><a id="id1250010"></a>2.4. Database</h3></div></div></div><div class="section" title="2.4.1. MySQL"><div class="titlepage"><div><div><h4 class="title"><a id="id1250013"></a>2.4.1. MySQL</h4></div></div></div><pre class="screen">
+			
+zf configure dbadapter "adapter=Pdo_Mysql&amp;username=test&amp;password=test&amp;dbname=test"
+			
+				</pre></div><div class="section" title="2.4.2. SQLite"><div class="titlepage"><div><div><h4 class="title"><a id="id1250023"></a>2.4.2. SQLite</h4></div></div></div><pre class="screen">
+		
+$ sudo apt-get install php5-sqlite		
+mkdir -p data/db; chmod -R a+rwX data
+		
+				</pre><pre class="screen">
+		
+zf.sh configure db-adapter \
+'adapter=PDO_SQLITE&amp;dbname=APPLICATION_PATH "/../data/db/guestbook.db"' \
+production
+
+zf.sh configure db-adapter \
+'adapter=PDO_SQLITE&amp;dbname=APPLICATION_PATH "/../data/db/guestbook-testing.db"' \
+testing
+
+zf.sh configure db-adapter \
+'adapter=PDO_SQLITE&amp;dbname=APPLICATION_PATH "/../data/db/guestbook-dev.db"' \
+development
+		
+				</pre></div></div><div class="section" title="2.5. zf.sh"><div class="titlepage"><div><div><h3 class="title"><a id="id1250039"></a>2.5. zf.sh</h3></div></div></div><div class="section" title="2.5.1. controller"><div class="titlepage"><div><div><h4 class="title"><a id="id1250042"></a>2.5.1. controller</h4></div></div></div><pre class="screen">
+		
+zf create controller Guestbook
+		
+				</pre><div class="section" title="2.5.1.1. action"><div class="titlepage"><div><div><h5 class="title"><a id="id1250051"></a>2.5.1.1. action</h5></div></div></div><pre class="screen">
+			
+	zf create action sign Guestbook
+			
+					</pre></div></div><div class="section" title="2.5.2. model"><div class="titlepage"><div><div><h4 class="title"><a id="id1250061"></a>2.5.2. model</h4></div></div></div><pre class="screen">
+		
+zf create model Guestbook
+		
+				</pre><div class="section" title="2.5.2.1. db-table"><div class="titlepage"><div><div><h5 class="title"><a id="id1250069"></a>2.5.2.1. db-table</h5></div></div></div><pre class="screen">
+			
+zf create db-table Guestbook guestbook
+			
+					</pre></div></div><div class="section" title="2.5.3. layout"><div class="titlepage"><div><div><h4 class="title"><a id="id1250077"></a>2.5.3. layout</h4></div></div></div><pre class="screen">
+		
+zf enable layout
+		
+				</pre></div><div class="section" title="2.5.4. form"><div class="titlepage"><div><div><h4 class="title"><a id="id1250085"></a>2.5.4. form</h4></div></div></div><pre class="screen">
+		
+zf create form Guestbook
+		
+				</pre></div></div><div class="section" title="2.6. Smarty"><div class="titlepage"><div><div><h3 class="title"><a id="id1250094"></a>2.6. Smarty</h3></div></div></div><pre class="screen">
+			
+&lt;?php
+
+//打开错误提示
+
+error_reporting(E_ALL|E_STRICT);
+
+//设定时区
+
+date_default_timezone_set("Asia/Shanghai");
+
+//指明引用文件的路径
+
+set_include_path('.'.PATH_SEPARATOR.'./library'.PATH_SEPARATOR.'./app/model/'.PATH_SEPARATOR.get_include_path());
+
+//必须手动加载Loader.php
+
+include "Zend/Loader.php";
+
+//自动加载类，使用时，直接实例化使用
+
+function __autoload($class){
+
+    Zend_Loader::loadClass($class);
+
+}
+
+   //getInstance()方法用来获取前端控制器实例
+
+   $frontController = Zend_Controller_Front::getInstance();
+
+   //设定前端路由器的工作目录，即cotroller
+
+   $frontController-&gt;setControllerDirectory(array("default"=&gt;"app/controller"));
+
+   //抛出异常
+
+   $frontController-&gt;throwExceptions(true);
+
+   //设置基地址,方便以后url的跳转用户,注意，区分大小写！
+
+   $frontController-&gt;setBaseUrl("/phpzend");
+
+//使用smarty模版需关闭本身的视图助手.
+
+$frontController-&gt;setParam("noViewRenderer", true);
+
+       // 关闭错误提示，发生请求错误时候，转到ErrorController的errorAction控制器
+
+//$frontController-&gt;throwExceptions(false);
+
+//对。。进行注册
+
+Zend_Registry::set("font", $frontController);
+
+//------------配置Smarty模版 ----------------
+
+include "smarty/Smarty.class.php";
+
+/**
+
+* 对smarty模版进行初始化
+
+**/
+
+$views = new Smarty();
+
+//$views-&gt;left_delimiter = "{{";
+
+//$views-&gt;right_delimiter = "}}";
+
+$views-&gt;compile_dir = "app/template_c";
+$views-&gt;cache_dir = "app/template_c/cache_c";
+$views-&gt;template_dir = "app/template";
+function smarty_block_dynamic($param,$content,&amp;$views)
+{
+      return $content;
+}
+
+$views-&gt;register_block("dynamic","smarty_block_dynamic",false);
+
+Zend_Registry::set("views", $views);
+
+//开始运行程序
+
+$frontController-&gt;dispatch();
+			
+			</pre><p></p><pre class="screen">
+			
+&lt;?php
+
+   //控制器层
+
+   class IndexController extends Zend_Controller_Action{
+
+     var $views;   /*模板对象*/
+
+     var $data;    /*传递模版变量的对象*/
+
+      function init()
+
+      {
+
+             //拿回注册过的对象
+
+             $this-&gt;views = Zend_Registry::get("views");     
+
+    }
+
+      function indexAction()
+
+      {
+
+             //定义模版显示的变量
+
+             $data['title']="hello world";
+
+             //传递变量到模版
+
+             $this-&gt;views-&gt;assign($data);
+
+             //显示模版
+
+             $this-&gt;views-&gt;display("index/index.tpl");
+
+                       echo "&lt;p&gt;in IndexController::indexAction()&lt;/p&gt;";
+
+    }
+
+      function addAction()
+
+      {
+
+      }
+
+}
+						
+			</pre></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="frameworks.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="frameworks.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ch18.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 17 章 Frameworks </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 18 章 Application</td></tr></table></div></body></html>

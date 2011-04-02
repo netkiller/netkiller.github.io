@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>6. Cisco Catalyst 3750 series DHCP + VLAN + Routing Example</title><link rel="stylesheet" href="/docbook.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.75.2" /><link rel="home" href="index.html" title="Netkiller Cisco IOS 手札" /><link rel="up" href="experiment.html" title="第 8 章 network experiment" /><link rel="prev" href="ch08s05.html" title="5. vlan example" /><link rel="next" href="ch08s07.html" title="7. Cisco Catalyst 3750 + Cisco Catalyst 2960 VTP Example" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">6. Cisco Catalyst 3750 series DHCP + VLAN + Routing Example</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ch08s05.html">上一页</a> </td><th width="60%" align="center">第 8 章 network experiment</th><td width="20%" align="right"> <a accesskey="n" href="ch08s07.html">下一页</a></td></tr></table><hr /></div><div class="section" title="6. Cisco Catalyst 3750 series DHCP + VLAN + Routing Example"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id1320845"></a>6. Cisco Catalyst 3750 series DHCP + VLAN + Routing Example</h2></div></div></div>
+			
+		<div class="procedure" title="过程 8.1. Cisco Catalyst 3750 series Example"><a id="id1320851"></a><p class="title"><b>过程 8.1. Cisco Catalyst 3750 series Example</b></p><ol class="procedure" type="1"><li class="step" title="步骤 1">
+				<p>进入交换机</p>
+				<pre class="screen">
+Switch#configure terminal
+Enter configuration commands, one per line.  End with CNTL/Z.
+Switch(config)#				
+				</pre>
+			</li><li class="step" title="步骤 2">
+				<p>划分VLAN.</p>
+				<pre class="screen">
+Switch#VLAN database
+% Warning: It is recommended to configure VLAN from config mode,
+  as VLAN database mode is being deprecated. Please consult user
+  documentation for configuring VTP/VLAN in config mode.
+
+
+Switch(vlan)#vlan 2
+VLAN 2 added:
+    Name: VLAN0002
+Switch(vlan)#vlan 3
+VLAN 3 added:
+    Name: VLAN0003
+Switch(vlan)#				
+				</pre>
+				<pre class="screen">
+Switch(config)#interface vlan 1
+Switch(config-if)#ip address 172.16.0.100 255.255.255.0
+Switch(config)#exit
+
+Switch(config)#interface vlan 2
+Switch(config-if)#ip address 10.10.0.1 255.255.255.0
+
+Switch(config)#interface vlan 3
+Switch(config-if)#ip address 10.10.1.254 255.255.255.0		
+				</pre>
+			</li><li class="step" title="步骤 3">
+				<p>DHCP</p>
+				<pre class="screen">
+Switch(config)#ip dhcp pool vlan2
+Switch(dhcp-config)#network 10.10.0.0 255.255.255.0
+Switch(dhcp-config)#default-router 10.10.0.1
+Switch(dhcp-config)#dns-server 208.67.222.222 208.67.220.220
+Switch(dhcp-config)#lease 7
+Switch(dhcp-config)#exit
+				
+Switch(config)#ip dhcp pool vlan3
+Switch(dhcp-config)#network 10.10.1.0 255.255.255.0
+Switch(dhcp-config)#default-router 10.10.1.254
+Switch(dhcp-config)#dns-server 208.67.222.222 208.67.220.220
+Switch(dhcp-config)#lease 7
+Switch(dhcp-config)#exit
+				</pre>
+				<p>启用路由 vlan 路由</p>
+				<pre class="screen">
+Switch(config)#ip routing
+Switch(config)#ip route 0.0.0.0 0.0.0.0 172.16.0.254
+				</pre>
+			</li><li class="step" title="步骤 4">
+				<p>配置接口</p>
+				<pre class="screen">
+Switch(config)#interface GigabitEthernet1/0/2
+Switch(config-if)#switchport access vlan 2
+Switch(config-if)# switchport mode access
+Switch(config-if)# spanning-tree portfast
+%Warning: portfast should only be enabled on ports connected to a single
+ host. Connecting hubs, concentrators, switches, bridges, etc... to this
+ interface  when portfast is enabled, can cause temporary bridging loops.
+ Use with CAUTION
+
+%Portfast has been configured on GigabitEthernet1/0/2 but will only
+ have effect when the interface is in a non-trunking mode.
+Switch(config-if)# ip dhcp snooping trust
+Switch(config-if)#exit
+
+
+Switch(config)#interface GigabitEthernet1/0/3
+Switch(config-if)#switchport access vlan 3
+Switch(config-if)#switchport mode access
+Switch(config-if)#spanning-tree portfast
+%Warning: portfast should only be enabled on ports connected to a single
+ host. Connecting hubs, concentrators, switches, bridges, etc... to this
+ interface  when portfast is enabled, can cause temporary bridging loops.
+ Use with CAUTION
+
+%Portfast has been configured on GigabitEthernet1/0/3 but will only
+ have effect when the interface is in a non-trunking mode.
+Switch(config-if)#ip dhcp snooping trust
+Switch(config-if)#exit
+				</pre>				
+			</li><li class="step" title="步骤 5">
+				<p></p>
+				<p>配置访问控制列表 </p>
+				<pre class="screen">
+　　Switch(config)access-list 103 permit ip 192.168.2.0 0.0.0.255 192.168.3.0 0.0.0.255
+　　Switch(config)access-list 103 permit ip 192.168.3.0 0.0.0.255 192.168.2.0 0.0.0.255
+　　Switch(config)access-list 103 permit udp any any eq bootpc
+　　Switch(config)access-list 103 permit udp any any eq tftp
+　　Switch(config)access-list 103 permit udp any eq bootpc any
+　　Switch(config)access-list 103 permit udp any eq tftp any
+　　Switch(config)access-list 104 permit ip 192.168.2.0 0.0.0.255 192.168.4.0 0.0.0.255
+　　Switch(config)access-list 104 permit ip 192.168.4.0 0.0.0.255 192.168.2.0 0.0.0.255
+　　Switch(config)access-list 104 permit udp any eq tftp any
+　　Switch(config)access-list 104 permit udp any eq bootpc any
+　　Switch(config)access-list 104 permit udp any eq bootpc any
+　　Switch(config)access-list 104 permit udp any eq tftp any
+				</pre>
+				<p>应用访问控制列表</p>
+				<p>/*将访问控制列表应用到VLAN 3和VLAN 4,VLAN 2不需要*/</p>
+				<pre class="screen">
+Switch(config)Int Vlan 3
+　　Switch(config-vlan)ip access-group 103 out
+　　Switch(config-vlan)Int Vlan 4
+　　Switch(config-vlan)ip access-group 104 out				
+				</pre>
+			</li><li class="step" title="步骤 6">
+				<p>结束并保存配置</p>
+				<pre class="screen">
+Switch(config)#end
+Switch#write memory
+Building configuration...
+[OK]
+Switch#
+00:43:52: %SYS-5-CONFIG_I: Configured from console by console
+
+				</pre>
+			</li></ol></div>
+		<div class="example"><a id="id1320984"></a><p class="title"><b>例 8.7. Cisco Catalyst 3750 series Example</b></p><div class="example-contents">
+			
+			<pre class="screen">
+Switch#show running-config
+Building configuration...
+
+Current configuration : 2085 bytes
+!
+version 12.2
+no service pad
+service timestamps debug uptime
+service timestamps log uptime
+no service password-encryption
+!
+hostname Switch
+!
+!
+no aaa new-model
+switch 1 provision ws-c3750g-24ts
+system mtu routing 1500
+ip subnet-zero
+ip routing
+!
+ip dhcp pool vlan2
+   network 10.10.0.0 255.255.255.0
+   default-router 10.10.0.1
+   dns-server 208.67.222.222 208.67.220.220
+   lease 7
+!
+ip dhcp pool vlan3
+   network 10.10.1.0 255.255.255.0
+   default-router 10.10.1.254
+   dns-server 208.67.222.222 208.67.220.220
+   lease 7
+!
+!
+!
+!
+no file verify auto
+spanning-tree mode pvst
+spanning-tree extend system-id
+!
+vlan internal allocation policy ascending
+!
+interface GigabitEthernet1/0/1
+!
+interface GigabitEthernet1/0/2
+ switchport access vlan 2
+ switchport mode access
+ spanning-tree portfast
+ ip dhcp snooping trust
+!
+interface GigabitEthernet1/0/3
+ switchport access vlan 3
+ switchport mode access
+ spanning-tree portfast
+ ip dhcp snooping trust
+!
+interface GigabitEthernet1/0/4
+!
+interface GigabitEthernet1/0/5
+!
+interface GigabitEthernet1/0/6
+!
+interface GigabitEthernet1/0/7
+!
+interface GigabitEthernet1/0/8
+!
+interface GigabitEthernet1/0/9
+!
+interface GigabitEthernet1/0/10
+!
+interface GigabitEthernet1/0/11
+!
+interface GigabitEthernet1/0/12
+!
+interface GigabitEthernet1/0/13
+!
+interface GigabitEthernet1/0/14
+!
+interface GigabitEthernet1/0/15
+!
+interface GigabitEthernet1/0/16
+!
+interface GigabitEthernet1/0/17
+!
+interface GigabitEthernet1/0/18
+!
+interface GigabitEthernet1/0/19
+!
+interface GigabitEthernet1/0/20
+!
+interface GigabitEthernet1/0/21
+!
+interface GigabitEthernet1/0/22
+!
+interface GigabitEthernet1/0/23
+!
+interface GigabitEthernet1/0/24
+!
+interface GigabitEthernet1/0/25
+!
+interface GigabitEthernet1/0/26
+!
+interface GigabitEthernet1/0/27
+!
+interface GigabitEthernet1/0/28
+!
+interface Vlan1
+ ip address 172.16.0.100 255.255.255.0
+!
+interface Vlan2
+ ip address 10.10.0.1 255.255.255.0
+!
+interface Vlan3
+ ip address 10.10.1.254 255.255.255.0
+!
+ip classless
+ip route 0.0.0.0 0.0.0.0 172.16.0.254
+ip http server
+!
+!
+control-plane
+!
+!
+line con 0
+line vty 5 15
+!
+end
+			
+			</pre>
+		</div></div><br class="example-break" />
+		
+	</div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ch08s05.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="experiment.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ch08s07.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">5. vlan example </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 7. Cisco Catalyst 3750 + Cisco Catalyst 2960 VTP Example</td></tr></table></div></body></html>

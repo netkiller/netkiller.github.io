@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>2. OpenLDAP</title><link rel="stylesheet" href="/docbook.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.75.2" /><link rel="home" href="../index.html" title="Netkiller Linux 手札" /><link rel="up" href="network.authentication.html" title="第 43 章 Network Authentication" /><link rel="prev" href="network.authentication.html" title="第 43 章 Network Authentication" /><link rel="next" href="kerberos.html" title="3. Kerberos" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">2. OpenLDAP</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="network.authentication.html">上一页</a> </td><th width="60%" align="center">第 43 章 Network Authentication</th><td width="20%" align="right"> <a accesskey="n" href="kerberos.html">下一页</a></td></tr></table><hr /></div><div class="section" title="2. OpenLDAP"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="network.authentication.ldap"></a>2. OpenLDAP</h2></div></div></div><div class="section" title="2.1. Server"><div class="titlepage"><div><div><h3 class="title"><a id="id1381576"></a>2.1. Server</h3></div></div></div><div class="procedure"><ol class="procedure" type="1"><li class="step" title="步骤 1"><p>First, install the OpenLDAP server daemon slapd and ldap-utils, a package containing LDAP management utilities:</p><pre class="screen">
+sudo apt-get install slapd ldap-utils				
+				</pre><p>By default the directory suffix will match the domain name of the server. For example, if the machine's Fully Qualified Domain Name (FQDN) is ldap.example.com, the default suffix will be dc=example,dc=com. If you require a different suffix, the directory can be	reconfigured using dpkg-reconfigure. Enter the following in a terminal prompt:</p><pre class="screen">
+sudo dpkg-reconfigure slapd				
+				</pre></li><li class="step" title="步骤 2"><p>example.com.ldif</p><pre class="screen">
+dn: ou=people,dc=example,dc=com
+objectClass: organizationalUnit
+ou: people
+
+dn: ou=groups,dc=example,dc=com
+objectClass: organizationalUnit
+ou: groups
+
+dn: uid=john,ou=people,dc=example,dc=com
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+uid: john
+sn: Doe
+givenName: John
+cn: John Doe
+displayName: John Doe
+uidNumber: 1000
+gidNumber: 10000
+userPassword: password
+gecos: John Doe
+loginShell: /bin/bash
+homeDirectory: /home/john
+shadowExpire: -1
+shadowFlag: 0
+shadowWarning: 7
+shadowMin: 8
+shadowMax: 999999
+shadowLastChange: 10877
+mail: john.doe@example.com
+postalCode: 31000
+l: Toulouse
+o: Example
+mobile: +33 (0)6 xx xx xx xx
+homePhone: +33 (0)5 xx xx xx xx
+title: System Administrator
+postalAddress: 
+initials: JD
+
+dn: cn=example,ou=groups,dc=example,dc=com
+objectClass: posixGroup
+cn: example
+gidNumber: 10000
+				</pre></li><li class="step" title="步骤 3"><p>To add the entries to the LDAP directory use the ldapadd utility:</p><pre class="screen">
+ldapadd -x -D cn=admin,dc=example,dc=com -W -f example.com.ldif
+				</pre><p>We can check that the content has been correctly added with the tools from the ldap-utils package. In order to execute a search of the LDAP directory:</p><pre class="screen">
+ldapsearch -xLLL -b "dc=example,dc=com" uid=john sn givenName cn
+
+dn: uid=john,ou=people,dc=example,dc=com
+cn: John Doe
+sn: Doe
+givenName: John				
+				</pre></li></ol></div><p>Just a quick explanation:</p><p>-x: will not use SASL authentication method, which is the default.</p><p>-LLL: disable printing LDIF schema information.</p></div><div class="section" title="2.2. Client"><div class="titlepage"><div><div><h3 class="title"><a id="id1381650"></a>2.2. Client</h3></div></div></div><div class="procedure"><ol class="procedure" type="1"><li class="step" title="步骤 1"><p>libnss-ldap</p><pre class="screen">
+sudo apt-get install libnss-ldap
+				</pre></li><li class="step" title="步骤 2"><p>reconfigure ldap-auth-config</p><pre class="screen">
+sudo dpkg-reconfigure ldap-auth-config
+				</pre></li><li class="step" title="步骤 3"><p>auth-client-config</p><pre class="screen">
+sudo auth-client-config -t nss -p lac_ldap				
+				</pre></li><li class="step" title="步骤 4"><p>pam-auth-update.</p><pre class="screen">
+sudo pam-auth-update
+				</pre></li></ol></div></div><div class="section" title="2.3. User and Group Management"><div class="titlepage"><div><div><h3 class="title"><a id="id1381697"></a>2.3. User and Group Management</h3></div></div></div><pre class="screen">
+sudo apt-get install ldapscripts
+		</pre><p> /etc/ldapscripts/ldapscripts.conf </p><pre class="screen">
+SERVER=localhost
+BINDDN='cn=admin,dc=example,dc=com'
+BINDPWDFILE="/etc/ldapscripts/ldapscripts.passwd"
+SUFFIX='dc=example,dc=com'
+GSUFFIX='ou=Groups'
+USUFFIX='ou=People'
+MSUFFIX='ou=Computers'
+GIDSTART=10000
+UIDSTART=10000
+MIDSTART=10000		
+		</pre><p>Now, create the ldapscripts.passwd file to allow authenticated access to the directory:</p><pre class="screen">
+sudo sh -c "echo -n 'secret' &gt; /etc/ldapscripts/ldapscripts.passwd"
+sudo chmod 400 /etc/ldapscripts/ldapscripts.passwd		
+		</pre></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="network.authentication.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="network.authentication.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="kerberos.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 43 章 Network Authentication </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 3. Kerberos</td></tr></table></div></body></html>

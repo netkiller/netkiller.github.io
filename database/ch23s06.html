@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>6. Script for automatic startup on boot</title><link rel="stylesheet" href="/docbook.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.75.2" /><link rel="home" href="index.html" title="Netkiller Database 手札" /><link rel="up" href="oracle.html" title="第 23 章 Manager" /><link rel="prev" href="ch23s05.html" title="5.  oracle 817 script" /><link rel="next" href="ch23s07.html" title="7. Run level shell script to start Oracle 10g services on RedHat Enterprise Linux (RHAS 4)" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">6. Script for automatic startup on boot</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ch23s05.html">上一页</a> </td><th width="60%" align="center">第 23 章 Manager</th><td width="20%" align="right"> <a accesskey="n" href="ch23s07.html">下一页</a></td></tr></table><hr /></div><div class="section" title="6. Script for automatic startup on boot"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id1405353"></a>6. Script for automatic startup on boot</h2></div></div></div><pre class="screen">
+		
+#!/bin/bash
+#
+# Run-level Startup script for the Oracle Instance and Listener
+#
+# chkconfig: 345 91 19
+# description: Startup/Shutdown Oracle listener and instance
+
+ORA_HOME="/u01/app/oracle/product/9.2.0.1.0"
+ORA_OWNR="oracle"
+
+# if the executables do not exist -- display error
+
+if [ ! -f $ORA_HOME/bin/dbstart -o ! -d $ORA_HOME ]
+then
+        echo "Oracle startup: cannot start"
+        exit 1
+fi
+
+# depending on parameter -- startup, shutdown, restart 
+# of the instance and listener or usage display 
+
+case "$1" in
+    start)
+        # Oracle listener and instance startup
+        echo -n "Starting Oracle: "
+        su - $ORA_OWNR -c "$ORA_HOME/bin/lsnrctl start"
+        su - $ORA_OWNR -c $ORA_HOME/bin/dbstart
+        touch /var/lock/subsys/oracle
+        echo "OK"
+        ;;
+    stop)
+        # Oracle listener and instance shutdown
+        echo -n "Shutdown Oracle: "
+        su - $ORA_OWNR -c "$ORA_HOME/bin/lsnrctl stop"
+        su - $ORA_OWNR -c $ORA_HOME/bin/dbshut
+        rm -f /var/lock/subsys/oracle
+        echo "OK"
+        ;;
+    reload|restart)
+        $0 stop
+        $0 start
+        ;;
+    *)
+        echo "Usage: $0 start|stop|restart|reload"
+        exit 1
+esac
+exit 0
+		
+		</pre></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ch23s05.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="oracle.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ch23s07.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">5.  oracle 817 script </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 7. Run level shell script to start Oracle 10g services on RedHat Enterprise Linux (RHAS 4)</td></tr></table></div></body></html>

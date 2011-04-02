@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>6. Shorewall Tools</title><link rel="stylesheet" href="/docbook.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.75.2" /><link rel="home" href="../index.html" title="Netkiller Linux 手札" /><link rel="up" href="firewall.html" title="第 31 章 Firewall" /><link rel="prev" href="ch31s05.html" title="5. Firewall GUI Tools" /><link rel="next" href="ch31s07.html" title="7. Endian Firewall" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">6. Shorewall Tools</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ch31s05.html">上一页</a> </td><th width="60%" align="center">第 31 章 Firewall</th><td width="20%" align="right"> <a accesskey="n" href="ch31s07.html">下一页</a></td></tr></table><hr /></div><div class="section" title="6. Shorewall Tools"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="shorewall"></a>6. Shorewall Tools</h2></div></div></div><p><a class="ulink" href="http://www.shorewall.net/" target="_top">Shorewall Tools</a></p><p></p><pre class="screen">
+netkiller@shenzhen:~$ apt-cache search Shorewall
+shorewall - Shoreline Firewall (Shorewall), a high-level tool for configuring Netfilter
+shorewall-doc - documentation for Shorewall firewall
+shorewall-lite - Shorewall (lite version), a high-level tool for configuring Netfilter
+netkiller@shenzhen:~$
+		</pre><p>install</p><pre class="screen">
+sudo apt-get install shorewall
+		</pre><p>copy config file to /etc/shorewall/</p><pre class="screen">
+sudo cp /usr/share/doc/shorewall/default-config/modules /etc/shorewall/
+sudo cp /usr/share/doc/shorewall/default-config/policy /etc/shorewall/
+sudo cp /usr/share/doc/shorewall/default-config/nat /etc/shorewall/
+sudo cp /usr/share/doc/shorewall/default-config/zones /etc/shorewall/
+sudo cp /usr/share/doc/shorewall/default-config/maclist /etc/shorewall/
+sudo cp /usr/share/doc/shorewall/default-config/blacklist /etc/shorewall/
+
+sudo cp /usr/share/doc/shorewall/default-config/interfaces /etc/shorewall/
+sudo cp /usr/share/doc/shorewall/default-config/rules /etc/shorewall/
+sudo cp /usr/share/doc/shorewall/default-config/hosts /etc/shorewall/
+sudo cp /usr/share/doc/shorewall/default-config/masq /etc/shorewall/
+		</pre><p> </p><div class="procedure" title="过程 31.1. configure"><a id="id1377920"></a><p class="title"><b>过程 31.1. configure</b></p><ol class="procedure" type="1"><li class="step" title="步骤 1"><p>interfaces</p><p>your net cards: eth0 and eth1, ppp0 is pppoe virtual net adapter</p><p>$ sudo vim /etc/shorewall/interfaces</p><pre class="screen">
+net    ppp0        detect        dhcp,routefilter,norfc1918,tcpflags
+loc    eth0        detect        tcpflags
+loc    eth1        detect        tcpflags
+				</pre></li><li class="step" title="步骤 2"><p>zones</p><p>network alias</p><p>$ sudo vim /etc/shorewall/zones</p><pre class="screen">
+net	Net		Internet
+loc	Local		Local Networks
+				</pre></li><li class="step" title="步骤 3"><p>masq</p><p>配置IP伪装</p><pre class="screen">
+ppp0			eth0
+				</pre></li><li class="step" title="步骤 4"><p>rules</p><pre class="screen">
+#
+#	允许 DNS 从 防火墙 连接到 Internet
+#
+AllowDNS	fw		net
+#
+#	允许本地网络可以使用 SSH 来管理服务器
+#
+AllowSSH	loc		fw
+#
+#	允许 Ping 到防火墙和允许防火墙 Ping 其它网络
+#
+AllowPing	loc		fw
+AllowPing	net		fw
+AllowPing	fw		loc
+AllowPing	fw		net
+#
+#	允许 Internet 访问防火墙上的 WEB 服务
+#
+AllowWeb	net		fw
+#
+#	允许 Internet 访问防火墙上的 FTP 服务
+#
+AllowFTP	net		fw
+#
+#	允许 Internet 访问防火墙上的 邮件 服务
+#
+AllowSMTP       net		fw
+AllowIMAP       net		fw
+#
+#	允许本地网络可以访问 Internet
+#
+AllowWeb	loc		net
+#
+#	允许本地网络可以收发邮件
+#
+AllowSMTP	loc		net
+AllowIMAP	loc		net
+AllowPOP3	loc		net
+#
+#	允许本地网络使用 FTP 到 Internet
+#
+AllowFTP	loc		net
+#
+#	允许本地网络从 Internet 查询 DNS
+#
+AllowDNS	loc		net
+#
+#	允许本地网络使用 NSM
+#
+ACCEPT          loc     	net     tcp     1863
+ACCEPT          loc     	net     tcp     443
+ACCEPT          loc     	net:gateway.messenger.hotmail.com all
+#
+#	将WEB访问重新定向到 3128 ,通过squid完成访问 ,访问服务器地址 192.168.0.1 除外。
+#
+#REDIRECT        loc     3128    tcp     www     - 	!192.168.0.1
+				</pre></li><li class="step" title="步骤 5"><p>修改 shorewall.conf</p><p>自动开启 IP 转发</p><p>查找 IP_FORWARDING=Keep 改为On</p><pre class="screen">
+IP_FORWARDING=On
+				</pre></li><li class="step" title="步骤 6"><p>修改 /etc/default/shorewall 自动运行防火墙</p><p>sudo vim /etc/default/shorewall</p><p>startup=0</p><p>改为</p><pre class="screen">
+startup=1
+				</pre></li><li class="step" title="步骤 7"><p>启动防火墙</p><p>sudo shorewall start</p></li></ol></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ch31s05.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="firewall.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ch31s07.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">5. Firewall GUI Tools </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 7. Endian Firewall</td></tr></table></div></body></html>

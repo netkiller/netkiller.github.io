@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>第 15 章 Synchronizes system time using the Network Time Protocol (NTP)</title><link rel="stylesheet" href="/docbook.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.75.2" /><link rel="home" href="index.html" title="Netkiller CentOS Linux 手札" /><link rel="up" href="pt02.html" title="部分 II. Network" /><link rel="prev" href="ch14s02.html" title="2. NFS Client Configuration" /><link rel="next" href="ch15s02.html" title="2. ntp client" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">第 15 章 Synchronizes system time using the Network Time Protocol (NTP)</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ch14s02.html">上一页</a> </td><th width="60%" align="center">部分 II. Network</th><td width="20%" align="right"> <a accesskey="n" href="ch15s02.html">下一页</a></td></tr></table><hr /></div><div class="chapter" title="第 15 章 Synchronizes system time using the Network Time Protocol (NTP)"><div class="titlepage"><div><div><h2 class="title"><a id="id1296130"></a>第 15 章 Synchronizes system time using the Network Time Protocol (NTP)</h2></div></div></div><div class="toc"><p><b>目录</b></p><dl><dt><span class="section"><a href="ch15.html#id1296142">1. ntpd - Network Time Protocol (NTP) daemon</a></span></dt><dt><span class="section"><a href="ch15s02.html">2. ntp client</a></span></dt></dl></div>
+	
+	<p>http://www.ntp.org</p>
+	<div class="section" title="1. ntpd - Network Time Protocol (NTP) daemon"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id1296142"></a>1. ntpd - Network Time Protocol (NTP) daemon</h2></div></div></div>
+		
+		<div class="procedure" title="过程 15.1. ntp server"><a id="id1296150"></a><p class="title"><b>过程 15.1. ntp server</b></p><ol class="procedure" type="1"><li class="step" title="步骤 1">
+				<p></p>
+				<pre class="screen">
+# yum install ntp	
+				</pre>
+			</li><li class="step" title="步骤 2">
+				<p>port</p>
+				<pre class="screen">
+[root@ntp ~]# netstat -unlnp |grep 123
+udp        0      0 192.168.5.5:123             0.0.0.0:*                               10810/ntpd
+udp        0      0 172.16.0.5:123              0.0.0.0:*                               10810/ntpd
+udp        0      0 192.168.3.5:123             0.0.0.0:*                               10810/ntpd
+udp        0      0 127.0.0.1:123               0.0.0.0:*                               10810/ntpd
+udp        0      0 0.0.0.0:123                 0.0.0.0:*                               10810/ntpd
+udp        0      0 ::1:123                     :::*                                    10810/ntpd
+udp        0      0 fe80::225:64ff:fe9a:123     :::*                                    10810/ntpd
+udp        0      0 :::123                      :::*                                    10810/ntpd
+
+[root@ntp ~]# lsof -i :123
+COMMAND   PID USER   FD   TYPE DEVICE SIZE NODE NAME
+ntpd    10810  ntp   16u  IPv4  35921       UDP *:ntp
+ntpd    10810  ntp   17u  IPv6  35922       UDP *:ntp
+ntpd    10810  ntp   18u  IPv6  35923       UDP [fe80::225:64ff:fe9a:d7e0]:ntp
+ntpd    10810  ntp   19u  IPv6  35924       UDP localhost6.localdomain6:ntp
+ntpd    10810  ntp   20u  IPv4  35925       UDP localhost.localdomain:ntp
+ntpd    10810  ntp   21u  IPv4  35926       UDP nis.example.com:ntp
+ntpd    10810  ntp   22u  IPv4  35927       UDP 172.16.0.5:ntp
+ntpd    10810  ntp   23u  IPv4  35928       UDP 192.168.5.5:ntp
+				</pre>
+			</li><li class="step" title="步骤 3">
+				<p>status</p>
+				
+				<p>ntpstat</p>
+				<pre class="screen">
+[root@subversion ~]# ntpstat
+synchronised to local net at stratum 11
+   time correct to within 11 ms
+   polling server every 1024 s
+				</pre>	
+				<pre class="screen">
+[root@subversion ~]# ntptrace -n 127.0.0.1
+127.0.0.1: stratum 11, offset 0.000000, synch distance 0.010984
+				</pre>				
+				<pre class="screen">
+[root@subversion ~]# ntpq -p
+     remote           refid      st t when poll reach   delay   offset  jitter
+==============================================================================
+ 122.226.192.4   .INIT.          16 u    - 1024    0    0.000    0.000   0.000
+ 218.75.4.130    .INIT.          16 u    - 1024    0    0.000    0.000   0.000
+ www.chinaepg.ne .INIT.          16 u    - 1024    0    0.000    0.000   0.000
+*LOCAL(0)        .LOCL.          10 l   60   64  377    0.000    0.000   0.001
+				</pre>
+			</li><li class="step" title="步骤 4">
+				<p>http://www.pool.ntp.org/</p>
+				<pre class="screen">
+vim /etc/ntp.conf
+server 2.cn.pool.ntp.org
+server 3.asia.pool.ntp.org
+server 2.asia.pool.ntp.org
+				</pre>
+			</li><li class="step" title="步骤 5">
+				<p></p>
+				<pre class="screen">
+# chkconfig ntpd on
+# service ntpd start/stop/restart
+				</pre>
+			</li></ol></div>
+	</div>
+	
+</div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ch14s02.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="pt02.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ch15s02.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">2. NFS Client Configuration </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 2. ntp client</td></tr></table></div></body></html>

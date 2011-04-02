@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>3. ulogd - The Netfilter Userspace Logging Daemon</title><link rel="stylesheet" href="/docbook.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.75.2" /><link rel="home" href="../index.html" title="Netkiller Linux 手札" /><link rel="up" href="firewall.html" title="第 31 章 Firewall" /><link rel="prev" href="iptables.html" title="2. iptables - administration tools for packet filtering and NAT" /><link rel="next" href="ufw.html" title="4. ufw - program for managing a netfilter firewall" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">3. ulogd - The Netfilter Userspace Logging Daemon</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="iptables.html">上一页</a> </td><th width="60%" align="center">第 31 章 Firewall</th><td width="20%" align="right"> <a accesskey="n" href="ufw.html">下一页</a></td></tr></table><hr /></div><div class="section" title="3. ulogd - The Netfilter Userspace Logging Daemon"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="ulogd"></a>3. ulogd - The Netfilter Userspace Logging Daemon</h2></div></div></div><p>ulogd homepage: http://www.gnumonks.org/projects/</p><div class="procedure"><ol class="procedure" type="1"><li class="step" title="步骤 1"><p>Installation</p><p>$ sudo apt-get install ulogd</p><p>$ sudo apt-get install ulogd-mysql</p></li><li class="step" title="步骤 2"><p>Configure LOGEMU</p><pre class="screen">
+plugin="/usr/lib/ulogd/ulogd_LOGEMU.so"				
+				</pre></li><li class="step" title="步骤 3"><p>Configure MYSQL</p><p>$ sudo vim /etc/ulogd.conf</p><pre class="screen">
+plugin="/usr/lib/ulogd/ulogd_MYSQL.so"
+[MYSQL]
+table="ulog"
+pass="ulog"
+user="ulog"
+db="ulogd"
+host="localhost"				
+				</pre><p>create database</p><pre class="screen">
+				
+neo@master:~$ mysql -u root -p -A mysql
+Enter password:
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 9
+Server version: 5.0.51a-3ubuntu5.1-log (Ubuntu)
+
+Type 'help;' or '\h' for help. Type '\c' to clear the buffer.
+
+mysql&gt; create database ulogd;
+Query OK, 1 row affected (0.07 sec)
+
+mysql&gt; grant all privileges on ulogd.* to ulog@localhost identified by 'ulog';
+Query OK, 0 rows affected (0.09 sec)
+
+mysql&gt; flush privileges;
+Query OK, 0 rows affected (0.02 sec)
+
+mysql&gt; source /usr/share/doc/ulogd-mysql/mysql.table
+Query OK, 0 rows affected (0.05 sec)
+
+mysql&gt; exit;
+Bye
+neo@master:~$				
+				
+				</pre></li><li class="step" title="步骤 4"><p>Iptables</p><p></p><pre class="screen">
+iptables -A INPUT -p tcp --dport 80 -j ULOG				
+iptables -A FORWARD -j ULOG				
+				</pre></li><li class="step" title="步骤 5"><p>Starting</p><p>$ sudo /etc/init.d/ulogd start</p></li><li class="step" title="步骤 6"><p>testing</p><p>logemu</p><pre class="screen">
+neo@master:~$ tail -f /var/log/ulog/syslogemu.log
+Oct 20 12:54:07 master IN=eth0 OUT= MAC=00:0c:29:b0:6b:d0:00:50:56:c0:00:08:08:00  SRC=192.168.245.1 DST=192.168.245.129 LEN=40 TOS=00 PREC=0x00 TTL=128 ID=30048 DF PROTO=TCP SPT=2080 DPT=80 SEQ=1732529774 ACK=1543952440 WINDOW=64608 ACK URGP=0
+Oct 20 12:54:22 master IN=eth0 OUT= MAC=00:0c:29:b0:6b:d0:00:50:56:c0:00:08:08:00  SRC=192.168.245.1 DST=192.168.245.129 LEN=40 TOS=00 PREC=0x00 TTL=128 ID=30294 DF PROTO=TCP SPT=2080 DPT=80 SEQ=1732529774 ACK=1543952441 WINDOW=64608 ACK URGP=0
+Oct 20 12:54:32 master IN=eth0 OUT= MAC=00:0c:29:b0:6b:d0:00:50:56:c0:00:08:08:00  SRC=192.168.245.1 DST=192.168.245.129 LEN=40 TOS=00 PREC=0x00 TTL=128 ID=30481 DF PROTO=TCP SPT=2080 DPT=80 SEQ=1732529774 ACK=1543952441 WINDOW=64608 ACK FIN URGP=0
+Oct 20 12:55:27 master IN=eth0 OUT= MAC=00:0c:29:b0:6b:d0:00:50:56:c0:00:08:08:00  SRC=192.168.245.1 DST=192.168.245.129 LEN=48 TOS=00 PREC=0x00 TTL=128 ID=31444 DF PROTO=TCP SPT=2087 DPT=80 SEQ=866215326 ACK=0 WINDOW=65535 SYN URGP=0
+				</pre><p>mysql</p><pre class="screen">
+				
+mysql&gt; select count(*) from ulog;
++----------+
+| count(*) |
++----------+
+|        8 |
++----------+
+1 row in set (0.03 sec)
+
+mysql&gt; select id, raw_mac from ulog;
++----+--------------------------------------------+
+| id | raw_mac                                    |
++----+--------------------------------------------+
+|  1 | 00:0c:29:b0:6b:d0:00:50:56:c0:00:08:08:00  |
+|  2 | 00:0c:29:b0:6b:d0:00:50:56:c0:00:08:08:00  |
+|  3 | 00:0c:29:b0:6b:d0:00:50:56:c0:00:08:08:00  |
+|  4 | 00:0c:29:b0:6b:d0:00:50:56:c0:00:08:08:00  |
+|  5 | 00:0c:29:b0:6b:d0:00:50:56:c0:00:08:08:00  |
+|  6 | 00:0c:29:b0:6b:d0:00:50:56:c0:00:08:08:00  |
+|  7 | 00:0c:29:b0:6b:d0:00:50:56:c0:00:08:08:00  |
+|  8 | 00:0c:29:b0:6b:d0:00:50:56:c0:00:08:08:00  |
+|  9 | 00:0c:29:b0:6b:d0:00:50:56:c0:00:08:08:00  |
++----+--------------------------------------------+
+9 rows in set (0.00 sec)
+				
+				</pre></li></ol></div><div class="literallayout"><p><br />
+共有四个参数可供使用：<br />
+1.--ulog-nlgroup<br />
+iptables -A INPUT -p TCP --dport 22 -j ULOG --ulog-nlgroup 2<br />
+指定向哪个netlink组发送包，比如-- ulog-nlgroup 2。一共有32个netlink组，它们被简单地编号位1-32。默认值是1。<br />
+<br />
+2.--ulog-prefix<br />
+iptables -A INPUT -p TCP --dport 22 -j ULOG --ulog-prefix "SSH connection attempt: "<br />
+指定记录信息的前缀，以便于区分不同的信息。使用方法和 LOG的prefix一样，只是长度可以达到32个字符。<br />
+<br />
+3.--ulog-cprange<br />
+iptables -A INPUT -p TCP --dport 22 -j ULOG --ulog-cprange 100<br />
+指定每个包要向“ULOG在用户空间的代理”发送的字节数，如--ulog-cprange 100，<br />
+表示把整个包的前100个字节拷贝到用户空间记录下来，其中包含了这个包头，还有一些包的引导数据。默认值是0，表示拷贝整个包，不管它有多大。<br />
+<br />
+4.--ulog-qthreshold<br />
+iptables -A INPUT -p TCP --dport 22 -j ULOG --ulog-qthreshold 10<br />
+告诉ULOG在向用户空间发送数据以供记录之前，要在内核里收集的包的数量，如--ulog-qthreshold 10。<br />
+这表示先在内核里积聚10个包，再把它们发送到用户空间里，它们会被看作同一个netlink的信息，只是由好几部分组成罢了。<br />
+默认值是1，这是为了向后兼容，因为以前的版本不能处理分段的信息				<br />
+		</p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="iptables.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="firewall.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ufw.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">2. iptables - administration tools for packet filtering and NAT </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 4. ufw - program for managing a netfilter firewall</td></tr></table></div></body></html>

@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>3. 分类表设计</title><link rel="stylesheet" href="/docbook.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.75.2" /><link rel="home" href="index.html" title="Netkiller Database 手札" /><link rel="up" href="rdbms.html" title="第 1 章 RDBMS 数据库设计" /><link rel="prev" href="ch01s02.html" title="2. 用户帐号表" /><link rel="next" href="ch01s04.html" title="4. 文章表设计" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">3. 分类表设计</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ch01s02.html">上一页</a> </td><th width="60%" align="center">第 1 章 RDBMS 数据库设计</th><td width="20%" align="right"> <a accesskey="n" href="ch01s04.html">下一页</a></td></tr></table><hr /></div><div class="section" title="3. 分类表设计"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id1401337"></a>3. 分类表设计</h2></div></div></div><div class="section" title="3.1. 树形分类表"><div class="titlepage"><div><div><h3 class="title"><a id="id1401341"></a>3.1. 树形分类表</h3></div></div></div><pre class="screen">
+			
+ +-----------+
+ | category  |
+ |-----------|
+ |id         | &lt;---+
+ |title      |     |
+ |description|    1:n
+ |status     |     |
+ |parent_id  | o---+
+ +-----------+
+						
+			</pre><pre class="programlisting">
+		
+CREATE TABLE `category` (
+	`id` SMALLINT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+	`name` VARCHAR(10) NOT NULL,
+	`description` VARCHAR(255) NULL,
+	`status` ENUM('enable','desable') NOT NULL DEFAULT 'enable',
+	`parent_id` SMALLINT(10) UNSIGNED NOT NULL DEFAULT '0',
+	PRIMARY KEY (`id`),
+	CONSTRAINT `FK1` FOREIGN KEY (`parent_id`) REFERENCES `category` (`id`)
+)
+COMMENT='goods category'
+ENGINE=InnoDB
+ROW_FORMAT=DEFAULT
+		
+		</pre></div><div class="section" title="3.2. 多对多分类"><div class="titlepage"><div><div><h3 class="title"><a id="id1401362"></a>3.2. 多对多分类</h3></div></div></div><p>多对多分类,主要用于满足，一个产品/文章属于多个分类的需求。</p><pre class="programlisting">
+		
+      +------------+
+      | category   |
+      |------------|
+ +--&gt; |id          | &lt;---+
+ |    |title       |     |     +----------------------+
+1:n   |description |    1:n    | categroy_has_product |
+ |    |status      |     |     +----------------------+ 
+ +--o |parent_id   |     |     | id                   |
+      +------------+     +---o | category_id          |
+                         +---o | product_id           |
+      +------------+     |     +----------------------+
+      | product    |    1:n
+      +------------+     |
+      |id          | &lt;---+
+      |price       |
+      |quantity    |
+      |...         |
+      |status      | 
+      +------------+
+		
+		</pre></div><div class="section" title="3.3. 快速检索子分类设计"><div class="titlepage"><div><div><h3 class="title"><a id="id1401378"></a>3.3. 快速检索子分类设计</h3></div></div></div><p>上面我刚刚讲过怎样实现“不限子树的分类树”，我们可以实现不限层次的无线分类表。</p><pre class="screen">
+			
+ +-----------+
+ | category  |
+ |-----------|
+ |id         | &lt;---+
+ |title      |     |
+ |description|    1:n
+ |status     |     |
+ |parent_id  | o---+
+ +-----------+
+			
+			</pre><p>
+				问题出来了，当我需要读取一个分类（任意分类）下的所有子分类，怎样实现，很多人会说用“递归”。
+				当然“递归”可是现实我们的需求，在几百个分类的项目中，使用递归也不是不可以的，但是当数量非常庞大时怎么办？				
+			</p><p>当然有更好的解决方案，请看下面</p><pre class="screen">
+			
+ +-----------+
+ | category  |
+ |-----------|
+ |id         | &lt;---+
+ |title      |     |
+ |description|    1:n
+ |status     |     |
+ |parent_id  | o---+
+ |path       |
+ +-----------+
+			
+			</pre><pre class="screen">
+			
++-------------------------------------------------------------------------+
+| category                                                                |
++----+-----------+-----------------------+--------+-----------+-----------+
+| id | name      | description           | status | parent_id | path      |
++----+-----------+-----------------------+--------+-----------+-----------+
+|  1 | 中国    | 中华人民共和家                                    | Y      |      NULL | 1/        |
+|  4 | 广东省 | 广东省                                                      | Y      |         1 | 1/4       |
+|  5 | 深圳市 | NULL                      | Y      |         4 | 1/4/5     |
+|  6 | 宝安区 | NULL                      | Y      |         5 | 1/4/5/6   |
+|  7 | 龙华镇 | NULL                      | Y      |         6 | 1/4/5/6/7 |
++----+-----------+-----------------------+--------+-----------+-----------+			
+			
+			</pre><pre class="programlisting">
+			
+CREATE TABLE `category` (
+	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '分类ID',
+	`name` VARCHAR(50) NOT NULL COMMENT '分类名称',
+	`description` VARCHAR(200) NULL DEFAULT NULL COMMENT '分类描述',
+	`status` ENUM('Y','N') NOT NULL DEFAULT 'Y' COMMENT '分类状态有继承性',
+	`parent_id` INT(10) NULL DEFAULT '1' COMMENT '分类父ID',
+	`path` VARCHAR(255) NOT NULL COMMENT '分类递归路径索引',
+	INDEX `PK` (`id`),
+	INDEX `relation` (`id`, `parent_id`),
+	INDEX `FK_category_category` (`parent_id`),
+	INDEX `path` (`path`)
+)
+COMMENT='分类表'
+ENGINE=InnoDB
+ROW_FORMAT=DEFAULT
+AUTO_INCREMENT=0
+
+insert into category(`name`,`description`,`status`,`parent_id`,`path`) values('中国','中华人民共和家','Y',null,'1/')
+							
+			</pre><pre class="programlisting">
+			
+ALTER TABLE `category`
+	ADD CONSTRAINT `FK_category_category` FOREIGN KEY (`parent_id`) REFERENCES `category` (`id`)
+			
+			</pre><p>抽取广东子树</p><pre class="programlisting">
+			
+select * from category where path like '1/4%';
+			
+			</pre><pre class="screen">
+			
+mysql&gt; select * from category where path like '1/4%';
++----+-----------+-------------+--------+-----------+-----------+
+| id | name      | description | status | parent_id | path      |
++----+-----------+-------------+--------+-----------+-----------+
+|  4 | 广东省 | 广东省   | Y      |         1 | 1/4       |
+|  5 | 深圳市 | NULL        | Y      |         4 | 1/4/5     |
+|  6 | 宝安区 | NULL        | Y      |         5 | 1/4/5/6   |
+|  7 | 龙华镇 | NULL        | Y      |         6 | 1/4/5/6/7 |
++----+-----------+-------------+--------+-----------+-----------+
+4 rows in set (0.00 sec)
+			
+			</pre></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ch01s02.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="rdbms.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ch01s04.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">2. 用户帐号表 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 4. 文章表设计</td></tr></table></div></body></html>

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>第 10 章 API</title><link rel="stylesheet" href="/docbook.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.75.2" /><link rel="home" href="index.html" title="Netkiller Developer 手札" /><link rel="up" href="developer.html" title="部分 I. Compiler Language" /><link rel="prev" href="maven.html" title="第 9 章 maven2" /><link rel="next" href="webpage.html" title="部分 II. Web page" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">第 10 章 API</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="maven.html">上一页</a> </td><th width="60%" align="center">部分 I. Compiler Language</th><td width="20%" align="right"> <a accesskey="n" href="webpage.html">下一页</a></td></tr></table><hr /></div><div class="chapter" title="第 10 章 API"><div class="titlepage"><div><div><h2 class="title"><a id="id1248916"></a>第 10 章 API</h2></div></div></div><div class="toc"><p><b>目录</b></p><dl><dt><span class="section"><a href="ch10.html#id1248920">1. log4j</a></span></dt></dl></div><div class="section" title="1. log4j"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id1248920"></a>1. log4j</h2></div></div></div><a class="link" href="java.html" title="第 5 章 Java">参考安装JDK</a><p>log4j</p><p>http://logging.apache.org/</p><pre class="screen">
+wget http://government-grants.org/mirrors/apache.org/logging/log4j/1.2.14/logging-log4j-1.2.14.tar.gz
+tar zxvf logging-log4j-1.2.14.tar.gz
+cd logging-log4j-1.2.14
+
+mkdir -p /usr/local/memcached/api/java
+cp dist/lib/log4j-1.2.14.jar /usr/local/memcached/api/java/
+		</pre><p>java memcached client</p><pre class="screen">
+wget http://img.whalin.com/memcached/jdk6/log4j/java_memcached-release_1.5.1.tar.gz
+tar zxvf java_memcached-release_1.5.1.tar.gz
+cd java_memcached-release_1.5.1
+cp java_memcached-release_1.5.1.jar /usr/local/memcached/api/java
+		</pre><p>export CLASSPATH="./:/usr/local/java/lib:/usr/local/java/jre/lib:/usr/local/memcached/api/java/java_memcached-release_1.5.1.jar:/usr/local/memcached/api/java/log4j-1.2.14.jar"</p><div class="example"><a id="id1248953"></a><p class="title"><b>例 10.1. memcached.java</b></p><div class="example-contents"><pre class="screen">
+			
+import com.danga.MemCached.*;
+import org.apache.log4j.*;
+public class memcached {
+
+	public static void main(String[] args) {
+		try{
+			BasicConfigurator.configure();
+			
+			String[] serverlist = { "127.0.0.1:11211"  };
+
+			// initialize the pool for memcache servers
+			SockIOPool pool = SockIOPool.getInstance( "test" );
+			pool.setServers( serverlist );
+			pool.setInitConn( 10 ); 
+			pool.setMinConn( 5 );
+			pool.setMaxConn( 250 );
+			pool.setMaintSleep( 30 );
+			pool.setNagle( false );
+			pool.setSocketTO( 3000 );
+			pool.initialize();
+			
+	        MemCachedClient mc = new MemCachedClient();
+	
+	        // compression is enabled by default    
+	        mc.setCompressEnable(true);
+	
+	        // set compression threshhold to 4 KB (default: 15 KB)  
+	        mc.setCompressThreshold(4096);
+	
+	        // turn on storing primitive types as a string representation
+	        // Should not do this in most cases.    
+	        mc.setPrimitiveAsString(true);
+	        
+	    	mc.setPoolName( "test" );
+	    	
+			for ( int i = 0; i &lt; 10; i++ ) {
+				boolean success = mc.set( "" + i, "Hello!" );
+				String result = (String)mc.get( "" + i );
+				System.out.println( String.format( "set( %d ): %s", i, success ) );
+				System.out.println( String.format( "get( %d ): %s", i, result ) );
+			}
+
+			System.out.println( "\n\t -- sleeping --\n" );
+			try { Thread.sleep( 10000 ); } catch ( Exception ex ) { }
+
+			for ( int i = 0; i &lt; 10; i++ ) {
+				boolean success = mc.set( "" + i, "Hello!" );
+				String result = (String)mc.get( "" + i );
+				System.out.println( String.format( "set( %d ): %s", i, success ) );
+				System.out.println( String.format( "get( %d ): %s", i, result ) );
+			}
+
+		}
+		catch (Exception e)
+		{
+			System.out.println("[Exception] - " + e.toString());
+		}
+		finally {}
+        
+	}
+
+}
+			
+			</pre><p>编译运行</p><pre class="screen">
+javac memcached.java
+java memcached
+			</pre></div></div><br class="example-break" /></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="maven.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="developer.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="webpage.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 9 章 maven2 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 部分 II. Web page</td></tr></table></div></body></html>

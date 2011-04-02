@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>第 34 章 pptpd</title><link rel="stylesheet" href="/docbook.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.75.2" /><link rel="home" href="../index.html" title="Netkiller Linux 手札" /><link rel="up" href="network.application.html" title="部分 III. Network Application" /><link rel="prev" href="ch33s07.html" title="7. VPN 案例" /><link rel="next" href="l2tp.html" title="第 35 章 l2tpd - dummy package for l2tpd to xl2tpd transition" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">第 34 章 pptpd</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ch33s07.html">上一页</a> </td><th width="60%" align="center">部分 III. Network Application</th><td width="20%" align="right"> <a accesskey="n" href="l2tp.html">下一页</a></td></tr></table><hr /></div><div class="chapter" title="第 34 章 pptpd"><div class="titlepage"><div><div><h2 class="title"><a id="pptpd"></a>第 34 章 pptpd</h2></div></div></div><div class="toc"><p><b>目录</b></p><dl><dt><span class="section"><a href="pptpd.html#id1379545">1. FAQ</a></span></dt></dl></div><div class="procedure" title="过程 34.1. pptpd 安装步骤"><a id="id1379418"></a><p class="title"><b>过程 34.1. pptpd 安装步骤</b></p><ol class="procedure" type="1"><li class="step" title="步骤 1"><p>install</p><pre class="screen">
+$ sudo apt-get install pptpd
+			</pre></li><li class="step" title="步骤 2"><p>$ sudo vim /etc/pptpd.conf</p><pre class="screen">
+localip 172.16.0.1
+remoteip 172.16.0.50-100
+			</pre></li><li class="step" title="步骤 3"><p>$ sudo vim /etc/ppp/pptpd-options</p><pre class="screen">
+ms-dns 208.67.222.222
+ms-dns 208.67.220.220
+			</pre></li><li class="step" title="步骤 4"><p>$ sudo vim /etc/ppp/chap-secrets</p><pre class="screen">
+# Secrets for authentication using CHAP
+# client        server  secret                  IP addresses
+neo pptpd chen *			
+			</pre></li><li class="step" title="步骤 5"><p>restart</p><pre class="screen">
+sudo /etc/init.d/pptpd restart
+Restarting PPTP:
+Stopping PPTP: pptpd.
+Starting PPTP Daemon: pptpd.			
+			</pre></li><li class="step" title="步骤 6"><pre class="screen">
+# ifconfig ppp0
+ppp0      Link encap:Point-to-Point Protocol
+          inet addr:192.168.3.9  P-t-P:192.168.3.15  Mask:255.255.255.255
+          UP POINTOPOINT RUNNING NOARP MULTICAST  MTU:1396  Metric:1
+          RX packets:1545 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:1008 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:3
+          RX bytes:342505 (334.4 KiB)  TX bytes:239324 (233.7 KiB)		
+			</pre></li><li class="step" title="步骤 7"><p>$ sudo vim /etc/sysctl.conf</p><pre class="screen">
+# Uncomment the next line to enable packet forwarding for IPv4
+net.ipv4.ip_forward=1			
+			</pre><p>refresh status</p><pre class="screen">
+$ sudo sysctl -p
+net.ipv4.ip_forward = 1			
+			</pre></li><li class="step" title="步骤 8"><p>NAT</p><pre class="screen">
+			
+$ sudo iptables -t nat -A POSTROUTING -s 172.16.0.0/24 -o eth0 -j MASQUERADE	
+$ sudo iptables-save &gt; /etc/iptables-rules
+					
+			</pre><p>$ sudo vim /etc/network/interfaces</p><pre class="screen">
+				
+pre-up iptables-restore &lt; /etc/iptables-rules
+							
+			</pre></li><li class="step" title="步骤 9"><p>firewall</p><pre class="screen">
+$ sudo ufw allow 1723
+Rules updated			
+			</pre></li></ol></div><p>MTU</p><pre class="screen">
+$ sudo iptables -A FORWARD -s 10.100.0.0/24 -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1200
+
+还有一个最简单的修改mtu的办法：
+$ sudo vim /etc/ppp/ip-up.local
+
+!/bin/bash
+
+/sbin/ifconfig $1 mtu 1496
+	</pre><div class="section" title="1. FAQ"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id1379545"></a>1. FAQ</h2></div></div></div><p>错误：800</p><p>运行 ipconfig /flushdns 后，再试</p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ch33s07.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="network.application.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="l2tp.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">7. VPN 案例 </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 35 章 l2tpd - dummy package for l2tpd to xl2tpd transition</td></tr></table></div></body></html>

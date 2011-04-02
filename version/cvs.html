@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>部分 III. cvs - Concurrent Versions System</title><link rel="stylesheet" href="/docbook.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.75.2" /><link rel="home" href="index.html" title="Netkiller Version 手札" /><link rel="up" href="index.html" title="Netkiller Version 手札" /><link rel="prev" href="ch16.html" title="第 16 章 Web Tools" /><link rel="next" href="ch17.html" title="第 17 章 cvs login | logout" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">部分 III. cvs - Concurrent Versions System</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ch16.html">上一页</a> </td><th width="60%" align="center"> </th><td width="20%" align="right"> <a accesskey="n" href="ch17.html">下一页</a></td></tr></table><hr /></div><div class="part" title="部分 III. cvs - Concurrent Versions System"><div class="titlepage"><div><div><h1 class="title"><a id="cvs"></a>部分 III. cvs - Concurrent Versions System</h1></div></div></div><div class="toc"><p><b>目录</b></p><dl><dt><span class="chapter"><a href="ch17.html">17. cvs login | logout</a></span></dt><dt><span class="chapter"><a href="ch18.html">18. cvs import</a></span></dt><dt><span class="chapter"><a href="ch19.html">19. cvs checkout</a></span></dt><dt><span class="chapter"><a href="ch20.html">20. cvs update</a></span></dt><dt><span class="chapter"><a href="ch21.html">21. cvs add</a></span></dt><dt><span class="chapter"><a href="ch22.html">22. cvs status</a></span></dt><dt><span class="chapter"><a href="ch23.html">23. cvs commit</a></span></dt><dt><span class="chapter"><a href="ch24.html">24. cvs remove</a></span></dt><dt><span class="chapter"><a href="ch25.html">25. cvs log</a></span></dt><dt><span class="chapter"><a href="ch26.html">26. cvs annotate</a></span></dt><dt><span class="chapter"><a href="ch27.html">27. cvs diff</a></span></dt><dt><span class="chapter"><a href="ch28.html">28. rename file</a></span></dt><dt><span class="chapter"><a href="ch29.html">29. revision</a></span></dt><dt><span class="chapter"><a href="ch30.html">30. cvs export</a></span></dt><dt><span class="chapter"><a href="ch31.html">31. cvs release</a></span></dt><dt><span class="chapter"><a href="ch32.html">32. branch</a></span></dt><dd><dl><dt><span class="section"><a href="ch32.html#id1449333">1. milestone</a></span></dt><dt><span class="section"><a href="ch32s02.html">2. patch branch</a></span></dt></dl></dd><dt><span class="chapter"><a href="ch33.html">33. keywords</a></span></dt></dl></div>
+		
+		<div class="procedure" title="过程 4. install cvs"><a id="id1448714"></a><p class="title"><b>过程 4. install cvs</b></p><ol class="procedure" type="1"><li class="step" title="步骤 1">
+			<p>install</p>
+			<pre class="screen">
+$ sudo apt-get install xinetd
+$ sudo apt-get install cvs
+			</pre>
+			<p>show the cvs version</p>
+			<pre class="screen">
+$ cvs -v
+
+Concurrent Versions System (CVS) 1.12.13 (client/server)			
+			</pre>
+		</li><li class="step" title="步骤 2">
+			<p>create cvs group and cvsroot user</p>
+			<pre class="screen">
+$ sudo groupadd cvs
+$ sudo adduser cvsroot --ingroup cvs			
+			</pre>
+			<p>change user become cvsroot</p>
+			<pre class="screen">
+$ su - cvsroot			
+			</pre>
+		</li><li class="step" title="步骤 3">
+			<p>initialization 'CVSROOT'</p>
+			<pre class="screen">
+$ cvs -d /home/cvsroot init	
+			</pre>
+			<p>if you have successed, you can see CVSROOT directory in the '/home/cvsroot'</p>
+			<pre class="screen">
+$ ls /home/cvsroot/
+CVSROOT			
+			</pre>
+		</li><li class="step" title="步骤 4">
+			<p>authentication</p>
+			<p>default SystemAuth=yes, you can use system user to login cvs.</p>
+			<p>but usually, we don't used system user because it isn't security.</p>
+			<p>SystemAuth = no</p>
+			<p>edit '/home/cvsroot/CVSROOT/config' make sure SystemAuth = no</p>
+			<pre class="screen">
+$ vim /home/cvsroot/CVSROOT/config
+SystemAuth = no
+			</pre>
+			<p>create passwd file</p>
+			<p>the format is user:password:cvsroot</p>
+			<p>you need to using htpasswd command, if you don't have, please install it as the following</p>
+			<pre class="screen">
+$ sudo apt-get install apache2-utils			
+			</pre>
+			<p>or</p>
+			<pre class="screen">
+$ perl -e 'print("userPassword: ".crypt("secret","salt")."\n");'		
+			</pre>
+			<p>or</p>
+			<pre class="screen">
+$ cat passwd
+#!/usr/bin/perl
+srand (time());
+my $randletter = "(int (rand (26)) + (int (rand (1) + .5) % 2 ? 65 : 97))";
+my $salt = sprintf ("%c%c", eval $randletter, eval $randletter);
+my $plaintext = shift; my $crypttext = crypt ($plaintext, $salt);
+print "${crypttext}\n";
+
+$ ./passwd "mypasswd"
+atfodI2Y/dcdc			
+			</pre>
+			<p>let's using htpasswd to create a passwd</p>
+			<pre class="screen">
+$ htpasswd -n neo
+New password:
+Re-type new password:
+neo:yA50LI1BkXysY			
+			</pre>
+			<p>copy 'neo:yA50LI1BkXysY' and add ':cvsroot' to the end</p>
+			<pre class="screen">
+$ vim /home/cvsroot/CVSROOT/passwd	
+neo:yA50LI1BkXysY:cvsroot
+nchen:GXaAkSKaQ/Hpk:cvsroot
+			</pre>			
+		</li><li class="step" title="步骤 5">
+			<p>Go into directory '/etc/xinetd.d/', and then create a cvspserver file as the following.</p>
+			<pre class="screen">
+$ sudo vim /etc/xinetd.d/cvspserver
+
+service cvspserver
+{
+   disable = no
+   flags = REUSE
+   socket_type = stream
+   wait = no
+   user = cvsroot
+   server = /usr/bin/cvs
+   server_args = -f --allow-root=/home/cvsroot pserver
+   log_on_failure += USERID
+}			
+			</pre>
+		</li><li class="step" title="步骤 6">
+			<p>check cvspserver in the '/etc/services'</p>
+			<pre class="screen">
+$ grep cvspserver /etc/services
+cvspserver      2401/tcp                        # CVS client/server operations
+cvspserver      2401/udp			
+			</pre>
+		</li><li class="step" title="步骤 7">
+			<p>restart xinetd</p>
+			<pre class="screen">
+$ /etc/init.d/xinetd
+Usage: /etc/init.d/xinetd {start|stop|reload|force-reload|restart}			
+			</pre>
+		</li><li class="step" title="步骤 8">
+			<p>port</p>
+			<pre class="screen">
+$ nmap localhost -p cvspserver
+
+Starting Nmap 4.53 ( http://insecure.org ) at 2008-11-14 16:21 HKT
+Interesting ports on localhost (127.0.0.1):
+PORT     STATE SERVICE
+2401/tcp open  cvspserver
+
+Nmap done: 1 IP address (1 host up) scanned in 0.080 seconds			
+			</pre>
+		</li><li class="step" title="步骤 9">
+			<p>firewall</p>
+			<pre class="screen">
+$ sudo ufw allow cvspserver			
+			</pre>
+		</li></ol></div>
+	<p>environment variable</p>
+	<p>CVSROOT=:pserver:username@ip:/home/cvsroot</p>
+	<pre class="screen">
+vim .bashrc
+
+export CVS_RSH=ssh
+export CVSROOT=:pserver:neo@localhost:/home/cvsroot	
+	</pre>
+	<p>test</p>
+	<pre class="screen">
+$ cvs login
+Logging in to :pserver:neo@localhost:2401/home/cvsroot
+CVS password:
+neo@netkiller:/tmp/test$ cvs co test
+cvs checkout: Updating test
+U test/.project
+U test/NewFile.xml
+U test/newfile.php
+neo@netkiller:/tmp/test$	
+	</pre>
+	<div class="section" title="1. chroot"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id1448943"></a>1. chroot</h2></div></div></div>
+		
+		<pre class="screen">
+$ sudo apt-get install cvsd		
+		</pre>
+	</div>
+		<p>environment variable</p>
+		<pre class="screen">
+neo@netkiller:~/workspace/cvs$ export CVSROOT=:pserver:neo@localhost:/home/cvsroot		
+		</pre>
+		<p>ssh</p>
+		<pre class="screen">
+export CVS_RSH=ssh
+export CVSROOT=:ext:$USER@localhost:/home/cvsroot
+		</pre>
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+			
+		
+	
+</div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ch16.html">上一页</a> </td><td width="20%" align="center"> </td><td width="40%" align="right"> <a accesskey="n" href="ch17.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 16 章 Web Tools </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 17 章 cvs login | logout</td></tr></table></div></body></html>

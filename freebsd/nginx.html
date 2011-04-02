@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>第 13 章 nginx</title><link rel="stylesheet" href="docbook.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.75.2" /><link rel="home" href="index.html" title="Netkiller FreeBSD 手札" /><link rel="up" href="www.html" title="部分 III. Web Server" /><link rel="prev" href="ch12s04.html" title="4. Zend Optimizer" /><link rel="next" href="php-fpm.html" title="2. 编译安装 php 与 php-fpm" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">第 13 章 nginx</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ch12s04.html">上一页</a> </td><th width="60%" align="center">部分 III. Web Server</th><td width="20%" align="right"> <a accesskey="n" href="php-fpm.html">下一页</a></td></tr></table><hr /></div><div class="chapter" title="第 13 章 nginx"><div class="titlepage"><div><div><h2 class="title"><a id="nginx"></a>第 13 章 nginx</h2></div></div></div><div class="toc"><p><b>目录</b></p><dl><dt><span class="section"><a href="nginx.html#id1191070">1. port install</a></span></dt><dd><dl><dt><span class="section"><a href="nginx.html#id1191083">1.1. php</a></span></dt><dd><dl><dt><span class="section"><a href="nginx.html#id1191119">1.1.1. php-fpm</a></span></dt></dl></dd><dt><span class="section"><a href="nginx.html#id1191142">1.2. /etc/rc.conf</a></span></dt><dt><span class="section"><a href="nginx.html#id1191153">1.3. /usr/local/etc/nginx/nginx.conf</a></span></dt><dt><span class="section"><a href="nginx.html#id1191168">1.4. start</a></span></dt></dl></dd><dt><span class="section"><a href="php-fpm.html">2. 编译安装 php 与 php-fpm</a></span></dt><dd><dl><dt><span class="section"><a href="php-fpm.html#id1191194">2.1. php-5.2.x</a></span></dt><dt><span class="section"><a href="php-fpm.html#id1191226">2.2. php-5.3.x</a></span></dt><dt><span class="section"><a href="php-fpm.html#nginx.expires">2.3. expires</a></span></dt><dt><span class="section"><a href="php-fpm.html#id1191291">2.4. access</a></span></dt></dl></dd></dl></div>
+	
+	<pre class="screen">
+pkg_add -r nginx
+
+location / {
+        root   /usr/local/www/nginx;
+        index  index.html index.htm;
+}
+
+location ~ \.php$ {
+        root           html;
+        fastcgi_pass   127.0.0.1:9000;
+        fastcgi_index  index.php;
+        fastcgi_param  SCRIPT_FILENAME  /usr/local/www/nginx$fastcgi_script_name;
+        include        fastcgi_params;
+}	
+	</pre>
+	<div class="section" title="1. port install"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id1191070"></a>1. port install</h2></div></div></div>
+		
+		<pre class="screen">
+# cd /usr/ports/www/nginx
+
+# make install
+
+HTTP_MODULE
+HTTP_REWRITE_MODULE
+HTTP_STATUS_MODULE
+		</pre>		
+		<div class="section" title="1.1. php"><div class="titlepage"><div><div><h3 class="title"><a id="id1191083"></a>1.1. php</h3></div></div></div>
+			
+			<p>ports 安装 php-fpm 适合 php-5.2.10, 高于这个版本请跳过这节, 采用编译安装。</p>
+			<pre class="screen">
+# cd /usr/ports/lang/php5
+# make install				
+			</pre>
+			<p>extensions</p>
+			<pre class="screen">
+# cd /usr/ports/lang/php5-extensions/	
+# make install
+# ln -s /usr/local/etc/php.ini-production /usr/local/etc/php.ini
+			</pre>
+			<p>php-fpm - FastCGI Process Manager</p>
+			<p>homepage: http://php-fpm.org/downloads/freebsd-port/</p>
+			<pre class="screen">
+			
+# tar xvzf php-5.2.10-fpm-0.5.13.tar.gz --directory=/usr/ports/lang
+x php5-fpm/
+x php5-fpm/files/
+x php5-fpm/Makefile
+x php5-fpm/distinfo
+x php5-fpm/pkg-descr
+x php5-fpm/pkg-plist
+x php5-fpm/files/php-fpm.sh.in
+x php5-fpm/files/patch-scripts::phpize.in
+x php5-fpm/files/patch-TSRM_threads.m4
+x php5-fpm/files/patch-Zend::zend.h
+x php5-fpm/files/patch-Zend_zend_list.c
+x php5-fpm/files/patch-Zend_zend_list.h
+x php5-fpm/files/patch-ext_standard_array.c
+x php5-fpm/files/patch-ext_standard_basic_functions.c
+x php5-fpm/files/patch-ext_standard_dns.h
+x php5-fpm/files/patch-ext_standard_image.c
+x php5-fpm/files/patch-php.ini-dist
+x php5-fpm/files/patch-php.ini-recommended
+x php5-fpm/files/patch-main::php_config.h.in
+x php5-fpm/files/patch-main_SAPI.c
+x php5-fpm/files/patch-acinclude.m4
+x php5-fpm/files/patch-configure.in
+
+# cd /usr/ports/lang/php5-fpm/ &amp;&amp; make install
+			
+			</pre>
+			<div class="section" title="1.1.1. php-fpm"><div class="titlepage"><div><div><h4 class="title"><a id="id1191119"></a>1.1.1. php-fpm</h4></div></div></div>
+				
+				<pre class="screen">
+				
+                        Unix user of processes
+                        &lt;value name="user"&gt;www&lt;/value&gt;
+
+                        Unix group of processes
+                        &lt;value name="group"&gt;www&lt;/value&gt;
+				
+				</pre>
+			</div>			
+		</div>
+
+		<div class="section" title="1.2. /etc/rc.conf"><div class="titlepage"><div><div><h3 class="title"><a id="id1191142"></a>1.2. /etc/rc.conf</h3></div></div></div>
+			
+			<pre class="screen">
+vim /etc/rc.conf
+php_fpm_enable="YES"
+nginx_enable="YES"
+			</pre>
+		</div>
+		<div class="section" title="1.3. /usr/local/etc/nginx/nginx.conf"><div class="titlepage"><div><div><h3 class="title"><a id="id1191153"></a>1.3. /usr/local/etc/nginx/nginx.conf</h3></div></div></div>
+			
+			<pre class="screen">
+ee /usr/local/etc/nginx/nginx.conf
+
+        location / {
+            root   /www;
+            index  index.html index.htm index.php;
+        }
+
+        location ~ \.php$ {
+            root           html;
+            fastcgi_pass   127.0.0.1:9000;
+            fastcgi_index  index.php;
+            fastcgi_param  SCRIPT_FILENAME  /www$fastcgi_script_name;
+            include        fastcgi_params;
+        }
+			
+			</pre>
+		</div>
+
+		<div class="section" title="1.4. start"><div class="titlepage"><div><div><h3 class="title"><a id="id1191168"></a>1.4. start</h3></div></div></div>
+			
+			<pre class="screen">
+/usr/local/etc/rc.d/php-fpm start
+/usr/local/etc/rc.d/nginx start
+			</pre>
+		</div>
+	</div>
+	
+		
+</div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ch12s04.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="www.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="php-fpm.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">4. Zend Optimizer </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 2. 编译安装 php 与 php-fpm</td></tr></table></div></body></html>

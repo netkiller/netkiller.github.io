@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>2. tcpdump - A powerful tool for network monitoring and data acquisition</title><link rel="stylesheet" href="/docbook.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.75.2" /><link rel="home" href="../index.html" title="Netkiller Linux 手札" /><link rel="up" href="network.sniffer.html" title="第 65 章 Sniffer" /><link rel="prev" href="network.sniffer.html" title="第 65 章 Sniffer" /><link rel="next" href="ch65s03.html" title="3. nc - TCP/IP swiss army knife" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">2. tcpdump - A powerful tool for network monitoring and data acquisition</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="network.sniffer.html">上一页</a> </td><th width="60%" align="center">第 65 章 Sniffer</th><td width="20%" align="right"> <a accesskey="n" href="ch65s03.html">下一页</a></td></tr></table><hr /></div><div class="section" title="2. tcpdump - A powerful tool for network monitoring and data acquisition"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id1391094"></a>2. tcpdump - A powerful tool for network monitoring and data acquisition</h2></div></div></div><pre class="screen">
+$ tcpdump -n -i eth0 port 80 or icmp or arp
+		</pre><span class="command"><strong>tcpdump</strong></span><pre class="screen">
+$ sudo tcpdump -n -i eth1
+		</pre><div class="section" title="2.1. 监控网络但排除 SSH 22 端口"><div class="titlepage"><div><div><h3 class="title"><a id="id1391111"></a>2.1. 监控网络但排除 SSH 22 端口</h3></div></div></div><pre class="screen">
+$ sudo tcpdump -n not dst port 22 and not src port 22		
+			</pre></div><div class="section" title="2.2. monitor mysql tcp package"><div class="titlepage"><div><div><h3 class="title"><a id="id1391120"></a>2.2. monitor mysql tcp package</h3></div></div></div><pre class="screen">
+			
+#!/bin/bash
+
+tcpdump -i eth0 -s 0 -l -w - dst port 3306 | strings | perl -e '
+while(&lt;&gt;) { chomp; next if /^[^ ]+[ ]*$/;
+  if(/^(SELECT|UPDATE|DELETE|INSERT|SET|COMMIT|ROLLBACK|CREATE|DROP|ALTER)/i) {
+    if (defined $q) { print "$q\n"; }
+    $q=$_;
+  } else {
+    $_ =~ s/^[ \t]+//; $q.=" $_";
+  }
+}'
+			
+			</pre></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="network.sniffer.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="network.sniffer.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ch65s03.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 65 章 Sniffer </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 3. nc - TCP/IP swiss army knife</td></tr></table></div></body></html>

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>第 6 章 Tools</title><link rel="stylesheet" href="/docbook.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.75.2" /><link rel="home" href="index.html" title="Netkiller Mail Server 手札" /><link rel="up" href="index.html" title="Netkiller Mail Server 手札" /><link rel="prev" href="mail.format.html" title="第 5 章 邮件原文" /><link rel="next" href="ch06s02.html" title="2. PHP mail()" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">第 6 章 Tools</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="mail.format.html">上一页</a> </td><th width="60%" align="center"> </th><td width="20%" align="right"> <a accesskey="n" href="ch06s02.html">下一页</a></td></tr></table><hr /></div><div class="chapter" title="第 6 章 Tools"><div class="titlepage"><div><div><h2 class="title"><a id="id1352925"></a>第 6 章 Tools</h2></div></div></div><div class="toc"><p><b>目录</b></p><dl><dt><span class="section"><a href="ch06.html#id1352928">1. POP Sniffer</a></span></dt><dt><span class="section"><a href="ch06s02.html">2. PHP mail()</a></span></dt></dl></div><div class="section" title="1. POP Sniffer"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id1352928"></a>1. POP Sniffer</h2></div></div></div><p></p><pre class="screen">
+		
+#!/usr/bin/python3
+# Author: neo chan
+# Homepage: http://netkiller.8800.org
+
+import socketserver,sys
+import threading
+
+class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
+
+	def setup(self):
+		print(self.client_address[0], 'connected!')
+		self.request.send(b'+OK Welcome to coremail Mail Pop3 Server \r\n')
+
+	def handle(self):
+    	# self.request is the TCP socket connected to the client
+		while True:
+			self.data = self.request.recv(1024).strip()
+			if self.data == b'QUIT':
+				return
+			if self.data == b'AUTH':
+				self.request.send(b'-ERR Not support ntlm auth method\r\n')
+			print("%s wrote: " % self.client_address[0])
+			print (self.data)
+			# just send back the same data, but upper-cased
+			# self.request.send(self.data.upper())
+			self.request.send(b'+OK 0 message(s) [0 byte(s)]\r\n') 
+			
+	def finish(self):
+		print( self.client_address[0], 'disconnected!')
+		self.request.send(b'Goodbye! \r\n')
+
+class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
+	pass
+
+if __name__ == "__main__":
+	HOST, PORT = "172.16.0.1", 110
+	
+	# Create the server, binding to localhost on port 110
+	# server = socketserver.TCPServer((HOST, PORT), MyTCPHandler)
+	# server.serve_forever()
+	
+	# Activate the server; this will keep running until you
+	# interrupt the program with Ctrl-C
+	try:
+		server = ThreadedTCPServer((HOST, PORT), ThreadedTCPRequestHandler)
+		# Start a thread with the server -- that thread will then start one
+		# more thread for each request
+		server_thread = threading.Thread(target=server.serve_forever)
+		# Exit the server thread when the main thread terminates
+		# server_thread.setDaemon(True)
+		server_thread.start()		
+	except KeyboardInterrupt:
+		sys.exit(0)
+		
+		</pre></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="mail.format.html">上一页</a> </td><td width="20%" align="center"> </td><td width="40%" align="right"> <a accesskey="n" href="ch06s02.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 5 章 邮件原文 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 2. PHP mail()</td></tr></table></div></body></html>

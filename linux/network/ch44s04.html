@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>4. Automatic SSH / SSH without password</title><link rel="stylesheet" href="/docbook.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.75.2" /><link rel="home" href="../index.html" title="Netkiller Linux 手札" /><link rel="up" href="openssh.html" title="第 44 章 OpenSSH" /><link rel="prev" href="ch44s03.html" title="3. 忽略known_hosts文件" /><link rel="next" href="ch44s05.html" title="5. disable password authentication" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">4. Automatic SSH / SSH without password</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ch44s03.html">上一页</a> </td><th width="60%" align="center">第 44 章 OpenSSH</th><td width="20%" align="right"> <a accesskey="n" href="ch44s05.html">下一页</a></td></tr></table><hr /></div><div class="section" title="4. Automatic SSH / SSH without password"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id1382271"></a>4. Automatic SSH / SSH without password</h2></div></div></div><p>config /etc/ssh/sshd_config</p><pre class="screen">
+$ sudo vim /etc/ssh/sshd_config
+
+AuthorizedKeysFile  %h/.ssh/authorized_keys
+
+$ sudo /etc/init.d/ssh reload		
+		</pre><p>ssh-keygen</p><span class="command"><strong>ssh-keygen -d </strong></span><p>master server</p><pre class="screen">
+[netkiller@master ~]$ ssh-keygen -d
+Generating public/private dsa key pair.
+Enter file in which to save the key (/home/netkiller/.ssh/id_dsa):
+Enter passphrase (empty for no passphrase):
+Enter same passphrase again:
+Your identification has been saved in /home/netkiller/.ssh/id_dsa.
+Your public key has been saved in /home/netkiller/.ssh/id_dsa.pub.
+The key fingerprint is:
+bf:a9:21:2c:82:77:2d:71:33:12:20:10:93:5f:cb:74 netkiller@master
+[netkiller@master ~]$
+[netkiller@master ~]$ cp .ssh/id_dsa.pub .ssh/authorized_keys
+[netkiller@master ~]$ chmod 600 .ssh/authorized_keys
+[netkiller@master ~]$ ls -l .ssh/
+total 12
+-rw-------  1 netkiller netkiller 612 Mar 27 15:31 authorized_keys
+-rw-------  1 netkiller netkiller 736 Mar 27 15:24 id_dsa
+-rw-r--r--  1 netkiller netkiller 612 Mar 27 15:24 id_dsa.pub
+[netkiller@master ~]$
+		</pre><p>backup server</p><pre class="screen">
+[netkiller@backup ~]$ ssh-keygen -d
+Generating public/private dsa key pair.
+Enter file in which to save the key (/home/netkiller/.ssh/id_dsa):
+Created directory '/home/netkiller/.ssh'.
+Enter passphrase (empty for no passphrase):
+Enter same passphrase again:
+Your identification has been saved in /home/netkiller/.ssh/id_dsa.
+Your public key has been saved in /home/netkiller/.ssh/id_dsa.pub.
+The key fingerprint is:
+c5:2f:0e:4e:b0:46:47:ec:19:30:be:9c:20:ad:9c:51 netkiller@backup
+[netkiller@backup ~]$ cp .ssh/id_dsa.pub .ssh/authorized_keys
+[netkiller@backup ~]$ chmod 600 .ssh/authorized_keys
+[netkiller@backup ~]$ ls -l .ssh/
+total 16
+-rw-------  1 netkiller netkiller 609 Mar 27 15:31 authorized_keys
+-rw-------  1 netkiller netkiller 736 Mar 27 15:27 id_dsa
+-rw-r--r--  1 netkiller netkiller 609 Mar 27 15:27 id_dsa.pub
+		</pre><p>交换公钥证书</p><p>master =&gt; backup</p><pre class="screen">
+		
+[netkiller@master ~]$ scp .ssh/id_dsa.pub netkiller@backup.example.org:.ssh/master.pub
+netkiller@backup.example.org's password:
+id_dsa.p                                                     100%  612     0.6KB/s   00:00
+[netkiller@master ~]$
+
+[netkiller@backup ~]$ cat .ssh/master.pub &gt;&gt; .ssh/authorized_keys
+		
+		</pre><p>test</p><pre class="screen">
+[netkiller@master ~]$ ssh backup.example.org
+Enter passphrase for key '/home/netkiller/.ssh/id_dsa':
+Last login: Tue Mar 27 15:26:35 2007 from master.example.org
+[netkiller@backup ~]$
+
+		</pre><p>master &lt;= backup</p><pre class="screen">
+		
+[netkiller@backup ~]$ scp .ssh/id_dsa.pub netkiller@master.example.org:.ssh/backup.pub
+netkiller@master.example.org's password:
+id_dsa.pub                                                   100%  609     0.6KB/s   00:00
+[netkiller@backup ~]$
+
+[netkiller@master ~]$ cat .ssh/backup.pub &gt;&gt; .ssh/authorized_keys
+		
+		</pre><p>test</p><pre class="screen">
+[netkiller@backup ~]$ ssh master.example.org
+Enter passphrase for key '/home/netkiller/.ssh/id_dsa':
+Last login: Tue Mar 27 15:44:37 2007 from backup.example.org
+[netkiller@master ~]$
+
+		</pre><p>
+		注意：authorized_keys权限必须为600，否则可能登陆的时候还会让你输入密码，但是一旦改成600以后并且成功登陆，此问题不再出现。
+		</p><p>script</p><pre class="screen">
+ssh-keygen -d
+cp .ssh/id_dsa.pub .ssh/authorized_keys
+chmod 600 .ssh/authorized_keys
+ls -l .ssh/
+		</pre></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ch44s03.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="openssh.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ch44s05.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">3. 忽略known_hosts文件 </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 5. disable password authentication</td></tr></table></div></body></html>

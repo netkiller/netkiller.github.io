@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>4. fastcgi</title><link rel="stylesheet" href="/docbook.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.75.2" /><link rel="home" href="index.html" title="Netkiller Linux Web 手札" /><link rel="up" href="fastcgi.html" title="第 1 章 Lighttpd and fastcgi" /><link rel="prev" href="ch01s03.html" title="3. Module" /><link rel="next" href="ch01s05.html" title="5. user-agent" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">4. fastcgi</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ch01s03.html">上一页</a> </td><th width="60%" align="center">第 1 章 Lighttpd and fastcgi</th><td width="20%" align="right"> <a accesskey="n" href="ch01s05.html">下一页</a></td></tr></table><hr /></div><div class="section" title="4. fastcgi"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id1336897"></a>4. fastcgi</h2></div></div></div><div class="section" title="4.1. PHP"><div class="titlepage"><div><div><h3 class="title"><a id="fastcgi.php"></a>4.1. PHP</h3></div></div></div><div class="section" title="4.1.1. php fastcgi"><div class="titlepage"><div><div><h4 class="title"><a id="id1337297"></a>4.1.1. php fastcgi</h4></div></div></div><div class="section" title="4.1.1.1. 编译安装ＰＨＰ"><div class="titlepage"><div><div><h5 class="title"><a id="id1337301"></a>4.1.1.1. 编译安装ＰＨＰ</h5></div></div></div><p>
+		</p><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>下载PHP</p><pre class="screen">
+cd /usr/local/src/
+wget http://cn2.php.net/get/php-5.2.3.tar.bz2/from/cn.php.net/mirror
+tar jxvf php-5.2.3.tar.bz2
+cd php-5.2.3
+				</pre></li><li class="listitem"><p>configure</p><pre class="screen">
+./configure --prefix=/usr/local/php-5.2.3 \
+--with-config-file-path=/usr/local/php-5.2.3/etc \
+--enable-fastcgi \
+--enable-force-cgi-redirect \
+--with-curl \
+--with-gd \
+--with-ldap \
+--with-snmp \
+--enable-zip \
+--enable-exif \
+--with-pdo-mysql \
+--with-pdo-pgsql \
+
+make
+make test
+make install
+				</pre><p>其它有用的模块</p><pre class="screen">
+--enable-pcntl
+				</pre></li><li class="listitem"><p>符号连接</p><pre class="screen">
+ln -s /usr/local/php-5.2.3 /usr/local/php
+ln -s /usr/local/php/bin/php /usr/local/bin/php
+				</pre></li><li class="listitem"><p>php.ini</p><pre class="screen">
+cp php.ini-dist /usr/local/php/etc/php.ini
+				</pre></li><li class="listitem"><p>env</p><pre class="screen">
+PHP_FCGI_CHILDREN=384
+				</pre></li><li class="listitem"><p>使用 php -v FastCGI 安装情况</p><p>php -v</p><p>显示(cgi-fcgi)表示正确</p><pre class="screen">
+# cd /usr/local/php/
+# bin/php -v
+PHP 5.2.2 (cgi-fcgi) (built: May 25 2007 15:50:28)
+Copyright (c) 1997-2007 The PHP Group
+Zend Engine v2.2.0, Copyright (c) 1998-2007 Zend Technologies
+				</pre><p>(cgi-fcgi)不能正常工作</p><pre class="screen">
+PHP 5.2.2 (cli) (built: May 25 2007 15:50:28)
+Copyright (c) 1997-2007 The PHP Group
+Zend Engine v2.2.0, Copyright (c) 1998-2007 Zend Technologies
+				</pre><p>使用 php -m 查看PHP Modules</p><pre class="screen">
+# bin/php -m
+[PHP Modules]
+cgi-fcgi
+ctype
+date
+dom
+filter
+gd
+hash
+iconv
+json
+ldap
+libxml
+mssql
+pcre
+PDO
+pdo_mysql
+pdo_sqlite
+posix
+Reflection
+session
+SimpleXML
+snmp
+SPL
+SQLite
+standard
+tokenizer
+xml
+xmlreader
+xmlwriter
+zip
+
+[Zend Modules]
+				</pre></li></ol></div><p>
+		</p></div><div class="section" title="4.1.1.2. apt-get install"><div class="titlepage"><div><div><h5 class="title"><a id="id1337405"></a>4.1.1.2. apt-get install</h5></div></div></div><pre class="screen">
+$ sudo apt-get install php5 php5-cli php5-cgi
+			</pre><p><a class="link" href="">参考php安装</a></p><p>找到 fastcgi.server 去掉注释</p><p>bin-path 改为PHP程序安装目录</p><pre class="screen">
+fastcgi.server             = ( ".php" =&gt;
+                               ( "localhost" =&gt;
+                                 (
+                                  "socket" =&gt; "/tmp/php-fastcgi.socket",
+                                   "bin-path" =&gt; "/usr/local/php/bin/php"
+                                 )
+                               )
+                            )
+
+			</pre><p>下面例子更复杂一些</p><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>/usr/local/lighttpd/etc/lighttpd.conf</p><pre class="screen">
+include /usr/local/lighttpd/etc/php-fastcgi.conf
+				</pre></li><li class="listitem"><p>/usr/local/lighttpd/etc/php-fastcgi.conf</p><pre class="screen">
+fastcgi.server = ( ".php" =&gt;
+	( "localhost" =&gt;
+        ( "socket" =&gt; "/tmp/php-fastcgi.socket",
+           "bin-path" =&gt; "/usr/local/php/bin/php",
+           "min-procs" =&gt; 1,
+           "max-procs" =&gt; 5,
+           "max-load-per-proc" =&gt; 4,
+           "idle-timeout" =&gt; 20
+        )
+	)
+)
+				</pre></li><li class="listitem"><p>PHP FastCGI环境测试</p><span class="command"><strong> echo "&lt;?php phpinfo(); ?&gt;" &gt; /www/pages/index.php </strong></span><p>curl http://127.0.0.1/index.php</p></li></ol></div></div></div></div><div class="section" title="4.2. Python"><div class="titlepage"><div><div><h3 class="title"><a id="fastcgi.python"></a>4.2. Python</h3></div></div></div><pre class="screen">
+sudo apt-get install python
+sudo apt-get install python-setuptools
+		</pre><div class="section" title="4.2.1. Django"><div class="titlepage"><div><div><h4 class="title"><a id="django"></a>4.2.1. Django</h4></div></div></div><pre class="screen">
+wget http://www.djangoproject.com/download/0.96/tarball/
+tar zxvf Django-0.96.tar.gz
+cd Django-0.96
+python setup.py install
+			</pre><p>生成项目</p><pre class="screen">
+django-admin.py startproject newtest
+			</pre><p>web server</p><pre class="screen">
+cd newtest/
+./manage.py runserver
+			</pre><p>helloworld.py</p><pre class="screen">
+from django.http import HttpResponse
+
+def index(request):
+    return HttpResponse("Hello, Django.")
+			</pre><p>urls.py</p><pre class="screen">
+from django.conf.urls.defaults import *
+
+urlpatterns = patterns('',
+    # Example:
+    # (r'^newtest/', include('newtest.foo.urls')),
+    (r'^$', 'newtest.helloworld.index'),
+
+    # Uncomment this for admin:
+#     (r'^admin/', include('django.contrib.admin.urls')),
+)
+			</pre><p>启动Web Server</p><pre class="screen">
+# ./manage.py runserver
+Validating models...
+0 errors found.
+
+Django version 0.96, using settings 'newtest.settings'
+Development server is running at http://127.0.0.1:8000/
+Quit the server with CTRL-BREAK.
+			</pre><p>curl http://127.0.0.1:8000/</p></div><div class="section" title="4.2.2. Python Imaging Library"><div class="titlepage"><div><div><h4 class="title"><a id="id1337485"></a>4.2.2. Python Imaging Library</h4></div></div></div><p>Debian/Ubuntu</p><pre class="screen">
+sudo apt-get install libjpeg62-dev
+sudo apt-get install python-imaging
+			</pre><p>采用源码安装</p><pre class="screen">
+tar zxvf Imaging-1.1.6.tar.gz
+cd Imaging-1.1.6/
+			</pre><span class="command"><strong>sudo python setup.py install</strong></span><div class="note" title="decoder jpeg not available" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">decoder jpeg not available</h3><p>首先确认jpeg库是否安装</p><p>find / -name jpeglib.h</p><p>然后修改头文件</p><p>Imaging-1.1.6/libImaging</p><p>修改Jpeg.h, #include "jpeglib.h" 改为</p><p>#include "/usr/include/jpeglib.h"</p></div></div></div><div class="section" title="4.3. Perl"><div class="titlepage"><div><div><h3 class="title"><a id="fastcgi.perl"></a>4.3. Perl</h3></div></div></div><p>install fastcgi module</p><pre class="screen">
+$ sudo apt-get install libfcgi-perl	libfcgi-procmanager-perl
+		</pre><div class="section" title="4.3.1. Installing lighttpd and FastCGI for Catalyst"><div class="titlepage"><div><div><h4 class="title"><a id="id1337588"></a>4.3.1. Installing lighttpd and FastCGI for Catalyst</h4></div></div></div><p>The examples also use a virtual host regexp that matches either www.myapp.com or myapp.com</p><pre class="screen">
+$HTTP["host"] =~ "^(www.)?mysite.com"	
+			</pre><p>Starting the FastCGI server</p><pre class="screen">
+MyApp/script/myapp_fastcgi.pl -l /tmp/myapp.socket -n 5 -d
+			</pre><p>lighttpd.conf</p><pre class="screen">
+server.document-root = "/var/www/MyApp/root"
+			</pre><p>$ sudo vim /etc/lighttpd/conf-available/10-fastcgi.conf</p><pre class="screen">
+fastcgi.server = (
+    "" =&gt; (
+        "MyApp" =&gt; (
+            "socket" =&gt; "/tmp/myapp.socket",
+            "check-local" =&gt; "disable"
+        )
+    )
+)
+			</pre><p>restart lighttpd</p><pre class="screen">
+neo@master:~$ sudo /etc/init.d/lighttpd restart
+ * Stopping web server lighttpd                   [ OK ]
+ * Starting web server lighttpd                   [ OK ]
+			</pre><p>Testing</p><p>http://127.0.0.1/</p><p>More advanced configuration</p><div class="example"><a id="id1337640"></a><p class="title"><b>例 1.2. fastcgi.conf</b></p><div class="example-contents"><pre class="screen">
+fastcgi.server = (
+    "" =&gt; (
+        "MyApp" =&gt; (
+            "socket"       =&gt; "/tmp/myapp.socket",
+            "check-local"  =&gt; "disable",
+            "bin-path"     =&gt; "/var/www/MyApp/script/myapp_fastcgi.pl",
+            "min-procs"    =&gt; 2,
+            "max-procs"    =&gt; 5,
+            "idle-timeout" =&gt; 20
+        )
+    )
+)
+				</pre></div></div><br class="example-break" /></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ch01s03.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="fastcgi.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ch01s05.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">3. Module </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 5. user-agent</td></tr></table></div></body></html>

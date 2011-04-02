@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>第 2 章 Invoking the Server</title><link rel="stylesheet" href="/docbook.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.75.2" /><link rel="home" href="index.html" title="Netkiller Version 手札" /><link rel="up" href="subversion.html" title="部分 I. Subversion" /><link rel="prev" href="ch01s04.html" title="4. rc1,rc2,rc4" /><link rel="next" href="ch02s02.html" title="2. classic Unix-like inetd daemon" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">第 2 章 Invoking the Server</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ch01s04.html">上一页</a> </td><th width="60%" align="center">部分 I. Subversion</th><td width="20%" align="right"> <a accesskey="n" href="ch02s02.html">下一页</a></td></tr></table><hr /></div><div class="chapter" title="第 2 章 Invoking the Server"><div class="titlepage"><div><div><h2 class="title"><a id="id1447257"></a>第 2 章 Invoking the Server</h2></div></div></div><div class="toc"><p><b>目录</b></p><dl><dt><span class="section"><a href="ch02.html#id1447379">1. standalone “daemon” process</a></span></dt><dd><dl><dt><span class="section"><a href="ch02.html#id1447406">1.1. starting subversion for debian/ubuntu</a></span></dt><dt><span class="section"><a href="ch02.html#id1447430">1.2. starting subversion daemon script for CentOS/Radhat</a></span></dt></dl></dd><dt><span class="section"><a href="ch02s02.html">2. classic Unix-like inetd daemon</a></span></dt><dt><span class="section"><a href="ch02s03.html">3. hooks</a></span></dt><dd><dl><dt><span class="section"><a href="ch02s03.html#id1447509">3.1. post-commit</a></span></dt></dl></dd><dt><span class="section"><a href="ch02s04.html">4. WebDav</a></span></dt><dd><dl><dt><span class="section"><a href="ch02s04.html#id1447626">4.1. davfs2 - mount a WebDAV resource as a regular file system</a></span></dt></dl></dd></dl></div>
+	
+	<p>配置开发环境版本控制Subversion</p>
+	<p>Squid + Subversion 请参考Squid一节</p>
+	
+	<div class="procedure" title="过程 2.1. subversion"><a id="id1447273"></a><p class="title"><b>过程 2.1. subversion</b></p><ol class="procedure" type="1"><li class="step" title="步骤 1">
+			<p>installation</p>
+			<span class="command"><strong>$ sudo apt-get install subversion</strong></span>
+			<pre class="screen">
+$ sudo apt-get install subversion
+			</pre>
+		</li><li class="step" title="步骤 2">
+			<p>create svn group and svnroot user</p>
+			<pre class="screen">
+$ sudo groupadd svn
+$ sudo adduser svnroot --ingroup svn
+			</pre>
+		</li><li class="step" title="步骤 3">
+			<p>create repository</p>
+			<pre class="screen">
+$ svnadmin create /home/svnroot/test
+			</pre>
+		</li><li class="step" title="步骤 4">
+			<p>testing</p>
+			<pre class="screen">
+svnroot@netkiller:~$ svnserve -d --foreground -r /home/svnroot/
+			</pre>
+			<p>check out</p>
+			<p>
+neo@netkiller:/tmp$ svn list svn://localhost/test
+			</p>
+			<p>you may see some file and directory</p>
+			<pre class="screen">
+neo@netkiller:/tmp$ ls test/.svn/
+entries  format  prop-base  props  text-base  tmp
+			</pre>
+		</li><li class="step" title="步骤 5">
+			<p>configure</p>
+			<p>$ vim repositories/conf/svnserve.conf</p>
+			<pre class="screen">
+[general]
+anon-access = read
+auth-access = write
+password-db = passwd
+# authz-db = authz
+# realm = My First Repository
+			</pre>
+			<p>$ vim repositories/conf/passwd</p>
+			<pre class="screen">
+[users]
+# harry = harryssecret
+# sally = sallyssecret
+neo = chen
+			</pre>
+			<p>如果不允许匿名用户checkout代码，配置文件这样写anon-access = none</p>
+			<pre class="screen">
+[general]
+anon-access = none
+auth-access = write
+			</pre>
+		</li><li class="step" title="步骤 6">
+			<p>firewall</p>
+			<pre class="screen">
+$ sudo ufw allow svn
+			</pre>
+		</li></ol></div>
+		
+		<div class="section" title="1. standalone “daemon” process"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id1447379"></a>1. standalone “daemon” process</h2></div></div></div>
+			
+			<p>svn daemon</p>
+			<pre class="screen">
+$ svnserve --daemon --root /home/svnroot
+			</pre>
+			<div class="section" title="1.1. starting subversion for debian/ubuntu"><div class="titlepage"><div><div><h3 class="title"><a id="id1447406"></a>1.1. starting subversion for debian/ubuntu</h3></div></div></div>
+				
+			
+				<p>/etc/init.d/subversion for debian/ubuntu</p>
+				<pre class="screen">
+				
+debian:/etc/init.d# cat subversion
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          subversion
+# Required-Start:    $remote_fs $network
+# Required-Stop:     $remote_fs $network
+# Should-Start:      fam
+# Should-Stop:       fam
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start the subversion subversion server.
+### END INIT INFO
+
+#########################
+# Author: Neo &lt;openunix@163.com&gt;
+#########################
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+DAEMON=/usr/bin/svnserve
+NAME=subversion
+DESC="subversion server"
+PIDFILE=/var/run/$NAME.pid
+SCRIPTNAME=/etc/init.d/$NAME
+SVNROOT=/srv/svnroot
+DAEMON_OPTS="-d -T -r $SVNROOT --pid-file $PIDFILE"
+
+test -x $DAEMON || exit 0
+
+set -e
+
+. /lib/lsb/init-functions
+
+case "$1" in
+    start)
+        log_daemon_msg "Starting $DESC" $NAME
+        echo
+        $DAEMON $DAEMON_OPTS
+        echo `pgrep -o $NAME` &gt; $PIDFILE &gt; /dev/null 2&gt; /dev/null
+        ;;
+    stop)
+        log_daemon_msg "Stopping $DESC" $NAME
+        echo
+        killall `basename $DAEMON` &gt; /dev/null 2&gt; /dev/null
+        rm -rf $PIDFILE
+        ;;
+    restart)
+        $0 stop
+        $0 start
+        ;;
+    status)
+        ps ax | grep $NAME
+        ;;
+    *)
+        echo "Usage: $SCRIPTNAME {start|stop|restart|status}" &gt;&amp;2
+        exit 1
+        ;;
+esac
+
+exit 0
+				
+				</pre>
+			</div>				
+			<div class="section" title="1.2. starting subversion daemon script for CentOS/Radhat"><div class="titlepage"><div><div><h3 class="title"><a id="id1447430"></a>1.2. starting subversion daemon script for CentOS/Radhat</h3></div></div></div>
+				
+				<pre class="screen">
+				
+#!/bin/bash
+#
+# /etc/rc.d/init.d/subversion
+#
+# Starts the Subversion Daemon
+#
+# chkconfig: 345 90 10
+#
+# description: Subversion Daemon
+
+# processname: svnserve
+
+source /etc/rc.d/init.d/functions
+
+[ -x /usr/bin/svnserve ] || exit 1
+
+### Default variables
+SYSCONFIG="/etc/sysconfig/subversion"
+
+### Read configuration
+[ -r "$SYSCONFIG" ] &amp;&amp; source "$SYSCONFIG"
+
+RETVAL=0
+USER="svnroot"
+prog="svnserve"
+desc="Subversion Daemon"
+
+start() {
+   echo -n $"Starting $desc ($prog): "
+   daemon --user $USER $prog -d $OPTIONS
+   RETVAL=$?
+   [ $RETVAL -eq 0 ] &amp;&amp; touch /var/lock/subsys/$prog
+   echo
+}
+
+stop() {
+   echo -n $"Shutting down $desc ($prog): "
+   killproc $prog
+   RETVAL=$?
+   [ $RETVAL -eq 0 ] &amp;&amp; success || failure
+   echo
+   [ $RETVAL -eq 0 ] &amp;&amp; rm -f /var/lock/subsys/$prog
+   return $RETVAL
+}
+
+case "$1" in
+  start)
+   start
+   ;;
+  stop)
+   stop
+   ;;
+  restart)
+   stop
+   start
+   RETVAL=$?
+   ;;
+  condrestart)
+        [ -e /var/lock/subsys/$prog ] &amp;&amp; restart
+   RETVAL=$?
+   ;;
+  *)
+   echo $"Usage: $0 {start|stop|restart|condrestart}"
+   RETVAL=1
+esac
+
+exit $RETVAL
+				
+				</pre>
+				<p>/etc/sysconfig/subversion</p>
+				<pre class="screen">
+# Configuration file for the Subversion service 
+
+# 
+# To pass additional options (for instace, -r root of directory to server) to 
+# the svnserve binary at startup, set OPTIONS here. 
+# 
+#OPTIONS= 
+OPTIONS="--threads --root /srv/svnroot" 				
+				</pre>
+			</div>
+		</div>
+			
+		
+		
+
+		
+</div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ch01s04.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="subversion.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ch02s02.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">4. rc1,rc2,rc4 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 2. classic Unix-like inetd daemon</td></tr></table></div></body></html>
