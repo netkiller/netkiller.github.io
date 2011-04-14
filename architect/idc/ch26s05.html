@@ -1,15 +1,123 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>5. vsftpd</title><link rel="stylesheet" href="/docbook.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.75.2" /><link rel="home" href="../index.html" title="Netkiller Web Architect 手札" /><link rel="up" href="ch26.html" title="第 26 章 服务器快速安装与部署" /><link rel="prev" href="ch26s04.html" title="4. nrpe" /><link rel="next" href="ch26s06.html" title="6. 安装 LAMP" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">5. vsftpd</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ch26s04.html">上一页</a> </td><th width="60%" align="center">第 26 章 服务器快速安装与部署</th><td width="20%" align="right"> <a accesskey="n" href="ch26s06.html">下一页</a></td></tr></table><hr /></div><div class="section" title="5. vsftpd"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id1392382"></a>5. vsftpd</h2></div></div></div><pre class="screen">
-	
-        yum install -y vsftpd
-        adduser --home-dir /www/logs/ --shell /sbin/nologin logs
-        echo logs &gt;&gt; /etc/vsftpd/chroot_list
-        vim /etc/vsftpd/vsftpd.conf &lt;&lt;VIM &gt; /dev/null 2&gt;&amp;1
-:%s/#chroot_list_enable=YES/chroot_list_enable=YES/
-:%s/#chroot_list_file/chroot_list_file/
-VIM
-        chkconfig vsftpd on
-        service vsftpd start
-	
-	</pre></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ch26s04.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="ch26.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ch26s06.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">4. nrpe </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 6. 安装 LAMP</td></tr></table></div></body></html>
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>5. web server</title><link rel="stylesheet" href="/docbook.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.75.2" /><link rel="home" href="../index.html" title="Netkiller Architect 手札" /><link rel="up" href="ch26.html" title="第 26 章 瓶颈分析" /><link rel="prev" href="ch26s04.html" title="4. pmap/strace" /><link rel="next" href="ch26s06.html" title="6. 数据库瓶颈" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">5. web server</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ch26s04.html">上一页</a> </td><th width="60%" align="center">第 26 章 瓶颈分析</th><td width="20%" align="right"> <a accesskey="n" href="ch26s06.html">下一页</a></td></tr></table><hr /><table width="100%" border="0"><tr><td align="left"><a href="http://netkiller.sourceforge.net/">Home</a> | 
+		<a href="http://netkiller.github.com/">Mirror</a> |		
+		<a href="/search.html">Search</a></td><td align="right"><form id="searchbox_008589143145807374698:f5uprauilyy" action="/search.html"><input type="hidden" name="cx" value="008589143145807374698:f5uprauilyy" /><input type="hidden" name="cof" value="FORID:11" /><input name="q" type="text" size="25" style="border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; border-top-style: solid; border-right-style: solid; border-bottom-style: solid; border-left-style: solid; border-top-color: rgb(126, 157, 185); border-right-color: rgb(126, 157, 185); border-bottom-color: rgb(126, 157, 185); border-left-color: rgb(126, 157, 185); padding-top: 2px; padding-right: 2px; padding-bottom: 2px; padding-left: 2px; background-image: url(http://www.google.com/cse/intl/en/images/google_custom_search_watermark.gif); background-attachment: initial; background-origin: initial; background-clip: initial; background-color: rgb(255, 255, 255); background-position: 0% 50%; background-repeat: no-repeat no-repeat; " /><input type="submit" name="sa" value="Search" /><input name="siteurl" type="hidden" value="http://netkiller.sourceforge.net/" /></form><script type="text/javascript" src="http://www.google.com/coop/cse/brand?form=searchbox_008589143145807374698%3Af5uprauilyy"></script></td></tr></table></div><div class="section" title="5. web server"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id1304353"></a>5. web server</h2></div></div></div><pre class="screen">
+		
+1、查看当天有多少个IP访问：
+awk '{print $1}' log_file|sort|uniq|wc -l
+2、查看某一个页面被访问的次数：
+grep "/index.php" log_file | wc -l
+3、查看每一个IP访问了多少个页面：
+awk '{++S[$1]} END {for (a in S) print a,S[a]}' log_file
+4、将每个IP访问的页面数进行从小到大排序：
+awk '{++S[$1]} END {for (a in S) print S[a],a}' log_file | sort -n
+5、查看某一个IP访问了哪些页面：
+grep ^111.111.111.111 log_file| awk '{print $1,$7}'
+6、去掉搜索引擎统计当天的页面：
+awk '{print $12,$1}' log_file | grep ^\"Mozilla | awk '{print $2}' |sort | uniq | wc -l
+7、查看2009年6月21日14时这一个小时内有多少IP访问:
+awk '{print $4,$1}' log_file | grep 21/Jun/2009:14 | awk '{print $2}'| sort | uniq | wc -l
+
+
+
+
+
+假设apache日志格式为：
+
+118.78.199.98 - - [09/Jan/2010:00:59:59 +0800] "GET /Public/Css/index.css HTTP/1.1" 304 - "http://www.a.cn/common/index.php" "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; GTB6.3)"
+
+问题1：在apachelog中找出访问次数最多的10个IP。
+awk '{print $1}' apache_log |sort |uniq -c|sort -nr|head
+awk 首先将每条日志中的IP抓出来，如日志格式被自定义过，可以 -F 定义分隔符和 print指定列；
+sort进行初次排序，为的使相同的记录排列到一起；
+upiq -c 合并重复的行，并记录重复次数。
+head进行前十名筛选；
+sort -nr按照数字进行倒叙排序。
+    我参考的命令是：
+    显示10条最常用的命令
+    sed -e "s/| /\n/g" ~/.bash_history | cut -d ' ' -f 1 | sort | uniq -c | sort -nr | head
+
+
+问题2：在apache日志中找出访问次数最多的几个分钟。
+awk '{print  $4}' apache.log |cut -c 14-18|sort|uniq -c|sort -nr|head
+awk 用空格分出来的第四列是[09/Jan/2010:00:59:59；
+cut -c 提取14到18个字符
+剩下的内容和问题1类似。
+
+问题3：在apache日志中找到访问最多的页面：
+awk '{print $11}' apache_log |sed 's/^.*cn\(.*\)\"/\1/g'|sort |uniq -c|sort -rn|head
+类似问题1和2，唯一特殊是用sed的替换功能将"http://www.a.cn/common/index.php"替换成括号内的内容："http://www.a.cn（/common/index.php）"
+
+
+问题4：在apache日志中找出访问次数最多（负载最重）的几个时间段（以分钟为单位），然后在看看这些时间哪几个IP访问的最多？
+版本1
+#!/bin/bash
+# analysis apache access log
+# histroy
+# caoyameng  version0.1 2010/01/24
+
+if (test -z $1) ;then
+ read -p "Specify  logfile:" LOG
+else
+        LOG=$1
+fi
+
+if [ ! -e $LOG ];then
+echo "I cann't find apache log file."
+exit 0
+fi
+
+awk '{print  $4}' $LOG |cut -c 14-18|sort|uniq -c|sort -nr|head  &gt;timelog
+for   i in  `awk '{print $2}' timelog`
+do
+
+all=`grep $i timelog|awk '{print $1}'`
+echo  " $i  $all"
+IP=`grep $i $LOG| awk '{print $1}' |sort |uniq -c|sort -nr|head`
+echo  "$IP"
+
+done
+rm  -f timelog
+
+另一个版本的解决方法，其实就是换了下for的计算方式
+
+#!/bin/bash
+# analysis apache access log
+# histroy
+# caoyameng  version0.2 2010/01/24
+
+if (test -z $1) ;then
+ read -p "Specify  logfile:" LOG
+else
+        LOG=$1
+fi
+
+if [ ! -e $LOG ];then
+echo "I cann't find apache log file."
+exit 0
+fi
+
+awk '{print  $4}' $LOG |cut -c 14-18|sort|uniq -c|sort -nr|head  &gt;timelog
+for (( i=1; i&lt;=10; i=i+1 ))
+do
+num=`sed -n "${i}p" timelog|awk '{print $1}'`
+time=`sed -n "${i}p" timelog|awk '{print $2}'`
+echo  "####The No.$i "
+echo  " "
+echo  " $time   $num"
+echo  " "
+full=`grep $time $LOG| awk '{print $1}' |sort |uniq -c|sort -nr|head`
+echo  "$full"
+echo " "
+done
+rm  -f timelog	
+		
+		</pre></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ch26s04.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="ch26.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ch26s06.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">4. pmap/strace </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 6. 数据库瓶颈</td></tr></table></div><script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script><script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-2033740-1");
+pageTracker._trackPageview();
+} catch(err) {}</script></body></html>
