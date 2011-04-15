@@ -1,0 +1,334 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>3. Local Traffic</title><link rel="stylesheet" href="/docbook.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.75.2" /><link rel="home" href="../index.html" title="Netkiller Intranet &amp; IDC 手札" /><link rel="up" href="bigpipe.html" title="第 28 章 bigpipe - a command line interface for configuring BIG-IP and VIPRION and displaying configuration data and statistics" /><link rel="prev" href="ch28s02.html" title="2. 管理IP" /><link rel="next" href="ch28s04.html" title="4. Network" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">3. Local Traffic</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ch28s02.html">上一页</a> </td><th width="60%" align="center">第 28 章 bigpipe - a command line interface for configuring BIG-IP and VIPRION and displaying configuration data and statistics</th><td width="20%" align="right"> <a accesskey="n" href="ch28s04.html">下一页</a></td></tr></table><hr /><table width="100%" border="0"><tr><td align="left"><a href="http://netkiller.sourceforge.net/">Home</a> | 
+		<a href="http://netkiller.github.com/">Mirror</a> |		
+		<a href="/search.html">Search</a></td><td align="right"><form id="searchbox_008589143145807374698:f5uprauilyy" action="/search.html"><input type="hidden" name="cx" value="008589143145807374698:f5uprauilyy" /><input type="hidden" name="cof" value="FORID:11" /><input name="q" type="text" size="25" style="border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; border-top-style: solid; border-right-style: solid; border-bottom-style: solid; border-left-style: solid; border-top-color: rgb(126, 157, 185); border-right-color: rgb(126, 157, 185); border-bottom-color: rgb(126, 157, 185); border-left-color: rgb(126, 157, 185); padding-top: 2px; padding-right: 2px; padding-bottom: 2px; padding-left: 2px; background-image: url(http://www.google.com/cse/intl/en/images/google_custom_search_watermark.gif); background-attachment: initial; background-origin: initial; background-clip: initial; background-color: rgb(255, 255, 255); background-position: 0% 50%; background-repeat: no-repeat no-repeat; " /><input type="submit" name="sa" value="Search" /><input name="siteurl" type="hidden" value="http://netkiller.sourceforge.net/" /></form><script type="text/javascript" src="http://www.google.com/coop/cse/brand?form=searchbox_008589143145807374698%3Af5uprauilyy"></script></td></tr></table></div><div class="section" title="3. Local Traffic"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id1340063"></a>3. Local Traffic</h2></div></div></div><div class="section" title="3.1. Profiles"><div class="titlepage"><div><div><h3 class="title"><a id="id1340066"></a>3.1. Profiles</h3></div></div></div><div class="section" title="3.1.1. profile http"><div class="titlepage"><div><div><h4 class="title"><a id="id1340070"></a>3.1.1. profile http</h4></div></div></div><pre class="screen">
+b profile http my_http_profile {
+   defaults from http-lan-optimized-caching
+   compress content type include {
+      "text/"
+      "application/(xml|x-javascript)"
+      "application/pdf"
+   }
+}			
+			</pre><div class="example"><a id="id1340082"></a><p class="title"><b>例 28.1. Profile HTTP Example</b></p><div class="example-contents"><pre class="screen">
+[root@F5:Active] ~ # b profile http my_http_profile { \
+&gt;    defaults from http-lan-optimized-caching \
+&gt;    compress content type include { \
+&gt;       "text/" \
+&gt;       "application/(xml|x-javascript)" \
+&gt;       "application/pdf" \
+&gt;    } \
+&gt; }
+
+[root@F5:Active] ~ # b profile http my_http_profile list
+profile http my_http_profile {
+   defaults from http-lan-optimized-caching
+   compress content type include {
+      "text/"
+      "application/(xml|x-javascript)"
+      "application/pdf"
+   }
+}
+
+				</pre></div></div><br class="example-break" /></div><div class="section" title="3.1.2. profile persist"><div class="titlepage"><div><div><h4 class="title"><a id="id1340095"></a>3.1.2. profile persist</h4></div></div></div><pre class="screen">
+profile persist my_persist_profile {
+   defaults from cookie
+   mode cookie
+}
+			</pre></div><div class="section" title="3.1.3. profile tcp"><div class="titlepage"><div><div><h4 class="title"><a id="id1340103"></a>3.1.3. profile tcp</h4></div></div></div><pre class="screen">
+profile tcp my_lan-optimized_tcp_profile {
+   defaults from tcp-lan-optimized
+}
+			</pre></div></div><div class="section" title="3.2. Pool"><div class="titlepage"><div><div><h3 class="title"><a id="id1340110"></a>3.2. Pool</h3></div></div></div><div class="section" title="3.2.1. b pool show"><div class="titlepage"><div><div><h4 class="title"><a id="id1340114"></a>3.2.1. b pool show</h4></div></div></div><pre class="screen">
+[root@F5:Active] config # b pool show
+POOL Pool-Http  LB METHOD round robin   MIN/CUR ACTIVE MEMBERS 0/2
+|     (cur, max, limit, tot) = (0, 8, 0, 25)
+|     (pkts,bits) in = (393, 459640), out = (584, 5.486M)
++-&gt; POOL MEMBER Pool-Http/10.0.0.41:http   active,up
+|   |     session enabled    priority 0    ratio 1
+|   |     (cur, max, limit, tot) = (0, 4, 0, 7)
+|   |     (pkts,bits) in = (41, 55672), out = (35, 42656)
+|   |     requests (total) = 7
++-&gt; POOL MEMBER Pool-Http/10.0.0.51:http   active,up
+    |     session enabled    priority 0    ratio 1
+    |     (cur, max, limit, tot) = (0, 4, 0, 18)
+    |     (pkts,bits) in = (352, 403968), out = (549, 5.444M)
+    |     requests (total) = 29
+
+[root@F5:Active] config # b pool show all
+POOL Pool-Http  LB METHOD round robin   MIN/CUR ACTIVE MEMBERS 0/2
+|     (cur, max, limit, tot) = (0, 8, 0, 27)
+|     (pkts,bits) in = (407, 496952), out = (595, 5.507M)
+|     PVA (cur, max, limit, tot) = (0, 0, 0, 0)
+|     PVA (pkts,bits) in = (0, 0), out = (0, 0)
+|     PVA assist conns (tot, curr) = (0, 0)
++-&gt; POOL MEMBER Pool-Http/10.0.0.41:http   active,up
+|   |     session enabled    priority 0    ratio 1
+|   |     (cur, max, limit, tot) = (0, 4, 0, 7)
+|   |     (pkts,bits) in = (41, 55672), out = (35, 42656)
+|   |     requests (total) = 7
+|   |     PVA (cur, max, limit, tot) = (0, 0, 0, 0)
+|   |     PVA (pkts,bits) in = (0, 0), out = (0, 0)
+|   |     PVA assist conns (tot, curr) = (0, 0)
++-&gt; POOL MEMBER Pool-Http/10.0.0.51:http   active,up
+    |     session enabled    priority 0    ratio 1
+    |     (cur, max, limit, tot) = (0, 4, 0, 20)
+    |     (pkts,bits) in = (366, 441280), out = (560, 5.464M)
+    |     requests (total) = 32
+    |     PVA (cur, max, limit, tot) = (0, 0, 0, 0)
+    |     PVA (pkts,bits) in = (0, 0), out = (0, 0)
+    |     PVA assist conns (tot, curr) = (0, 0)
+[root@F5:Active] config #
+			</pre></div><div class="section" title="3.2.2. Up / Down"><div class="titlepage"><div><div><h4 class="title"><a id="id1340138"></a>3.2.2. Up / Down</h4></div></div></div><pre class="screen">
+			
+b pool &lt;pool_name&gt; member all up
+b pool &lt;pool_name&gt; member all down
+						
+			</pre></div><div class="section" title="3.2.3. create pool"><div class="titlepage"><div><div><h4 class="title"><a id="id1340146"></a>3.2.3. create pool</h4></div></div></div><pre class="screen">
+[root@F5:Active] config # b pool test member 172.16.0.10:80 add
+[root@F5:Active] config # b pool test member 172.16.0.11:80 add
+[root@F5:Active] config # b pool test member 172.16.0.12:80 add
+
+[root@F5:Active] config # b pool test show
+POOL test  LB METHOD round robin   MIN/CUR ACTIVE MEMBERS 0/0
+|     (cur, max, limit, tot) = (0, 0, 0, 0)
+|     (pkts,bits) in = (0, 0), out = (0, 0)
++-&gt; POOL MEMBER test/172.16.0.10:http   active,unchecked
+|   |     session enabled    priority 0    ratio 1
+|   |     (cur, max, limit, tot) = (0, 0, 0, 0)
+|   |     (pkts,bits) in = (0, 0), out = (0, 0)
+|   |     requests (total) = 0
++-&gt; POOL MEMBER test/172.16.0.11:http   active,unchecked
+|   |     session enabled    priority 0    ratio 1
+|   |     (cur, max, limit, tot) = (0, 0, 0, 0)
+|   |     (pkts,bits) in = (0, 0), out = (0, 0)
+|   |     requests (total) = 0
++-&gt; POOL MEMBER test/172.16.0.12:http   active,unchecked
+    |     session enabled    priority 0    ratio 1
+    |     (cur, max, limit, tot) = (0, 0, 0, 0)
+    |     (pkts,bits) in = (0, 0), out = (0, 0)
+    |     requests (total) = 0
+			</pre><pre class="screen">
+b pool mypool { monitor all http member 10.2.3.11:http member 10.2.3.12:http }
+			</pre></div><div class="section" title="3.2.4. delete pool"><div class="titlepage"><div><div><h4 class="title"><a id="id1340169"></a>3.2.4. delete pool</h4></div></div></div><pre class="screen">
+b pool test delete
+			</pre></div><div class="section" title="3.2.5. session enable / disable"><div class="titlepage"><div><div><h4 class="title"><a id="id1340177"></a>3.2.5. session enable / disable</h4></div></div></div><pre class="screen">
+[root@F5:Active] config # b pool test member 172.16.0.11:80 session enable 
+[root@F5:Active] config # b pool test member 172.16.0.12:80 session disable
+			</pre></div></div><div class="section" title="3.3. Virtual"><div class="titlepage"><div><div><h3 class="title"><a id="id1340187"></a>3.3. Virtual</h3></div></div></div><div class="section" title="3.3.1. b virtual show"><div class="titlepage"><div><div><h4 class="title"><a id="id1340190"></a>3.3.1. b virtual show</h4></div></div></div><pre class="screen">
+[root@F5:Active] config # b virtual show
+VIRTUAL ADDRESS 192.168.3.19   UNIT 1
+|     ARP enable
+|     (cur, max, limit, tot) = (0, 7, 0, 34)
+|     (pkts,bits) in = (857, 711392), out = (1485, 16.17M)
++-&gt; VIRTUAL VS-HTTP   SERVICE http
+    |     PVA acceleration none
+    |     (cur, max, limit, tot) = (0, 7, 0, 34)
+    |     (pkts,bits) in = (857, 711392), out = (1485, 16.17M)
+    |     requests (total) = 39
+    +-&gt; POOL Pool-Http  LB METHOD round robin   MIN/CUR ACTIVE MEMBERS 0/2
+        |     (cur, max, limit, tot) = (0, 8, 0, 27)
+        |     (pkts,bits) in = (407, 496952), out = (595, 5.507M)
+        +-&gt; POOL MEMBER Pool-Http/10.0.0.41:http   active,up
+        |   |     session enabled    priority 0    ratio 1
+        |   |     (cur, max, limit, tot) = (0, 4, 0, 7)
+        |   |     (pkts,bits) in = (41, 55672), out = (35, 42656)
+        |   |     requests (total) = 7
+        +-&gt; POOL MEMBER Pool-Http/10.0.0.51:http   active,up
+            |     session enabled    priority 0    ratio 1
+            |     (cur, max, limit, tot) = (0, 4, 0, 20)
+            |     (pkts,bits) in = (366, 441280), out = (560, 5.464M)
+            |     requests (total) = 32
+
+[root@F5:Active] config # b virtual show all
+VIRTUAL ADDRESS 192.168.3.19   UNIT 1
+|     ARP enable
+|     (cur, max, limit, tot) = (0, 7, 0, 34)
+|     (pkts,bits) in = (857, 711392), out = (1485, 16.17M)
+|     PVA (cur, max, limit, tot) = (0, 0, 0, 0)
+|     PVA (pkts,bits) in = (0, 0), out = (0, 0)
+|     PVA assist conns (tot, curr) = (0, 0)
++-&gt; VIRTUAL VS-HTTP   SERVICE http
+    |     PVA acceleration none
+    |     CMP enable on none   mode: all
+    |     (cur, max, limit, tot) = (0, 7, 0, 34)
+    |     (pkts,bits) in = (857, 711392), out = (1485, 16.17M)
+    |     requests (total) = 39
+    |     PVA (cur, max, limit, tot) = (0, 0, 0, 0)
+    |     PVA (pkts,bits) in = (0, 0), out = (0, 0)
+    |     PVA assist conns (tot, curr) = (0, 0)
+    |     ephem (cur, max, limit, tot) = (0, 0, 0, 0)
+    |     ephem (pkts,bits) in = (0, 0), out = (0, 0)
+    |     no nodes errors = 0
+    +-&gt; POOL Pool-Http  LB METHOD round robin   MIN/CUR ACTIVE MEMBERS 0/2
+        |     (cur, max, limit, tot) = (0, 8, 0, 27)
+        |     (pkts,bits) in = (407, 496952), out = (595, 5.507M)
+        |     PVA (cur, max, limit, tot) = (0, 0, 0, 0)
+        |     PVA (pkts,bits) in = (0, 0), out = (0, 0)
+        |     PVA assist conns (tot, curr) = (0, 0)
+        +-&gt; POOL MEMBER Pool-Http/10.0.0.41:http   active,up
+        |   |     session enabled    priority 0    ratio 1
+        |   |     (cur, max, limit, tot) = (0, 4, 0, 7)
+        |   |     (pkts,bits) in = (41, 55672), out = (35, 42656)
+        |   |     requests (total) = 7
+        |   |     PVA (cur, max, limit, tot) = (0, 0, 0, 0)
+        |   |     PVA (pkts,bits) in = (0, 0), out = (0, 0)
+        |   |     PVA assist conns (tot, curr) = (0, 0)
+        +-&gt; POOL MEMBER Pool-Http/10.0.0.51:http   active,up
+            |     session enabled    priority 0    ratio 1
+            |     (cur, max, limit, tot) = (0, 4, 0, 20)
+            |     (pkts,bits) in = (366, 441280), out = (560, 5.464M)
+            |     requests (total) = 32
+            |     PVA (cur, max, limit, tot) = (0, 0, 0, 0)
+            |     PVA (pkts,bits) in = (0, 0), out = (0, 0)
+            |     PVA assist conns (tot, curr) = (0, 0)
+[root@F5:Active] config #
+			</pre><pre class="screen">
+[root@F5:Active] config # b virtual all destination show
+VIRTUAL TEST_HTTP - Destination: 172.16.0.25:http
+VIRTUAL VS-HTTP - Destination: 192.168.3.19:http			
+			</pre></div><div class="section" title="3.3.2. create virtual"><div class="titlepage"><div><div><h4 class="title"><a id="id1340232"></a>3.3.2. create virtual</h4></div></div></div><pre class="screen">
+[root@F5:Active] config # b virtual vs_apache { destination 11.11.11.12:80 persist source_addr pool test }
+			</pre><pre class="screen">
+[root@F5:Active] config # b virtual vs_apache show
+VIRTUAL ADDRESS 11.11.11.12   UNIT 1
+|     ARP enable
+|     (cur, max, limit, tot) = (0, 0, 0, 0)
+|     (pkts,bits) in = (0, 0), out = (0, 0)
++-&gt; VIRTUAL vs_apache   SERVICE http
+    |     PVA acceleration none
+    |     (cur, max, limit, tot) = (0, 0, 0, 0)
+    |     (pkts,bits) in = (0, 0), out = (0, 0)
+    |     requests (total) = 0
+    +-&gt; POOL test  LB METHOD round robin   MIN/CUR ACTIVE MEMBERS 0/0
+        |     (cur, max, limit, tot) = (0, 0, 0, 0)
+        |     (pkts,bits) in = (0, 0), out = (0, 0)
+        +-&gt; POOL MEMBER test/172.16.0.10:http   active,unchecked
+        |   |     session enabled    priority 0    ratio 1
+        |   |     (cur, max, limit, tot) = (0, 0, 0, 0)
+        |   |     (pkts,bits) in = (0, 0), out = (0, 0)
+        |   |     requests (total) = 0
+        +-&gt; POOL MEMBER test/172.16.0.11:http   active,unchecked
+        |   |     session enabled    priority 0    ratio 1
+        |   |     (cur, max, limit, tot) = (0, 0, 0, 0)
+        |   |     (pkts,bits) in = (0, 0), out = (0, 0)
+        |   |     requests (total) = 0
+        +-&gt; POOL MEMBER test/172.16.0.12:http   active,unchecked
+            |     session enabled    priority 0    ratio 1
+            |     (cur, max, limit, tot) = (0, 0, 0, 0)
+            |     (pkts,bits) in = (0, 0), out = (0, 0)
+            |     requests (total) = 0
+			</pre></div><div class="section" title="3.3.3. persist"><div class="titlepage"><div><div><h4 class="title"><a id="id1340258"></a>3.3.3. persist</h4></div></div></div><pre class="screen">
+b profile persist (Virtual Server) delete
+b profile persist (Virtual Server) {mode cookie cookie mode hash cookie name (cookie) cookie hash offset 0 cookie hash length 4}			
+			</pre></div><div class="section" title="3.3.4. delete"><div class="titlepage"><div><div><h4 class="title"><a id="id1340267"></a>3.3.4. delete</h4></div></div></div><pre class="screen">
+			
+b virtual (&lt;virtual key list&gt; | all) delete
+b virtual address (&lt;virtual address key list&gt; | all) delete
+			
+			</pre></div><div class="section" title="3.3.5. enable / disable"><div class="titlepage"><div><div><h4 class="title"><a id="id1340276"></a>3.3.5. enable / disable</h4></div></div></div><pre class="screen">
+b virtual address 10.10.10.20 disable			
+			</pre></div></div><div class="section" title="3.4. Node"><div class="titlepage"><div><div><h3 class="title"><a id="id1340284"></a>3.4. Node</h3></div></div></div><pre class="screen">
+[root@F5:Active] config # b node list
+node 10.0.0.41 {}
+node 10.0.0.51 {}
+node 172.16.0.5 {}
+node 172.16.0.9 {}
+node 192.168.3.9 {}
+node 192.168.3.10 {}
+
+[root@F5:Active] config # b node show
+NODE 10.0.0.41   unchecked   session user enabled
+|     (cur, max, limit, tot) = (0, 4, 0, 9)
+|     (pkts,bits) in = (75, 115216), out = (85, 498040)
+|     requests (total) = 10
+NODE 10.0.0.51   unchecked   session user enabled
+|     (cur, max, limit, tot) = (0, 4, 0, 20)
+|     (pkts,bits) in = (366, 441280), out = (560, 5.464M)
+|     requests (total) = 32
+NODE 172.16.0.5   unchecked   session user enabled
+|     (cur, max, limit, tot) = (0, 0, 0, 0)
+|     (pkts,bits) in = (0, 0), out = (0, 0)
+|     requests (total) = 0
+NODE 172.16.0.9   unchecked   session user enabled
+|     (cur, max, limit, tot) = (0, 0, 0, 0)
+|     (pkts,bits) in = (0, 0), out = (0, 0)
+|     requests (total) = 0
+NODE 192.168.3.9   unchecked   session user enabled
+|     (cur, max, limit, tot) = (0, 0, 0, 0)
+|     (pkts,bits) in = (0, 0), out = (0, 0)
+|     requests (total) = 0
+NODE 192.168.3.10   unchecked   session user enabled
+|     (cur, max, limit, tot) = (0, 0, 0, 0)
+|     (pkts,bits) in = (0, 0), out = (0, 0)
+|     requests (total) = 0
+		
+		</pre></div><div class="section" title="3.5. Example"><div class="titlepage"><div><div><h3 class="title"><a id="id1340302"></a>3.5. Example</h3></div></div></div><div class="example"><a id="id1340306"></a><p class="title"><b>例 28.2. SLB HTTP Example</b></p><div class="example-contents"><p>创建Pool</p><pre class="screen">
+[root@F5:Active] ~ # b pool mypool { monitor all http member 172.16.0.5:http{priority 1} member 172.16.0.9:http{priority 1} }
+[root@F5:Active] ~ # b pool mypool list
+pool mypool {
+   monitor all http
+   members {
+      172.16.0.5:http {
+         priority 1
+      }
+      172.16.0.9:http {
+         priority 1
+      }
+   }
+}
+			</pre><p>创建Virtual Server</p><pre class="screen">
+			
+			
+[root@F5:Active] ~ # b virtual myvs { snat automap pool mypool destination 192.168.3.22:80 persist source_addr profiles {  http-wan-optimized-compression-caching {} tcp {} } }
+			
+[root@F5:Active] ~ # b virtual myvs list
+virtual myvs {
+   snat automap
+   pool mypool
+   destination 192.168.3.22:http
+   ip protocol tcp
+   persist source_addr
+   profiles {
+      http-wan-optimized-compression-caching {}
+      tcp {}
+   }
+}
+
+
+[root@F5:Active] ~ # b virtual myvs show
+VIRTUAL ADDRESS 192.168.3.22   UNIT 1
+|     ARP enable
+|     (cur, max, limit, tot) = (1, 4, 0, 22)
+|     (pkts,bits) in = (111, 102056), out = (110, 110272)
++-&gt; VIRTUAL myvs   SERVICE http
+    |     PVA acceleration none
+    |     (cur, max, limit, tot) = (1, 4, 0, 22)
+    |     (pkts,bits) in = (111, 102056), out = (110, 110272)
+    |     requests (total) = 0
+    +-&gt; POOL mypool  LB METHOD round robin   MIN/CUR ACTIVE MEMBERS 0/1
+        |     (cur, max, limit, tot) = (1, 4, 0, 22)
+        |     (pkts,bits) in = (111, 102056), out = (110, 110272)
+        +-&gt; POOL MEMBER mypool/172.16.0.5:http   active,up
+        |   |     session enabled    priority 1    ratio 1
+        |   |     (cur, max, limit, tot) = (1, 4, 0, 22)
+        |   |     (pkts,bits) in = (111, 102056), out = (110, 110272)
+        |   |     requests (total) = 0
+        +-&gt; POOL MEMBER mypool/172.16.0.9:http   inactive,down
+            |     session enabled    priority 0    ratio 1
+            |     (cur, max, limit, tot) = (0, 0, 0, 0)
+            |     (pkts,bits) in = (0, 0), out = (0, 0)
+            |     requests (total) = 0
+
+			</pre><p>删除上面配置</p><pre class="screen">
+[root@F5:Active] ~ # b virtual myvs delete
+[root@F5:Active] ~ # b pool mypool delete
+			</pre></div></div><br class="example-break" /></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ch28s02.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="bigpipe.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ch28s04.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">2. 管理IP </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 4. Network</td></tr></table></div><script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script><script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-2033740-1");
+pageTracker._trackPageview();
+} catch(err) {}</script></body></html>
