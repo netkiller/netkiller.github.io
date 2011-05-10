@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>2. Compile and then install Apache</title><link rel="stylesheet" href="/docbook.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.75.2" /><link rel="home" href="index.html" title="Netkiller Linux Web 手札" /><link rel="up" href="lamp.html" title="第 3 章 LAMP" /><link rel="prev" href="lamp.html" title="第 3 章 LAMP" /><link rel="next" href="httpd.module.html" title="3. Module" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">2. Compile and then install Apache</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="lamp.html">上一页</a> </td><th width="60%" align="center">第 3 章 LAMP</th><td width="20%" align="right"> <a accesskey="n" href="httpd.module.html">下一页</a></td></tr></table><hr /><table width="100%" border="0"><tr><td align="left"><a href="http://netkiller.sourceforge.net/">Home</a> | 
+		<a href="http://netkiller.github.com/">Mirror</a> |		
+		<a href="/search.html">Search</a></td><td align="right"><form id="searchbox_008589143145807374698:f5uprauilyy" action="/search.html"><input type="hidden" name="cx" value="008589143145807374698:f5uprauilyy" /><input type="hidden" name="cof" value="FORID:11" /><input name="q" type="text" size="25" style="border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; border-top-style: solid; border-right-style: solid; border-bottom-style: solid; border-left-style: solid; border-top-color: rgb(126, 157, 185); border-right-color: rgb(126, 157, 185); border-bottom-color: rgb(126, 157, 185); border-left-color: rgb(126, 157, 185); padding-top: 2px; padding-right: 2px; padding-bottom: 2px; padding-left: 2px; background-image: url(http://www.google.com/cse/intl/en/images/google_custom_search_watermark.gif); background-attachment: initial; background-origin: initial; background-clip: initial; background-color: rgb(255, 255, 255); background-position: 0% 50%; background-repeat: no-repeat no-repeat; " /><input type="submit" name="sa" value="Search" /><input name="siteurl" type="hidden" value="http://netkiller.sourceforge.net/" /></form><script type="text/javascript" src="http://www.google.com/coop/cse/brand?form=searchbox_008589143145807374698%3Af5uprauilyy"></script></td></tr></table></div><a xmlns="" href="/">Back to main page</a><div class="section" title="2. Compile and then install Apache"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="lamp.src"></a>2. Compile and then install Apache</h2></div></div></div><div class="section" title="2.1. Apache 安装与配置"><div class="titlepage"><div><div><h3 class="title"><a id="id1343321"></a>2.1. Apache 安装与配置</h3></div></div></div><p>configure</p><p>--with-mpm=worker 进程,线程混合方式效率提高不少</p><p>--enable-modules='dir mime' 没有它就找不到index.*文件</p><p>--enable-rewrite=shared Rewrite用于表态化</p><p>--enable-expires=shared 禁止页面被 cache </p><p>--enable-authz_host=shared Order权限</p><p>--enable-setenvif=shared </p><p>--enable-log_config=shared 日志格式</p><p>--enable-speling=shared 允许自动修正拼错的URL</p><p>--enable-deflate=shared 压缩传送</p><p>--enable-mods-shared='cache file-cache disk-cache mem-cache proxy proxy-ajp proxy-balancer' 代理和缓存</p><pre class="screen">
+tar zxvf httpd-2.2.4.tar.gz
+cd httpd-2.2.4
+./configure --prefix=/usr/local/httpd-2.2.4 \
+--with-mpm=worker \
+--enable-modules='dir mime' \
+--enable-rewrite=shared \
+--enable-authz_host=shared \
+--enable-alias=shared \
+--enable-setenvif=shared \
+--enable-log_config=shared \
+--enable-speling=shared \
+--enable-filter=shared \
+--enable-deflate=shared \
+--enable-headers=shared \
+--enable-expires=shared \
+--enable-mods-shared='cache file-cache disk-cache mem-cache proxy proxy-ajp proxy-balancer' \
+--disable-include \
+--disable-actions \
+--disable-alias \
+--disable-asis \
+--disable-autoindex \
+--disable-auth_basic \
+--disable-authn_file \
+--disable-authn_default \
+--disable-authz_groupfile \
+--disable-authz_user \
+--disable-authz_default \
+--disable-cgi \
+--disable-cgid \
+--disable-env \
+--disable-negotiation \
+--disable-status \
+--disable-userdir
+		</pre><p>make; make install</p><p>启动</p><pre class="screen">
+ln -s /usr/local/httpd-2.2.4/ /usr/local/apache
+
+/usr/local/httpd/bin/apachectl start
+		</pre></div><div class="section" title="2.2. 优化编译条件"><div class="titlepage"><div><div><h3 class="title"><a id="id1343322"></a>2.2. 优化编译条件</h3></div></div></div><pre class="screen">
+# vim server/mpm/worker/worker.c
+
+# define DEFAULT_SERVER_LIMIT 256
+# define MAX_SERVER_LIMIT 20000
+# define DEFAULT_THREAD_LIMIT 512
+# define MAX_THREAD_LIMIT 20000
+		</pre></div><div class="section" title="2.3. PHP"><div class="titlepage"><div><div><h3 class="title"><a id="id1343385"></a>2.3. PHP</h3></div></div></div><div class="procedure" title="过程 3.1. 安装PHP"><a id="id1343389"></a><p class="title"><b>过程 3.1. 安装PHP</b></p><ol class="procedure" type="1"><li class="step" title="步骤 1"><p>第一步</p><pre class="screen">
+cd /usr/local/src
+wget http://cn2.php.net/get/php-5.3.0.tar.bz2/from/cn.php.net/mirror
+tar jxvf php-5.3.0.tar.bz2
+cd php-5.3.0
+			</pre></li><li class="step" title="步骤 2"><p>第二步</p><pre class="screen">
+./configure --prefix=/usr/local/php-5.3.0 \
+--with-config-file-path=/usr/local/php-5.3.0/etc \
+--with-apxs2=/usr/local/apache/bin/apxs \
+--with-curl \
+--with-gd \
+--with-ldap \
+--with-snmp \
+--enable-zip \
+--enable-exif \
+--with-libxml-dir \
+--with-mysql \
+--with-mysqli \
+--with-pdo-mysql \
+--with-pdo-pgsql
+
+make
+make test
+make install
+			</pre><ol type="a" class="substeps"><li class="step" title="步骤 2.a"><p>建立符号连接</p><pre class="screen">
+ln -s /usr/local/php-5.3.0 /usr/local/php
+		      </pre></li><li class="step" title="步骤 2.b"><p>php.ini</p><pre class="screen">
+cp php.ini-dist /usr/local/php/etc/php.ini
+		    	</pre></li><li class="step" title="步骤 2.c"><p>conf/httpd.conf</p><pre class="screen">
+AddType application/x-httpd-php .php .phtml
+AddType application/x-httpd-php-source .phps
+		    	</pre><p>reload apache</p></li></ol></li><li class="step" title="步骤 3"><p>最后一步</p><p>phpinfo() 测试文件复杂到apache目录</p><div class="example"><a id="index.php"></a><p class="title"><b>例 3.1. index.php</b></p><div class="example-contents"><pre class="programlisting">
+				
+&lt;?php phpinfo(); ?&gt;
+				
+				</pre></div></div><br class="example-break" /></li></ol></div><div class="note" title="--with-snmp" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">--with-snmp</h3><p>redhat as4 启用 --with-snmp 需要安装下面包</p><pre class="screen">
+rpm -i elfutils-libelf-devel-0.97.1-3.i386.rpm
+rpm -i elfutils-devel-0.97.1-3.i386.rpm
+rpm -i beecrypt-devel-3.1.0-6.i386.rpm
+rpm -i net-snmp-devel-5.1.2-11.EL4.7.i386.rpm
+		</pre></div></div><div class="section" title="2.4. Automation Installing"><div class="titlepage"><div><div><h3 class="title"><a id="id1343488"></a>2.4. Automation Installing</h3></div></div></div><div class="example"><a id="id1343491"></a><p class="title"><b>例 3.2. autolamp.sh</b></p><div class="example-contents"><pre class="screen">
+		
+#!/bin/bash
+HTTPD_SRC=httpd-2.2.15.tar.gz
+PHP_SRC=php-5.2.13.tar.gz
+MYSQL_SRC='mysql-5.1.45.tar.gz'
+MYSQL_LIBS_SRC='mysql-5.1.45-linux-x86_64-glibc23.tar.gz'
+
+SRC_DIR=$(pwd)
+HTTPD_DIR=${HTTPD_SRC%%.tar.gz}
+PHP_DIR=${PHP_SRC%%.tar.*}
+MYSQL_DIR=${MYSQL_SRC%%.tar.*}
+MYSQL_LIBS_DIR=${MYSQL_LIBS_SRC%%.tar.*}
+
+function clean(){
+        rm -rf $HTTPD_DIR
+        rm -rf $PHP_DIR
+        rm -rf $MYSQL_DIR
+        rm -rf $MYSQL_LIBS_DIR
+}
+function mysql(){
+rm -rf $MYSQL_DIR
+tar zxf $MYSQL_SRC
+cd $MYSQL_DIR
+./configure \
+--prefix=/usr/local/$MYSQL_DIR \
+--with-mysqld-user=mysql \
+--with-unix-socket-path=/tmp/mysql.sock \
+--with-charset=utf8 \
+--with-collation=utf8_general_ci \
+--with-pthread \
+--with-mysqld-ldflags \
+--with-client-ldflags \
+--with-openssl \
+--without-docs \
+--without-debug \
+--without-ndb-debug \
+--without-bench
+#-–without-isam
+#--without-innodb \
+#--without-ndbcluster \
+#--without-blackhole \
+#--without-ibmdb2i \
+#--without-federated \
+#--without-example \
+#--without-comment \
+#--with-extra-charsets=gbk,gb2312,utf8 \
+
+#--localstatedir=/usr/local/mysql/data
+#--with-extra-charsets=all
+make clean
+make &amp;&amp; make install
+cd ..
+/usr/local/$MYSQL_DIR/bin/mysql_install_db
+}
+function httpd(){
+rm -rf $HTTPD_DIR
+tar zxf $HTTPD_SRC
+cd $HTTPD_DIR
+./configure --prefix=/usr/local/$HTTPD_DIR \
+--with-mpm=worker \
+--enable-so \
+--enable-mods-shared=all \
+--disable-authn_file \
+--disable-authn_default \
+--disable-authz_groupfile \
+--disable-authz_user \
+--disable-authz_default \
+--disable-auth_basic \
+--disable-include \
+--disable-env \
+--disable-status \
+--disable-autoindex \
+--disable-asis \
+--disable-cgi \
+--disable-cgid \
+--disable-negotiation \
+--disable-actions \
+--disable-userdir \
+--disable-alias
+
+make clean
+make &amp;&amp; make install
+cd ..
+}
+function php(){
+rm -rf $MYSQL_LIBS_DIR
+tar zxf $MYSQL_LIBS_SRC
+rm -rf $PHP_DIR
+tar zxf $PHP_SRC
+cd $PHP_DIR
+
+./configure --prefix=/usr/local/$PHP_DIR \
+--with-config-file-path=/usr/local/$PHP_DIR/etc \
+--with-apxs2=/usr/local/$HTTPD_DIR/bin/apxs \
+--with-curl \
+--with-gd \
+--with-jpeg-dir=/usr/lib64 \
+--with-iconv \
+--with-zlib-dir \
+--with-pear \
+--with-libxml \
+--with-dom \
+--with-xmlrpc \
+--with-openssl \
+--with-mysql=/usr/local/mysql-5.1.45-linux-x86_64-glibc23 \
+--with-mysqli \
+--with-pdo-mysql \
+--enable-memcache \
+--enable-zip \
+--enable-sockets \
+--enable-soap \
+--enable-mbstring \
+--enable-magic-quotes \
+--enable-inline-optimization \
+--enable-xml
+
+#make &amp;&amp; make test &amp;&amp; make install
+make &amp;&amp;  make install
+cp /usr/local/src/$PHP_DIR/php.ini-dist /usr/local/$PHP_DIR/php.ini
+}
+function depend(){
+        yum install gcc gcc-c++ -y
+        yum install -y libxml2-devel libxslt-devel
+        yum install curl-devel -y
+        yum install gd-devel libjpeg-devel libpng-devel -y
+        yum install ncurses-devel -y
+        yum install mysql-devel -y
+        yum install libevent-devel -y
+}
+function java(){
+        #yum install java-1.6.0-openjdk -y
+        chmod +x jdk-6u20-linux-x64.bin
+        ./jdk-6u20-linux-x64.bin
+        mv jdk1.6.0_20 ..
+        ln -s /usr/local/jdk1.6.0_20 /usr/local/java
+}
+function memcached(){
+        MEMCACHED_PKG=memcached-1.4.5.tar.gz
+        MEMCACHED_SRC=memcached-1.4.5
+        rm -rf $MEMCACHED_SRC
+        tar zxf $MEMCACHED_PKG
+        cd $MEMCACHED_SRC
+        ./configure --prefix=/usr/local/memcached-1.4.5
+        make &amp;&amp; make install
+}
+# See how we were called.
+case "$1" in
+  clean)
+        clean
+        ;;
+  httpd)
+        httpd
+        ;;
+  php)
+        php
+        ;;
+  mysql)
+        if [ -f $0 ] ; then
+                mysql
+        fi
+        ;;
+  depend)
+        depend
+        ;;
+  java)
+        java
+        ;;
+  memcached)
+        memcached
+        ;;
+  all)
+        clean
+
+        echo ##################################################
+        echo # $MYSQL_DIR Installing...
+        echo ##################################################
+        mysql
+
+        echo ##################################################
+        echo # $HTTPD_DIR Installing...
+        echo ##################################################
+        httpd
+
+        echo ##################################################
+        echo # $PHP_DIR Installing...
+        echo ##################################################
+        php
+
+        ln -s /usr/local/$HTTPD_DIR /usr/local/apache
+        ln -s /usr/local/$MYSQL_DIR /usr/local/mysql
+        ln -s /usr/local/$PHP_DIR /usr/local/php
+
+        clean
+        ;;
+  *)
+        echo $"Usage: $0 {httpd|php|mysql|all|clean}"
+        RETVAL=2
+        ;;
+esac
+
+exit $RETVAL
+		
+		</pre></div></div><br class="example-break" /></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="lamp.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="lamp.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="httpd.module.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 3 章 LAMP </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 3. Module</td></tr></table></div><script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script><script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-2033740-1");
+pageTracker._trackPageview();
+} catch(err) {}</script></body></html>
