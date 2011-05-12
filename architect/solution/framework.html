@@ -1,0 +1,470 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>3. Framework Design</title><link rel="stylesheet" href="/docbook.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.75.2" /><link rel="home" href="../index.html" title="Netkiller Architect 手札" /><link rel="up" href="solution.development.html" title="第 18 章 Development" /><link rel="prev" href="cache.html" title="2. Cache Workflow" /><link rel="next" href="ch18s04.html" title="4. Logging" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">3. Framework Design</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="cache.html">上一页</a> </td><th width="60%" align="center">第 18 章 Development</th><td width="20%" align="right"> <a accesskey="n" href="ch18s04.html">下一页</a></td></tr></table><hr /><table width="100%" border="0"><tr><td align="left"><a href="http://netkiller.sourceforge.net/">Home</a> | 
+		<a href="http://netkiller.github.com/">Mirror</a> |		
+		<a href="/search.html">Search</a></td><td align="right"><form id="searchbox_008589143145807374698:f5uprauilyy" action="/search.html"><input type="hidden" name="cx" value="008589143145807374698:f5uprauilyy" /><input type="hidden" name="cof" value="FORID:11" /><input name="q" type="text" size="25" style="border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; border-top-style: solid; border-right-style: solid; border-bottom-style: solid; border-left-style: solid; border-top-color: rgb(126, 157, 185); border-right-color: rgb(126, 157, 185); border-bottom-color: rgb(126, 157, 185); border-left-color: rgb(126, 157, 185); padding-top: 2px; padding-right: 2px; padding-bottom: 2px; padding-left: 2px; background-image: url(http://www.google.com/cse/intl/en/images/google_custom_search_watermark.gif); background-attachment: initial; background-origin: initial; background-clip: initial; background-color: rgb(255, 255, 255); background-position: 0% 50%; background-repeat: no-repeat no-repeat; " /><input type="submit" name="sa" value="Search" /><input name="siteurl" type="hidden" value="http://netkiller.sourceforge.net/" /></form><script type="text/javascript" src="http://www.google.com/coop/cse/brand?form=searchbox_008589143145807374698%3Af5uprauilyy"></script></td></tr></table></div><div class="section" title="3. Framework Design"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="framework"></a>3. Framework Design</h2></div></div></div>
+	
+    <div><img src="../images/development/framework.png" /></div>
+	<div class="section" title="3.1. MVC Framework"><div class="titlepage"><div><div><h3 class="title"><a id="id1391631"></a>3.1. MVC Framework</h3></div></div></div>
+		
+		<div><table border="0" summary="manufactured viewport for HTML img" cellspacing="0" cellpadding="0" width="1000"><tr><td><img src="/architect/images/development/framework.png" width="1000" /></td></tr></table></div>
+	</div>	
+	<div class="section" title="3.2. REST"><div class="titlepage"><div><div><h3 class="title"><a id="framework.rest"></a>3.2. REST</h3></div></div></div>
+		
+	</div>
+	<div class="section" title="3.3. action 分发器"><div class="titlepage"><div><div><h3 class="title"><a id="id1391640"></a>3.3. action 分发器</h3></div></div></div>
+		
+		<pre class="screen">
+		
+$action  = $_REQUEST['action'];
+$libname = $_REQUEST['lib'];
+$special = new Advertize ($libname,$action);
+if(method_exists($special, $action)) {
+    $special-&gt;$action();
+}else{
+    $special-&gt;index();
+}
+		
+		</pre>
+	</div>
+	
+<div class="section" title="3.4. Plugin &amp; Hook 设计与实现"><div class="titlepage"><div><div><h3 class="title"><a id="plugin"></a>3.4. Plugin &amp; Hook 设计与实现</h3></div></div></div>
+	
+	<p>插件系统分为：</p>
+	<p>插件管理平台</p>
+	<p>插件探测</p>
+	<p>插件注册</p>
+	<p>插件调用</p>
+	<p>插件注销</p>
+	
+	<div class="section" title="3.4.1. 插件管理平台"><div class="titlepage"><div><div><h4 class="title"><a id="id1391706"></a>3.4.1. 插件管理平台</h4></div><div><h4 class="title"><a id="id1391706"></a>3.4.1. 插件管理平台</h4></div></div></div>
+		
+		
+		<pre class="programlisting">
+		
+&lt;?php
+final class Plugin{
+	private $plugins 	= null;
+	private $directory 	= 'plugins';
+	private $path		= null;
+	public function __construct(){
+		$this-&gt;path = $this-&gt;directory.'/';
+	}
+	public function autoload(){
+		$interfaces = scandir($this-&gt;directory);
+		unset($interfaces[0]);
+		unset($interfaces[1]);
+		foreach($interfaces as $interface)
+		{
+			//load all of the plugins
+			$file =  $this-&gt;path . $interface;
+			if (@file_exists($file))
+			{
+				include_once($file);
+				$class =  basename($interface, ".php");
+				if (class_exists($class))
+				{
+					$this-&gt;$class = new $class($this);
+					$vars = get_class_vars($class);
+					$entity['name'] 			= $vars['name'];
+					$entity['description'] 	= $vars['description'];
+					$entity['author'] 		= $vars['author'];
+					$entity['class'] 		= $class;
+					$entity['methods'] 		= get_class_methods($class);
+					
+					$this-&gt;plugins[$class] = $entity;
+				}
+			}
+		}
+
+	}
+	public function load($plugin){
+		$file = $this-&gt;path . $plugin . '.php';
+		if (@file_exists($file))
+		{
+			include_once($file);
+			$class = $plugin;
+			if (class_exists($class))
+			{
+				$this-&gt;$class = new $class($this);
+				$vars = get_class_vars($class);
+				$entity['name'] 			= $vars['name'];
+				$entity['description'] 	= $vars['description'];
+				$entity['author'] 		= $vars['author'];
+				$entity['class'] 		= $class;
+				$entity['methods'] 		= get_class_methods($class);
+
+				$this-&gt;plugins[$class] = $entity;
+			}
+		}
+	}
+	public function show(){
+		print_r($this-&gt;plugins);
+	}
+}		
+		
+		</pre>
+	</div>
+	<div class="section" title="3.4.2. 接口定义"><div class="titlepage"><div><div><h4 class="title"><a id="id1391738"></a>3.4.2. 接口定义</h4></div></div></div>
+		
+		<pre class="programlisting">
+		
+&lt;?php
+interface iPlugin
+{
+	public function test();
+}
+				
+		</pre>
+	</div>
+	<div class="section" title="3.4.3. 插件"><div class="titlepage"><div><div><h4 class="title"><a id="id1391750"></a>3.4.3. 插件</h4></div></div></div>
+		
+		<pre class="programlisting">
+		
+&lt;?php
+final class demo implements iPlugin{
+	public static $author 		= 'Neo Chen&lt;openunix@163.com&gt;';
+	public static $name = 'Demo';
+	public static $description = 'Demo Simple';
+	public function __construct(){
+
+	}
+	public function test(){
+		echo 'Hello world!!!';
+	}
+}		
+			
+		</pre>
+	</div>
+	<div class="section" title="3.4.4. 测试"><div class="titlepage"><div><div><h4 class="title"><a id="id1391763"></a>3.4.4. 测试</h4></div></div></div>
+		
+		<pre class="programlisting">
+		
+&lt;?php
+function __autoload($class_name) {
+    require_once('library/'.$class_name . '.php');
+}
+
+//include_once('library/Plugin.php');
+$plugin = new Plugin();
+echo '=============================';
+$plugin-&gt;load('demo');
+$plugin-&gt;demo-&gt;test();
+echo '=============================';
+$plugin-&gt;autoload();
+$plugin-&gt;show();
+		
+		</pre>
+	</div>
+</div>
+
+	<div class="section" title="3.5. Cache"><div class="titlepage"><div><div><h3 class="title"><a id="cache"></a>3.5. Cache</h3></div></div></div>
+		
+		<div class="section" title="3.5.1. Coding Flow"><div class="titlepage"><div><div><h4 class="title"><a id="id1391784"></a>3.5.1. Coding Flow</h4></div></div></div>
+			
+			<div><img src="../images/workflow/user-browser-server.png" /></div>
+		</div>		
+
+		<div class="section" title="3.5.2. HTTP Cache"><div class="titlepage"><div><div><h4 class="title"><a id="id1391806"></a>3.5.2. HTTP Cache</h4></div></div></div>
+			
+			<p>Cache-Control</p>
+			<pre class="screen">
+max-age
+max-age 格式写为：max-age=n，n是以秒为单位, 这个值是告知客户端GMT + N 后页面过期，缓存服务器在s-maxage值为空的时候也会使用这个参数的值。
+
+s-maxage
+s-maxage的格式跟max-age一样，只不过他是给缓存服务器使用的。
+
+must-revalidate
+这个参数用来告知客户端和缓存服务器，在GET请求的时候必须与源服务器验证实体是否为最新版本。
+
+Cache-Control:max-age=1200,s-maxage=3600
+			</pre>
+			<pre class="screen">
+Last-Modified
+这个参数提供了实体最近一次被修改的时间。这个名字起得不错，当实体被修改了之后，这个参数也就会被修改.	
+			</pre>
+			<p>ETag</p>
+			<pre class="screen">
+ETag
+ETag是根据内容生成的一段hash字符串，采用信息摘要算法，保证每一个页面有一个唯一字串。
+			</pre>
+			<p>expires</p>
+			<p>expires 是HTTP 1.0 中定义的，已经不能满足用户的需要在 HTTP 1.1 加入了max-age，建议使用 max-age替代expires</p>
+		</div>
+		<div class="section" title="3.5.3. Cache 生存时间"><div class="titlepage"><div><div><h4 class="title"><a id="id1391848"></a>3.5.3. Cache 生存时间</h4></div></div></div>
+			
+			<p>你不必一开始加费劲心机去考虑这个值，当网站运行一段时间后，利用玩站流量数据作为参考，一步一地尝试调整。</p>
+		</div>		
+	</div>
+	<div class="section" title="3.6. Session/Cookie 安全"><div class="titlepage"><div><div><h3 class="title"><a id="cookie"></a>3.6. Session/Cookie 安全</h3></div></div></div>
+		
+		<div class="section" title="3.6.1. cookie-free domains"><div class="titlepage"><div><div><h4 class="title"><a id="id1391869"></a>3.6.1. cookie-free domains</h4></div></div></div>
+			
+		</div>
+	</div>	
+	<div class="section" title="3.7. Logging"><div class="titlepage"><div><div><h3 class="title"><a id="logging"></a>3.7. Logging</h3></div></div></div>
+		
+			<div><img src="../images/development/logging.png" /></div>
+
+	</div>
+    
+<div class="section" title="3.8. SEO Module"><div class="titlepage"><div><div><h3 class="title"><a id="search"></a>3.8. SEO Module</h3></div></div></div>
+	
+	<div class="section" title="3.8.1. robots.txt"><div class="titlepage"><div><div><h4 class="title"><a id="id1391906"></a>3.8.1. robots.txt</h4></div></div></div>
+		
+		<pre class="screen">
+		
+&lt;meta name="robots" content="noarchive"&gt;
+				
+		</pre>
+		<div class="example"><a id="id1391917"></a><p class="title"><b>例 18.1. example robots.txt</b></p><div class="example-contents">
+			
+			<p>http://www.google.com/robots.txt</p>
+			<pre class="screen">
+User-agent: *
+Disallow: /search
+Disallow: /groups
+Disallow: /images
+Disallow: /catalogs
+Disallow: /catalogues
+Disallow: /news
+Allow: /news/directory
+Disallow: /nwshp
+Disallow: /setnewsprefs?
+Disallow: /index.html?
+Disallow: /?
+Disallow: /addurl/image?
+Disallow: /pagead/
+Disallow: /relpage/
+Disallow: /relcontent
+Disallow: /imgres
+Disallow: /imglanding
+Disallow: /keyword/
+Disallow: /u/
+Disallow: /univ/
+Disallow: /cobrand
+Disallow: /custom
+Disallow: /advanced_group_search
+Disallow: /googlesite
+Disallow: /preferencessection
+Disallow: /setprefs
+Disallow: /swr
+Disallow: /url
+Disallow: /default
+Disallow: /m?
+Disallow: /m/?
+Disallow: /m/blogs?
+Disallow: /m/ig
+Disallow: /m/images?
+Disallow: /m/local?
+Disallow: /m/movies?
+Disallow: /m/news?
+Disallow: /m/news/i?
+Disallow: /m/place?
+Disallow: /m/setnewsprefs?
+Disallow: /m/search?
+Disallow: /m/swmloptin?
+Disallow: /m/trends
+Disallow: /wml?
+Disallow: /wml/?
+Disallow: /wml/search?
+Disallow: /xhtml?
+Disallow: /xhtml/?
+Disallow: /xhtml/search?
+Disallow: /xml?
+Disallow: /imode?
+Disallow: /imode/?
+Disallow: /imode/search?
+Disallow: /jsky?
+Disallow: /jsky/?
+Disallow: /jsky/search?
+Disallow: /pda?
+Disallow: /pda/?
+Disallow: /pda/search?
+Disallow: /sprint_xhtml
+Disallow: /sprint_wml
+Disallow: /pqa
+Disallow: /palm
+Disallow: /gwt/
+Disallow: /purchases
+Disallow: /hws
+Disallow: /bsd?
+Disallow: /linux?
+Disallow: /mac?
+Disallow: /microsoft?
+Disallow: /unclesam?
+Disallow: /answers/search?q=
+Disallow: /local?
+Disallow: /local_url
+Disallow: /froogle?
+Disallow: /products?
+Disallow: /products/
+Disallow: /froogle_
+Disallow: /product_
+Disallow: /products_
+Disallow: /print
+Disallow: /books
+Disallow: /bkshp?q=
+Allow: /booksrightsholders
+Disallow: /patents?
+Disallow: /patents/
+Allow: /patents/about
+Disallow: /scholar
+Disallow: /complete
+Disallow: /sponsoredlinks
+Disallow: /videosearch?
+Disallow: /videopreview?
+Disallow: /videoprograminfo?
+Disallow: /maps?
+Disallow: /mapstt?
+Disallow: /mapslt?
+Disallow: /maps/stk/
+Disallow: /maps/br?
+Disallow: /mapabcpoi?
+Disallow: /maphp?
+Disallow: /places/
+Disallow: /maps/place
+Disallow: /help/maps/streetview/partners/welcome/
+Disallow: /lochp?
+Disallow: /center
+Disallow: /ie?
+Disallow: /sms/demo?
+Disallow: /katrina?
+Disallow: /blogsearch?
+Disallow: /blogsearch/
+Disallow: /blogsearch_feeds
+Disallow: /advanced_blog_search
+Disallow: /reader/
+Allow: /reader/play
+Disallow: /uds/
+Disallow: /chart?
+Disallow: /transit?
+Disallow: /mbd?
+Disallow: /extern_js/
+Disallow: /calendar/feeds/
+Disallow: /calendar/ical/
+Disallow: /cl2/feeds/
+Disallow: /cl2/ical/
+Disallow: /coop/directory
+Disallow: /coop/manage
+Disallow: /trends?
+Disallow: /trends/music?
+Disallow: /trends/hottrends?
+Disallow: /trends/viz?
+Disallow: /notebook/search?
+Disallow: /musica
+Disallow: /musicad
+Disallow: /musicas
+Disallow: /musicl
+Disallow: /musics
+Disallow: /musicsearch
+Disallow: /musicsp
+Disallow: /musiclp
+Disallow: /browsersync
+Disallow: /call
+Disallow: /archivesearch?
+Disallow: /archivesearch/url
+Disallow: /archivesearch/advanced_search
+Disallow: /base/search?
+Disallow: /base/reportbadoffer
+Disallow: /base/s2
+Disallow: /urchin_test/
+Disallow: /movies?
+Disallow: /codesearch?
+Disallow: /codesearch/feeds/search?
+Disallow: /wapsearch?
+Disallow: /safebrowsing
+Allow: /safebrowsing/diagnostic
+Allow: /safebrowsing/report_error/
+Allow: /safebrowsing/report_phish/
+Disallow: /reviews/search?
+Disallow: /orkut/albums
+Disallow: /jsapi
+Disallow: /views?
+Disallow: /c/
+Disallow: /cbk
+Disallow: /recharge/dashboard/car
+Disallow: /recharge/dashboard/static/
+Disallow: /translate_a/
+Disallow: /translate_c
+Disallow: /translate_f
+Disallow: /translate_static/
+Disallow: /translate_suggestion
+Disallow: /profiles/me
+Allow: /profiles
+Disallow: /s2/profiles/me
+Allow: /s2/profiles
+Allow: /s2/photos
+Allow: /s2/static
+Disallow: /s2
+Disallow: /transconsole/portal/
+Disallow: /gcc/
+Disallow: /aclk
+Disallow: /cse?
+Disallow: /cse/panel
+Disallow: /cse/manage
+Disallow: /tbproxy/
+Disallow: /comparisonads/
+Disallow: /imesync/
+Disallow: /shenghuo/search?
+Disallow: /support/forum/search?
+Disallow: /reviews/polls/
+Disallow: /hosted/images/
+Disallow: /hosted/life/
+Disallow: /ppob/?
+Disallow: /ppob?
+Disallow: /ig/add?
+Disallow: /adwordsresellers
+Disallow: /accounts/o8
+Allow: /accounts/o8/id
+Disallow: /topicsearch?q=
+Disallow: /xfx7/
+Disallow: /squared/api
+Disallow: /squared/search
+Disallow: /squared/table
+Disallow: /toolkit/
+Allow: /toolkit/*.html
+Disallow: /qnasearch?
+Disallow: /errors/
+Disallow: /app/updates
+Disallow: /sidewiki/entry/
+Disallow: /quality_form?
+Disallow: /labs/popgadget/search
+Disallow: /buzz/post
+Sitemap: http://www.gstatic.com/s2/sitemaps/profiles-sitemap.xml
+Sitemap: http://www.google.com/hostednews/sitemap_index.xml
+Sitemap: http://www.google.com/ventures/sitemap_ventures.xml
+Sitemap: http://www.google.com/sitemaps_webmasters.xml
+Sitemap: http://www.gstatic.com/trends/websites/sitemaps/sitemapindex.xml
+Sitemap: http://www.gstatic.com/dictionary/static/sitemaps/sitemap_index.xml
+			</pre>
+		</div></div><br class="example-break" />		
+		<div class="section" title="3.8.1.1. Sitemap in robots.txt"><div class="titlepage"><div><div><h5 class="title"><a id="id1391973"></a>3.8.1.1. Sitemap in robots.txt</h5></div></div></div>
+			
+			<pre class="screen">
+User-agent: *
+Allow: *
+Disallow: /management/
+Sitemap: http://netkiller.sourceforge.net/sitemaps.xml.gz			
+			</pre>
+		</div>
+	</div>	
+
+	<div class="section" title="3.8.2. sitemaps"><div class="titlepage"><div><div><h4 class="title"><a id="sitemaps"></a>3.8.2. sitemaps</h4></div></div></div>
+		
+		<p><a class="ulink" href="http://www.sitemaps.org/" target="_top">http://www.sitemaps.org/</a></p>
+		<p>sitemap.xml</p>
+	</div>
+	    
+	
+</div>
+
+</div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="cache.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="solution.development.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ch18s04.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">2. Cache Workflow </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 4. Logging</td></tr></table></div><script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script><script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-2033740-1");
+pageTracker._trackPageview();
+} catch(err) {}</script></body></html>
