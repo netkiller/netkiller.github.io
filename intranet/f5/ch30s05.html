@@ -1,0 +1,488 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>5. System</title><link rel="stylesheet" href="/docbook.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.75.2" /><link rel="home" href="../index.html" title="Netkiller Intranet &amp; IDC 手札" /><link rel="up" href="bigpipe.html" title="第 30 章 bigpipe - a command line interface for configuring BIG-IP and VIPRION and displaying configuration data and statistics" /><link rel="prev" href="ch30s04.html" title="4. Network" /><link rel="next" href="ch30s06.html" title="6. 查看连接数" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">5. System</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ch30s04.html">上一页</a> </td><th width="60%" align="center">第 30 章 bigpipe - a command line interface for configuring BIG-IP and VIPRION and displaying configuration data and statistics</th><td width="20%" align="right"> <a accesskey="n" href="ch30s06.html">下一页</a></td></tr></table><hr /><table width="100%" border="0"><tr><td align="left"><a href="http://netkiller.sourceforge.net/">Home</a> | 
+		<a href="http://netkiller.github.com/">Mirror</a> |		
+		<a href="/search.html">Search</a></td><td align="right"><form id="searchbox_008589143145807374698:f5uprauilyy" action="/search.html"><input type="hidden" name="cx" value="008589143145807374698:f5uprauilyy" /><input type="hidden" name="cof" value="FORID:11" /><input name="q" type="text" size="25" style="border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; border-top-style: solid; border-right-style: solid; border-bottom-style: solid; border-left-style: solid; border-top-color: rgb(126, 157, 185); border-right-color: rgb(126, 157, 185); border-bottom-color: rgb(126, 157, 185); border-left-color: rgb(126, 157, 185); padding-top: 2px; padding-right: 2px; padding-bottom: 2px; padding-left: 2px; background-image: url(http://www.google.com/cse/intl/en/images/google_custom_search_watermark.gif); background-attachment: initial; background-origin: initial; background-clip: initial; background-color: rgb(255, 255, 255); background-position: 0% 50%; background-repeat: no-repeat no-repeat; " /><input type="submit" name="sa" value="Search" /><input name="siteurl" type="hidden" value="http://netkiller.sourceforge.net/" /></form><script type="text/javascript" src="http://www.google.com/coop/cse/brand?form=searchbox_008589143145807374698%3Af5uprauilyy"></script></td></tr></table></div><div class="section" title="5. System"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id1319274"></a>5. System</h2></div></div></div><div class="section" title="5.1. config"><div class="titlepage"><div><div><h3 class="title"><a id="id1319277"></a>5.1. config</h3></div></div></div><pre class="screen">
+[root@F5:Active] ~ # b list
+datastor {
+   low water mark 80
+   high water mark 90
+}
+deduplication {}
+shell write partition Common
+route default inet {
+   gateway 192.168.3.1
+}
+profile http my_HTTP_1_http_profile {
+   defaults from http-lan-optimized-caching
+   compress content type include {
+      "text/"
+      "application/(xml|x-javascript)"
+      "application/pdf"
+   }
+}
+profile persist my_HTTP_1_persist_profile {
+   defaults from cookie
+   mode cookie
+}
+profile tcp my_HTTP_1_lan-optimized_tcp_profile {
+   defaults from tcp-lan-optimized
+}
+node 10.0.0.41 {}
+node 10.0.0.51 {}
+node 172.16.0.5 {}
+node 172.16.0.9 {}
+node 172.16.0.10 {}
+node 172.16.0.11 {}
+node 172.16.0.12 {}
+node 192.168.3.5 {}
+node 192.168.3.9 {}
+node 192.168.3.10 {}
+pool Pool-Http {
+   monitor all http
+   members {
+      10.0.0.41:http {}
+      10.0.0.51:http {}
+   }
+}
+pool my_HTTP_1_pool {
+   monitor all http
+   members {
+      192.168.3.5:http {
+         priority 1
+      }
+      192.168.3.9:http {
+         priority 1
+      }
+      192.168.3.10:http {
+         priority 1
+      }
+   }
+}
+pool mypool {
+   monitor all http
+   members {
+      172.16.0.5:http {
+         priority 1
+      }
+      172.16.0.9:http {
+         priority 1
+      }
+   }
+}
+pool neo {
+   monitor all http
+   members {
+      172.16.0.5:http {
+         monitor http
+      }
+      172.16.0.9:http {}
+   }
+}
+virtual TEST_HTTP {
+   snat automap
+   pool neo
+   destination 172.16.0.25:http
+   ip protocol tcp
+   profiles {
+      http-lan-optimized-caching {}
+      tcp {}
+   }
+}
+virtual VS-HTTP {
+   snat automap
+   pool Pool-Http
+   destination 192.168.3.21:http
+   ip protocol tcp
+   persist source_addr
+   profiles {
+      http-lan-optimized-caching {}
+      tcp {}
+   }
+}
+virtual my_HTTP_1_virtual_server {
+   snat automap
+   pool my_HTTP_1_pool
+   destination 192.168.3.11:http
+   ip protocol tcp
+   persist my_HTTP_1_persist_profile
+   profiles {
+      my_HTTP_1_http_profile {}
+      my_HTTP_1_lan-optimized_tcp_profile {}
+   }
+}
+virtual myvs {
+   snat automap
+   pool mypool
+   destination 192.168.3.22:http
+   ip protocol tcp
+   persist source_addr
+   profiles {
+      http-wan-optimized-compression-caching {}
+      tcp {}
+   }
+}
+		</pre></div><div class="section" title="5.2. b version"><div class="titlepage"><div><div><h3 class="title"><a id="id1319304"></a>5.2. b version</h3></div></div></div><pre class="screen">
+[root@F5:Active] config # b version
+Kernel:
+Linux 2.6.18-164.11.1.el5.1.0.f5app
+Package:
+BIG-IP Version 10.2.0 1707.0
+Final Edition
+
+Enabled Features:
+Active Directory/Windows Domain Authentication
+LDAP Authentication
+RADIUS Authentication
+SecurID Authentication
+Base Endpoint Security Checks
+Antivirus Checks
+Firewall Checks
+Machine Certificate Checks
+Protected Workspace
+Secure Virtual Keyboard
+Network Access
+Access Policy Manager Support
+Reverse Proxy
+Concurrent Sessions (Limited) 10
+Rate Shaping and Rate Class Support
+Traffic Classification L4
+Traffic Classification iRules+L7
+Stochastic Fair Queuing Mode
+Priority FIFO (ToS) Queuing Mode
+QoS and ToS Tagging
+Connection Limits
+OneConnect - Switching and Pooling
+Connection Rebinding
+Connection Timeout
+Route Pool
+Last Hop Pool
+Active Active
+Failover
+Pool Min Up Members
+State Mirroring
+VLAN Failsafe
+HTTP traffic classifier
+iSession
+iSNAT - Rules Referencing SNAT Pools
+Basic Load Balancing
+Dynamic Ratio Load Balancing
+Fastest Load Balancing
+L3 Addr Load Balancing
+Least Connection Load Balancing
+Least Sessions Load Balancing
+Observed Load Balancing
+LB Pools Maximum Nodes unlimited
+Predictive Load Balancing
+Priority Load Balancing
+Ratio Load Balancing
+Round Robin Load Balancing
+UDP Packet Load Balancing
+Web Logic Load Balancing
+DIAMETER Monitor
+EAV Monitor
+FTP Monitor
+gateway ICMP Monitor
+HTTP Monitor
+HTTPS Monitor
+ICMP Monitor
+IMAP Monitor
+Inband Monitor
+LDAP Monitor
+LDAP Over SSL Monitor
+Module Score Monitor
+Microsoft SQL Monitor
+MySQL Monitor
+NNTP Monitor
+Oracle Monitor
+POP3 Monitor
+PostgreSQL Monitor
+RADIUS Monitor
+RealN Monitor
+Reverse Keyword
+RPC Monitor
+Monitor Rules
+SASP Monitor
+SCRIPTED Monitor
+SIP Monitor
+SMB Monitor
+SMTP Monitor
+SNMP Monitor
+Soap Monitor
+TCP Monitor
+TCP Echo Monitor
+TCP Half Open Monitor
+Transparent Device Monitor
+UDP Monitor
+Virtual Location Monitor
+WAP Monitor
+WMI Monitor
+Monitors
+Network Address Translation
+Persistence
+Cookie Persistence
+Simple Persistence
+SIP Persistence
+SSL Session ID Persistence
+Sticky Persistence
+Universal Persistence
+WTS Persistence
+Pools
+HTTP Content Transformation
+Fast L4
+FTP
+HTTP Header Transformation
+HTTP
+Probe Control - IDS Traffic Management
+HTTP Redirection
+SIP
+TCP
+UDP
+RAM Cache
+RTSP switching
+L4 iRules
+L7 iRules
+User-Defined Statistics
+iRules
+SCTP support
+SNAT Standard
+Address Translation
+Port Translation
+Transparent Device Load Balancing
+Access Policy Manager Limited
+Local Traffic Manager
+IPv6 DNS Support
+IPv6 Gateway Module
+Interface Mirroring
+Spanning Tree Protocol
+PVA Enable
+SSL Mbps 2000
+CMP SSL
+CMP SSL per core
+SSL Total TPS 5000
+Virtual Edition maximum throughput 1
+CMP compression per core
+HTTP Compression 50
+SSL client certificate authorization via LDAP
+DDoS Connection Limits
+Dynamic Connection Reaping
+Packet Filter
+SYN Check
+SSL Support
+SSL Online Certificate Status Protocol
+SSL certificate validation via CRLDP
+		</pre></div><div class="section" title="5.3. b platform show"><div class="titlepage"><div><div><h3 class="title"><a id="id1319336"></a>5.3. b platform show</h3></div></div></div><pre class="screen">
+[root@F5:Active] config # b platform show
+PLATFORM INFORMATION --
+|     Marketing Name: BIG-IP 3900
+|     BIOS revision: F5 Platform: C106 OBJ-0314-03 BIOS (build: 008) Date: 12/28/09
+|     base MAC: 00:01:D7:C3:30:C0
+|     Physical memory: 7.832GB
++-&gt; SYSTEM INFORMATION C106
+|     Type: C106
+|     Chassis   serial: f5-dhte-kayv   Level 200 part: 200-0322-01 REV G
++-&gt; CHASSIS
+|   |     Max MAC count: 2
++-&gt; HARDWARE INFO
+|   +-&gt; cn0
+|   |   |     Type: crypto   Model: Cavium NITROX-PX
+|   |   |     version: CNPx-MC-SSL-MAIN-0013
+|   +-&gt; hsb_lbb0
+|   |   |     Type: net   Model: F5 High Speed Bridge LBB device
+|   |   |     version: Build: 1.0.12 lab 1
+|   +-&gt; cpld
+|   |   |     Type: pic   Model: F5 cpld
+|   |   |     version: 0x2a
+|   +-&gt; mercury2 mainboard
+|   |   |     Type: pic   Model: F5 ARM FPGA Loader
+|   |   |     ARM FPGA Loader version: 0.09
+|   +-&gt; cpus
+|   |   |     Type: base board   Model: Intel(R) Xeon(R) CPU           X3220  @ 2.40GHz
+|   |   |     cache size: 4096 KB
+|   |   |     cores: 4  (cores/cpu:4)
+|   |   |     cpu MHz: 2400.134
++-&gt; CPU 0
+|   |     Temp: 36degC   Fan speed: 7336rpm
++-&gt; CHASSIS TEMPERATURE
+|   |     Air Inlet(1) 26degC   HSBe(2) 31degC
+|   |     TMP421 on die(3) 27degC
++-&gt; CHASSIS FAN
+|   |     (1) active - 7031rpm   (2) active - 8035rpm
+|   |     (3) active - 7670rpm
++-&gt; POWER SUPPLY
+|   |     (1) active   (2) not present
++-&gt; LICENSE Local Traffic Mananger 3900 add ons
+|   |     Local Traffic Manager Module
+|   |     ADD IPV6 GATEWAY
+|   |     ADD RATE SHAPING
+|   |     ADD RAMCACHE
+|   |     50 MBPS COMPRESSION
+|   |     SSL 500 TPS Per Core
+|   |     ADD SSL CMP
+|   |     ADD ANTI-VIRUS CHECKS
+|   |     ADD BASE ENDPOINT SECURITY CHECKS
+|   |     ADD FIREWALL CHECKS
+|   |     ADD NETWORK ACCESS
+|   |     ADD SECURE VIRTUAL KEYBOARD
+|   |     ADD WEB APP
+|   |     ADD MACHINE CERTIFICATE CHECKS
+|   |     ADD PROTECTED WORKSPACE
+		</pre></div><div class="section" title="5.4. Memory"><div class="titlepage"><div><div><h3 class="title"><a id="id1319360"></a>5.4. Memory</h3></div></div></div><pre class="screen">
+[root@F5:Active] config # b memory show
+MEMORY STATISTICS --
+|    (Host) Total = 7.827GB   Used = 7.666GB
+|    (TMM)  Total = 6.208GB   Used = 108.7MB
+|    SUBSYSTEM                        Alloc     Max    Obj size
+|     TCP SNACK                       0  0  40
+|     TCP lost segment                0  0  40
+|     access_session_batch            0  0  80
+|     access_session_items            0  0  80
+|     access_uri_info                 0  0  4120
+|     access_whitelist_uri_entries    61568  61568  104
+|     acl (variable)                  4224  4224  1
+|     acl_item                        0  0  32
+|     auth (variable)                 2336  2336  1
+|     cmp (variable)                  256  256  1
+|     cn_key                          0  0  1280
+|     connflow                        4608  18432  256
+|     dedup_xact_op_ctx               0  0  48
+|     devbuf (variable)               376352  376352  1
+|     dnssec_pkt                      0  0  40
+|     dnssec_rrsig                    0  0  4168
+|     drop_policy                     704  704  88
+|     filter (variable)               360488  389576  1
+|     fred_flow_data                  0  0  32
+|     http_header_dictionary_cache    0  0  608
+|     ifc                             5376  5376  256
+|     inst_entry                      0  0  56
+|     isession-&gt;hst_cache             0  0  312
+|     isession_virt_compress_stats    0  0  32
+|     laddr                           3872  3872  88
+|     leasepool                       0  0  80
+|     leasepool_mbr                   0  0  80
+|     listener (variable)             832  960  1
+|     loop_nexthop                    0  0  80
+|     mco db (variable)               40.00M  40.00M  1
+|     mds_btree_nodes                 1216  1216  152
+|     mds_conn                        0  0  88
+|     memcache request items          0  0  320
+|     mpi_request                     10304  10528  56
+|     neighbor_advertiser_entry       0  1344  64
+|     net_ip                          2720  2720  40
+|     peer_route                      0  0  104
+|     persist                         0  448  112
+|     plugin (variable)               0  0  1
+|     pool (variable)                  70464   70464  1
+|     poolmbr_ratio                   0  0  40
+|     pq                              0  0  24
+|     profile (variable)              830560  831520  1
+|     proxy exclude (variable)        0  0  1
+|     proxy_connect_data              0  576  144
+|     proxy_oob                       0  0  40
+|     pva                             0  0  192
+|     ramcache (variable)             1.240M  1.256M  1
+|     ramcache entity                 2600  3016  104
+|     rate shaper (variable)          0  0  1
+|     rateclass_queue                 0  0  144
+|     red_cb                          0  0  88
+|     resolv (variable)               896  896  1
+|     resolv_query                    0  0  104
+|     rt_entry                        9216  9728  128
+|     rules (variable)                5312  5312  1
+|     session                         320  320  160
+|     shaper_domain                   96  96  24
+|     snat                            0  0  64
+|     ssl_basic                       0  0  1928
+|     ssl_hs                          0  0  17048
+|     ssl_profile                     0  0  4320
+|     ssl_session                     0  0  200
+|     sso (variable)                  4224  4224  1
+|     string cache (variable)         262336  262336  1
+|     tcl_ip_addr                     320  640  40
+|     temp (variable)                 529824  532056  1
+|     traffic class tables            0  0  4408
+|     umem (variable)                 1.930M  1.930M  1
+|     wa_resource_item                0  0  112
+|     web_application                 0  0  88
+|     xfrag                           41.37M  46.49M  2048
+|     web_application_item            0  0  32
+|     web application (variable)      4224  4224  1
+|     vaddr                           4320  4608  72
+|     tunnel_nexthop                  0  0  64
+|     traffic class                   0  0  72
+|     tcl_strcache                    128  128  32
+|     tcl (variable)                  5.534M  5.535M  1
+|     sso_config                      0  0  128
+|     ssl_shim                        0  0  136
+|     ssl_rd                          0  0  40
+|     ssl_keys                        0  0  1688
+|     ssl_cn                          0  0  760
+|     ssl (variable)                  4.347M  4.371M  1
+|     shared_var_context              256  256  64
+|     session (variable)              672  672  1
+|     selfip                          3200  3200  80
+|     rtm_internal                    128  2432  128
+|     rt_dom                          0  0  48
+|     resolv_cache                    0  0  64
+|     regex (variable)                0  0  1
+|     rateshaper                      0  0  32
+|     rateclass                       0  0  320
+|     ramcache resource               1800  2088  72
+|     ramcache document               5600  6496  224
+|     queueing_method                 576  576  72
+|     proxy_tuple                     0  0  40
+|     proxy_ctx                       0  352  88
+|     proxy_common_cache              0  0  176
+|     proxy (variable)                43840  45440  1
+|     private (variable)              0  0  1
+|     poolprio                        0  0  56
+|     poolmbr                         18496  18496  272
+|     pool                            5920  5920  296
+|     persistence (variable)          0  0  1
+|     peer_woc                        0  0  232
+|     packet                          395520  765312  192
+|     neighbor_entry                  28896   65632  112
+|     nat                             0  0  24
+|     method (variable)               0  0  1
+|     memcache (variable)             160  160  1
+|     mds_cache                       0  0  2416
+|     mcp (variable)                  6888  106312  1
+|     mac_entry                       0  0  32
+|     local_route                     0  0  104
+|     listener                        153600  154880  320
+|     leasepool (variable)            1.016M  1.016M  1
+|     lasthop                         1792  2880  64
+|     isession_virt_stat              0  0  32
+|     isession_abort_stat             0  0  32
+|     isession (variable)             147776  147776  1
+|     ifnet (variable)                5.904M  5.904M  1
+|     http_persist                    0  0  72
+|     http_data                       0  5656  808
+|     fred_cb                         0  0  40
+|     errdefs (variable)              0  0  1
+|     dnssec_sig_cache                0  0  64
+|     dnssec_rrset                    0  0  48
+|     dns_session                     0  0  32
+|     deflate (variable)              0  0  1
+|     dedup (variable)                0  0  1
+|     cn_req                          0  3424  856
+|     cn_io                           0  0  1168
+|     cipher_rsa_io                   0  0  2320
+|     address_entry                   0  0  40
+|     acl_entry                       0  0  112
+|     acl                             0  0  56
+|     access_uuid_entries             0  0  48
+|     access_session_variables        0  0  288
+|     access_session_data             0  0  80
+|     TCP segment                     0  12864  64
+|     TCP SYN cache                   0  288  72
+|     TCP SACK                        0  120  40
+|     CallFrame                       704  704  176
+		</pre></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ch30s04.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="bigpipe.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ch30s06.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">4. Network </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 6. 查看连接数</td></tr></table></div><script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script><script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-2033740-1");
+pageTracker._trackPageview();
+} catch(err) {}</script></body></html>
