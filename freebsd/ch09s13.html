@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>13. ZFS Snapshots and Clones</title><link rel="stylesheet" href="docbook.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.75.2" /><link rel="home" href="index.html" title="Netkiller FreeBSD 手札" /><link rel="up" href="zfs.html" title="Chapter 9. ZFS" /><link rel="prev" href="ch09s12.html" title="12. Backing Up and Restoring ZFS Data" /><link rel="next" href="ch09s14.html" title="14. Emulated Volumes" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">13. ZFS Snapshots and Clones</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ch09s12.html">Prev</a> </td><th width="60%" align="center">Chapter 9. ZFS</th><td width="20%" align="right"> <a accesskey="n" href="ch09s14.html">Next</a></td></tr></table><hr /><table width="100%" border="0"><tr><td align="left"><a href="http://netkiller.sourceforge.net/">Home</a> | 
+		<a href="http://netkiller.github.com/">Mirror</a> |		
+		<a href="/search.html">Search</a></td><td align="right"><form id="searchbox_008589143145807374698:f5uprauilyy" action="/search.html"><input type="hidden" name="cx" value="008589143145807374698:f5uprauilyy" /><input type="hidden" name="cof" value="FORID:11" /><input name="q" type="text" size="25" style="border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; border-top-style: solid; border-right-style: solid; border-bottom-style: solid; border-left-style: solid; border-top-color: rgb(126, 157, 185); border-right-color: rgb(126, 157, 185); border-bottom-color: rgb(126, 157, 185); border-left-color: rgb(126, 157, 185); padding-top: 2px; padding-right: 2px; padding-bottom: 2px; padding-left: 2px; background-image: url(http://www.google.com/cse/intl/en/images/google_custom_search_watermark.gif); background-attachment: initial; background-origin: initial; background-clip: initial; background-color: rgb(255, 255, 255); background-position: 0% 50%; background-repeat: no-repeat no-repeat; " /><input type="submit" name="sa" value="Search" /><input name="siteurl" type="hidden" value="http://netkiller.sourceforge.net/" /></form><script type="text/javascript" src="http://www.google.com/coop/cse/brand?form=searchbox_008589143145807374698%3Af5uprauilyy"></script></td></tr></table></div><div class="section" title="13. ZFS Snapshots and Clones"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id1443204"></a>13. ZFS Snapshots and Clones</h2></div></div></div>
+		
+		<div class="section" title="13.1. ZFS Snapshots"><div class="titlepage"><div><div><h3 class="title"><a id="id1443209"></a>13.1. ZFS Snapshots</h3></div></div></div>
+			
+			<p>filesystem@snapname, volume@snapname</p>
+			<div class="section" title="13.1.1. Creating ZFS Snapshots"><div class="titlepage"><div><div><h4 class="title"><a id="id1443220"></a>13.1.1. Creating ZFS Snapshots</h4></div></div></div>
+				
+				<p>The following example creates a snapshot of tank/neo that is named friday.</p>
+				<pre class="screen">
+freebsd# zfs snapshot tank/neo@friday
+				</pre>
+			</div>
+			<div class="section" title="13.1.2. Destroying ZFS Snapshots"><div class="titlepage"><div><div><h4 class="title"><a id="id1443238"></a>13.1.2. Destroying ZFS Snapshots</h4></div></div></div>
+				
+				<p>Snapshots are destroyed by using the zfs destroy command.</p>
+				<pre class="screen">
+# zfs destroy tank/home/ahrens@friday
+				</pre>
+			</div>
+			<div class="section" title="13.1.3. Renaming ZFS Snapshots"><div class="titlepage"><div><div><h4 class="title"><a id="id1443254"></a>13.1.3. Renaming ZFS Snapshots</h4></div></div></div>
+				
+				<pre class="screen">
+# zfs rename tank/home/cindys@111205 pool/home/cindys@today				
+				</pre>
+			</div>
+			<div class="section" title="13.1.4. Displaying and Accessing ZFS Snapshots"><div class="titlepage"><div><div><h4 class="title"><a id="id1443265"></a>13.1.4. Displaying and Accessing ZFS Snapshots</h4></div></div></div>
+				
+				<pre class="screen">
+freebsd# zfs list -t snapshot
+NAME              USED  AVAIL  REFER  MOUNTPOINT
+tank/neo@friday      0      -    18K  -			
+				</pre>
+			</div>
+			<div class="section" title="13.1.5. Rolling Back to a Snapshot"><div class="titlepage"><div><div><h4 class="title"><a id="id1443278"></a>13.1.5. Rolling Back to a Snapshot</h4></div></div></div>
+				
+				<pre class="screen">
+# zfs rollback pool/home/ahrens@tuesday
+cannot rollback to 'pool/home/ahrens@tuesday': more recent snapshots exist
+use '-r' to force deletion of the following snapshots:
+pool/home/ahrens@wednesday
+pool/home/ahrens@thursday
+# zfs rollback -r pool/home/ahrens@tuesday
+				</pre>
+			</div>
+		</div>
+		<div class="section" title="13.2. ZFS Clones"><div class="titlepage"><div><div><h3 class="title"><a id="id1443285"></a>13.2. ZFS Clones</h3></div></div></div>
+			
+			<div class="section" title="13.2.1. Creating a Clone"><div class="titlepage"><div><div><h4 class="title"><a id="id1443296"></a>13.2.1. Creating a Clone</h4></div></div></div>
+				
+				<pre class="screen">
+# zfs clone pool/ws/gate@yesterday pool/home/ahrens/bug123
+
+# zfs snapshot projects/newproject@today
+# zfs clone projects/newproject@today projects/teamA/tempuser
+# zfs set sharenfs=on projects/teamA/tempuser
+# zfs set quota=5G projects/teamA/tempuser
+				</pre>
+			</div>
+			<div class="section" title="13.2.2. Destroying a Clone"><div class="titlepage"><div><div><h4 class="title"><a id="id1443310"></a>13.2.2. Destroying a Clone</h4></div></div></div>
+				
+				<p>ZFS clones are destroyed with the zfs destroy command.</p>
+				<pre class="screen">
+# zfs destroy pool/home/ahrens/bug123
+				</pre>
+				<p>Clones must be destroyed before the parent snapshot can be destroyed.</p>
+			</div>
+		</div>
+	</div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ch09s12.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="zfs.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="ch09s14.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">12. Backing Up and Restoring ZFS Data </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> 14. Emulated Volumes</td></tr></table></div><script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script><script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-2033740-1");
+pageTracker._trackPageview();
+} catch(err) {}</script></body></html>
