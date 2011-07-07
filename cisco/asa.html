@@ -175,4 +175,107 @@ ciscoasa(config)# dhcpd enable management
 ciscoasa(config)#
 		</pre>
 	</div>
+	<div class="section" title="2.3. 接口配置"><div class="titlepage"><div><div><h3 class="title"><a id="asa.interface"></a>2.3. 接口配置</h3></div></div></div>
+		
+		<pre class="screen">
+ciscoasa(config)# interface GigabitEthernet0/0
+ciscoasa(config-if)# nameif outside
+INFO: Security level for "outside" set to 0 by default.
+ciscoasa(config-if)# ip address 172.16.0.2 255.255.255.0
+ciscoasa(config-if)# no shutdown
+
+
+ciscoasa(config-if)# interface GigabitEthernet1/0
+ciscoasa(config-if)# nameif inside
+INFO: Security level for "inside" set to 100 by default.
+ciscoasa(config-if)# ip address 192.168.3.254 255.255.255.0
+ciscoasa(config-if)# no shutdown
+
+ciscoasa(config-if)# show ip
+System IP Addresses:
+Interface                Name                   IP address      Subnet mask     Method
+GigabitEthernet0/0       outside                172.16.0.2      255.255.255.0   manual
+Management0/0            management             192.168.1.1     255.255.255.0   manual
+GigabitEthernet1/0       inside                 192.168.3.254   255.255.255.0   manual
+Current IP Addresses:
+Interface                Name                   IP address      Subnet mask     Method
+GigabitEthernet0/0       outside                172.16.0.2      255.255.255.0   manual
+Management0/0            management             192.168.1.1     255.255.255.0   manual
+GigabitEthernet1/0       inside                 192.168.3.254   255.255.255.0   manual
+		</pre>
+	</div>
+	<div class="section" title="2.4. route"><div class="titlepage"><div><div><h3 class="title"><a id="asa.route"></a>2.4. route</h3></div></div></div>
+		
+		<pre class="screen">
+ciscoasa(config)# route outside 0 0 172.16.0.1
+show route
+		</pre>
+	</div>
+	<div class="section" title="2.5. 配置NAT映射"><div class="titlepage"><div><div><h3 class="title"><a id="asa.nat"></a>2.5. 配置NAT映射</h3></div></div></div>
+		
+		<p>把inside区域的所有地址进行映射，映射为outside端口的那个公网IP地址。</p>
+		<pre class="screen">
+globle (outside) 1 interface
+nat (inside) 1 0.0.0.0 0.0.0.0
+		</pre>
+		<p>指定其他IP</p>
+		<pre class="screen">
+asa(config)#nat(inside) 1 192.168.1.1 255.255.255.0
+asa(config)#global(outside) 1 222.240.254.193 255.255.255.248
+		</pre>
+		<p>定义的地址池</p>
+		<pre class="screen">
+asa(config)#nat (inside) 0 192.168.1.1 255.255.255.255     //表示192.168.1.1这个地址不需要转换。直接转发出去。
+asa(config)#global (outside) 1 133.1.0.1-133.1.0.14      //定义的地址池
+asa(config)#nat (inside) 1 0 0                           //0 0表示转换网段中的所有地址。定义内部网络地址将要翻译成的全局地址或地址范围
+		</pre>
+		<p>我的配置</p>
+		<pre class="screen">
+global (outside) 1 interface
+nat (inside) 1 172.16.1.0 255.255.255.0 0 0
+		</pre>
+		<div class="section" title="2.5.1. IP 映射"><div class="titlepage"><div><div><h4 class="title"><a id="asa.nat.ip"></a>2.5.1. IP 映射</h4></div></div></div>
+			
+			<pre class="screen">
+static (inside, outside) 222.24.24.2 192.168.1.2
+static (inside, outside) 222.24.24.2 192.168.1.2 4096 32
+			</pre>
+			<p>后面的4096为限制连接数，32为限制的半开连接数。</p>
+			<pre class="screen">
+ asa(config)#static (dmz,outside) 13.1.0.2 10.65.1.102        ;静态NAT
+ asa(config)#static (inside,dmz) 10.66.1.20 10.66.1.20        ;静态NAT
+			</pre>
+		</div>
+		<div class="section" title="2.5.2. 端口映射"><div class="titlepage"><div><div><h4 class="title"><a id="asa.nat.port"></a>2.5.2. 端口映射</h4></div></div></div>
+			
+			<pre class="screen">
+static (inside,outside) tcp 61.144.203.40 80 192.168.0.116 80 netmask 255.255.255.255 0 0
+static (inside,outside) tcp 61.144.203.40 20 192.168.0.116 20 netmask 255.255.255.255 0 0
+			</pre>
+		</div>
+	</div>
+	<div class="section" title="2.6. acl"><div class="titlepage"><div><div><h3 class="title"><a id="asa.acl"></a>2.6. acl</h3></div></div></div>
+		
+		<pre class="screen">
+access-list acl permit ip any any
+access-group acl in interface outside
+
+Access-list 101 permit tcp any host 222.240.254.194 eq www
+Access-group 101 in interface outside
+
+asa(config)#access-list 101 permit ip any host 133.1.0.1 eq www;设置ACL
+asa(config)#access-list 101 permit ip any host 133.1.0.2 eq ftp;设置ACL
+asa(config)#access-list 101 deny ip any any                    ;设置ACL
+asa(config)#access-group 101 in interface outside     ;将ACL应用在outside端口
+		</pre>
+	</div>
+	<div class="section" title="2.7. VPN"><div class="titlepage"><div><div><h3 class="title"><a id="vpn"></a>2.7. VPN</h3></div></div></div>
+		
+		<div class="section" title="2.7.1. site to site"><div class="titlepage"><div><div><h4 class="title"><a id="id1412342"></a>2.7.1. site to site</h4></div></div></div>
+			
+		</div>
+		<div class="section" title="2.7.2. "><div class="titlepage"><div><div><h4 class="title"><a id="id1412350"></a>2.7.2. </h4></div></div></div>
+			
+		</div>
+	</div>
 </div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="firewall.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="firewall.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="experiment.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 6 章 Firewall </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 7 章 network experiment</td></tr></table></div></body></html>
