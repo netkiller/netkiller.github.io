@@ -37,7 +37,7 @@ USERCTL="no"
 NM_CONTROLLED="no"
 EOF
 
-cat &gt;&gt; /etc/sysconfig/network-scripts/ifcfg-bond0 &lt;&lt;EOF
+cat &gt; /etc/sysconfig/network-scripts/ifcfg-bond0 &lt;&lt;EOF
 DEVICE="bond0"
 ONBOOT="yes"
 BOOTPROTO="none"
@@ -49,13 +49,20 @@ USERCTL="no"
 NM_CONTROLLED="no"
 EOF
 
-ip route add default via 172.16.0.254 dev bond0
-
 modprobe bonding mode=balance-alb miimon=1000
 ifconfig bond0 up
-ifconfig bond0 172.16.0.4 netmask 255.255.255.0 up
+ifconfig bond0 172.16.0.6 netmask 255.255.255.0 up
 ifenslave bond0 eth0
 ifenslave bond0 eth1
+ip route add default via 172.16.0.254 dev bond0
+
+cat &gt;&gt; /etc/rc.local &lt;&lt;EOF
+#-------------------------
+ifenslave bond0 eth0
+ifenslave bond0 eth1
+ip route add default via 172.16.0.254 dev bond0
+#-------------------------
+EOF
 
 more /proc/net/bonding/bond0
 		
