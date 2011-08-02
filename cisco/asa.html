@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>2. Cisco ASA Firewall</title><link rel="stylesheet" href="/docbook.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.75.2" /><link rel="home" href="index.html" title="Netkiller Cisco IOS 手札" /><link rel="up" href="firewall.html" title="第 6 章 Firewall" /><link rel="prev" href="firewall.html" title="第 6 章 Firewall" /><link rel="next" href="experiment.html" title="第 7 章 network experiment" /><script xmlns="" type="text/javascript">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>2. Cisco ASA Firewall</title><link rel="stylesheet" href="/docbook.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.75.2" /><link rel="home" href="index.html" title="Netkiller Cisco IOS 手札" /><link rel="up" href="firewall.html" title="第 6 章 Firewall" /><link rel="prev" href="firewall.html" title="第 6 章 Firewall" /><link rel="next" href="firewall.show.html" title="3. 查看命令" /><script xmlns="" type="text/javascript">
 
   var _gaq = _gaq || [];
   _gaq.push(['_setAccount', 'UA-11694057-1']);
@@ -15,7 +15,7 @@
     var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
   })();
 
-</script></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">2. Cisco ASA Firewall</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="firewall.html">上一页</a> </td><th width="60%" align="center">第 6 章 Firewall</th><td width="20%" align="right"> <a accesskey="n" href="experiment.html">下一页</a></td></tr></table><hr /></div><table xmlns="" width="100%" border="0"><tr><td align="left"><a href="http://netkiller.sourceforge.net/">Home</a> |
+</script></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">2. Cisco ASA Firewall</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="firewall.html">上一页</a> </td><th width="60%" align="center">第 6 章 Firewall</th><td width="20%" align="right"> <a accesskey="n" href="firewall.show.html">下一页</a></td></tr></table><hr /></div><table xmlns="" width="100%" border="0"><tr><td align="left"><a href="http://netkiller.sourceforge.net/">Home</a> |
                 <a href="http://netkiller.github.com/">Mirror</a> |
                 <a href="/search.html">Search</a></td><td align="right"><form id="searchbox_008589143145807374698:f5uprauilyy" action="/search.html"><input type="hidden" name="cx" value="008589143145807374698:f5uprauilyy" /><input type="hidden" name="cof" value="FORID:11" /><input name="q" type="text" size="25" style="border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; border-top-style: solid; border-right-style: solid; border-bottom-style: solid; border-left-style: solid; border-top-color: rgb(126, 157, 185); border-right-color: rgb(126, 157, 185); border-bottom-color: rgb(126, 157, 185); border-left-color: rgb(126, 157, 185); padding-top: 2px; padding-right: 2px; padding-bottom: 2px; padding-left: 2px; background-image: url(http://www.google.com/cse/intl/en/images/google_custom_search_watermark.gif); background-attachment: initial; background-origin: initial; background-clip: initial; background-color: rgb(255, 255, 255); background-position: 0% 50%; background-repeat: no-repeat no-repeat; " /><input type="submit" name="sa" value="Search" /><input name="siteurl" type="hidden" value="http://netkiller.sourceforge.net/" /></form><script type="text/javascript" src="http://www.google.com/coop/cse/brand?form=searchbox_008589143145807374698%3Af5uprauilyy"></script></td></tr></table><div class="section" title="2. Cisco ASA Firewall"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="asa"></a>2. Cisco ASA Firewall</h2></div></div></div>
 	
@@ -211,7 +211,77 @@ ciscoasa(config)# route outside 0 0 172.16.0.1
 show route
 		</pre>
 	</div>
-	<div class="section" title="2.5. 配置NAT映射"><div class="titlepage"><div><div><h3 class="title"><a id="asa.nat"></a>2.5. 配置NAT映射</h3></div></div></div>
+	<div class="section" title="2.5. ACL"><div class="titlepage"><div><div><h3 class="title"><a id="asa.acl"></a>2.5. ACL</h3></div></div></div>
+		
+		<p>白名单规则</p>
+		<pre class="screen">
+access-list outside extended permit ip any any
+access-list outside extended permit icmp any any
+access-list outside extended permit tcp any any
+access-list outside extended permit udp any any
+access-list outside deny ip any host 192.168.0.1
+access-list outside deny ip any host 192.168.0.2 eq www
+access-group outside in interface outside
+		</pre>
+		<p>黑名单规则</p>
+		<pre class="screen">
+access-list outside extended permit icmp any any
+access-list outside deny ip any any
+access-list outside extended permit tcp any any eq www
+access-list outside extended permit tcp any any eq https
+access-list outside extended permit tcp any host 28.6.7.23 eq ftp
+access-list outside permit tcp any host 202.96.134.133 eq www
+access-list outside permit ip any host 133.11.20.21 eq ftp
+access-group outside in interface outside
+		</pre>
+		<pre class="screen">
+ciscoasa(config)# access-list outside permit icmp any any
+ciscoasa(config)# access-group outside in interface outside
+ciscoasa(config)# show access-list
+access-list cached ACL log flows: total 0, denied 0 (deny-flow-max 4096)
+            alert-interval 300
+access-list outside; 1 elements; name hash: 0x1a47dec4
+access-list outside line 1 extended permit icmp any any (hitcnt=0) 0x390a154c
+		</pre>
+		<p>extended关键字可能省略 access-list outside permit ip any any，另外我比较喜欢用nameif做acl 名称，这样比较直观如： outside，你也可以使用传统100，101什么的</p>
+	</div>
+	<div class="section" title="2.6. service-policy"><div class="titlepage"><div><div><h3 class="title"><a id="service-policy"></a>2.6. service-policy</h3></div></div></div>
+		
+		<pre class="screen">
+ciscoasa(config)# access-list TEST200K permit ip host x.x.x.x any
+ciscoasa(config)# class-map internet
+ciscoasa(config-cmap)# match access-list TEST200K
+
+ciscoasa(config)# policy-map out-police
+ciscoasa(config-pmap)# class internet
+
+ciscoasa(config-pmap-c)# police output 200000 1000 conform-action transmit exceed-action drop
+
+ciscoasa(config)# service-policy out-police interface outside
+		</pre>
+		<p>使用NAT映射后应该配置到inside接口上</p>
+		<pre class="screen">
+access-list 200k extended permit ip any host x.x.x.x
+access-list 500k extended permit ip any host x.x.x.x
+
+class-map 200k
+    match access-list 200k
+policy-map limit200k
+    class 200k
+        police input 2096000 1048
+        police output 2096000 1048
+service-policy limit200k interface inside
+
+class-map 500k
+    match access-list 500k
+policy-map limit500k
+    class 500k
+        police input 2096000 1048
+        police output 2096000 1048
+service-policy limit500k interface inside
+		</pre>
+	</div>
+	<div class="section" title="2.7. 配置NAT映射"><div class="titlepage"><div><div><h3 class="title"><a id="asa.nat"></a>2.7. 配置NAT映射</h3></div></div></div>
 		
 		<p>把inside区域的所有地址进行映射，映射为outside端口的那个公网IP地址。</p>
 		<pre class="screen">
@@ -234,11 +304,11 @@ asa(config)#nat (inside) 1 0 0                           //0 0表示转换网段
 global (outside) 1 interface
 nat (inside) 1 172.16.1.0 255.255.255.0 0 0
 		</pre>
-		<div class="section" title="2.5.1. IP 映射"><div class="titlepage"><div><div><h4 class="title"><a id="asa.nat.ip"></a>2.5.1. IP 映射</h4></div></div></div>
+		<div class="section" title="2.7.1. IP 映射"><div class="titlepage"><div><div><h4 class="title"><a id="asa.nat.ip"></a>2.7.1. IP 映射</h4></div></div></div>
 			
 			<pre class="screen">
-static (inside, outside) 222.24.24.2 192.168.1.2
-static (inside, outside) 222.24.24.2 192.168.1.2 4096 32
+static (inside,outside) 222.24.24.2 192.168.1.2
+static (inside,outside) 222.24.24.2 192.168.1.2 4096 32
 			</pre>
 			<p>后面的4096为限制连接数，32为限制的半开连接数。</p>
 			<pre class="screen">
@@ -246,36 +316,73 @@ static (inside, outside) 222.24.24.2 192.168.1.2 4096 32
  asa(config)#static (inside,dmz) 10.66.1.20 10.66.1.20        ;静态NAT
 			</pre>
 		</div>
-		<div class="section" title="2.5.2. 端口映射"><div class="titlepage"><div><div><h4 class="title"><a id="asa.nat.port"></a>2.5.2. 端口映射</h4></div></div></div>
+		<div class="section" title="2.7.2. 端口映射"><div class="titlepage"><div><div><h4 class="title"><a id="asa.nat.port"></a>2.7.2. 端口映射</h4></div></div></div>
 			
 			<pre class="screen">
 static (inside,outside) tcp 61.144.203.40 80 192.168.0.116 80 netmask 255.255.255.255 0 0
 static (inside,outside) tcp 61.144.203.40 20 192.168.0.116 20 netmask 255.255.255.255 0 0
+static (inside,outside) 221.221.147.195 192.168.0.10 netmask 255.255.255.255 tcp 8089 0
 			</pre>
 		</div>
 	</div>
-	<div class="section" title="2.6. acl"><div class="titlepage"><div><div><h3 class="title"><a id="asa.acl"></a>2.6. acl</h3></div></div></div>
+	<div class="section" title="2.8. timeout"><div class="titlepage"><div><div><h3 class="title"><a id="asa.timeout"></a>2.8. timeout</h3></div></div></div>
 		
 		<pre class="screen">
-access-list acl permit ip any any
-access-group acl in interface outside
-
-Access-list 101 permit tcp any host 222.240.254.194 eq www
-Access-group 101 in interface outside
-
-asa(config)#access-list 101 permit ip any host 133.1.0.1 eq www;设置ACL
-asa(config)#access-list 101 permit ip any host 133.1.0.2 eq ftp;设置ACL
-asa(config)#access-list 101 deny ip any any                    ;设置ACL
-asa(config)#access-group 101 in interface outside     ;将ACL应用在outside端口
+timeout xlate 3:00:00
+timeout conn 1:00:00 half-closed 0:10:00 udp 0:02:00 icmp 0:00:02
+timeout sunrpc 0:10:00 h323 0:05:00 h225 1:00:00 mgcp 0:05:00 mgcp-pat 0:05:00
+timeout sip 0:30:00 sip_media 0:02:00 sip-invite 0:03:00 sip-disconnect 0:02:00
+timeout sip-provisional-media 0:02:00 uauth 0:05:00 absolute
+timeout tcp-proxy-reassembly 0:01:00
 		</pre>
 	</div>
-	<div class="section" title="2.7. VPN"><div class="titlepage"><div><div><h3 class="title"><a id="vpn"></a>2.7. VPN</h3></div></div></div>
+	<div class="section" title="2.9. DHCP"><div class="titlepage"><div><div><h3 class="title"><a id="asa.dhcpd"></a>2.9. DHCP</h3></div></div></div>
 		
-		<div class="section" title="2.7.1. site to site"><div class="titlepage"><div><div><h4 class="title"><a id="id1412342"></a>2.7.1. site to site</h4></div></div></div>
+		<pre class="screen">
+dhcpd address 192.168.1.100-192.168.1.199 inside 					设置DHCP服务器地址池
+dhcpd dns 208.67.222.222 208.67.220.220 interface inside 			设置DNS服务器到内网端口
+dhcpd enable inside 												设置DHCP应用到内网端口
+		</pre>
+	</div>
+	<div class="section" title="2.10. 用户登录"><div class="titlepage"><div><div><h3 class="title"><a id="asa.login"></a>2.10. 用户登录</h3></div></div></div>
+		
+		<p>匹配地址 	172.16.0.1 255.255.255.255</p>
+		<p>匹配网段	172.16.0.0 255.255.255.0</p>
+		<p>所有地址	0.0.0.0 0.0.0.0</p>
+		<div class="section" title="2.10.1. Telnet"><div class="titlepage"><div><div><h4 class="title"><a id="id1188592"></a>2.10.1. Telnet</h4></div></div></div>
+			
+			<pre class="screen">
+username cisco password cisco
+aaa authentication telnet console LOCAL
+telnet 0.0.0.0 0.0.0.0 inside
+telnet timeout 5
+			</pre>
+		</div>
+		<div class="section" title="2.10.2. SSH"><div class="titlepage"><div><div><h4 class="title"><a id="id1188603"></a>2.10.2. SSH</h4></div></div></div>
+			
+			<pre class="screen">
+1) username xxxx password xxxx
+2) passwd xxxxx
+3) ssh x.x.x.x x.x.x.x {inside/outside}
+4) crypto key generate rsa modulus {512/768/1024/2048}
+5) aaa authentication ssh console LOCAL
+			</pre>
+			<pre class="screen">
+username cisco password cisco
+passwd cisco
+ssh 172.16.0.1 255.255.255.255 outside
+crypto key generate rsa modulus 2048
+aaa authentication ssh console LOCAL
+			</pre>
+		</div>
+	</div>
+	<div class="section" title="2.11. VPN"><div class="titlepage"><div><div><h3 class="title"><a id="vpn"></a>2.11. VPN</h3></div></div></div>
+		
+		<div class="section" title="2.11.1. site to site"><div class="titlepage"><div><div><h4 class="title"><a id="id1188629"></a>2.11.1. site to site</h4></div></div></div>
 			
 		</div>
-		<div class="section" title="2.7.2. "><div class="titlepage"><div><div><h4 class="title"><a id="id1412350"></a>2.7.2. </h4></div></div></div>
+		<div class="section" title="2.11.2. "><div class="titlepage"><div><div><h4 class="title"><a id="id1188635"></a>2.11.2. </h4></div></div></div>
 			
 		</div>
 	</div>
-</div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="firewall.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="firewall.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="experiment.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 6 章 Firewall </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 7 章 network experiment</td></tr></table></div></body></html>
+</div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="firewall.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="firewall.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="firewall.show.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 6 章 Firewall </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 3. 查看命令</td></tr></table></div></body></html>
