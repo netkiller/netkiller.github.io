@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>5. 证书转换</title><link rel="stylesheet" href="/docbook.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.75.2" /><link rel="home" href="index.html" title="Netkiller Security 手札" /><link rel="up" href="openssl.html" title="Chapter 15. OpenSSL" /><link rel="prev" href="openssl.phrase.html" title="4. 去除私钥的密码" /><link rel="next" href="keytool.html" title="Chapter 16. Java - keytool" /><script xmlns="" type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-11694057-1']);
+  _gaq.push(['_setDomainName', 'netkiller.sourceforge.net']);
+  _gaq.push(['_setAllowHash', 'false']);
+  _gaq.push(['_setAllowLinker', true]);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">5. 证书转换</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="openssl.phrase.html">Prev</a> </td><th width="60%" align="center">Chapter 15. OpenSSL</th><td width="20%" align="right"> <a accesskey="n" href="keytool.html">Next</a></td></tr></table><hr /></div><table xmlns="" width="100%" border="0"><tr><td align="left"><a href="http://netkiller.sourceforge.net/">Home</a> |
+                <a href="http://netkiller.github.com/">Mirror</a> |
+                <a href="/search.html">Search</a></td><td align="right"><form id="searchbox_008589143145807374698:f5uprauilyy" action="/search.html"><input type="hidden" name="cx" value="008589143145807374698:f5uprauilyy" /><input type="hidden" name="cof" value="FORID:11" /><input name="q" type="text" size="25" style="border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; border-top-style: solid; border-right-style: solid; border-bottom-style: solid; border-left-style: solid; border-top-color: rgb(126, 157, 185); border-right-color: rgb(126, 157, 185); border-bottom-color: rgb(126, 157, 185); border-left-color: rgb(126, 157, 185); padding-top: 2px; padding-right: 2px; padding-bottom: 2px; padding-left: 2px; background-image: url(http://www.google.com/cse/intl/en/images/google_custom_search_watermark.gif); background-attachment: initial; background-origin: initial; background-clip: initial; background-color: rgb(255, 255, 255); background-position: 0% 50%; background-repeat: no-repeat no-repeat; " /><input type="submit" name="sa" value="Search" /><input name="siteurl" type="hidden" value="http://netkiller.sourceforge.net/" /></form><script type="text/javascript" src="http://www.google.com/coop/cse/brand?form=searchbox_008589143145807374698%3Af5uprauilyy"></script></td></tr></table><div class="section" title="5. 证书转换"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id360679"></a>5. 证书转换</h2></div></div></div><div class="literallayout"><p><br />
+PKCS 全称是 Public-Key Cryptography Standards ，是由 RSA 实验室与其它安全系统开发商为促进公钥密码的发展而制订的一系列标准，PKCS 目前共发布过 15 个标准。 常用的有：<br />
+PKCS#7 Cryptographic Message Syntax Standard<br />
+PKCS#10 Certification Request Standard<br />
+PKCS#12 Personal Information Exchange Syntax Standard<br />
+X.509是常见通用的证书格式。所有的证书都符合为Public Key Infrastructure (PKI) 制定的 ITU-T X509 国际标准。<br />
+PKCS#7 常用的后缀是： .P7B .P7C .SPC<br />
+PKCS#12 常用的后缀有： .P12 .PFX<br />
+X.509 DER 编码(ASCII)的后缀是： .DER .CER .CRT<br />
+X.509 PAM 编码(Base64)的后缀是： .PEM .CER .CRT<br />
+.cer/.crt是用于存放证书，它是2进制形式存放的，不含私钥。<br />
+.pem跟crt/cer的区别是它以Ascii来表示。<br />
+pfx/p12用于存放个人证书/私钥，他通常包含保护密码，2进制方式<br />
+p10是证书请求<br />
+p7r是CA对证书请求的回复，只用于导入<br />
+p7b以树状展示证书链(certificate chain)，同时也支持单个证书，不含私钥。<br />
+		</p></div><div class="section" title="5.1. CA证书"><div class="titlepage"><div><div><h3 class="title"><a id="id360707"></a>5.1. CA证书</h3></div></div></div><p>用openssl创建CA证书的RSA密钥(PEM格式)：</p><pre class="screen">
+openssl genrsa -des3 -out ca.key 1024
+			</pre></div><div class="section" title="5.2. 创建CA证书有效期为一年"><div class="titlepage"><div><div><h3 class="title"><a id="id360722"></a>5.2. 创建CA证书有效期为一年</h3></div></div></div><p>用openssl创建CA证书(PEM格式,假如有效期为一年)：</p><pre class="screen">
+openssl req -new -x509 -days 365 -key ca.key -out ca.crt -config openssl.cnf
+			</pre><p>openssl是可以生成DER格式的CA证书的，最好用IE将PEM格式的CA证书转换成DER格式的CA证书。</p></div><div class="section" title="5.3. x509转换为pfx"><div class="titlepage"><div><div><h3 class="title"><a id="id360744"></a>5.3. x509转换为pfx</h3></div></div></div><pre class="screen">
+openssl pkcs12 -export -out server.pfx -inkey server.key -in server.crt
+			</pre></div><div class="section" title="5.4. PEM格式的ca.key转换为Microsoft可以识别的pvk格式"><div class="titlepage"><div><div><h3 class="title"><a id="id360757"></a>5.4. PEM格式的ca.key转换为Microsoft可以识别的pvk格式</h3></div></div></div><pre class="screen">
+pvk -in ca.key -out ca.pvk -nocrypt -topvk
+			</pre></div><div class="section" title="5.5. PKCS#12 到 PEM 的转换"><div class="titlepage"><div><div><h3 class="title"><a id="id360771"></a>5.5. PKCS#12 到 PEM 的转换</h3></div></div></div><pre class="screen">
+openssl pkcs12 -nocerts -nodes -in cert.p12 -out private.pem
+验证
+openssl pkcs12 -clcerts -nokeys -in cert.p12 -out cert.pem
+			</pre></div><div class="section" title="5.6. 从 PFX 格式文件中提取私钥格式文件 (.key)"><div class="titlepage"><div><div><h3 class="title"><a id="id360784"></a>5.6. 从 PFX 格式文件中提取私钥格式文件 (.key) </h3></div></div></div><pre class="screen">
+openssl pkcs12 -in mycert.pfx -nocerts -nodes -out mycert.key
+			</pre></div><div class="section" title="5.7. 转换 pem 到到 spc"><div class="titlepage"><div><div><h3 class="title"><a id="id360797"></a>5.7. 转换 pem 到到 spc</h3></div></div></div><pre class="screen">
+openssl crl2pkcs7 -nocrl -certfile venus.pem  -outform DER -out venus.spc
+			</pre><p>用 -outform -inform 指定 DER 还是 PAM 格式。例如：</p><pre class="screen">
+openssl x509 -in Cert.pem -inform PEM -out cert.der -outform DER
+			</pre></div><div class="section" title="5.8. PEM 到 PKCS#12 的转换"><div class="titlepage"><div><div><h3 class="title"><a id="id360821"></a>5.8. PEM 到 PKCS#12 的转换</h3></div></div></div><pre class="screen">
+openssl pkcs12 -export -in Cert.pem -out Cert.p12 -inkey key.pem
+			</pre><p>IIS 证书</p><pre class="screen">
+cd c:\openssl 　　　　　　　　　
+set OPENSSL_CONF=openssl.cnf 　　　　　　　　　
+openssl pkcs12 -export -out server.pfx -inkey server.key -in server.crt 　　　　　　　　　
+			</pre><p>server.key和server.crt文件是Apache的证书文件，生成的server.pfx用于导入IIS</p></div><div class="section" title="5.9. How to Convert PFX Certificate to PEM Format for SOAP"><div class="titlepage"><div><div><h3 class="title"><a id="id360850"></a>5.9. How to Convert PFX Certificate to PEM Format for SOAP</h3></div></div></div><pre class="screen">
+$ openssl pkcs12 -in test.pfx -out client.pem
+Enter Import Password:
+MAC verified OK
+Enter PEM pass phrase:
+Verifying - Enter PEM pass phrase:
+			</pre></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="openssl.phrase.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="openssl.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="keytool.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">4. 去除私钥的密码 </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> Chapter 16. Java - keytool </td></tr></table></div></body></html>
