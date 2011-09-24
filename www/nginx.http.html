@@ -1,0 +1,310 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>6. </title><link rel="stylesheet" href="/docbook.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.75.2" /><link rel="home" href="index.html" title="Netkiller Linux Web 手札" /><link rel="up" href="nginx.html" title="第 4 章 Nginx" /><link rel="prev" href="nginx.var.html" title="5. 可用的全局变量" /><link rel="next" href="tomcat.html" title="第 5 章 Tomcat 安装与配置" /><script xmlns="" type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-11694057-1']);
+  _gaq.push(['_setDomainName', 'netkiller.sourceforge.net']);
+  _gaq.push(['_setAllowHash', 'false']);
+  _gaq.push(['_setAllowLinker', true]);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">6. </th></tr><tr><td width="20%" align="left"><a accesskey="p" href="nginx.var.html">上一页</a> </td><th width="60%" align="center">第 4 章 Nginx</th><td width="20%" align="right"> <a accesskey="n" href="tomcat.html">下一页</a></td></tr></table><hr /></div><table xmlns="" width="100%" border="0"><tr><td align="left"><a href="http://netkiller.sourceforge.net/">Home</a> |
+                <a href="http://netkiller.github.com/">Mirror</a> |
+                <a href="/search.html">Search</a></td><td align="right"><form id="searchbox_008589143145807374698:f5uprauilyy" action="/search.html"><input type="hidden" name="cx" value="008589143145807374698:f5uprauilyy" /><input type="hidden" name="cof" value="FORID:11" /><input name="q" type="text" size="25" style="border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; border-top-style: solid; border-right-style: solid; border-bottom-style: solid; border-left-style: solid; border-top-color: rgb(126, 157, 185); border-right-color: rgb(126, 157, 185); border-bottom-color: rgb(126, 157, 185); border-left-color: rgb(126, 157, 185); padding-top: 2px; padding-right: 2px; padding-bottom: 2px; padding-left: 2px; background-image: url(http://www.google.com/cse/intl/en/images/google_custom_search_watermark.gif); background-attachment: initial; background-origin: initial; background-clip: initial; background-color: rgb(255, 255, 255); background-position: 0% 50%; background-repeat: no-repeat no-repeat; " /><input type="submit" name="sa" value="Search" /><input name="siteurl" type="hidden" value="http://netkiller.sourceforge.net/" /></form><script type="text/javascript" src="http://www.google.com/coop/cse/brand?form=searchbox_008589143145807374698%3Af5uprauilyy"></script></td></tr></table><div class="section" title="6. "><div class="titlepage"></div><div class="section" title="6.1. server"><div class="titlepage"><div><div><h3 class="title"><a id="nginx.http.server"></a>6.1. server</h3></div></div></div><div class="section" title="6.1.1. VirtualHost (虚拟主机)"><div class="titlepage"><div><div><h4 class="title"><a id="nginx.http.server.server_name"></a>6.1.1. VirtualHost (虚拟主机)</h4></div></div></div><pre class="screen">
+# cat /etc/nginx/conf.d/images.conf
+server {
+    listen       80;
+    server_name  images.example.com;
+
+    #charset koi8-r;
+    access_log  /var/log/nginx/images.access.log  main;
+
+    location / {
+        root   /www/images;
+        index  index.html index.htm;
+    }
+
+    #error_page  404              /404.html;
+
+    # redirect server error pages to the static page /50x.html
+    #
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html;
+    }
+
+    # proxy the PHP scripts to Apache listening on 127.0.0.1:80
+    #
+    #location ~ \.php$ {
+    #    proxy_pass   http://127.0.0.1;
+    #}
+
+    # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
+    #
+    #location ~ \.php$ {
+    #    root           html;
+    #    fastcgi_pass   127.0.0.1:9000;
+    #    fastcgi_index  index.php;
+    #    fastcgi_param  SCRIPT_FILENAME  /scripts$fastcgi_script_name;
+    #    include        fastcgi_params;
+    #}
+
+    # deny access to .htaccess files, if Apache's document root
+    # concurs with nginx's one
+    #
+    #location ~ /\.ht {
+    #    deny  all;
+    #}
+}
+			</pre><p>绑定多个域名</p><pre class="screen">
+server_name  images.example.com img1.example.com img2.example.com;
+			</pre><p>使用通配符匹配</p><pre class="screen">
+server_name  *.example.com
+server_name  www.*;
+			</pre><p>正则匹配</p><pre class="screen">
+server_name ~^(.+)\.example\.com$;
+server_name ~^(www\.)?(.+)$;
+			</pre></div><div class="section" title="6.1.2. location"><div class="titlepage"><div><div><h4 class="title"><a id="nginx.http.server.location"></a>6.1.2. location</h4></div></div></div><pre class="screen">
+    location / {
+        root   /www;
+        index  index.html index.htm;
+    }
+			</pre></div></div><div class="section" title="6.2. expires"><div class="titlepage"><div><div><h3 class="title"><a id="nginx.expires"></a>6.2. expires</h3></div></div></div><pre class="screen">
+#图片类资源缓存5天，并且不记录请求日志
+location ~ .*\.(ico|gif|jpg|jpeg|png|bmp|swf)$
+{
+        expires      5d;
+        access_log off;
+}
+
+#css/js 缓存一天，不记录请求日志
+location ~ .*\.(js|css)?$
+{
+        expires      1d;
+        access_log off;
+}
+		</pre><pre class="screen">
+location ~ .*\.(htm|html|gif|jpg|jpeg|png|bmp|swf|ioc|rar|zip|txt|flv|mid|doc|ppt|pdf|xls|mp3|wma)$
+{
+    expires      30d;
+}
+location ~ .*\.(js|css)?$
+{
+    expires      1h;
+}
+		</pre><pre class="screen">
+location ~* \.(js|css|jpg|jpeg|gif|png|swf)$ {
+	if (-f $request_filename) {
+	   expires    1h;
+	   break;
+	}
+}
+		</pre></div><div class="section" title="6.3. access"><div class="titlepage"><div><div><h3 class="title"><a id="nginx.access"></a>6.3. access</h3></div></div></div><pre class="screen">
+#防止access文件被下载
+location ~ /\.ht {
+    deny  all;
+}
+		</pre><pre class="screen">
+location ~ ^/upload/.*\.php$
+{
+        deny all;
+}
+
+location ~ ^/static/images/.*\.php$
+{
+        deny all;
+}
+		</pre></div><div class="section" title="6.4. autoindex"><div class="titlepage"><div><div><h3 class="title"><a id="nginx.autoindex"></a>6.4. autoindex</h3></div></div></div><pre class="screen">
+# vim /etc/nginx/sites-enabled/default
+
+location  /  {
+  autoindex  on;
+}
+		</pre><pre class="screen">
+# /etc/init.d/nginx reload
+Reloading nginx configuration: nginx.
+		</pre></div><div class="section" title="6.5. rewrite"><div class="titlepage"><div><div><h3 class="title"><a id="nginx.rewrite"></a>6.5. rewrite</h3></div></div></div><pre class="screen">
+Rewrite Flags
+last - 基本上都用这个Flag。
+break - 中止Rewirte，不在继续匹配
+redirect - 返回临时重定向的HTTP状态302
+permanent - 返回永久重定向的HTTP状态301
+
+文件及目录匹配，其中：
+-f和!-f用来判断是否存在文件
+-d和!-d用来判断是否存在目录
+-e和!-e用来判断是否存在文件或目录
+-x和!-x用来判断文件是否可执行
+
+正则表达式全部符号解释
+~ 为区分大小写匹配
+~* 为不区分大小写匹配
+!~和!~* 分别为区分大小写不匹配及不区分大小写不匹配
+(pattern) 匹配 pattern 并获取这一匹配。所获取的匹配可以从产生的 Matches 集合得到，在VBScript 中使用 SubMatches 集合，在JScript 中则使用 $0…$9 属性。要匹配圆括号字符，请使用 ‘\(’ 或 ‘\)’。
+^ 匹配输入字符串的开始位置。
+$ 匹配输入字符串的结束位置。
+		</pre><pre class="screen">
+server {
+	listen 80;
+	server_name www.example.com example.com ;
+	if ($host = "example.com" )
+	{
+		rewrite ^/(.*)$ http://www.example.com/$1 permanent;
+	}
+	if ($host != "www.example.com" )
+	{
+		rewrite ^/(.*)$ http://www.example.com/$1 permanent;
+	}
+}
+		</pre><pre class="screen">
+location ~* \.(js|css|jpg|jpeg|gif|png|swf)$ {
+	if (!-f $request_filename){
+	        rewrite /(.*) http://images.xiu.com/$1;
+	}
+}
+		</pre></div><div class="section" title="6.6. gzip"><div class="titlepage"><div><div><h3 class="title"><a id="nginx.gzip"></a>6.6. gzip</h3></div></div></div><pre class="screen">
+gzip  on;
+gzip_min_length  1000;
+gzip_buffers     4 8k;
+gzip_types       text/plain application/x-javascript text/css text/html application/xml;
+
+
+gzip on;
+gzip_http_version 1.0;
+gzip_disable "MSIE [1-6].";
+gzip_types text/plain application/x-javascript text/css text/javascript;
+		</pre></div><div class="section" title="6.7. Cache"><div class="titlepage"><div><div><h3 class="title"><a id="nginx.cache"></a>6.7. Cache</h3></div></div></div><pre class="screen">
+		
+add_header     Nginx-Cache     "HIT  from  www.example.com";
+or
+add_header     Nginx-Cache     "$upstream_cache_status  from  www.example.com";
+		
+		</pre></div><div class="section" title="6.8. stub_status"><div class="titlepage"><div><div><h3 class="title"><a id="nginx.stub_status"></a>6.8. stub_status</h3></div></div></div><pre class="screen">
+location /nginx_status {
+	stub_status on;
+	access_log  on;
+	allow 127.0.0.1;
+	deny all;
+}
+		</pre></div><div class="section" title="6.9. server_tokens"><div class="titlepage"><div><div><h3 class="title"><a id="nginx.server_tokens"></a>6.9. server_tokens</h3></div></div></div><pre class="screen">
+http {
+...
+server_tokens off;
+...
+}
+		</pre></div><div class="section" title="6.10. Proxy"><div class="titlepage"><div><div><h3 class="title"><a id="nginx.proxy"></a>6.10. Proxy</h3></div></div></div><pre class="screen">
+# cat /etc/nginx/nginx.conf
+
+#user  nobody;
+worker_processes  4;
+
+#error_log  logs/error.log;
+#error_log  logs/error.log  notice;
+#error_log  logs/error.log  info;
+
+#pid        logs/nginx.pid;
+
+
+events {
+    worker_connections  40960;
+        use epoll;
+}
+
+
+http {
+    include       mime.types;
+    default_type  application/octet-stream;
+
+    #log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+    #                  '$status $body_bytes_sent "$http_referer" '
+    #                  '"$http_user_agent" "$http_x_forwarded_for"';
+
+    #access_log  logs/access.log  main;
+
+    access_log  /dev/null;
+
+    sendfile        on;
+    #tcp_nopush     on;
+
+    #keepalive_timeout  0;
+    keepalive_timeout  65;
+
+    #gzip  on;
+
+upstream backend{
+#        server 172.16.0.6:80;
+        server 10.0.0.68:80;
+        server 10.0.0.69:80;
+}
+
+
+    server {
+        listen       80;
+        server_name  localhost;
+
+        #charset koi8-r;
+
+        #access_log  logs/host.access.log  main;
+
+#        location / {
+#            root   html;
+#            index  index.html index.htm;
+#        }
+
+    access_log  /dev/null;
+    error_log   /dev/null;
+
+
+    location / {
+#        proxy_pass $scheme://$host$request_uri;
+#        proxy_set_header Host $http_host;
+
+#        proxy_buffers 256 4k;
+#        proxy_max_temp_file_size 0;
+
+#        proxy_connect_timeout 30;
+
+#        proxy_cache_valid 200 302 10m;
+#        proxy_cache_valid 301 1h;
+#        proxy_cache_valid any 1m;
+
+
+
+         proxy_pass      http://backend;
+
+         proxy_redirect          off;
+         proxy_set_header        Host $host;
+#         proxy_set_header        X-Real-IP $remote_addr;
+#         proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+         client_max_body_size    10m;
+         client_body_buffer_size 128k;
+         proxy_connect_timeout   30;
+         proxy_send_timeout      30;
+         proxy_read_timeout      30;
+         proxy_buffer_size       4k;
+         proxy_buffers           256 4k;
+         proxy_busy_buffers_size 64k;
+         proxy_temp_file_write_size 64k;
+        tcp_nodelay on;
+    }
+
+
+        #error_page  404              /404.html;
+
+        # redirect server error pages to the static page /50x.html
+        #
+        error_page   500 502 503 504  /50x.html;
+        location = /50x.html {
+            root   html;
+        }
+    }
+
+}
+		</pre></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="nginx.var.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="nginx.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="tomcat.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">5. 可用的全局变量 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 5 章 Tomcat 安装与配置</td></tr></table></div></body></html>
