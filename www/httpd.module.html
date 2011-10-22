@@ -521,7 +521,7 @@ RewriteRule ^(.*)$ http://www.domain.com/$1 [R=permanent,L]
 	CustomLog "|/usr/local/httpd/bin/rotatelogs /www/logs/images/access.%Y-%m-%d.log 100M" common
 &lt;/VirtualHost&gt;
 			
-			</pre></div></div><div class="section" title="2.10. Proxy"><div class="titlepage"><div><div><h3 class="title"><a id="idp224544"></a>2.10. Proxy</h3></div></div></div><pre class="screen">
+			</pre></div></div><div class="section" title="2.10. Proxy"><div class="titlepage"><div><div><h3 class="title"><a id="proxy"></a>2.10. Proxy</h3></div></div></div><pre class="screen">
 		
 ProxyRequests Off
 
@@ -532,7 +532,30 @@ ProxyRequests Off
 ProxyPass / http://your.domain.com:8080/
 ProxyPassReverse / http://your.domain.com:8080/
 		
-		</pre></div><div class="section" title="2.11. Deflate"><div class="titlepage"><div><div><h3 class="title"><a id="httpd.deflate"></a>2.11. Deflate</h3></div></div></div><p>mod_deflate</p><p>httpd.conf中中加入下列语句：</p><pre class="screen">
+		</pre><div class="section" title="2.10.1. Reverse proxy"><div class="titlepage"><div><div><h4 class="title"><a id="idp225920"></a>2.10.1. Reverse proxy</h4></div></div></div><p>/etc/httpd/conf.d/rails.conf</p><pre class="screen">
+			
+Listen 8080
+ProxyRequests Off
+&lt;Proxy balancer://cluster&gt;
+	BalancerMember http://127.0.0.1:3001
+	BalancerMember http://127.0.0.1:3002
+	BalancerMember http://127.0.0.1:3003
+	BalancerMember http://127.0.0.1:3004
+	BalancerMember http://127.0.0.1:3005
+&lt;/Proxy&gt;
+
+&lt;VirtualHost *:8080&gt;
+	ServerName www.example.com:8080
+	DocumentRoot /var/www/project/public
+	ProxyPass /images !
+	ProxyPass /stylesheets !
+	ProxyPass /javascripts !
+	ProxyPass / balancer://cluster/
+	ProxyPassReverse / balancer://cluster/
+	ProxyPreserveHost on
+&lt;/VirtualHost&gt;
+			
+			</pre></div></div><div class="section" title="2.11. Deflate"><div class="titlepage"><div><div><h3 class="title"><a id="httpd.deflate"></a>2.11. Deflate</h3></div></div></div><p>mod_deflate</p><p>httpd.conf中中加入下列语句：</p><pre class="screen">
 			
 &lt;IfModule mod_deflate.c&gt;
 	SetOutputFilter DEFLATE
@@ -581,7 +604,7 @@ LogFormat '"%r" %{outstream}n/%{instream}n (%{ratio}n%%)' deflate # 格式定义
 
 CustomLog logs/deflate_log.log deflate # 日志位置
 CustomLog "|/usr/local/httpd/bin/rotatelogs /www/logs/deflate.%Y-%m-%d.log 86400 480" deflate # 分割日志位置
-			</pre><div class="section" title="2.11.1. 测试 gzip,deflate 模块"><div class="titlepage"><div><div><h4 class="title"><a id="idp231712"></a>2.11.1. 测试 gzip,deflate 模块</h4></div></div></div><span class="command"><strong>telnet www.bg7nyt.cn 80</strong></span><pre class="screen">
+			</pre><div class="section" title="2.11.1. 测试 gzip,deflate 模块"><div class="titlepage"><div><div><h4 class="title"><a id="idp233808"></a>2.11.1. 测试 gzip,deflate 模块</h4></div></div></div><span class="command"><strong>telnet www.bg7nyt.cn 80</strong></span><pre class="screen">
 GET /index.html HTTP/1.0
 Host: www.bg7nyt.cn
 Accept-Encoding: gzip,deflate
@@ -607,7 +630,7 @@ Header set Cache-Control “max-age=1800, public”
 FileETag none
 &lt;/FilesMatch&gt;
 		
-		</pre></div><div class="section" title="2.13. Cache"><div class="titlepage"><div><div><h3 class="title"><a id="httpd.cache"></a>2.13. Cache</h3></div></div></div><p>htcacheclean -- program for cleaning the disk cache.</p><div class="section" title="2.13.1. mod_disk_cache"><div class="titlepage"><div><div><h4 class="title"><a id="idp237248"></a>2.13.1. mod_disk_cache</h4></div></div></div><pre class="screen">
+		</pre></div><div class="section" title="2.13. Cache"><div class="titlepage"><div><div><h3 class="title"><a id="httpd.cache"></a>2.13. Cache</h3></div></div></div><p>htcacheclean -- program for cleaning the disk cache.</p><div class="section" title="2.13.1. mod_disk_cache"><div class="titlepage"><div><div><h4 class="title"><a id="idp239344"></a>2.13.1. mod_disk_cache</h4></div></div></div><pre class="screen">
 			
 &lt;IfModule mod_cache.c&gt;
     CacheDefaultExpire 86400
@@ -621,7 +644,7 @@ FileETag none
     &lt;/ifModule mod_disk_cache.c&gt;
 &lt;/IfModule mod_cache.c&gt;
 			
-			</pre></div><div class="section" title="2.13.2. mod_mem_cache"><div class="titlepage"><div><div><h4 class="title"><a id="idp238688"></a>2.13.2. mod_mem_cache</h4></div></div></div><pre class="screen">
+			</pre></div><div class="section" title="2.13.2. mod_mem_cache"><div class="titlepage"><div><div><h4 class="title"><a id="idp240784"></a>2.13.2. mod_mem_cache</h4></div></div></div><pre class="screen">
 			
 &lt;IfModule mod_cache.c&gt;
     &lt;ifModule mod_mem_cache.c&gt;
@@ -635,7 +658,7 @@ FileETag none
     &lt;/ifModule mod_disk_cache.c&gt;
 &lt;/IfModule mod_cache.c&gt;
 			
-			</pre></div></div><div class="section" title="2.14. usertrack"><div class="titlepage"><div><div><h3 class="title"><a id="idp240000"></a>2.14. usertrack</h3></div></div></div><p>跟踪用户信息</p><p>跟踪用户的cookie,使用log日志文件记录用户的cookie</p><pre class="screen">
+			</pre></div></div><div class="section" title="2.14. usertrack"><div class="titlepage"><div><div><h3 class="title"><a id="idp242096"></a>2.14. usertrack</h3></div></div></div><p>跟踪用户信息</p><p>跟踪用户的cookie,使用log日志文件记录用户的cookie</p><pre class="screen">
 LoadModule usertrack_module modules/mod_usertrack.so
 
 CookieTracking on
@@ -644,7 +667,7 @@ CookieExpires "10 years"
 CookieStyle Cookie
 
 LogFormat "%h %l %u %t \"%r\" %&gt;s %b \"%{Referer}i\" \"%{User-Agent}i\" %{cookie}n" combined
-		</pre></div><div class="section" title="2.15. Charset"><div class="titlepage"><div><div><h3 class="title"><a id="idp241792"></a>2.15. Charset</h3></div></div></div><p>Default charset</p><pre class="screen">
+		</pre></div><div class="section" title="2.15. Charset"><div class="titlepage"><div><div><h3 class="title"><a id="idp243888"></a>2.15. Charset</h3></div></div></div><p>Default charset</p><pre class="screen">
 AddCharset UTF-8 .html
 
 AddType 'text/html; charset=UTF-8' html
@@ -670,13 +693,13 @@ AddDefaultCharset UTF-8
 	ForceType 'text/html; charset=UTF-8'
 &lt;/Files&gt;
 		
-		</pre></div><div class="section" title="2.16. Dir"><div class="titlepage"><div><div><h3 class="title"><a id="idp245088"></a>2.16. Dir</h3></div></div></div><pre class="screen">
+		</pre></div><div class="section" title="2.16. Dir"><div class="titlepage"><div><div><h3 class="title"><a id="idp247184"></a>2.16. Dir</h3></div></div></div><pre class="screen">
 		
 &lt;IfModule dir_module&gt;
     DirectoryIndex index.html index.php
 &lt;/IfModule&gt;
 		
-		</pre></div><div class="section" title="2.17. Includes"><div class="titlepage"><div><div><h3 class="title"><a id="idp246032"></a>2.17. Includes</h3></div></div></div><pre class="screen">
+		</pre></div><div class="section" title="2.17. Includes"><div class="titlepage"><div><div><h3 class="title"><a id="idp248128"></a>2.17. Includes</h3></div></div></div><pre class="screen">
 		
 &lt;Directory "/www"&gt;
 	Options Indexes FollowSymLinks +Includes
@@ -689,7 +712,7 @@ AddDefaultCharset UTF-8
     AddOutputFilter INCLUDES .shtml
 &lt;/IfModule&gt;
 		
-		</pre></div><div class="section" title="2.18. Apache Status"><div class="titlepage"><div><div><h3 class="title"><a id="idp247728"></a>2.18. Apache Status</h3></div></div></div><p>开启Apache的status模块，需要修改httpd.conf，增加以下配置段：</p><pre class="screen">
+		</pre></div><div class="section" title="2.18. Apache Status"><div class="titlepage"><div><div><h3 class="title"><a id="idp249824"></a>2.18. Apache Status</h3></div></div></div><p>开启Apache的status模块，需要修改httpd.conf，增加以下配置段：</p><pre class="screen">
 		
 ExtendedStatus On
 &lt;Location /server-status&gt;
@@ -699,9 +722,9 @@ ExtendedStatus On
   Allow from 125.76.229.113
 &lt;/Location&gt;
 		
-		</pre><p>http://www.domain.com/server-status</p></div><div class="section" title="2.19. Mod Perl"><div class="titlepage"><div><div><h3 class="title"><a id="idp249504"></a>2.19. Mod Perl</h3></div></div></div><p>ref: http://search.cpan.org/~agrundma/Catalyst-Engine-Apache-1.07/lib/Catalyst/Engine/Apache2/MP20.pm</p><span class="command"><strong>$ sudo apt-get install libapache2-mod-perl2 </strong></span><span class="command"><strong>$ sudo apt-get install libcatalyst-engine-apache-perl</strong></span><pre class="screen">
+		</pre><p>http://www.domain.com/server-status</p></div><div class="section" title="2.19. Mod Perl"><div class="titlepage"><div><div><h3 class="title"><a id="idp251600"></a>2.19. Mod Perl</h3></div></div></div><p>ref: http://search.cpan.org/~agrundma/Catalyst-Engine-Apache-1.07/lib/Catalyst/Engine/Apache2/MP20.pm</p><span class="command"><strong>$ sudo apt-get install libapache2-mod-perl2 </strong></span><span class="command"><strong>$ sudo apt-get install libcatalyst-engine-apache-perl</strong></span><pre class="screen">
 $ sudo vi /etc/apache2/sites-available/catalyst.conf
-		</pre><div class="example"><a id="idp252080"></a><p class="title"><b>例 2.4. mod_perl.conf</b></p><div class="example-contents"><pre class="screen">
+		</pre><div class="example"><a id="idp254176"></a><p class="title"><b>例 2.4. mod_perl.conf</b></p><div class="example-contents"><pre class="screen">
 			
 PerlSwitches -I/var/www/MyApp/lib
 # Preload your entire application
@@ -748,7 +771,7 @@ Apache::DB-&gt;init();
 		</pre><p>enable site</p><pre class="screen">
 $ sudo a2ensite mod_perl.conf
 $ sudo /etc/init.d/apache2 restart
-		</pre></div><div class="section" title="2.20. Module FAQ"><div class="titlepage"><div><div><h3 class="title"><a id="idp255904"></a>2.20. Module FAQ</h3></div></div></div><p></p><pre class="screen">
+		</pre></div><div class="section" title="2.20. Module FAQ"><div class="titlepage"><div><div><h3 class="title"><a id="idp258000"></a>2.20. Module FAQ</h3></div></div></div><p></p><pre class="screen">
 	 	
 [root@srv-2 modules]# /etc/init.d/httpd start
 Starting httpd: Syntax error on line 358 of /etc/httpd/conf/httpd.conf:
@@ -809,7 +832,7 @@ LoadModule negotiation_module /etc/httpd/modules/mod_negotiation.so
 Starting httpd:                                            [  OK  ]
 [root@srv-2 modules]#
 	 	
-	 	</pre></div><div class="section" title="2.21. mod_setenvif"><div class="titlepage"><div><div><h3 class="title"><a id="idp259904"></a>2.21. mod_setenvif</h3></div></div></div><p>屏蔽爬虫</p><pre class="screen">
+	 	</pre></div><div class="section" title="2.21. mod_setenvif"><div class="titlepage"><div><div><h3 class="title"><a id="idp262000"></a>2.21. mod_setenvif</h3></div></div></div><p>屏蔽爬虫</p><pre class="screen">
 		
 &lt;directory "/www/example.com"&gt;
     Order allow,deny
