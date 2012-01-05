@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>Python Syslog Server</title><link rel="stylesheet" href="article.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.75.2" /><meta name="description" content="本程序用于收集，防火墙，路由器，交换机等日志" /><meta name="keywords" content="cisco, asa 5550, firewall, python, syslog, rsyslog, syslog-ng" /></head><body><div xml:lang="zh-cn" class="article" title="Python Syslog Server" lang="zh-cn"><div class="titlepage"><div><div><h2 class="title"><a id="idp4464"></a>Python Syslog Server</h2></div><div><div class="author"><h3 class="author"><span class="firstname">Neo Chen</span> <span class="surname">(netkiller)</span></h3><div class="affiliation"><div class="address"><p><br />
+				<code class="email">&lt;<a class="email" href="mailto:openunix@163.com">openunix@163.com</a>&gt;</code><br />
+			</p></div></div></div></div><div><p class="copyright">版权 © 2011, 2012 http://netkiller.github.com</p></div><div><div class="abstract" title="摘要"><p class="title"><b>摘要</b></p><p>本程序用于收集，防火墙，路由器，交换机等日志</p></div></div><div><div class="abstract" title="下面是我多年积累下来的经验总结，整理成文档供大家参考:"><a id="abstract"></a><p class="title"><b>下面是我多年积累下来的经验总结，整理成文档供大家参考:</b></p><p>
+		</p><table border="0" summary="Simple list" class="simplelist"><tr><td>
+				<a class="ulink" href="../architect/index.html" target="_top">Netkiller Architect 手札</a>
+			</td><td>
+				<a class="ulink" href="../linux/index.html" target="_top">Netkiller Linux 手札</a>
+			</td><td>
+				<a class="ulink" href="../developer/index.html" target="_top">Netkiller Developer 手札</a>
+			</td><td>
+				<a class="ulink" href="../database/index.html" target="_top">Netkiller Database 手札</a>
+			</td></tr><tr><td>
+				<a class="ulink" href="../debian/index.html" target="_top">Netkiller Debian 手札</a>
+			</td><td>
+				<a class="ulink" href="../centos/index.html" target="_top">Netkiller CentOS 手札</a>
+			</td><td>
+				<a class="ulink" href="../freebsd/index.html" target="_top">Netkiller FreeBSD 手札</a>
+			</td><td>
+				<a class="ulink" href="../shell/index.html" target="_top">Netkiller Shell 手札</a>
+			</td></tr><tr><td>
+				<a class="ulink" href="../www/index.html" target="_top">Netkiller Web 手札</a>
+			</td><td>
+				<a class="ulink" href="../monitoring/index.html" target="_top">Netkiller Monitoring 手札</a>
+			</td><td>
+				<a class="ulink" href="../storage/index.html" target="_top">Netkiller Storage 手札</a>
+			</td><td>
+				<a class="ulink" href="../mail/index.html" target="_top">Netkiller Mail 手札</a>
+			</td></tr><tr><td>
+				<a class="ulink" href="../security/index.html" target="_top">Netkiller Security 手札</a>
+			</td><td>
+				<a class="ulink" href="../postgres/index.html" target="_top">Netkiller PostgreSQL 手札</a>
+			</td><td>
+				<a class="ulink" href="../mysql/index.html" target="_top">Netkiller MySQL 手札</a>
+			</td><td>
+				<a class="ulink" href="../ldap/index.html" target="_top">Netkiller LDAP 手札</a>
+			</td></tr><tr><td>
+				<a class="ulink" href="../cryptography/index.html" target="_top">Netkiller Cryptography 手札</a>
+			</td><td>
+				<a class="ulink" href="../intranet/index.html" target="_top">Netkiller Intranet 手札</a>
+			</td><td>
+				<a class="ulink" href="../cisco/index.html" target="_top">Netkiller Cisco IOS 手札</a>
+			</td><td>
+				<a class="ulink" href="../docbook/index.html" target="_top">Netkiller Writer 手札</a>
+			</td></tr><tr><td>
+				<a class="ulink" href="../version/index.html" target="_top">Netkiller Version 手札</a>
+			</td><td>
+				<a class="ulink" href="../multimedia/index.html" target="_top">Netkiller Studio Linux 手札</a>
+			</td><td> </td><td> </td></tr></table><p>
+	</p></div></div></div><hr /></div><div class="toc"><p><b>目录</b></p><dl><dt><span class="section"><a href="#idp51424">1. 配置Cisco ASA 5550 Firewall</a></span></dt><dt><span class="section"><a href="#idp53088">2. syslog 服务器脚本</a></span></dt></dl></div><div class="section" title="1. 配置Cisco ASA 5550 Firewall"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp51424"></a>1. 配置Cisco ASA 5550 Firewall</h2></div></div></div><pre class="screen">
+logging enable 
+logging timestamp 
+logging trap warnings 
+logging host inside 172.16.0.5
+logging facility local0 
+		</pre><p>172.16.0.5 改为你的syslog服务器地址</p></div><div class="section" title="2. syslog 服务器脚本"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp53088"></a>2. syslog 服务器脚本</h2></div></div></div><p>*注意：python版本必须3.0以上</p><p>chmod 700 syslogd</p><p>./syslogd</p><pre class="screen">
+		
+#!/srv/python/bin/python3
+# -*- encoding: utf-8 -*-
+# Cisco ASA Firewall - Syslog Server by neo
+# Author: neo&lt;neo.chen@xiu.com&gt;
+
+import logging
+import socketserver
+import threading
+
+LOG_FILE = '/var/log/asa5550.log'
+
+logging.basicConfig(level=logging.INFO,
+                    format='%(message)s',
+                    datefmt='',
+                    filename=LOG_FILE,
+                    filemode='a')
+
+class SyslogUDPHandler(socketserver.BaseRequestHandler):
+
+    def handle(self):
+        data = bytes.decode(self.request[0].strip())
+        socket = self.request[1]
+        print( "%s : " % self.client_address[0], str(data))
+        logging.info(str(data))
+#        socket.sendto(data.upper(), self.client_address)
+
+if __name__ == "__main__":
+    try:
+        HOST, PORT = "0.0.0.0", 514
+        server = socketserver.UDPServer((HOST, PORT), SyslogUDPHandler)
+        server.serve_forever(poll_interval=0.5)
+    except (IOError, SystemExit):
+        raise
+    except KeyboardInterrupt:
+        print ("Crtl+C Pressed. Shutting down.")
+		
+		</pre></div></div></body></html>
