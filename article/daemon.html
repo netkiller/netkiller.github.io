@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>Linux 应用程序开发入门</title><link rel="stylesheet" href="article.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.75.2" /><meta name="description" content="我会实现一个守护进程，从这个程序你将了解，Linux 应用程序开发基本流程 我们将实现一个远程shell的功能，可以通过tcp协议，运行远程机器上的命令或shell脚本 通过这个命令可以实现批量操作，管理上千台服务器。需要发挥你的想象力，灵活使用它。 写这个脚本，我是为了替代SSH远程操作，因为SSH不能控制运行命令，操作风险大，也不安全。 程序还不完善，还需要很多后续改进工作，比如通过SSL建立Socket链接，用户认证，ACL访问控制等等." /><meta name="keywords" content="python, os.fork, getopt.getopt, logging, init.d, rc.d, inittab, nodekeeper" /></head><body><div xml:lang="zh-cn" class="article" title="Linux 应用程序开发入门" lang="zh-cn"><div class="titlepage"><div><div><h2 class="title"><a id="idp18464"></a>Linux 应用程序开发入门</h2></div><div><div class="author"><h3 class="author"><span class="firstname">Neo Chen</span> <span class="surname">(netkiller)</span></h3><div class="affiliation"><div class="address"><p><br />
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>Linux 应用程序开发入门</title><link rel="stylesheet" href="article.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.75.2" /><meta name="description" content="我会实现一个守护进程，从这个程序你将了解，Linux 应用程序开发基本流程 我们将实现一个远程shell的功能，可以通过tcp协议，运行远程机器上的命令或shell脚本 通过这个命令可以实现批量操作，管理上千台服务器。需要发挥你的想象力，灵活使用它。 写这个脚本，我是为了替代SSH远程操作，因为SSH不能控制运行命令，操作风险大，也不安全。 程序还不完善，还需要很多后续改进工作，比如通过SSL建立Socket链接，用户认证，ACL访问控制等等." /><meta name="keywords" content="python, os.fork, getopt.getopt, logging, init.d, rc.d, inittab, nodekeeper" /></head><body><div xml:lang="zh-cn" class="article" title="Linux 应用程序开发入门" lang="zh-cn"><div class="titlepage"><div><div><h2 class="title"><a id="idp192"></a>Linux 应用程序开发入门</h2></div><div><div class="author"><h3 class="author"><span class="firstname">Neo Chen</span> <span class="surname">(netkiller)</span></h3><div class="affiliation"><div class="address"><p><br />
 				<code class="email">&lt;<a class="email" href="mailto:openunix@163.com">openunix@163.com</a>&gt;</code><br />
 			</p></div></div></div></div><div><p class="copyright">版权 © 2011, 2012 http://netkiller.github.com</p></div><div><div class="abstract" title="摘要"><p class="title"><b>摘要</b></p><p>我会实现一个守护进程，从这个程序你将了解，Linux 应用程序开发基本流程</p><p>我们将实现一个远程shell的功能，可以通过tcp协议，运行远程机器上的命令或shell脚本</p><p>通过这个命令可以实现批量操作，管理上千台服务器。需要发挥你的想象力，灵活使用它。</p><p>写这个脚本，我是为了替代SSH远程操作，因为SSH不能控制运行命令，操作风险大，也不安全。</p><p>程序还不完善，还需要很多后续改进工作，比如通过SSL建立Socket链接，用户认证，ACL访问控制等等.</p></div></div><div><div class="abstract" title="下面是我多年积累下来的经验总结，整理成文档供大家参考:"><a id="abstract"></a><p class="title"><b>下面是我多年积累下来的经验总结，整理成文档供大家参考:</b></p><p>
 		</p><table border="0" summary="Simple list" class="simplelist"><tr><td>
@@ -48,7 +48,7 @@
 			</td><td>
 				<a class="ulink" href="../multimedia/index.html" target="_top">Netkiller Studio Linux 手札</a>
 			</td><td> </td><td> </td></tr></table><p>
-	</p></div></div></div><hr /></div><div class="toc"><p><b>目录</b></p><dl><dt><span class="section"><a href="#idp53568">1. 环境</a></span></dt><dt><span class="section"><a href="#idp56752">2. nodekeeper 主程序</a></span></dt><dd><dl><dt><span class="section"><a href="#idp66800">2.1. 帮助信息</a></span></dt><dt><span class="section"><a href="#idp69328">2.2. 参数处理</a></span></dt><dt><span class="section"><a href="#idp73312">2.3. 后台运行</a></span></dt><dt><span class="section"><a href="#idp76944">2.4. 日志记录</a></span></dt></dl></dd><dt><span class="section"><a href="#idp79760">3. 配置文件</a></span></dt><dt><span class="section"><a href="#idp83152">4. init.d 脚本</a></span></dt><dd><dl><dt><span class="section"><a href="#idp90096">4.1. start/stop</a></span></dt><dt><span class="section"><a href="#idp91328">4.2. service start/stop</a></span></dt></dl></dd></dl></div><div class="section" title="1. 环境"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp53568"></a>1. 环境</h2></div></div></div><p>OS: Ubuntu 10.10</p><p>Python: 3.2.2</p><p>程序目录: /srv/nodekeeper</p><p>目录与相关完美</p><pre class="screen">
+	</p></div></div></div><hr /></div><div class="toc"><p><b>目录</b></p><dl><dt><span class="section"><a href="#idp54480">1. 环境</a></span></dt><dt><span class="section"><a href="#idp57488">2. nodekeeper 主程序</a></span></dt><dd><dl><dt><span class="section"><a href="#idp67264">2.1. 帮助信息</a></span></dt><dt><span class="section"><a href="#idp69760">2.2. 参数处理</a></span></dt><dt><span class="section"><a href="#idp73792">2.3. 后台运行</a></span></dt><dt><span class="section"><a href="#idp77392">2.4. 日志记录</a></span></dt><dt><span class="section"><a href="#idp80208">2.5. 多线程</a></span></dt></dl></dd><dt><span class="section"><a href="#idp84160">3. 配置文件</a></span></dt><dt><span class="section"><a href="#idp87248">4. init.d 脚本</a></span></dt><dd><dl><dt><span class="section"><a href="#idp94448">4.1. start/stop</a></span></dt><dt><span class="section"><a href="#idp95680">4.2. service start/stop</a></span></dt></dl></dd></dl></div><div class="section" title="1. 环境"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54480"></a>1. 环境</h2></div></div></div><p>OS: Ubuntu 10.10</p><p>Python: 3.2.2</p><p>程序目录: /srv/nodekeeper</p><p>目录与相关文件</p><pre class="screen">
 $ cd /srv
 $ find nodekeeper | grep -v .svn
 nodekeeper
@@ -60,7 +60,7 @@ nodekeeper/etc/protocol.cfg
 nodekeeper/bin
 nodekeeper/bin/nodekeeper
 nodekeeper/bin/console
-		</pre></div><div class="section" title="2. nodekeeper 主程序"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp56752"></a>2. nodekeeper 主程序</h2></div></div></div><pre class="screen">
+		</pre></div><div class="section" title="2. nodekeeper 主程序"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp57488"></a>2. nodekeeper 主程序</h2></div></div></div><pre class="screen">
 		
 $ cat nodekeeper/bin/nodekeeper
 #!/usr/bin/env python3
@@ -315,7 +315,7 @@ if __name__ == '__main__':
         print ("Crtl+C Pressed. Shutting down.")
 
 		
-		</pre><div class="section" title="2.1. 帮助信息"><div class="titlepage"><div><div><h3 class="title"><a id="idp66800"></a>2.1. 帮助信息</h3></div></div></div><p>usage()</p><pre class="screen">
+		</pre><div class="section" title="2.1. 帮助信息"><div class="titlepage"><div><div><h3 class="title"><a id="idp67264"></a>2.1. 帮助信息</h3></div></div></div><p>usage()</p><pre class="screen">
 			
 Usage: nodekeeper -d -h &lt;ip address&gt; -p &lt;7800&gt;
 Development and deployment administration platform
@@ -338,7 +338,7 @@ Example:
 See http://netkiller.sf.net/ for updates, bug reports, and answers, 
 if you have no web access, by sending email to Neo Chan&lt;openunix@163.com&gt;.
 			
-			</pre></div><div class="section" title="2.2. 参数处理"><div class="titlepage"><div><div><h3 class="title"><a id="idp69328"></a>2.2. 参数处理</h3></div></div></div><p>getopt.getopt 实现Unix风格的命令参数，例如:</p><pre class="screen">
+			</pre></div><div class="section" title="2.2. 参数处理"><div class="titlepage"><div><div><h3 class="title"><a id="idp69760"></a>2.2. 参数处理</h3></div></div></div><p>getopt.getopt 实现Unix风格的命令参数，例如:</p><pre class="screen">
 nodekeeper --daemon --host localhost --port 7800
 
 --host localhost --port 7800 IP地址与端口参数
@@ -381,7 +381,7 @@ nodekeeper --daemon --host localhost --port 7800
         usage()
         sys.exit(2)
 			
-			</pre></div><div class="section" title="2.3. 后台运行"><div class="titlepage"><div><div><h3 class="title"><a id="idp73312"></a>2.3. 后台运行</h3></div></div></div><p>--daemon 参数实现后台运行，原理是首先通过os.fork()克隆一个进程，然后退出当前进程，克隆的新进程继续运行</p><p>如果是Shell程序，你可使用“&amp;”符号后台运行，但作为一个应用程序，使用“&amp;”显得不专业。</p><p>具体实现的代码如下</p><pre class="screen">
+			</pre></div><div class="section" title="2.3. 后台运行"><div class="titlepage"><div><div><h3 class="title"><a id="idp73792"></a>2.3. 后台运行</h3></div></div></div><p>--daemon 参数实现后台运行，原理是首先通过os.fork()克隆一个进程，然后退出当前进程，克隆的新进程继续运行</p><p>如果是Shell程序，你可使用“&amp;”符号后台运行，但作为一个应用程序，使用“&amp;”显得不专业。</p><p>具体实现的代码如下</p><pre class="screen">
 			
         if daemon :
             pid = os.fork()
@@ -389,7 +389,7 @@ nodekeeper --daemon --host localhost --port 7800
                 #exit first parent
                 sys.exit(0)
 			
-			</pre><p>程序一旦进入后台，当前进程即将关闭，所以你必须保存PID，为后面的推出程序操作使用，这里我们可以通过 --pidfile 指定一个pid文件</p></div><div class="section" title="2.4. 日志记录"><div class="titlepage"><div><div><h3 class="title"><a id="idp76944"></a>2.4. 日志记录</h3></div></div></div><p>程序一旦进入后台，你只能通过ps，pstree, top 等命令查看状态，运行情况必须通过日志的形式，打印出来</p><p>具体实现代码如下：</p><pre class="screen">
+			</pre><p>程序一旦进入后台，当前进程即将关闭，所以你必须保存PID，为后面的推出程序操作使用，这里我们可以通过 --pidfile 指定一个pid文件</p></div><div class="section" title="2.4. 日志记录"><div class="titlepage"><div><div><h3 class="title"><a id="idp77392"></a>2.4. 日志记录</h3></div></div></div><p>程序一旦进入后台，你只能通过ps，pstree, top 等命令查看状态，运行情况必须通过日志的形式，打印出来</p><p>具体实现代码如下：</p><pre class="screen">
 			
 			logging.basicConfig(level=logging.NOTSET,
                     format='%(asctime)s %(levelname)-8s %(message)s',
@@ -399,7 +399,22 @@ nodekeeper --daemon --host localhost --port 7800
             self.logging = logging.getLogger()
             self.logging.debug('Test')
 			
-			</pre></div></div><div class="section" title="3. 配置文件"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp79760"></a>3. 配置文件</h2></div></div></div><pre class="screen">
+			</pre></div><div class="section" title="2.5. 多线程"><div class="titlepage"><div><div><h3 class="title"><a id="idp80208"></a>2.5. 多线程</h3></div></div></div><p>继承 asynchat.async_chat 实现多线程</p><pre class="screen">
+			
+class request_handler(asynchat.async_chat):
+
+    def __init__(self, sock, resource):
+        asynchat.async_chat.__init__(self, sock=sock)
+			
+			</pre><p>连接数限制</p><pre class="screen">
+        self.listen(10)			
+			</pre><p>可以将这个参数提出来，然后通过命令行设置。</p><pre class="screen">
+nodekeeper --daemon --maxconn 100 --host localhost --port 7800
+			
+self.max_connect = maxconn
+
+self.listen(self.max_connect)			
+			</pre></div></div><div class="section" title="3. 配置文件"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp84160"></a>3. 配置文件</h2></div></div></div><pre class="screen">
 		
 $ cat nodekeeper/etc/protocol.cfg 
 [system]
@@ -466,8 +481,8 @@ vsftpd.restart = /etc/init.d/vsftpd restart
 vsftpd.status = /etc/init.d/vsftpd status
 
 		
-		</pre></div><div class="section" title="4. init.d 脚本"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp83152"></a>4. init.d 脚本</h2></div></div></div><p>Linux 所有守护进程都是用init.d下面的脚本来管理</p><p>当人你也可以直接运行命令：</p><pre class="screen">
-nodekeeper --daemon --host localhost --port 7800		
+		</pre></div><div class="section" title="4. init.d 脚本"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp87248"></a>4. init.d 脚本</h2></div></div></div><p>Linux 所有守护进程都是用init.d下面的脚本来管理</p><p>当人你也可以直接运行命令：</p><pre class="screen">
+nodekeeper --daemon --host localhost --port 7800
 		</pre><p>但这样只能算是一个半成品，也不够专业，我们写的是linux运用程序，必须遵循Linux规范，所有要实现一个init.d脚本</p><pre class="screen">
 		
 $ cat nodekeeper
@@ -571,10 +586,10 @@ exit 0
 		
 		</pre><p>我们将使用DAEMON_OPTS变量，提供所有需要的参数</p><pre class="screen">
 DAEMON_OPTS="--daemon --host $HOST --port $PORT --config=$CONFIG --protocol=$PROTOCOL --pidfile=$PIDFILE --logfile=$LOGFILE"
-		</pre><div class="section" title="4.1. start/stop"><div class="titlepage"><div><div><h3 class="title"><a id="idp90096"></a>4.1. start/stop</h3></div></div></div><pre class="screen">
+		</pre><div class="section" title="4.1. start/stop"><div class="titlepage"><div><div><h3 class="title"><a id="idp94448"></a>4.1. start/stop</h3></div></div></div><pre class="screen">
 /etc/init.d/nodekeeper start
 /etc/init.d/nodekeeper stop
-			</pre></div><div class="section" title="4.2. service start/stop"><div class="titlepage"><div><div><h3 class="title"><a id="idp91328"></a>4.2. service start/stop</h3></div></div></div><pre class="screen">
+			</pre></div><div class="section" title="4.2. service start/stop"><div class="titlepage"><div><div><h3 class="title"><a id="idp95680"></a>4.2. service start/stop</h3></div></div></div><pre class="screen">
 service nodekeeper start
 service nodekeeper stop
 			</pre></div></div></div></body></html>
