@@ -1,0 +1,798 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<HTML
+><HEAD
+><TITLE
+>SASL SMTP认证</TITLE
+>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.76b+
+"><LINK
+REL="HOME"
+TITLE="Postfix Integrated Solution"
+HREF="book1.html" tppabs="http://www.9812.net/article/postfix/book1.html"><LINK
+REL="UP"
+TITLE="Postfix + OpenLDAP (Debian) 已完成 2004-9-28"
+HREF="c423.html" tppabs="http://www.9812.net/article/postfix/c423.html"><LINK
+REL="PREVIOUS"
+TITLE="创建所需条目"
+HREF="x442.html" tppabs="http://www.9812.net/article/postfix/x442.html"><LINK
+REL="NEXT"
+TITLE="配置 Postfix"
+HREF="x498.html" tppabs="http://www.9812.net/article/postfix/x498.html"></HEAD
+><BODY
+CLASS="SECTION"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Postfix Integrated Solution</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x442.html" tppabs="http://www.9812.net/article/postfix/x442.html"
+ACCESSKEY="P"
+>&#60;&#60;&#60; Previous</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Postfix + OpenLDAP (Debian) 已完成 2004-9-28</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x498.html" tppabs="http://www.9812.net/article/postfix/x498.html"
+ACCESSKEY="N"
+>Next &#62;&#62;&#62;</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECTION"
+><H1
+CLASS="SECTION"
+><A
+NAME="AEN466"
+></A
+>SASL SMTP认证</H1
+><DIV
+CLASS="PROCEDURE"
+><P
+><B
+>Postfix SASL SMTP认证配置</B
+></P
+><OL
+TYPE="1"
+><LI
+><P
+>pam_ldap</P
+><P
+>			<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>debian:/etc/postfix# vi /etc/pam.d/smtp
+#%PAM-1.0
+auth required pam_ldap.so
+account sufficient /lib/security/pam_ldap.so
+			</PRE
+></TD
+></TR
+></TABLE
+>			
+			</P
+></LI
+><LI
+><P
+>pam_ldap.conf</P
+><DIV
+CLASS="NOTE"
+><P
+></P
+><TABLE
+CLASS="NOTE"
+WIDTH="100%"
+BORDER="0"
+><TR
+><TD
+WIDTH="25"
+ALIGN="CENTER"
+VALIGN="TOP"
+><IMG
+SRC="note.gif" tppabs="http://www.9812.net/article/postfix/stylesheet-images/note.gif"
+HSPACE="5"
+ALT="Note"></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+><P
+>redhat linux 中是/etc/ldap.conf</P
+></TD
+></TR
+></TABLE
+></DIV
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>host 127.0.0.1				
+base ou=postfix,dc=example,dc=net
+ldap_version 3
+binddn cn=admin,dc=example,dc=net
+bindpw chen
+#rootbinddn cn=admin,dc=example,dc=net
+scope sub
+pam_filter objectclass=postfix
+				</PRE
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="EXAMPLE"
+><A
+NAME="AEN479"
+></A
+><P
+><B
+>Example 3. pam_ldap.conf</B
+></P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>debian:/etc# cat pam_ldap.conf
+###DEBCONF###
+# the configuration of this file will be done by debconf as long as the
+# first line of the file says '###DEBCONF###'
+#
+# you should use dpkg-reconfigure to configure this file
+#
+# @(#)$Id: ldap.conf,v 1.28 2003/05/29 13:01:04 lukeh Exp $
+#
+# This is the configuration file for the LDAP nameservice
+# switch library and the LDAP PAM module.
+#
+# PADL Software
+# http://www.padl.com
+#
+
+# Your LDAP server. Must be resolvable without using LDAP.
+# Multiple hosts may be specified, each separated by a
+# space. How long nss_ldap takes to failover depends on
+# whether your LDAP client library supports configurable
+# network or connect timeouts (see bind_timelimit).
+host 127.0.0.1
+
+# The distinguished name of the search base.
+base ou=postfix,dc=example,dc=net
+
+# Another way to specify your LDAP server is to provide an
+# uri with the server name. This allows to use
+# Unix Domain Sockets to connect to a local LDAP Server.
+#uri ldap://127.0.0.1/
+#uri ldaps://127.0.0.1/
+#uri ldapi://%2fvar%2frun%2fldapi_sock/
+# Note: %2f encodes the '/' used as directory separator
+
+# The LDAP version to use (defaults to 3
+# if supported by client library)
+ldap_version 3
+
+# The distinguished name to bind to the server with.
+# Optional: default is to bind anonymously.
+#binddn cn=proxyuser,dc=padl,dc=com
+binddn cn=admin,dc=example,dc=net
+
+# The credentials to bind with.
+# Optional: default is no credential.
+#bindpw secret
+bindpw chen
+
+# The distinguished name to bind to the server with
+# if the effective user ID is root. Password is
+# stored in /etc/ldap.secret (mode 600)
+#rootbinddn cn=manager,dc=example,dc=net
+#rootbinddn cn=admin,dc=example,dc=net
+
+# The port.
+# Optional: default is 389.
+#port 389
+
+# The search scope.
+scope sub
+#scope one
+#scope base
+
+# Search timelimit
+#timelimit 30
+
+# Bind timelimit
+#bind_timelimit 30
+
+# Idle timelimit; client will close connections
+# (nss_ldap only) if the server has not been contacted
+# for the number of seconds specified below.
+#idle_timelimit 3600
+
+# Filter to AND with uid=%s
+#pam_filter objectclass=account
+pam_filter objectclass=postfix
+
+# The user ID attribute (defaults to uid)
+#pam_login_attribute uid
+#pam_login_attribute mail
+
+# Search the root DSE for the password policy (works
+# with Netscape Directory Server)
+#pam_lookup_policy yes
+
+# Check the 'host' attribute for access control
+# Default is no; if set to yes, and user has no
+# value for the host attribute, and pam_ldap is
+# configured for account management (authorization)
+# then the user will not be allowed to login.
+#pam_check_host_attr yes
+
+# Check the 'authorizedService' attribute for access
+# control
+# Default is no; if set to yes, and the user has no
+# value for the authorizedService attribute, and
+# pam_ldap is configured for account management
+# (authorization) then the user will not be allowed
+# to login.
+#pam_check_service_attr yes
+
+# Group to enforce membership of
+#pam_groupdn cn=PAM,ou=Groups,dc=padl,dc=com
+
+# Group member attribute
+#pam_member_attribute uniquemember
+
+# Specify a minium or maximum UID number allowed
+#pam_min_uid 0
+#pam_max_uid 0
+
+# Template login attribute, default template user
+# (can be overriden by value of former attribute
+# in user's entry)
+#pam_login_attribute userPrincipalName
+#pam_template_login_attribute uid
+#pam_template_login nobody
+
+# HEADS UP: the pam_crypt, pam_nds_passwd,
+# and pam_ad_passwd options are no
+# longer supported.
+
+# Do not hash the password at all; presume
+# the directory server will do it, if
+# necessary. This is the default.
+pam_password crypt
+
+# Hash password locally; required for University of
+# Michigan LDAP server, and works with Netscape
+# Directory Server if you're using the UNIX-Crypt
+# hash mechanism and not using the NT Synchronization
+# service.
+#pam_password crypt
+
+# Remove old password first, then update in
+# cleartext. Necessary for use with Novell
+# Directory Services (NDS)
+#pam_password nds
+
+# Update Active Directory password, by
+# creating Unicode password and updating
+# unicodePwd attribute.
+#pam_password ad
+
+# Use the OpenLDAP password change
+# extended operation to update the password.
+#pam_password exop
+
+# Redirect users to a URL or somesuch on password
+# changes.
+#pam_password_prohibit_message Please visit http://internal to change your password.
+
+# RFC2307bis naming contexts
+# Syntax:
+# nss_base_XXX          base?scope?filter
+# where scope is {base,one,sub}
+# and filter is a filter to be &#38;'d with the
+# default filter.
+# You can omit the suffix eg:
+# nss_base_passwd       ou=People,
+# to append the default base DN but this
+# may incur a small performance impact.
+#nss_base_passwd        ou=People,dc=padl,dc=com?one
+#nss_base_shadow        ou=People,dc=padl,dc=com?one
+#nss_base_group         ou=Group,dc=padl,dc=com?one
+#nss_base_hosts         ou=Hosts,dc=padl,dc=com?one
+#nss_base_services      ou=Services,dc=padl,dc=com?one
+#nss_base_networks      ou=Networks,dc=padl,dc=com?one
+#nss_base_protocols     ou=Protocols,dc=padl,dc=com?one
+#nss_base_rpc           ou=Rpc,dc=padl,dc=com?one
+#nss_base_ethers        ou=Ethers,dc=padl,dc=com?one
+#nss_base_netmasks      ou=Networks,dc=padl,dc=com?ne
+#nss_base_bootparams    ou=Ethers,dc=padl,dc=com?one
+#nss_base_aliases       ou=Aliases,dc=padl,dc=com?one
+#nss_base_netgroup      ou=Netgroup,dc=padl,dc=com?one
+
+# attribute/objectclass mapping
+# Syntax:
+#nss_map_attribute      rfc2307attribute        mapped_attribute
+#nss_map_objectclass    rfc2307objectclass      mapped_objectclass
+
+# configure --enable-nds is no longer supported.
+# For NDS now do:
+#nss_map_attribute uniqueMember member
+
+# configure --enable-mssfu-schema is no longer supported.
+# For MSSFU now do:
+#nss_map_objectclass posixAccount User
+#nss_map_attribute uid msSFUName
+#nss_map_attribute uniqueMember posixMember
+#nss_map_attribute userPassword msSFUPassword
+#nss_map_attribute homeDirectory msSFUHomeDirectory
+#nss_map_objectclass posixGroup Group
+#pam_login_attribute msSFUName
+#pam_filter objectclass=User
+#pam_password ad
+
+# configure --enable-authpassword is no longer supported
+# For authPassword support, now do:
+#nss_map_attribute userPassword authPassword
+#pam_password nds
+
+# For IBM SecureWay support, do:
+#nss_map_objectclass posixAccount aixAccount
+#nss_map_attribute uid userName
+#nss_map_attribute gidNumber gid
+#nss_map_attribute uidNumber uid
+#nss_map_attribute userPassword passwordChar
+#nss_map_objectclass posixGroup aixAccessGroup
+#nss_map_attribute cn groupName
+#nss_map_attribute uniqueMember member
+#pam_login_attribute userName
+#pam_filter objectclass=aixAccount
+#pam_password clear
+
+# Netscape SDK LDAPS
+#ssl on
+
+# Netscape SDK SSL options
+#sslpath /etc/ssl/certs/cert7.db
+
+# OpenLDAP SSL mechanism
+# start_tls mechanism uses the normal LDAP port, LDAPS typically 636
+#ssl start_tls
+#ssl on
+
+# OpenLDAP SSL options
+# Require and verify server certificate (yes/no)
+# Default is "no"
+#tls_checkpeer yes
+
+# CA certificates for server certificate verification
+# At least one of these are required if tls_checkpeer is "yes"
+#tls_cacertfile /etc/ssl/ca.cert
+#tls_cacertdir /etc/ssl/certs
+
+# Seed the PRNG if /dev/urandom is not provided
+#tls_randfile /var/run/egd-pool
+
+# SSL cipher suite
+# See man ciphers for syntax
+#tls_ciphers TLSv1
+
+# Client certificate and key
+# Use these, if your server requires client authentication.
+#tls_cert
+#tls_key
+					</PRE
+></TD
+></TR
+></TABLE
+></DIV
+></LI
+><LI
+><DIV
+CLASS="NOTE"
+><P
+></P
+><TABLE
+CLASS="NOTE"
+WIDTH="100%"
+BORDER="0"
+><TR
+><TD
+WIDTH="25"
+ALIGN="CENTER"
+VALIGN="TOP"
+><IMG
+SRC="note.gif" tppabs="http://www.9812.net/article/postfix/stylesheet-images/note.gif"
+HSPACE="5"
+ALT="Note"></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+><P
+>在Debian中没有/etc/sysconfig/目录，对应的是/etc/default/</P
+></TD
+></TR
+></TABLE
+></DIV
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>debian:~# find / -name saslauthd
+/etc/default/saslauthd
+/etc/init.d/saslauthd
+/var/run/saslauthd
+
+debian:/var/log# echo "START=yes" &#62;&#62; /etc/default/saslauthd
+debian:/var/log# cat /etc/default/saslauthd
+# This needs to be uncommented before saslauthd will be run automatically
+# START=yes
+
+# You must specify the authentication mechanisms you wish to use.
+# This defaults to "pam" for PAM support, but may also include
+# "shadow" or "sasldb", like this:
+# MECHANISMS="pam shadow"
+
+MECHANISMS="pam"
+
+START=yes
+				</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>smtpd.conf</P
+><P
+>redhat linux:/usr/lib/sasl2/smtpd.conf (debian: /etc/postfix/sasl/smtpd.conf) </P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>debian:/etc/postfix# cat sasl/smtpd.conf
+pwcheck_method: saslauthd
+mech_list: login plain CRAM-MD5 DIGEST-MD5 GSSAPI
+debian:/etc/postfix#
+				</PRE
+></TD
+></TR
+></TABLE
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>debian:/etc/postfix# mkdir -p /var/spool/postfix/var/run/saslauthd
+debian:/etc/postfix# chgrp sasl /var/spool/postfix/var/run/saslauthd/
+				</PRE
+></TD
+></TR
+></TABLE
+><P
+>Cyrus SASL 配置选项
+	<A
+NAME="AEN492"
+HREF="#FTN.AEN492"
+>[1]</A
+></P
+></LI
+><LI
+><P
+>测试 saslauthd</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>debian:/var/log# testsaslauthd -f /var/spool/postfix/var/run/saslauthd/mux -s smtp -r example.net -u chen -p chen
+0: OK "Success."
+debian:/var/log# saslauthd -O /etc/pam_ldap.conf -m /var/spool/postfix/var/run/saslauthd -a ldap
+
+debian:~# saslpasswd2 -c -u mail.example.net -a smtpauth test
+			</PRE
+></TD
+></TR
+></TABLE
+></LI
+></OL
+></DIV
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Notes</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN492"
+HREF="x466.html#AEN492" tppabs="http://www.9812.net/article/postfix/x466.html#AEN492"
+>[1]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+></P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>Cyrus SASL 配置选项
+
+这个文档包含了 Cyrus SASL 库和捆绑的机制能使用到的选项的信息。大部分通常使用到的
+选项同时也是经常被误解的选项是 pwcheck_method 和 auxprop_plugin 。如果工作不正常
+的话，请确保你正确的配置了他们。另外，mech_list选项能方便的限制某特定的应用程序
+所能使用的机制。
+
+选项 使用者 缺省值
+
+authdaemond_path SASL 库 /dev/null
+（描述：Courier-IMAP 的 authdaemond 的 Unix 套接字的路径。仅当 pwcheck_method 设
+置为 authdaemond 时可用。）
+
+auto_transition SASL 库 no
+（描述：当设置为 'yes'或'noplain'时，同时使用一个 auxprop 插件时，当用户成功的进
+行了纯文本认证时自动的他们到其他机制。当设置为 'noplain' 时，仅非纯文本秘密将
+被写。注意，当前实现，不使用纯文本秘密的机制仅有 OTP 和 SRP）。
+
+canon_user_plugin SASL 库 INTERNAL
+（描述：canon_user 插件使用的名字）
+
+log_level SASL 库 1 (SASL_LOG_ERR) 
+（描述：日志记录登记的数字，参考 sasl.h 中的 SASL_LOG_* 了解值和描述）
+
+mech_list SASL 库 使用所有有效插件
+（描述：空格分隔开的允许使用的机制的列表，比如：'plain otp'。用来在安装的插件
+中限制出一个可用机制的子集。）
+
+plugin_list SASL 库 无
+（描述：插件列表的位置【不支持】）
+
+pwcheck_method SASL 库 auxprop
+（描述：空格分隔开的用来效验密码的机制列表，值可能是 sasl_checkpass，auxprop，
+saslauthd，pwcheck，authdaemond【如果编译时添加了 --with-authdaemond 的话】 和
+alwaystrue【如果编译时添加了 --enable-alwaystrue 的话】）
+
+saslauthd_path SASL 库 系统相关（通常不需要更改）
+（描述：saslauthd 运行的目录，包括 "/mun" 命名管道）
+
+auxprop_plugin 辅助属性 (空) - 查询所有插件
+（描述：使用的辅助插件的插件名，你可以指定一个空格格开的插件名列表，这些插件将按
+照顺序被查询。）
+
+keytab GSSAPI /etc/krb5.keytab(系统相关)
+（描述：keytab 文件的位置）
+
+ntlm_server NTLM (服务器) (空) - 执行内部代理
+（描述：认证将被代理的系统名【WinNT，Win2K，Samba等】）
+
+ntlm_v2 NTLM (客户端) no (发送 NTLMv1)
+（描述：发送 NTLMv2 响应给服务器）
+
+opiekeys OTP (用于 OPIE) /etc/opiekeys
+（描述：opiekeys 文件位置）
+
+otp_mda OTP (w/o OPIE) md5 
+（描述：OTP 的消息摘要算法，用于 sasl_setpass，值有：'md4'，'md5'，'sha1'）
+
+reauth_timeout DIGEST-MD5 0
+（描述：为加快再次认证而缓存认证信息的保留时间（单位：分钟）。0 禁止缓存。）
+
+srp_mda SRP sha1 
+（描述：SRP 计算的消息摘要算法，值有：'md5'，'sha1'，'rmd160'）
+
+srvtab KERBEROS_V4 /etc/srvtab (系统相关)
+（描述：srvtab 文件的位置）
+
+sasldb_path sasldb 插件 /etc/sasldb2 (系统相关)
+（描述：sasldb 文件的路径）
+
+sql_engine SQL 插件 mysql
+（描述：使用的 SQL 数据库引擎名，可能值为：'mysql'，'pgsql'）
+
+
+sql_hostnames SQL 插件 无 (引擎相关)
+（描述：逗号分隔开的 SQL 服务器列表，使用 主机地址[:端口] 的格式）
+
+sql_user SQL 插件 无 (引擎相关)
+（描述：数据库服务器的登陆用户名）
+
+sql_passwd SQL 插件 无 (引擎相关)
+（描述：数据库服务器的登陆用户密码）
+
+
+sql_database SQL 插件 无 (引擎相关)
+（描述：包含辅助属性的数据库名）
+
+sql_select SQL 插件 无
+（描述：用来获取属性的 SELECT 语句。使用 SQL 插件时，这个选项时必须的。）
+
+sql_insert SQL 插件 无
+（描述：用来为新用户创建属性的 INSERT 语句。）
+
+sql_update SQL 插件 无
+（描述：用来修改属性的 UPDATE 语句）
+
+sql_usessl SQL 插件 no
+（描述：当设置为'yes'，'on'，'1'或者'true'时，将使用安全连接连接数据库服务器）
+
+
+SQL auxprop 选项的注意事项：
+sql_insert 和 sql_update 选项是可选的而且仅在你希望允许 SASL 库（比如：saslpasswd2）和插件（比如：OTP）向 SQL 服务器写入某些属性信息时有用。如果使用了，这两个语句都必须同时提供用来添加、更新、删除属性。注意：可写的属性表格列必须能够接收 NULL 值。
+
+由 sql_select，sql_insert 和 sql_update 选项提供的 SQL 语句能够包含将用合适的值取代其值的参数。这些参数是：
+
+%u 被获取（或存储）属性的用户的用户名。
+%p 被获取（或存储）的属性的名字。在技术上，它可以是任何东西，不过 SASL认证将会
+尝试 userPassword 和 cmusaslsecretMECHNAME （MECHNAME 是 SASL 机制的
+名字）。
+%r 用户属于的领域。它可以是 kerberos 领域，正在运行 SASL 应用的计算机的正式域名
+或者一个用户名中 @ 之后的任何东西。（请参考领域文档）
+%v 要被存储的属性的值（仅用于 INSERT 或 UPDATE）。除依赖于属性本身外，技术上它可
+以是任何值，不过一般是 userPassword。
+
+注意：不要为整个SQL语句加引号，不过每个单独的 %u， %r 和 %v 参数必须被加引号。
+
+例子：
+sql_select: SELECT %p FROM user_table WHERE username = '%u' and realm = '%r'
+
+下面将发送到数据库服务器的SQL语句表示将查询用户名为“bovik”，缺省领域为机器
+“madoka.surf.org.uk” 的用户密码：
+SELECT userPassword FROM user_table WHERE username = 'bovik' and
+realm = 'madoka.surf.org.uk';
+
+sql_insert: INSERT INTO user_table (username, realm, %p) VALUES ('%u', '%r', '%v')
+
+
+将为用户名为“bovik”，领域为“madoka.surf.org.uk”，userPassword 为 “wert”
+的用户产生下面的 SQL 语句：
+INSERT INTO user_table (username, realm, userPassword) VALUES
+('bovik', 'madoka.surf.org.uk', 'wert');
+
+
+注意，不一定所有的替代都要使用。比如，
+
+SELECT password FROM auth WHERE username = '%u'
+
+也是一个有效的 sql_select 值。 
+				</PRE
+></TD
+></TR
+></TABLE
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x442.html" tppabs="http://www.9812.net/article/postfix/x442.html"
+ACCESSKEY="P"
+>&#60;&#60;&#60; Previous</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html" tppabs="http://www.9812.net/article/postfix/book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x498.html" tppabs="http://www.9812.net/article/postfix/x498.html"
+ACCESSKEY="N"
+>Next &#62;&#62;&#62;</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>创建所需条目</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="c423.html" tppabs="http://www.9812.net/article/postfix/c423.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>配置 Postfix</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

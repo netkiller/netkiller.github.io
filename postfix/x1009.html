@@ -1,0 +1,753 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<HTML
+><HEAD
+><TITLE
+>防病毒系统 Clam AntiVirus</TITLE
+>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.76b+
+"><LINK
+REL="HOME"
+TITLE="Postfix Integrated Solution"
+HREF="book1.html" tppabs="http://www.9812.net/article/postfix/book1.html"><LINK
+REL="UP"
+TITLE="反病毒,反垃圾邮件部分(Anti-Virus,Anti-Spam)"
+HREF="c936.html" tppabs="http://www.9812.net/article/postfix/c936.html"><LINK
+REL="PREVIOUS"
+TITLE="防病毒系统 NAI McAfee AntiVirus (uvscan)"
+HREF="x996.html" tppabs="http://www.9812.net/article/postfix/x996.html"><LINK
+REL="NEXT"
+TITLE="Mail-SpamAssassin"
+HREF="x1065.html" tppabs="http://www.9812.net/article/postfix/x1065.html"></HEAD
+><BODY
+CLASS="SECTION"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Postfix Integrated Solution</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x996.html" tppabs="http://www.9812.net/article/postfix/x996.html"
+ACCESSKEY="P"
+>&#60;&#60;&#60; Previous</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>反病毒,反垃圾邮件部分(Anti-Virus,Anti-Spam)</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x1065.html" tppabs="http://www.9812.net/article/postfix/x1065.html"
+ACCESSKEY="N"
+>Next &#62;&#62;&#62;</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECTION"
+><H1
+CLASS="SECTION"
+><A
+NAME="AEN1009"
+></A
+>防病毒系统 Clam AntiVirus</H1
+><P
+></P
+><OL
+TYPE="1"
+><LI
+><P
+>安装Clam AntiVirus http://download.sourceforge.net/clamav/</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="90%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 src]# wget http://download.sourceforge.net/clamav/clamav-0.70.tar.gz
+[root@linuxas3 clamav-0.70]#
+[root@linuxas3 clamav-0.70]# groupadd clamav
+[root@linuxas3 clamav-0.70]# useradd -g clamav -s /bin/false -c "Clam AntiVirus" clamav
+[root@linuxas3 clamav-0.70]# ./configure --prefix=/usr/local/clamav
+[root@linuxas3 clamav-0.70]# make
+[root@linuxas3 clamav-0.70]# make install
+[root@linuxas3 clamav-0.70]# chown clamav.clamav -R /usr/local/clamav/
+[root@linuxas3 clamav-0.70]# cd /usr/local/clamav/
+[root@linuxas3 clamav]# mkdir /var/run/clamav/
+[root@linuxas3 clamav]# make /var/log/amavis
+[root@linuxas3 clamav]# cd /var/log/amavis
+[root@linuxas3 clamav]# touch amavis.log
+[root@linuxas3 clamav]# chown amavis amavis.log
+
+		</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>编辑clamav.conf文件</P
+><P
+>  	更改clamav.conf文件，去掉下面选项前面的＃
+    #Example  前面加上"#"注释 Example
+    LogFile /tmp/clamd.log       去掉前面的# 
+    LogFileMaxSize 2M          去掉前面的＃ 
+    LogTime                   去掉前面的＃ 
+    PidFile /var/run/clamd.pid     去掉前面的＃ 
+    DatabaseDirectory /var/lib/clamav  去掉前面的＃，并且修改路径为/usr/local/clamav/share/clamav 
+		</P
+><DIV
+CLASS="EXAMPLE"
+><A
+NAME="AEN1018"
+></A
+><P
+><B
+>Example 1. clamav.conf</B
+></P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="90%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 clamav]# vi etc/clamav.conf
+##
+## Example config file for the Clam AV daemon
+## Please read the clamav.conf(5) manual before editing this file.
+##
+
+
+# Comment or remove the line below.
+# Example
+
+# Uncomment this option to enable logging.
+# LogFile must be writable for the user running the daemon.
+# Full path is required.
+LogFile /var/log/clamd.log
+
+# By default the log file is locked for writing - the lock protects against
+# running clamd multiple times (if want to run another clamd, please
+# copy the configuration file, change the LogFile variable, and run
+# the daemon with --config-file option). That's why you shouldn't uncomment
+# this option.
+#LogFileUnlock
+
+# Maximal size of the log file. Default is 1 Mb.
+# Value of 0 disables the limit.
+# You may use 'M' or 'm' for megabytes (1M = 1m = 1048576 bytes)
+# and 'K' or 'k' for kilobytes (1K = 1k = 1024 bytes). To specify the size
+# in bytes just don't use modifiers.
+LogFileMaxSize 2M
+
+# Log time with an each message.
+LogTime
+
+# Log also clean files. May be useful in debugging but will drastically
+# increase the log size.
+#LogClean
+
+# Use system logger (can work together with LogFile).
+LogSyslog
+
+# Enable verbose logging.
+LogVerbose
+
+# This option allows you to save the process identifier of the listening
+# daemon (main thread).
+PidFile /var/run/clamd.pid
+
+# Optional path to the global temporary directory.
+# Default is system specific - usually /var/tmp or /tmp.
+#TemporaryDirectory /var/tmp
+
+# Path to the database directory.
+# Default is the hardcoded directory (mostly /usr/local/share/clamav,
+# but it depends on installation options).
+#DatabaseDirectory /var/lib/clamav
+DatabaseDirectory /usr/local/clamav/share/clamav
+# The daemon works in local or network mode. Currently the local mode is
+# recommended for security reasons.
+
+# Path to the local socket. The daemon doesn't change the mode of the
+# created file (portability reasons). You may want to create it in a directory
+# which is only accessible for a user running daemon.
+#LocalSocket /tmp/clamd
+LocalSocket /var/run/clamav/clamd.sock
+# Remove stale socket after unclean shutdown.
+#FixStaleSocket
+
+# TCP port address.
+#TCPSocket 3310
+
+# TCP address.
+# By default we bind to INADDR_ANY, probably not wise.
+# Enable the following to provide some degree of protection
+# from the outside world.
+#TCPAddr 127.0.0.1
+
+# Maximum length the queue of pending connections may grow to.
+# Default is 15.
+#MaxConnectionQueueLength 30
+
+# When activated, input stream (see STREAM command) will be saved to disk before
+# scanning - this allows scanning within archives.
+#StreamSaveToDisk
+
+# Close the connection if this limit is exceeded.
+#StreamMaxLength 10M
+
+# Maximal number of a threads running at the same time.
+# Default is 5, and it should be sufficient for a typical workstation.
+# You may need to increase threads number for a server machine.
+#MaxThreads 10
+
+# Waiting for data from a client socket will timeout after this time (seconds).
+# Default is 120. Value of 0 disables the timeout.
+#ReadTimeout 300
+
+# Maximal depth the directories are scanned at.
+MaxDirectoryRecursion 15
+
+# SECURITY HINT: You should have enabled directory recursion limit to
+# avoid potential problems.
+#FollowDirectorySymlinks
+
+# Follow regular file symlinks.
+#FollowFileSymlinks
+
+# Do internal checks (eg. check the integrity of the database structures)
+# By default clamd checks itself every 3600 seconds (1 hour).
+#SelfCheck 600
+
+# Execute a command when a virus is found. In the command string %v will
+# be replaced by the virus name.
+#
+#VirusEvent /usr/local/bin/send_sms 123456789 "VIRUS ALERT: %v"
+
+# Run as selected user (clamd must be started by root).
+# By default it doesn't drop privileges.
+#User clamav
+
+# Initialize the supplementary group access (for all groups in /etc/group
+# user is added in. clamd must be started by root).
+#AllowSupplementaryGroups
+
+# Don't fork into background. Useful in debugging.
+#Foreground
+
+# Enable debug messages in libclamav.
+#Debug
+
+##
+## Document scanning
+##
+
+# This option enables scanning of Microsoft Office document macros.
+ScanOLE2
+
+##
+## Mail support
+##
+
+# Uncomment this option if you are planning to scan mail files.
+ScanMail
+
+##
+## Archive support
+##
+
+
+# Comment this line to disable scanning of the archives.
+ScanArchive
+
+
+# By default the built-in RAR unpacker is disabled by default because the code
+# terribly leaks, however it's probably a good idea to enable it.
+#ScanRAR
+
+
+# Options below protect your system against Denial of Service attacks
+# with archive bombs.
+
+# Files in archives larger than this limit won't be scanned.
+# Value of 0 disables the limit.
+# WARNING: Due to the unrarlib implementation, whole files (one by one) in RAR
+#          archives are decompressed to the memory. That's why never disable
+#          this limit (but you may increase it of course!)
+ArchiveMaxFileSize 10M
+
+# Archives are scanned recursively - e.g. if Zip archive contains RAR file,
+# the RAR file will be decompressed, too (but only if recursion limit is set
+# at least to 1). With this option you may set the recursion level.
+# Value of 0 disables the limit.
+ArchiveMaxRecursion 5
+
+# Number of files to be scanned within archive.
+# Value of 0 disables the limit.
+ArchiveMaxFiles 1000
+
+# Mark potential archive bombs as viruses (0 disables the limit)
+ArchiveMaxCompressionRatio 200
+
+# Use slower decompression algorithm which uses less memory. This option
+# affects bzip2 decompressor only.
+#ArchiveLimitMemoryUsage
+
+# Mark encrypted archives as viruses (Encrypted.Zip, Encrypted.RAR).
+#ArchiveBlockEncrypted
+
+
+##
+## Clamuko settings
+## WARNING: This is experimental software. It is very likely it will hang
+##          up your system !!!
+##
+
+# Enable Clamuko. Dazuko (/dev/dazuko) must be configured and running.
+#ClamukoScanOnAccess
+
+# Set access mask for Clamuko.
+ClamukoScanOnOpen
+ClamukoScanOnClose
+ClamukoScanOnExec
+
+# Set the include paths (all files in them will be scanned). You can have
+# multiple ClamukoIncludePath options, but each directory must be added
+# in a seperate option. All subdirectories are scanned, too.
+ClamukoIncludePath /home
+#ClamukoIncludePath /students
+
+# Set the exclude paths. All subdirectories are also excluded.
+#ClamukoExcludePath /home/guru
+
+# Limit the file size to be scanned (probably you don't want to scan your movie
+# files ;))
+# Value of 0 disables the limit. 1 Mb should be fine.
+ClamukoMaxFileSize 1M
+
+# Enable archive support. It uses the limits from clamd section.
+# (This option doesn't depend on ScanArchive, you can have archive support
+# in clamd disabled).
+ClamukoScanArchive
+		</PRE
+></TD
+></TR
+></TABLE
+></DIV
+></LI
+><LI
+><P
+>配置freshclam.conf</P
+><P
+>freshclam.conf是升级程序使用的配置文件</P
+><DIV
+CLASS="EXAMPLE"
+><A
+NAME="AEN1024"
+></A
+><P
+><B
+>Example 2. freshclam.conf</B
+></P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="90%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 clamav]# vi etc/freshclam.conf
+##
+## Example config file for freshclam
+## Please read the clamav.conf(5) manual before editing this file.
+## This file may be optionally merged with clamav.conf.
+##
+
+
+# You can change the default database directory here.
+#DatabaseDirectory /var/lib/clamav
+<TT
+CLASS="USERINPUT"
+><B
+>DatabaseDirectory /usr/local/clamav/share/clamav</B
+></TT
+>
+
+# Path to the log file (make sure it has proper permissions)
+<TT
+CLASS="USERINPUT"
+><B
+>UpdateLogFile /var/log/freshclam.log</B
+></TT
+>
+
+# Enable verbose logging.
+<TT
+CLASS="USERINPUT"
+><B
+>LogVerbose</B
+></TT
+>
+
+# Use system logger (can work together with UpdateLogFile).
+<TT
+CLASS="USERINPUT"
+><B
+>LogSyslog</B
+></TT
+>
+
+# By default when freshclam is started by root it drops privileges and
+# switches to the "clamav" user. You can change this behaviour here.
+#DatabaseOwner clamav
+
+# The main database mirror is database.clamav.net (this is a round-robin
+# DNS that points to many mirrors on the world) and in most cases you
+# SHOULD NOT change it.
+DatabaseMirror database.clamav.net
+
+# How many attempts to make before giving up.
+MaxAttempts 3
+
+# How often check for a new database. We suggest checking for it every
+# two hours.
+Checks 12
+
+# Proxy settings
+#HTTPProxyServer myproxy.com
+#HTTPProxyPort 1234
+#HTTPProxyUsername myusername
+#HTTPProxyPassword mypass
+
+# Send the RELOAD command to clamd.
+#NotifyClamd [/optional/config/file/path]
+
+# Run command after database update.
+#OnUpdateExecute command
+
+# Run command if database update failed.
+#OnErrorExecute command
+
+		</PRE
+></TD
+></TR
+></TABLE
+></DIV
+></LI
+><LI
+><P
+>配置amavisd.conf</P
+><P
+>在vi中输入/clamav定位，可以找到http://www.clamav.net/,取消注释即可</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="90%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 clamav]# vi /etc/amavisd.conf
+# ### http://www.clamav.net/
+ ['Clam Antivirus-clamd',
+   \&#38;ask_daemon, ["CONTSCAN {}\n", "/var/run/clamav/clamd"],
+   qr/\bOK$/, qr/\bFOUND$/,
+   qr/^.*?: (?!Infected Archive)(.*) FOUND$/ ],
+		</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>测试</P
+><P
+>amavisd提示Using internal av scanner code for (primary) Clam Antivirus-clamd表示成功</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="90%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 clamav]#./clamd
+[root@linuxas3 clamav]# /usr/local/sbin/amavisd debug
+Apr 23 14:07:52 linuxas3.9812.net amavisd[13278]: Using internal av scanner code for (primary) Clam Antivirus-clamd
+		</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>升级clamscan病毒定义库</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="90%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>    # freshclam --verbose   //升级clamscan病毒库 
+		</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>创建freshclam日志记录文件</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="90%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>    # touch /var/log/freshclam.log 
+    # chmod 644 /var/log/freshclam.log 
+    # chown clamav:clamav /var/log/freshclam.log 
+		</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>创建Clamav自动启动脚本 <A
+HREF="clamav" tppabs="http://www.9812.net/article/postfix/attach/clamav"
+TARGET="_top"
+>clamav shell</A
+></P
+><DIV
+CLASS="EXAMPLE"
+><A
+NAME="AEN1048"
+></A
+><P
+><B
+>Example 3. 建立clamd的启动脚本</B
+></P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="90%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+># vi /etc/init.d/clamd 
+
+================================================================= 
+#! /bin/bash 
+# 
+# crond   Start/Stop the clam antivirus daemon. 
+# 
+# chkconfig: 2345 90 60 
+# description: clamdis a standard UNIX program that scans for Viruses. 
+# processname: clamd 
+# config: /usr/local/etc/clamd.conf 
+# pidfile: /var/run/clamav/clamd.pid 
+
+# Source function library. 
+. /etc/init.d/functions 
+
+RETVAL=0 
+
+# See how we were called. 
+
+prog="clamd" 
+progdir="/usr/local/clamav/sbin" 
+
+# Source configuration 
+if [ -f /etc/sysconfig/$prog ] ; then 
+    . /etc/sysconfig/$prog 
+fi 
+
+start() { 
+        echo -n $"Starting $prog: " 
+        daemon $progdir/$prog 
+        RETVAL=$? 
+        echo 
+        [ $RETVAL -eq 0 ] &#38;&#38; touch /var/run/clamav/clamd.pid 
+        return $RETVAL 
+} 
+
+stop() { 
+        echo -n $"Stopping $prog: " 
+        killproc $prog 
+        RETVAL=$? 
+        echo 
+        [ $RETVAL -eq 0 ] &#38;&#38; rm -f /var/run/clamav/clamd.pid 
+        return $RETVAL 
+} 
+
+rhstatus() { 
+        status clamd 
+} 
+
+restart() { 
+        stop 
+        start 
+} 
+
+reload() { 
+        echo -n $"Reloading clam daemon configuration: " 
+        killproc clamd -HUP 
+        retval=$? 
+        echo 
+        return $RETVAL 
+} 
+
+case "$1" in 
+  start) 
+        start 
+        ;; 
+  stop) 
+        stop 
+        ;; 
+  restart) 
+        restart 
+        ;; 
+  reload) 
+        reload 
+        ;; 
+  status) 
+        rhstatus 
+        ;; 
+  condrestart) 
+        [ -f /var/lock/subsys/clamd ] &#38;&#38; restart || : 
+        ;; 
+  *) 
+        echo $"Usage: $0 {start|stop|status|reload|restart|condrestart}" 
+        exit 1 
+esac 
+
+exit 0 
+
+# chmod 755 /etc/init.d/clamd 
+# chkconfig --add clamd 
+# chkconfig clamd on 
+			</PRE
+></TD
+></TR
+></TABLE
+></DIV
+><DIV
+CLASS="EXAMPLE"
+><A
+NAME="AEN1051"
+></A
+><P
+><B
+>Example 4. clamav </B
+></P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="90%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 clamav]# touch /etc/init.d/clamav //内容如下 
+    
+    #!/bin/sh 
+    # 
+    # Startup / shutdown script for Clam Antivirus 
+    CLAMAV=/usr/local/clamav/bin
+
+    case "$1" in 
+       start) 
+           ${CLAMAV}/bin/freshclam -d -c 2 -l /var/log/freshclam.log
+           echo -n ' freshclam' 
+           ;; 
+
+       stop) 
+           /usr/bin/killall freshclam &#62; /dev/null 2&#62;&#38;1 \ 
+           &#38;&#38; echo -n ' freshclam' 
+           ;; 
+		   
+          *) 
+           echo "" 
+           echo "Usage: `basename $0` { start | stop }" 
+           echo "" 
+           exit 64 
+           ;; 
+    esac 
+		</PRE
+></TD
+></TR
+></TABLE
+></DIV
+></LI
+><LI
+><P
+>启动clamav</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="90%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 clamav]# chmod 755 /etc/init.d/clamav		
+[root@linuxas3 clamav]# /etc/init.d/clamav start
+or
+[root@linuxas3 clamav]# service clamav start
+		</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>添加自动升级脚本</P
+><P
+>		<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="90%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>    # crontab 

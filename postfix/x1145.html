@@ -1,0 +1,377 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<HTML
+><HEAD
+><TITLE
+>rsync 备份方案</TITLE
+>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.76b+
+"><LINK
+REL="HOME"
+TITLE="Postfix Integrated Solution"
+HREF="book1.html" tppabs="http://www.9812.net/article/postfix/book1.html"><LINK
+REL="UP"
+TITLE="邮件存储、备份、迁移"
+HREF="c1124.html" tppabs="http://www.9812.net/article/postfix/c1124.html"><LINK
+REL="PREVIOUS"
+TITLE="邮件存储、备份、迁移"
+HREF="c1124.html" tppabs="http://www.9812.net/article/postfix/c1124.html"><LINK
+REL="NEXT"
+TITLE="wget + tar + xxzip 备份方案"
+HREF="x1182.html" tppabs="http://www.9812.net/article/postfix/x1182.html"></HEAD
+><BODY
+CLASS="SECTION"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Postfix Integrated Solution</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="c1124.html" tppabs="http://www.9812.net/article/postfix/c1124.html"
+ACCESSKEY="P"
+>&#60;&#60;&#60; Previous</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>邮件存储、备份、迁移</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x1182.html" tppabs="http://www.9812.net/article/postfix/x1182.html"
+ACCESSKEY="N"
+>Next &#62;&#62;&#62;</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECTION"
+><H1
+CLASS="SECTION"
+><A
+NAME="AEN1145"
+></A
+>rsync 备份方案</H1
+><P
+><TT
+CLASS="VARNAME"
+>rsync 镜像备份</TT
+></P
+><DIV
+CLASS="PROCEDURE"
+><P
+><B
+>配置 rsync </B
+></P
+><OL
+TYPE="1"
+><LI
+><P
+>系统环境</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 root]# uname -a
+Linux linuxas3.9812.net 2.4.21-4.ELsmp #1 SMP Fri Oct 3 17:52:56 EDT 2003 i686 i686 i386 GNU/Linux
+				</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>安装rsync</P
+><P
+>在AS3 第二张CD上找到rsync-2.5.6-20.i386.rpm</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 root]# cd /mnt
+[root@linuxas3 mnt]# mount cdrom
+[root@linuxas3 mnt]# cd cdrom/RedHat/RPMS
+[root@linuxas3 RPMS]# rpm -ivh rsync-2.5.6-20.i386.rpm
+				</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>配置/etc/rsyncd.conf</P
+><P
+>在rh9,as3系统上rsync安装后,并没有创建rsyncd.conf文档，笔者是自己创建的rsyncd.conf文档</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 root]# vi /etc/rsyncd.conf
+
+uid=nobody
+gid=nobody
+max connections=4
+use chroot=no
+log file=/var/log/rsyncd.log
+pid file=/var/run/rsyncd.pid
+lock file=/var/run/rsyncd.lock
+#auth users=root
+secrets file=/etc/rsyncd.pwd
+
+[postfix]
+path=/var/mail
+comment = backup mail
+ignore errors
+read only = yes
+list = no
+auth users = postfix
+
+[netkiller]
+path=/home/netkiller/web
+comment = backup 9812.net
+ignore errors
+read only = yes
+list = no
+auth users = netkiller
+
+[pgsqldb]
+path=/var/lib/pgsql
+comment = backup postgresql database
+ignore errors
+read only = yes
+list = no
+
+				</PRE
+></TD
+></TR
+></TABLE
+><P
+>选择说明</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>uid = nobody 
+gid = nobody 
+use chroot = no         # 不使用chroot
+max connections = 4     # 最大连接数为4
+pid file = /var/run/rsyncd.pid 	  #进程ID文件
+lock file = /var/run/rsync.lock
+log file = /var/log/rsyncd.log    # 日志记录文件
+secrets file = /etc/rsyncd.pwd    # 认证文件名,主要保存用户密码，权限建议设为600，所有者root
+
+[module]            # 这里是认证的模块名，在client端需要指定
+path = /var/mail    # 需要做镜像的目录
+comment = backup xxxx # 注释
+ignore errors         # 可以忽略一些无关的IO错误
+read only = yes       # 只读
+list = no             # 不允许列文件
+auth users = postfix  # 认证的用户名，如果没有这行，则表明是匿名
+
+[other]
+path = /path/to...
+comment = xxxxx
+				</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>密码文件</P
+><P
+>在server端生成一个密码文件/etc/rsyncd.pwd</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 root]# echo postfix:xxx &#62;&#62;/etc/rsyncd.pwd
+[root@linuxas3 root]# echo netkiller:xxx &#62;&#62;/etc/rsyncd.pwd
+[root@linuxas3 root]# chmod 600 /etc/rsyncd.pwd
+				</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>启动rsync daemon</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 root]# rsync --daemon
+				</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>测试</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linux docbook]#  rsync rsync://www.9812.net/netkiller
+
+[root@linux tmp]# rsync rsync://netkiller@www.9812.net/netkiller
+Password:
+
+[chen@linux temp]$  rsync -vzrtopg --progress --delete postfix@www.9812.net::postfix /tmp
+Password:
+				</PRE
+></TD
+></TR
+></TABLE
+><P
+>rsync rsync://认证用户@主机/模块</P
+><P
+>rsync -vzrtopg --progress --delete 认证用户@主机::模块 /mirror目录</P
+></LI
+><LI
+><P
+>添加到启动文件</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>echo　"rsync　--daemon"　&#62;&#62;　/etc/rc.d/rc.local 
+				</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>更复杂的使用，请参考http://rsync.samba.org/</P
+><P
+>rsync examples</P
+></LI
+></OL
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="c1124.html" tppabs="http://www.9812.net/article/postfix/c1124.html"
+ACCESSKEY="P"
+>&#60;&#60;&#60; Previous</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html" tppabs="http://www.9812.net/article/postfix/book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x1182.html" tppabs="http://www.9812.net/article/postfix/x1182.html"
+ACCESSKEY="N"
+>Next &#62;&#62;&#62;</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>邮件存储、备份、迁移</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="c1124.html" tppabs="http://www.9812.net/article/postfix/c1124.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>wget + tar + xxzip 备份方案</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

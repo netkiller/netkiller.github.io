@@ -1,0 +1,565 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<HTML
+><HEAD
+><TITLE
+>邮件系统安全</TITLE
+>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.76b+
+"><LINK
+REL="HOME"
+TITLE="Postfix Integrated Solution"
+HREF="book1.html" tppabs="http://www.9812.net/article/postfix/book1.html"><LINK
+REL="PREVIOUS"
+TITLE="wget + tar + xxzip 备份方案"
+HREF="x1182.html" tppabs="http://www.9812.net/article/postfix/x1182.html"><LINK
+REL="NEXT"
+TITLE="数字签名、加密与证书颁发机构"
+HREF="x1239.html" tppabs="http://www.9812.net/article/postfix/x1239.html"></HEAD
+><BODY
+CLASS="CHAPTER"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Postfix Integrated Solution</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x1182.html" tppabs="http://www.9812.net/article/postfix/x1182.html"
+ACCESSKEY="P"
+>&#60;&#60;&#60; Previous</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x1239.html" tppabs="http://www.9812.net/article/postfix/x1239.html"
+ACCESSKEY="N"
+>Next &#62;&#62;&#62;</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="CHAPTER"
+><H1
+><A
+NAME="SECURITY"
+></A
+>邮件系统安全</H1
+><P
+>OpenSSL + Stunnel + Iptable + 数字证书 PGP/GPG..</P
+><DIV
+CLASS="SECTION"
+><H1
+CLASS="SECTION"
+><A
+NAME="STUNNEL"
+></A
+>通过SSL访问POP、IMAP、SMTP</H1
+><DIV
+CLASS="PROCEDURE"
+><P
+><B
+>通过Stunnel 实现SSL连接</B
+></P
+><OL
+TYPE="1"
+><LI
+><P
+>安装</P
+><P
+>AS3，Redhat 9默认已经安装</P
+><P
+>需要下面两个包：</P
+><P
+><TT
+CLASS="FILENAME"
+>openssl</TT
+></P
+><P
+><TT
+CLASS="FILENAME"
+>stunnel</TT
+></P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 root]# rpm -qa |grep openssl
+openssl-0.9.7a-22.1
+openssl-devel-0.9.7a-22.1
+[root@linuxas3 root]# rpm -qa |grep stunnel
+stunnel-4.04-4
+[root@linuxas3 root]# cd /etc/stunnel/
+[root@linuxas3 stunnel]# ls
+stunnel.conf-sample stunnel.pem
+				</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>配置</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 stunnel]# cp stunnel.conf-sample stunnel.conf
+[root@linuxas3 stunnel]# mv stunnel.pem stunnel.pem.old
+[root@linuxas3 stunnel]# vi stunnel.conf
+				</PRE
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="EXAMPLE"
+><A
+NAME="AEN1208"
+></A
+><P
+><B
+>Example 1. stunnel.conf</B
+></P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+># Sample stunnel configuration file
+# Copyright by Michal Trojnara 2002
+
+# Comment it out on Win32
+cert = /etc/stunnel/stunnel.pem
+# chroot = /usr/var/run/stunnel/
+# PID is created inside chroot jail
+pid = /stunnel.pid
+#setuid = nobody
+#setgid = nogroup
+
+setuid = root
+setgid = root
+
+# Workaround for Eudora bug
+#options = DONT_INSERT_EMPTY_FRAGMENTS
+
+# Authentication stuff
+#verify = 2
+# don't forget about c_rehash CApath
+# it is located inside chroot jail:
+#CApath = /certs
+# or simply use CAfile instead:
+#CAfile = /usr/etc/stunnel/certs.pem
+
+# Some debugging stuff
+debug = 7
+output = stunnel.log
+
+# Use it for client mode
+#client = yes
+
+# Service-level configuration
+
+[pop3s]
+accept  = 995
+connect = 110
+
+[imaps]
+accept  = 993
+connect = 143
+
+[ssmtp]
+accept  = 465
+connect = 25
+
+[s1]
+accept  = 5000
+connect = mail.osw.pl:110
+# delay = yes
+
+[s2]
+accept  = 5001
+connect = mail.osw.pl:25
+
+#[https]
+#accept  = 443
+#connect = 80
+#TIMEOUTclose = 0
+
+[nntps]
+accept  = 563
+connect = 119
+					</PRE
+></TD
+></TR
+></TABLE
+></DIV
+><P
+>配置/运行 Stunnel</P
+><P
+>				<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>stunnel 默认配置文件是 /etc/stunnel/stunnel.conf
+下面是最小的服务方式配置文件内容示范：
+
+key = stunnel.pem
+[http2ssl]
+accept = 443
+connect = 127.0.0.1:80
+
+含义：使用 stunnel.pem 证书，将 127.0.0.1: 80 的端口加密映射成本机443端口，“ http2ssl ”是名称，可以改成其它的标识。 
+
+配置文件文件还有其它内容，详情请看帮助。
+
+直接运行stunnel，就可以启动 Stunnel 了。
+				</PRE
+></TD
+></TR
+></TABLE
+>
+			</P
+></LI
+><LI
+><P
+>创建服务器证书</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 stunnel]# cp /usr/share/ssl/openssl.cnf /etc/openssl.cnf
+[root@linuxas3 stunnel]# nano -w /etc/openssl.cnf
+[root@linuxas3 stunnel]# openssl req -new -x509 -days 365 -nodes -config /etc/openssl.cnf -out stunnel.pem -keyout stunnel.pem
+
+Generating a 1024 bit RSA private key
+....................++++++
+.......................++++++
+writing new private key to 'stunnel.pem'
+-----
+You are about to be asked to enter information that will be incorporated
+into your certificate request.
+What you are about to enter is what is called a Distinguished Name or a DN.
+There are quite a few fields but you can leave some blank
+For some fields there will be a default value,
+If you enter '.', the field will be left blank.
+-----
+Country Name (2 letter code) [GB]:<TT
+CLASS="USERINPUT"
+><B
+>CN</B
+></TT
+>
+State or Province Name (full name) [Berkshire]:<TT
+CLASS="USERINPUT"
+><B
+>GD</B
+></TT
+>
+Locality Name (eg, city) [Newbury]:<TT
+CLASS="USERINPUT"
+><B
+>Shen Zhen</B
+></TT
+>
+Organization Name (eg, company) [My Company Ltd]:<TT
+CLASS="USERINPUT"
+><B
+>none</B
+></TT
+>
+Organizational Unit Name (eg, section) []:<TT
+CLASS="USERINPUT"
+><B
+>postfix</B
+></TT
+>
+Common Name (eg, your name or your server's hostname) []:<TT
+CLASS="USERINPUT"
+><B
+>netkiller</B
+></TT
+>
+Email Address []:<TT
+CLASS="USERINPUT"
+><B
+>openunix@163.com</B
+></TT
+>
+[root@linuxas3 stunnel]# openssl gendh 512 &#62;&#62; stunnel.pem
+[root@linuxas3 stunnel]# openssl x509 -subject -dates -fingerprint -in stunnel.pem
+[root@linuxas3 stunnel]# chmod 600 /etc/stunnel/stunnel.pem
+				</PRE
+></TD
+></TR
+></TABLE
+><P
+>					<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>Stunnel 客户方式不需要证书。Stunnel 服务方式需要一个证书文件。
+Stunnel 在 SSL Http Proxy 服务器是以服务方式运行的，所以必须要有一个证书。通过 openssl.exe 创建服务器证书。下面我将 Stunnel 关于创建证书的翻译如下：
+“...运行下面的命令
+openssl req -new -x509 -days 365 -nodes -config openssl.cnf -out stunnel.pem -keyout stunnel.pem 
+这将会创建一个自己给自己签名的证书。参数的含义：
+-days 365 
+使这个证书的有效期是1年，之后它将不能再用。
+-new 
+创建一个新的证书
+-x509 
+创建一个 X509 证书（自己签名的）
+-nodes 
+这个证书没有密码
+-config openssl.cnf 
+OpenSSL 使用的配置文件 （可能需要修改的有[CA_default]和[req_distinguished_name]这两个 section，译者）
+-out stunnel.pem 
+把 SSL 证书写到哪里
+-keyout stunnel.pem 
+把 SSL 证书放到这个文件中
+
+这个命令将会问你以下问题：
+问题的回答示范
+Country name 国家代码 PL, UK, US, CA...我国是CN,HK,TW
+State or Province name 省
+Locality Name 市
+Organization Name 公司、组织名称
+Organizational Unit Name 部门名称
+Common Name (FQDN) www.example.com 
+
+注意：Common Name (FQDN) 应该是运行 stunnel 机器的主机名。如果你能通过不同的主机名访问这台机器，有些 SSL 客户会警告这个主机的证书有问题，所以最好是使它和用户访问的主机名匹配。
+
+openssl gendh 512&#62;&#62; stunnel.pem 
+这将生成 Diffie-Hellman 部分, 追加到 pem 文件中。
+
+openssl x509 -subject -dates -fingerprint -in stunnel.pem 
+这个命令是将你的证书信息在屏幕显示出来。”
+					</PRE
+></TD
+></TR
+></TABLE
+>
+				</P
+></LI
+><LI
+><P
+>运行</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 stunnel]# stunnel
+[root@linuxas3 stunnel]# ps ax |grep stunnel
+20733 ?        S      0:00 stunnel
+
+				</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>查看端口</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 stunnel]# nmap localhost
+
+Starting nmap V. 3.00 ( www.insecure.org/nmap/ )
+Interesting ports on linuxas3.9812.net (127.0.0.1):
+(The 1582 ports scanned but not shown below are in state: closed)
+Port       State       Service
+22/tcp     open        ssh
+25/tcp     open        smtp
+80/tcp     open        http
+110/tcp    open        pop-3
+111/tcp    open        sunrpc
+119/tcp    open        nntp
+143/tcp    open        imap2
+443/tcp    open        https
+465/tcp    open        smtps
+563/tcp    open        snews
+631/tcp    open        ipp
+783/tcp    open        hp-alarm-mgr
+993/tcp    open        imaps
+995/tcp    open        pop3s
+3306/tcp   open        mysql
+5000/tcp   open        UPnP
+5001/tcp   open        commplex-link
+8009/tcp   open        ajp13
+8080/tcp   open        http-proxy
+
+Nmap run completed -- 1 IP address (1 host up) scanned in 3 seconds
+[root@linuxas3 stunnel]#
+				</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>测试</P
+><P
+>详细请看Outlook使用帮助</P
+></LI
+></OL
+></DIV
+><DIV
+CLASS="SECTION"
+><H2
+CLASS="SECTION"
+><A
+NAME="IPTABLE"
+></A
+>Iptables</H2
+><P
+>查看iptables -L </P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+># SMTP
+/sbin/iptables -A INPUT -p tcp --dport 25 -j ACCEPT 
+# SMTPS
+/sbin/iptables -A INPUT -p tcp --dport 465 -j ACCEPT
+# POP3
+/sbin/iptables -A INPUT -p tcp --dport 110 -j ACCEPT
+# POP3S
+/sbin/iptables -A INPUT -p tcp --dport 995 -j ACCEPT
+# IMAP
+/sbin/iptables -A INPUT -p tcp --dport 143 -j ACCEPT
+# IMAPS
+/sbin/iptables -A INPUT -p tcp --dport 993 -j ACCEPT
+			</PRE
+></TD
+></TR
+></TABLE
+></DIV
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x1182.html" tppabs="http://www.9812.net/article/postfix/x1182.html"
+ACCESSKEY="P"
+>&#60;&#60;&#60; Previous</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html" tppabs="http://www.9812.net/article/postfix/book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x1239.html" tppabs="http://www.9812.net/article/postfix/x1239.html"
+ACCESSKEY="N"
+>Next &#62;&#62;&#62;</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>wget + tar + xxzip 备份方案</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>数字签名、加密与证书颁发机构</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

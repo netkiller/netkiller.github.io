@@ -1,0 +1,388 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<HTML
+><HEAD
+><TITLE
+>Cyrus-SASL</TITLE
+>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.76b+
+"><LINK
+REL="HOME"
+TITLE="Postfix Integrated Solution"
+HREF="book1.html" tppabs="http://www.9812.net/article/postfix/book1.html"><LINK
+REL="UP"
+TITLE="集成电子邮件系统(MYSQL)"
+HREF="c668.html" tppabs="http://www.9812.net/article/postfix/c668.html"><LINK
+REL="PREVIOUS"
+TITLE="pam_mysql-0.5"
+HREF="x681.html" tppabs="http://www.9812.net/article/postfix/x681.html"><LINK
+REL="NEXT"
+TITLE="Installing Postfix"
+HREF="x730.html" tppabs="http://www.9812.net/article/postfix/x730.html"></HEAD
+><BODY
+CLASS="SECTION"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Postfix Integrated Solution</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x681.html" tppabs="http://www.9812.net/article/postfix/x681.html"
+ACCESSKEY="P"
+>&#60;&#60;&#60; Previous</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>集成电子邮件系统(MYSQL)</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x730.html" tppabs="http://www.9812.net/article/postfix/x730.html"
+ACCESSKEY="N"
+>Next &#62;&#62;&#62;</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECTION"
+><H1
+CLASS="SECTION"
+><A
+NAME="AEN684"
+></A
+>Cyrus-SASL</H1
+><P
+>SASL (Simple Authentication Security Layer)简单认证安全层,在这里有功能主要是用于SMTP认证。</P
+><DIV
+CLASS="PROCEDURE"
+><P
+><B
+>安装配置</B
+></P
+><OL
+TYPE="1"
+><LI
+><P
+>首先查看系统是否已经安装了cyrus-sasl</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 src]# rpm -qa |grep cyrus-sasl
+cyrus-sasl-plain-2.1.15-3
+cyrus-sasl-md5-2.1.15-3
+cyrus-sasl-2.1.15-3
+cyrus-sasl-gssapi-2.1.15-3
+cyrus-sasl-devel-2.1.15-3
+[root@linuxas3 src]#
+				</PRE
+></TD
+></TR
+></TABLE
+><P
+>如果安装已经，就请卸载它，或使用下面方法关闭它</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 src]# mv /usr/lib/sasl /usr/lib/sasl.OFF
+[root@linuxas3 src]# mv /usr/lib/sasl2 /usr/lib/sasl2.OFF
+				</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>编译安装cyrus-sasl-2.1.18</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linux src]# cd cyrus-sasl-2.1.18
+[root@linux cyrus-sasl-2.1.18]# make clean
+[root@linux cyrus-sasl-2.1.18]# <TT
+CLASS="USERINPUT"
+><B
+>./configure --disable-sample --disable-saslauthd --disable-pwcheck \</B
+></TT
+>
+<TT
+CLASS="USERINPUT"
+><B
+>--disable-krb4 --disable-gssapi --disable-anon \</B
+></TT
+>
+<TT
+CLASS="USERINPUT"
+><B
+>--enable-plain --enable-login --enable-cram --enable-digest \</B
+></TT
+>
+<TT
+CLASS="USERINPUT"
+><B
+>--with-saslauthd=/var/run/saslauthd </B
+></TT
+>
+Configuration Complete. Type 'make' to build.
+[root@linux cyrus-sasl-2.1.18]# <TT
+CLASS="USERINPUT"
+><B
+>make</B
+></TT
+>
+[root@linux cyrus-sasl-2.1.18]# <TT
+CLASS="USERINPUT"
+><B
+>make install</B
+></TT
+>
+[root@linux cyrus-sasl-2.1.18]# <TT
+CLASS="USERINPUT"
+><B
+>ln -s /usr/local/include/sasl/ /usr/include/sasl</B
+></TT
+>
+[root@linux cyrus-sasl-2.1.18]# <TT
+CLASS="USERINPUT"
+><B
+>ln -s /usr/local/lib/sasl2 /usr/lib/sasl2</B
+></TT
+>
+[root@linux cyrus-sasl-2.1.18]# <TT
+CLASS="USERINPUT"
+><B
+>echo /usr/local/lib/sasl2 &#62;&#62; /etc/ld.so.conf</B
+></TT
+>
+[root@linux cyrus-sasl-2.1.18]# <TT
+CLASS="USERINPUT"
+><B
+>ldconfig</B
+></TT
+>
+
+[root@linuxas3 src]# ll -d /usr/lib/sasl2
+lrwxrwxrwx    1 root     root           20 Apr 19 20:00 /usr/lib/sasl2 -&#62; /usr/local/lib/sasl2
+[root@linuxas3 src]#
+
+			</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>设置<A
+HREF=""
+TARGET="_top"
+>cyrus-sasl</A
+>启用plain、login、cram、digest认证模块，Postfix使用SASL的saslauthd认证守护进程来支持smtp auth认证：</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+><TT
+CLASS="USERINPUT"
+><B
+>echo MECH=pam &#62; /etc/sysconfig/saslauthd</B
+></TT
+>
+<TT
+CLASS="USERINPUT"
+><B
+>echo pwcheck_method: saslauthd &#62; /usr/lib/sasl2/smtpd.conf</B
+></TT
+>
+<TT
+CLASS="USERINPUT"
+><B
+>echo mech_list: plain login cram digest&#62;&#62; /usr/lib/sasl2/smtpd.conf</B
+></TT
+>
+			</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>配置PAM</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 cyrus-sasl-2.1.18]# cd /etc/pam.d/
+[root@linuxas3 pam.d]# cat smtp
+#%PAM-1.0
+#auth       required    pam_stack.so service=system-auth
+#account    required    pam_stack.so service=system-auth
+auth    optional        pam_mysql.so    host=localhost  db=postfix user=postfix passwd=6AJx9Nqv9x8hg table=postfix_users  usercolumn=user passwdcolumn=passwd crypt=0
+account required        pam_mysql.so    host=localhost  db=postfix user=postfix passwd=6AJx9Nqv9x8hg table=postfix_users  usercolumn=user passwdcolumn=passwd crypt=0
+[root@linuxas3 pam.d]#
+			</PRE
+></TD
+></TR
+></TABLE
+><P
+>crypt= n </P
+><P
+></P
+><OL
+TYPE="1"
+><LI
+><P
+>crypt=0: 明文密码</P
+></LI
+><LI
+><P
+>crypt=1: 使用crpyt()函数(对应SQL数据里的encrypt()，encrypt()随机产生salt)</P
+></LI
+><LI
+><P
+>crypt=2: 使用MYSQL中的password()函数加密</P
+></LI
+><LI
+><P
+>crypt=3：表示使用md5的散列方式</P
+></LI
+></OL
+></LI
+><LI
+><P
+>启动SMTP认证进程(Authenticated SMTP)</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 init.d]# service saslauthd start
+Starting saslauthd:                                        [  OK  ]
+[root@linuxas3 init.d]#
+or
+[root@linuxas3 init.d]# /etc/init.d/saslauthd start
+				</PRE
+></TD
+></TR
+></TABLE
+></LI
+></OL
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x681.html" tppabs="http://www.9812.net/article/postfix/x681.html"
+ACCESSKEY="P"
+>&#60;&#60;&#60; Previous</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html" tppabs="http://www.9812.net/article/postfix/book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x730.html" tppabs="http://www.9812.net/article/postfix/x730.html"
+ACCESSKEY="N"
+>Next &#62;&#62;&#62;</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>pam_mysql-0.5</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="c668.html" tppabs="http://www.9812.net/article/postfix/c668.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Installing Postfix</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

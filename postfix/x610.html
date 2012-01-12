@@ -1,0 +1,592 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<HTML
+><HEAD
+><TITLE
+>本章测试</TITLE
+>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.76b+
+"><LINK
+REL="HOME"
+TITLE="Postfix Integrated Solution"
+HREF="book1.html" tppabs="http://www.9812.net/article/postfix/book1.html"><LINK
+REL="UP"
+TITLE="Postfix + OpenLDAP (Debian) 已完成 2004-9-28"
+HREF="c423.html" tppabs="http://www.9812.net/article/postfix/c423.html"><LINK
+REL="PREVIOUS"
+TITLE="邮件流量分析"
+HREF="x607.html" tppabs="http://www.9812.net/article/postfix/x607.html"><LINK
+REL="NEXT"
+TITLE="集成电子邮件系统(MYSQL)"
+HREF="c668.html" tppabs="http://www.9812.net/article/postfix/c668.html"></HEAD
+><BODY
+CLASS="SECTION"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Postfix Integrated Solution</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x607.html" tppabs="http://www.9812.net/article/postfix/x607.html"
+ACCESSKEY="P"
+>&#60;&#60;&#60; Previous</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Postfix + OpenLDAP (Debian) 已完成 2004-9-28</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="c668.html" tppabs="http://www.9812.net/article/postfix/c668.html"
+ACCESSKEY="N"
+>Next &#62;&#62;&#62;</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECTION"
+><H1
+CLASS="SECTION"
+><A
+NAME="AEN610"
+></A
+>本章测试</H1
+><DIV
+CLASS="PROCEDURE"
+><P
+><B
+>测试步骤</B
+></P
+><OL
+TYPE="1"
+><LI
+><P
+>check</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>debian:~# postfix check
+			</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>postconf</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>debian:/etc/postfix# postconf -n 
+			</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>smtp</P
+><P
+># <TT
+CLASS="USERINPUT"
+><B
+>mail chen@example.net &#60; /etc/hostname</B
+></TT
+></P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>debian:~# ls /var/mail/example.net/
+chen
+debian:~# find /var/mail/example.net/
+/var/mail/example.net/
+/var/mail/example.net/chen
+/var/mail/example.net/chen/maildir
+/var/mail/example.net/chen/maildir/tmp
+/var/mail/example.net/chen/maildir/cur
+/var/mail/example.net/chen/maildir/new
+/var/mail/example.net/chen/maildir/new/1095370461.V306Ia262b8.localhost.localdomain
+debian:~#
+			</PRE
+></TD
+></TR
+></TABLE
+><P
+>example.net域下有文件夹说明邮件投递成功，恭喜你了！</P
+><P
+>如果没成功请查看/var/log/mail.log</P
+><P
+>一封被正确投递的邮件日志应该是：</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>Sep 17 13:39:35 localhost postfix/smtpd[8699]: connect from unknown[192.168.0.254]
+Sep 17 13:39:35 localhost postfix/smtpd[8699]: 487EE49BA3F: client=unknown[192.168.0.254]
+Sep 17 13:39:35 localhost postfix/cleanup[8701]: 487EE49BA3F: message-id=&#60;20040917053935.487EE49BA3F@mail.example.net&#62;
+Sep 17 13:39:35 localhost postfix/qmgr[8682]: 487EE49BA3F: from=&#60;chen@example.net&#62;, size=584, nrcpt=1 (queue active)
+Sep 17 13:39:35 localhost postfix/virtual[8686]: 487EE49BA3F: to=&#60;chen@example.net&#62;, relay=virtual, delay=0, status=sent (delivered to maildir)
+Sep 17 13:39:35 localhost postfix/qmgr[8682]: 487EE49BA3F: removed
+Sep 17 13:39:35 localhost postfix/smtpd[8699]: disconnect from unknown[192.168.0.254]
+			</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>sasl</P
+><P
+>AUTH PLAIN</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>debian:~# perl -MMIME::Base64 -e 'print encode_base64("username\0username\0password");'
+debian:~# perl -MMIME::Base64 -e 'print encode_base64("neo\0neo\0chen");'
+			
+220 mail.example.net ESMTP Postfix (Debian/GNU)
+ehlo netkiller
+250-mail.example.net
+250-PIPELINING
+250-SIZE 10240000
+250-ETRN
+250-STARTTLS
+250-AUTH LOGIN PLAIN DIGEST-MD5 CRAM-MD5
+250-AUTH=LOGIN PLAIN DIGEST-MD5 CRAM-MD5
+250 8BITMIME
+auth plain bmVvAG5lbwBjaGVu
+235 Authentication successful
+			</PRE
+></TD
+></TR
+></TABLE
+><P
+>AUTH LOGIN</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>debian:~# perl -MMIME::Base64 -e 'print encode_base64("neo");'
+debian:~# perl -MMIME::Base64 -e 'print encode_base64("chen");'
+
+220 mail.example.net ESMTP Postfix (Debian/GNU)
+ehlo netkiller
+250-mail.example.net
+250-PIPELINING
+250-SIZE 10240000
+250-ETRN
+250-STARTTLS
+250-AUTH LOGIN PLAIN DIGEST-MD5 CRAM-MD5
+250-AUTH=LOGIN PLAIN DIGEST-MD5 CRAM-MD5
+250 8BITMIME
+auth login
+334 VXNlcm5hbWU6
+bmVv
+334 UGFzc3dvcmQ6
+Y2hlbg==
+235 Authentication successful
+			</PRE
+></TD
+></TR
+></TABLE
+><P
+>CRAM-MD5</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>base64(user md5(password))
+试验中...
+			</PRE
+></TD
+></TR
+></TABLE
+><P
+>DIGEST-MD5</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>试验中...
+			</PRE
+></TD
+></TR
+></TABLE
+><P
+>debian:~# swaks -a LOGIN PLAIN DIGEST-MD5 CRAM-MD5</P
+>debian:/etc/postfix# postfix check
+			</LI
+><LI
+><P
+>TLS</P
+><P
+>输入：STARTTLS</P
+><P
+>返回：220 Ready to start TLS</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>220 mail.example.net ESMTP Postfix (Debian/GNU)
+ehlo hi
+250-mail.example.net
+250-PIPELINING
+250-SIZE 10240000
+250-ETRN
+250-STARTTLS
+250-AUTH GSSAPI LOGIN PLAIN DIGEST-MD5 CRAM-MD5
+250-AUTH=GSSAPI LOGIN PLAIN DIGEST-MD5 CRAM-MD5
+250 8BITMIME
+STARTTLS
+220 Ready to start TLS　
+			</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>POP/IMAP</P
+><P
+>默认域测试</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>  debian:/etc/postfix# courierauthtest test chen
+  Trying authdaemon...
+  Authenticated: module authdaemon
+  Home directory: /var/mail
+  UID/GID: 105/109
+  Maildir: example.net/test/Maildir/
+  AUTHADDR=test
+  AUTHFULLNAME=test
+  OPTIONS=&#60;none&#62;
+  			</PRE
+></TD
+></TR
+></TABLE
+><P
+>虚拟域测试</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>  debian:/etc/postfix# courierauthtest chen@example.net chen
+  Trying authdaemon...
+  Authenticated: module authdaemon
+  Home directory: /var/mail
+  UID/GID: 105/109
+  Maildir: example.net/chen/maildir/
+  AUTHADDR=chen@example.net
+  AUTHFULLNAME=chen
+  OPTIONS=&#60;none&#62;
+  debian:/etc/postfix#
+			</PRE
+></TD
+></TR
+></TABLE
+><P
+>POP3成功地接收的日志应该是：</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>Sep 17 13:46:00 localhost courierpop3login: Connection, ip=[::ffff:192.168.0.254]
+Sep 17 13:46:00 localhost courierpop3login: LOGIN, user=chen@example.net, ip=[::ffff:192.168.0.254]
+Sep 17 13:46:00 localhost courierpop3login: LOGOUT, user=chen@example.net, ip=[::ffff:192.168.0.254], top=0, retr=0
+			</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>aliases</P
+><P
+>首先使用下面的ldif测试</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>dn:uid=neo,ou=postfix,dc=example,dc=net
+uid:neo
+cn:test
+sn:test
+mail:neo
+uidnumber:1001
+gidnumber:1001
+mailhost:mail.example.net
+homedirectory:/var/mail/
+mailbox:example.net/neo/Maildir/
+quota:200000000s,20000c
+userpassword:{crypt}$1$8E.vtK6o$7JdJ6dpTwaLU7x8X2FKwc1
+#clearPassword:chen
+AccountStatus:true
+objectclass:postfixAccount
+objectclass:person
+				</PRE
+></TD
+></TR
+></TABLE
+><P
+>增加maildrop:openunix@163.com属性，在测试</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>dn:uid=neo,ou=postfix,dc=example,dc=net
+uid:neo
+cn:test
+sn:test
+mail:neo
+uidnumber:1001
+gidnumber:1001
+mailhost:mail.example.net
+homedirectory:/var/mail/
+mailbox:example.net/neo/Maildir/
+quota:200000000s,20000c
+maildrop:openunix@163.com
+userpassword:{crypt}$1$8E.vtK6o$7JdJ6dpTwaLU7x8X2FKwc1
+#clearPassword:chen
+AccountStatus:true
+objectclass:postfixAccount
+objectclass:person
+				</PRE
+></TD
+></TR
+></TABLE
+><P
+>mail日志</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>Sep 18 07:15:53 localhost postfix/smtpd[13373]: connect from unknown[192.168.0.254]
+Sep 18 07:15:54 localhost postfix/smtpd[13373]: 055774A0DF0: client=unknown[192.168.0.254], sasl_method=LOGIN, sasl_username=test@example.net
+Sep 18 07:15:54 localhost postfix/cleanup[13375]: 055774A0DF0: message-id=&#60;20040917231554.055774A0DF0@mail.example.net&#62;
+Sep 18 07:15:54 localhost postfix/qmgr[13372]: 055774A0DF0: from=&#60;test@example.net&#62;, size=551, nrcpt=1 (queue active)
+Sep 18 07:15:54 localhost postfix/smtpd[13373]: disconnect from unknown[192.168.0.254]
+Sep 18 07:15:59 localhost postfix/smtp[13376]: 055774A0DF0: to=&#60;openunix@163.com&#62;, orig_to=&#60;neo@example.net&#62;, relay=mail.9812.net[202.105.113.174], delay=5, status=sent (250 Ok: queued as C2379225DE7)
+Sep 18 07:15:59 localhost postfix/qmgr[13372]: 055774A0DF0: removed
+				</PRE
+></TD
+></TR
+></TABLE
+><P
+>这是发往neo@example.net的邮件将被转发到openunix@163.com</P
+><DIV
+CLASS="NOTE"
+><P
+></P
+><TABLE
+CLASS="NOTE"
+WIDTH="100%"
+BORDER="0"
+><TR
+><TD
+WIDTH="25"
+ALIGN="CENTER"
+VALIGN="TOP"
+><IMG
+SRC="note.gif" tppabs="http://www.9812.net/article/postfix/stylesheet-images/note.gif"
+HSPACE="5"
+ALT="Note"></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+><P
+>使用Outlook,Foxmail或debian:/etc/postfix# mail neo@example.net &#60; /etc/fstab</P
+></TD
+></TR
+></TABLE
+></DIV
+></LI
+><LI
+><P
+>spam 测试</P
+><P
+>注意：Hits值的变化</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@as3 postfix]# tail -f /var/log/maillog|grep root@mail.example.net|grep Hits
+Oct 11 17:36:23 linuxas3 amavis[29336]: (29336-10) Passed, &#60;root@mail.example.net&#62; -&#62; &#60;neo@example.net&#62;, Message-ID: &#60;20041010184602.A04784A0D65@mail.example.net&#62;, Hits: -2.792
+Oct 11 17:36:23 linuxas3 amavis[29368]: (29368-01) Passed, &#60;root@mail.example.net&#62; -&#62; &#60;neo@example.net&#62;, Message-ID: &#60;20041010184602.533D14A0D61@mail.example.net&#62;, Hits: -2.793
+Oct 11 17:36:24 linuxas3 amavis[29355]: (29355-09) Passed, &#60;root@mail.example.net&#62; -&#62; &#60;neo@example.net&#62;, Message-ID: &#60;20041010184602.B3B7C4A0D66@mail.example.net&#62;, Hits: -2.794
+Oct 11 17:36:24 linuxas3 amavis[29372]: (29372-01) Passed, &#60;root@mail.example.net&#62; -&#62; &#60;neo@example.net&#62;, Message-ID: &#60;20041010184602.C47CE4A0D67@mail.example.net&#62;, Hits: -2.796
+Oct 11 17:36:25 linuxas3 amavis[29373]: (29373-01) Passed, &#60;root@mail.example.net&#62; -&#62; &#60;neo@example.net&#62;, Message-ID: &#60;20041010184603.0979D4A0D69@mail.example.net&#62;, Hits: -2.797
+Oct 11 17:36:25 linuxas3 amavis[29355]: (29355-10) Passed, &#60;root@mail.example.net&#62; -&#62; &#60;neo@example.net&#62;, Message-ID: &#60;20041010184603.3D3054A0D6D@mail.example.net&#62;, Hits: -2.798
+Oct 11 17:36:26 linuxas3 amavis[29372]: (29372-02) Passed, &#60;root@mail.example.net&#62; -&#62; &#60;neo@example.net&#62;, Message-ID: &#60;20041010184603.50C8F4A0D6D@mail.example.net&#62;, Hits: -2.799
+Oct 11 17:36:27 linuxas3 amavis[29373]: (29373-02) Passed, &#60;root@mail.example.net&#62; -&#62; &#60;neo@example.net&#62;, Message-ID: &#60;20041010184603.61BC14A0D6D@mail.example.net&#62;, Hits: -2.8
+Oct 11 17:36:27 linuxas3 amavis[29368]: (29368-02) Passed, &#60;root@mail.example.net&#62; -&#62; &#60;neo@example.net&#62;, Message-ID: &#60;20041010184603.2BF4F4A0D69@mail.example.net&#62;, Hits: -2.802
+				</PRE
+></TD
+></TR
+></TABLE
+></LI
+></OL
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x607.html" tppabs="http://www.9812.net/article/postfix/x607.html"
+ACCESSKEY="P"
+>&#60;&#60;&#60; Previous</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html" tppabs="http://www.9812.net/article/postfix/book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="c668.html" tppabs="http://www.9812.net/article/postfix/c668.html"
+ACCESSKEY="N"
+>Next &#62;&#62;&#62;</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>邮件流量分析</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="c423.html" tppabs="http://www.9812.net/article/postfix/c423.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>集成电子邮件系统(MYSQL)</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

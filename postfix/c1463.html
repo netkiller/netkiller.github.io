@@ -1,0 +1,994 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<HTML
+><HEAD
+><TITLE
+>Webmail</TITLE
+>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.76b+
+"><LINK
+REL="HOME"
+TITLE="Postfix Integrated Solution"
+HREF="book1.html" tppabs="http://www.9812.net/article/postfix/book1.html"><LINK
+REL="PREVIOUS"
+TITLE="Postfix Admin (socket)"
+HREF="x1460.html" tppabs="http://www.9812.net/article/postfix/x1460.html"><LINK
+REL="NEXT"
+TITLE="基于物理文件系统存取Maildir/mailbox的Webmail"
+HREF="x1578.html" tppabs="http://www.9812.net/article/postfix/x1578.html"></HEAD
+><BODY
+CLASS="CHAPTER"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Postfix Integrated Solution</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x1460.html" tppabs="http://www.9812.net/article/postfix/x1460.html"
+ACCESSKEY="P"
+>&#60;&#60;&#60; Previous</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x1578.html" tppabs="http://www.9812.net/article/postfix/x1578.html"
+ACCESSKEY="N"
+>Next &#62;&#62;&#62;</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="CHAPTER"
+><H1
+><A
+NAME="WEBMAIL"
+></A
+>Webmail</H1
+><P
+>Webmail实现源理，有三种。1、使用POP、IMAP　Socket实现，2、通过直接访问物理文件实现，3、使用语言的开发包API实现。</P
+><DIV
+CLASS="SECTION"
+><H1
+CLASS="SECTION"
+><A
+NAME="AEN1469"
+></A
+>基于IMAP,POP的webmail系统</H1
+><P
+></P
+><UL
+><LI
+><P
+><A
+HREF="javascript:if(confirm('http://www.squirrelmail.org/  \n\nThis file was not retrieved by Teleport Pro, because it is addressed on a domain or path outside the boundaries set for its Starting Address.  \n\nDo you want to open it from the server?'))window.location='http://www.squirrelmail.org/'" tppabs="http://www.squirrelmail.org/"
+TARGET="_top"
+>SquirrelMail</A
+></P
+><DIV
+CLASS="MEDIAOBJECT"
+><P
+><IMG
+SRC="sm_logo.png" tppabs="http://www.9812.net/article/postfix/images/sm_logo.png"
+ALIGN="CENTER"><DIV
+CLASS="CAPTION"
+><P
+>SquirrelMail</P
+></DIV
+></P
+></DIV
+></LI
+><LI
+><P
+><A
+HREF="javascript:if(confirm('http://jwebmail.sourceforge.net/  \n\nThis file was not retrieved by Teleport Pro, because it is addressed on a domain or path outside the boundaries set for its Starting Address.  \n\nDo you want to open it from the server?'))window.location='http://jwebmail.sourceforge.net/'" tppabs="http://jwebmail.sourceforge.net/"
+TARGET="_top"
+>jWebmail</A
+></P
+><DIV
+CLASS="MEDIAOBJECT"
+><P
+><IMG
+SRC="webmail-title.gif" tppabs="http://jwebmail.sourceforge.net/images/webmail-title.gif"
+ALIGN="CENTER"><DIV
+CLASS="CAPTION"
+><P
+>jWebmail</P
+></DIV
+></P
+></DIV
+></LI
+><LI
+><P
+>imp</P
+></LI
+></UL
+><DIV
+CLASS="SECTION"
+><H2
+CLASS="SECTION"
+><A
+NAME="AEN1498"
+></A
+>SquirrelMail</H2
+><P
+>SquirrelMail是使用PHP开发的webmail基于IMAP协议,对postfix,qmail....支持很好。</P
+><DIV
+CLASS="PROCEDURE"
+><P
+><B
+>安装配置SquirrelMail</B
+></P
+><OL
+TYPE="1"
+><LI
+><P
+>下载SquirrelMail，解包后复制到Apache目录下</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 src]# wget http://heanet.dl.sourceforge.net/sourceforge/squirrelmail/squirrelmail-1.5.0.tar.gz
+[root@linuxas3 src]# wget http://unc.dl.sourceforge.net/sourceforge/squirrelmail/zh_CN-1.4.2-20040418.tar.gz
+[root@linuxas3 src]# wget http://aleron.dl.sourceforge.net/sourceforge/squirrelmail/zh_TW-1.4.2-20040418.tar.gz
+[root@linuxas3 src]# tar zxvf squirrelmail-1.5.0.tar.gz
+[root@linuxas3 src]# tar zxvf zh_CN-1.4.2-20040418.tar.gz
+[root@linuxas3 src]# mv squirrelmail-1.5.0 /var/www/html/ squirrelmail
+[root@linuxas3 src]# ./install
+Please enter path to your squirrelmail installation:/var/www/html/squirrelmail
+[root@linuxas3 squirrelmail]# cd /var/www/html/squirrelmail
+[root@linuxas3 squirrelmail]# chmod 777 -R data
+					</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>进入目录/var/www/html/squirrelmail，运行configure,显示主菜单”Main Menu“，命令提示符Command &#62;&#62;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 squirrelmail]# ./configure
+
+SquirrelMail Configuration : Read: config_default.php (1.4.0)
+---------------------------------------------------------
+Main Menu --
+1.  Organization Preferences
+2.  Server Settings
+3.  Folder Defaults
+4.  General Options
+5.  Themes
+6.  Address Books (LDAP)
+7.  Message of the Day (MOTD)
+8.  Plugins
+9.  Database
+10. Language settings
+11. Tweaks
+
+D.  Set pre-defined settings for specific IMAP servers
+
+C.  Turn color on
+S   Save data
+Q   Quit
+
+Command &#62;&#62;
+					</PRE
+></TD
+></TR
+></TABLE
+><P
+>C.  高亮显示</P
+><P
+>S   保存设置</P
+><P
+>Q   退出</P
+></LI
+><LI
+><P
+>在命令提示符Command &#62;&#62;下输入1&#60;CR&#62;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>SquirrelMail Configuration : Read: config_default.php (1.4.0)
+---------------------------------------------------------
+Organization Preferences
+1.  Organization Name      : SquirrelMail
+2.  Organization Logo      : ../images/sm_logo.png
+3.  Org. Logo Width/Height : (308/111)
+4.  Organization Title     : SquirrelMail $version
+5.  Signout Page           :
+6.  Top Frame              : _top
+7.  Provider link          : http://www.squirrelmail.org/
+8.  Provider name          : SquirrelMail
+
+R   Return to Main Menu
+C.  Turn color on
+S   Save data
+Q   Quit
+
+Command &#62;&#62;
+
+					</PRE
+></TD
+></TR
+></TABLE
+><P
+>R   反回主菜单</P
+></LI
+><LI
+><P
+>在命令提示符Command &#62;&#62;下输入2&#60;CR&#62;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>SquirrelMail Configuration : Read: config.php (1.4.0)
+---------------------------------------------------------
+Server Settings
+
+General
+-------
+1.  Domain                 : example.com
+2.  Invert Time            : false
+3.  Sendmail or SMTP       : SMTP
+
+A.  Update IMAP Settings   : localhost:143 (other)
+B.  Update SMTP Settings   : localhost:25
+
+R   Return to Main Menu
+C.  Turn color off
+S   Save data
+Q   Quit
+
+Command &#62;&#62;　1
+The domain name is the suffix at the end of all email addresses.  If
+for example, your email address is jdoe@myorg.com, then your domain
+would be myorg.com.
+
+[example.com]:example.net
+					</PRE
+></TD
+></TR
+></TABLE
+><P
+>输入1&#60;CR&#62;输入域</P
+></LI
+><LI
+><P
+>在命令提示符Command &#62;&#62;下输入3&#60;CR&#62;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>SquirrelMail Configuration : Read: config.php (1.4.0)
+---------------------------------------------------------
+Folder Defaults
+1.  Default Folder Prefix         :
+2.  Show Folder Prefix Option     : false
+3.  Trash Folder                  : INBOX.Trash
+4.  Sent Folder                   : INBOX.Sent
+5.  Drafts Folder                 : INBOX.Drafts
+6.  By default, move to trash     : true
+7.  By default, move to sent      : true
+8.  By default, save as draft     : true
+9.  List Special Folders First    : true
+10. Show Special Folders Color    : true
+11. Auto Expunge                  : true
+12. Default Sub. of INBOX         : true
+13. Show 'Contain Sub.' Option    : false
+14. Default Unseen Notify         : 2
+15. Default Unseen Type           : 1
+16. Auto Create Special Folders   : true
+17. Folder Delete Bypasses Trash  : false
+18. Enable /NoSelect folder fix   : false
+
+R   Return to Main Menu
+C.  Turn color off
+S   Save data
+Q   Quit
+
+Command &#62;&#62;
+					</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>在命令提示符Command &#62;&#62;下输入4&#60;CR&#62;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>SquirrelMail Configuration : Read: config.php (1.4.0)
+---------------------------------------------------------
+General Options
+1.  Data Directory              : ../data/
+2.  Attachment Directory        : $data_dir
+3.  Directory Hash Level        : 0
+4.  Default Left Size           : 150
+5.  Usernames in Lowercase      : false
+6.  Allow use of priority       : true
+7.  Hide SM attributions        : false
+8.  Allow use of receipts       : true
+9. Allow editing of identity   : true/true
+10. Allow server thread sort    : false
+11. Allow server-side sorting   : false
+12. Allow server charset search : true
+13. PHP session name            : SQMSESSID
+
+R   Return to Main Menu
+C.  Turn color off
+S   Save data
+Q   Quit
+
+Command &#62;&#62;
+					</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>在命令提示符Command &#62;&#62;下输入5&#60;CR&#62;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>SquirrelMail Configuration : Read: config.php (1.4.0)
+---------------------------------------------------------
+Themes
+1.  Change Themes
+     Default                                     Plain Blue
+     Sand Storm                                  Deep Ocean
+     Slashdot                                    Purple
+     Forest                                      Ice
+     Sea Spray                                   Blue Steel
+     Dark Grey                                   High Contrast
+     Black Bean Burrito                          Servery
+     Maize                                       BluesNews
+     Deep Ocean 2                                Blue Grey
+     Dompie                                      Methodical
+     Greenhouse Effect (Changes)                 In The Pink (Changes)
+     Kind of Blue (Changes)                      Monostochastic (Changes)
+     Shades of Grey (Changes)                    Spice of Life (Changes)
+     Spice of Life - Lite (Changes)              Spice of Life - Dark (Changes)
+     Holiday - Christmas                         Darkness (Changes)
+     Random (Changes every login)                Midnight
+     Alien Glow                                  Dark Green
+     Penguin                                     Minimal BW
+2.  CSS File :
+
+R   Return to Main Menu
+C.  Turn color off
+S   Save data
+Q   Quit
+
+Command &#62;&#62;
+					</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>在命令提示符Command &#62;&#62;下输入6&#60;CR&#62;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>SquirrelMail Configuration : Read: config.php (1.4.0)
+---------------------------------------------------------
+Address Books (LDAP)
+1.  Change Servers
+2.  Use Javascript Address Book Search  : false
+
+R   Return to Main Menu
+C.  Turn color off
+S   Save data
+Q   Quit
+
+Command &#62;&#62;
+					</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>在命令提示符Command &#62;&#62;下输入7&#60;CR&#62;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>SquirrelMail Configuration : Read: config.php (1.4.0)
+---------------------------------------------------------
+Message of the Day (MOTD)
+
+
+
+1   Edit the MOTD
+
+R   Return to Main Menu
+C.  Turn color off
+S   Save data
+Q   Quit
+
+Command &#62;&#62;
+					</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>在命令提示符Command &#62;&#62;下输入8&#60;CR&#62;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>SquirrelMail Configuration : Read: config.php (1.4.0)
+---------------------------------------------------------
+Plugins
+  Installed Plugins
+
+  Available Plugins:
+    1. abook_take
+    2. administrator
+    3. bug_report
+    4. calendar
+    5. change_password
+    6. filters
+    7. fortune
+    8. info
+    9. listcommands
+    10. mail_fetch
+    11. message_details
+    12. newmail
+    13. sent_subfolders
+    14. spamcop
+    15. squirrelspell
+    16. translate
+
+R   Return to Main Menu
+C.  Turn color off
+S   Save data
+Q   Quit
+
+Command &#62;&#62;
+					</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>在命令提示符Command &#62;&#62;下输入9&#60;CR&#62;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>SquirrelMail Configuration : Read: config.php (1.4.0)
+---------------------------------------------------------
+Database
+1.  DSN for Address Book   :
+2.  Table for Address Book : address
+
+3.  DSN for Preferences    :
+4.  Table for Preferences  : userprefs
+5.  Field for username     : user
+6.  Field for prefs key    : prefkey
+7.  Field for prefs value  : prefval
+
+8.  DSN for Global Address Book            :
+9.  Table for Global Address Book          : global_abook
+10. Allow writing into Global Address Book : false
+11. Allow listing of Global Address Book   : false
+
+R   Return to Main Menu
+C.  Turn color off
+S   Save data
+Q   Quit
+
+Command &#62;&#62;
+					</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>在命令提示符Command &#62;&#62;下输入10&#60;CR&#62;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>SquirrelMail Configuration : Read: config.php (1.4.0)
+---------------------------------------------------------
+Language settings
+1.  Default Language                : en_US
+2.  Default Charset                 : iso-8859-1
+3.  Show alternative language names : false
+4.  Available languages             : all
+5.  Use agresive decoding           : false
+
+R   Return to Main Menu
+C.  Turn color off
+S   Save data
+Q   Quit
+
+Command &#62;&#62;
+
+Command &#62;&#62; 1
+
+SquirrelMail attempts to set the language in many ways.  If it
+can not figure it out in another way, it will default to this
+language.  Please use the code for the desired language.
+
+[en_US]: zh_CN
+
+Command &#62;&#62; 2
+This option is obsolate. Default charset depends on language
+you have selected in "Default language" option.
+
+[iso-8859-1]: gb2312
+
+Command &#62;&#62; 4
+
+This option allows to limit number of languages available in
+language selection box. You can enter as code of every language that
+you want to enable. Language codes should be separated by space. If you
+enter name unsupported by SquirrelMail, it will be ignored. If you enter
+special key 'all' - all languages available in SquirrelMail will be
+listed. If you enter special key 'none' - user won't be able to changelanguage and interface will use language set it "Default language" option.
+
+Valid language names are:
+ ar (Arabic), bg_BG (Bulgarian), ca_ES (Catalan), cy_GB (Welsh)
+ cs_CZ (Chech), da_DK (Danish), de_DE (German), el_GR (Greek),
+ en_US (English), es_ES (Spanish), et_EE (Estonian), fi_FI (Finnish),
+ fo_FO (Faroese), fr_FR (French), he_IL (Hebrew), hr_HR (Croatian),
+ hu_HU (Hungarian), id_ID (Indonesian), is_IS (Icelandic), it_IT (Italian),
+ ja_JP (Japanese), ko_KR (Korean), lt_LT (Lithuanian), ms_MY (Malay),
+ nl_NL (Dutch), nn_NO (Norwegian (Nynorsk)), no_NO (Norwegian (Bokmal)),
+ pl_PL (Polish), pt_BR (Portuguese (Brazil)), pt_PT (Portuguese (Portugal)),
+ ro_RO (Romanian), ru_RU (Russian), sk_SK (Slovak), sl_SI (Slovenian),
+ sr_YU (Serbian), sv_SE (Swedish), th_TH (Thai), tr_TR (Turkish),
+ zh_CN (Chinese Simplified), zh_TW (Chinese Traditional).
+
+[all]: zh_CN
+
+
+Command &#62;&#62; r
+					</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>在命令提示符Command &#62;&#62;下输入11&#60;CR&#62;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>SquirrelMail Configuration : Read: config.php (1.4.0)
+---------------------------------------------------------
+Interface tweaks
+1.  Advanced tree            : false
+2.  Oldway                   : false
+
+PHP tweaks
+3.  Use php recode functions : false
+4.  Use php iconv functions  : false
+
+R   Return to Main Menu
+C.  Turn color off
+S   Save data
+Q   Quit
+
+Command &#62;&#62;
+					</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>在命令提示符Command &#62;&#62;下输入D&#60;CR&#62;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>SquirrelMail Configuration : Read: config.php
+---------------------------------------------------------
+While we have been building SquirrelMail, we have discovered some
+preferences that work better with some servers that don't work so
+well with others.  If you select your IMAP server, this option will
+set some pre-defined settings for that server.
+
+Please note that you will still need to go through and make sure
+everything is correct.  This does not change everything.  There are
+only a few settings that this will change.
+
+Please select your IMAP server:
+    cyrus      = Cyrus IMAP server
+    uw         = University of Washington's IMAP server
+    exchange   = Microsoft Exchange IMAP server
+    courier    = Courier IMAP server
+    macosx     = Mac OS X Mailserver
+    mercury32  = Mercury/32
+    quit       = Do not change anything
+Command &#62;&#62;
+
+					</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>配置webmail虚拟主机</P
+><P
+><TT
+CLASS="FILENAME"
+>/etc/httpd/conf/httpd.conf</TT
+></P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 squirrelmail]# vi /etc/httpd/conf/httpd.conf
+NameVirtualHost xxx.xxx.xxx.xxx
+					
+&#60;VirtualHost xxx.xxx.xxx.xxx&#62;
+    ServerAdmin webmaster@example.org
+    DocumentRoot /var/www/html/squirrelmail
+    ServerName webmail.example.org
+    ErrorLog logs/SquirrelMail-error_log
+    CustomLog logs/SquirrelMail-access_log common
+&#60;/VirtualHost&#62;
+[root@linuxas3 squirrelmail]# service httpd restart
+Stopping httpd:                                            [  OK  ]
+Starting httpd:                                            [  OK  ]
+[root@linuxas3 squirrelmail]#
+					</PRE
+></TD
+></TR
+></TABLE
+><P
+><A
+HREF="javascript:if(confirm('http://mail.example.org/  \n\nThis file was not retrieved by Teleport Pro, because it is addressed on a domain or path outside the boundaries set for its Starting Address.  \n\nDo you want to open it from the server?'))window.location='http://mail.example.org/'" tppabs="http://mail.example.org/"
+TARGET="_top"
+>http://mail.example.org/</A
+></P
+></LI
+></OL
+></DIV
+></DIV
+><DIV
+CLASS="SECTION"
+><H2
+CLASS="SECTION"
+><A
+NAME="AEN1557"
+></A
+>jwebmail</H2
+><P
+>jwebmail是Java Servlet写的Webmail跨平台很好</P
+><P
+>安装Java环境</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 src]# wget http://192.18.97.239/ECom/EComTicketServlet/BEGINjsecom16k.sun.com-2a13%3A408c6cb1%3Ada4fb41b2fe897e/-2147483648/360611139/1/444014/443834/360611139/2ts+/westCoastFSEND/j2sdk-1.4.2_04-oth-JPR/j2sdk-1.4.2_04-oth-JPR:5/j2sdk-1_4_2_04-linux-i586.bin
+[root@linuxas3 src]# wget http://apache.linuxforum.net/dist/jakarta/tomcat-5/v5.0.19/bin/jakarta-tomcat-5.0.19.tar.gz
+[root@linuxas3 src]# chmod 755 j2sdk-1_4_2_04-linux-i586.bin
+[root@linuxas3 src]# ./j2sdk-1_4_2_04-linux-i586.bin
+Do you agree to the above license terms? [yes or no]
+<TT
+CLASS="USERINPUT"
+><B
+>yes</B
+></TT
+> (输入 yes 解压)
+[root@linuxas3 src]# mv j2sdk1.4.2_04 ../java
+[root@linuxas3 src]# tar zxvf jakarta-tomcat-5.0.19.tar.gz
+[root@linuxas3 src]# mv jakarta-tomcat-5.0.19 ../jakarta-tomcat
+			</PRE
+></TD
+></TR
+></TABLE
+><P
+>配置Java环境变量</P
+><P
+>			<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 src]# vi /etc/profile.d/java.sh
+# Netkiller's envionment variables
+
+#root=/usr/local/java
+
+#if ! echo ${PATH} | grep -q "${root}/bin" ; then
+#    PATH=${root}/bin:${PATH}
+#fi
+
+JAVA_HOME=/usr/local/java
+export JAVA_HOME
+
+JRE_HOME=/usr/local/java/jre
+export JRE_HOME
+
+APACHE_HOME=/usr/local/apache
+APACHE2_HOME=/usr/local/apache
+
+TOMCAT_HOME=/usr/local/jakarta-tomcat
+CATALINA_BASE=/usr/local/jakarta-tomcat
+CATALINA_HOME=/usr/local/jakarta-tomcat
+export TOMCAT_HOME CATALINA_BASE CATALINA_HOME
+
+
+ANT_HOME=/usr/local/apache-ant
+export ANT_HOME
+
+JAMES_HOME=/usr/local/james
+export JAMES_HOME
+
+CLASSPATH=$JAVA_HOME/lib:$JAVA_HOME/jre/lib:$JAVA_HOME/lib/pg73jdbc3.jar:$TOMCAT_HOME/webapps:/usr/local/jakarta-tomcat/common/classes/pg73jdbc3.jar:/usr/local/jakarta-tomcat/common/classes/mysql-connector-java-3.0.8-stable-bin.jar:/var/www/html/webapps/WEB-INF/lib/jfreechart-0.9.16.jar:/var/www/html/webapps/WEB-INF/lib/jcommon-0.9.1.jar:/var/www/html/webapps/WEB-INF/lib/gnujaxp.jar
+
+CLASSPATH=$CLASSPATH:/var/www/html/webapps/WEB-INF/lib:/var/www/html/webapps/WEB-INF/classes
+
+export CLASSPATH
+
+MYSQL_HOME=/usr/local/mysql
+
+PATH=$PATH:$JAVA_HOME/bin:$JAVA_HOME/jre/bin:$ANT_HOME/bin:MYSQL_HOME/bin
+export PATH
+
+			</PRE
+></TD
+></TR
+></TABLE
+>
+			</P
+><P
+>部属<TT
+CLASS="VARNAME"
+>webmail.war</TT
+></P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 src]# wget http://umn.dl.sourceforge.net/sourceforge/jwebmail/webmail-0.7.10-binary.tar.gz
+[root@linuxas3 src]# tar zxvf webmail-0.7.10-binary.tar.gz
+webmail.war
+INSTALL
+[root@linuxas3 src]# mv webmail.war /usr/local/jakarta-tomcat/webapps/
+[root@linuxas3 src]#
+			</PRE
+></TD
+></TR
+></TABLE
+><P
+>启动Tomcat</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 src]# /usr/local/jakarta-tomcat/bin/startup.sh
+Using CATALINA_BASE:   /usr/local/jakarta-tomcat
+Using CATALINA_HOME:   /usr/local/jakarta-tomcat
+Using CATALINA_TMPDIR: /usr/local/jakarta-tomcat/temp
+Using JAVA_HOME:       /usr/local/java
+[root@linuxas3 src]#
+			</PRE
+></TD
+></TR
+></TABLE
+><P
+>测试URL</P
+><P
+><A
+HREF="javascript:if(confirm('http://mail.example.org:8080/webmail  \n\nThis file was not retrieved by Teleport Pro, because it is addressed on a domain or path outside the boundaries set for its Starting Address.  \n\nDo you want to open it from the server?'))window.location='http://mail.example.org:8080/webmail'" tppabs="http://mail.example.org:8080/webmail"
+TARGET="_top"
+>http://mail.example.org:8080/webmail</A
+></P
+></DIV
+><DIV
+CLASS="SECTION"
+><H2
+CLASS="SECTION"
+><A
+NAME="AEN1574"
+></A
+>Horde IMP</H2
+><P
+>imp 也是一个PHP写的WEBMAIL</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>			</PRE
+></TD
+></TR
+></TABLE
+></DIV
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x1460.html" tppabs="http://www.9812.net/article/postfix/x1460.html"
+ACCESSKEY="P"
+>&#60;&#60;&#60; Previous</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html" tppabs="http://www.9812.net/article/postfix/book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x1578.html" tppabs="http://www.9812.net/article/postfix/x1578.html"
+ACCESSKEY="N"
+>Next &#62;&#62;&#62;</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Postfix Admin (socket)</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>基于物理文件系统存取Maildir/mailbox的Webmail</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>
