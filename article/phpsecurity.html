@@ -1,0 +1,311 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>PHP 安全</title><link rel="stylesheet" href="article.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.75.2" /><meta name="description" content="" /><meta name="keywords" content="php, php-cgi, php-fastcgi, apache, nginx, " /></head><body><div xml:lang="zh-cn" class="article" title="PHP 安全" lang="zh-cn"><div class="titlepage"><div><div><h2 class="title"><a id="idp768"></a>PHP 安全</h2></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(netkiller)</span>, <span class="lineage">陈景峰(BG7NYT)</span></h3><div class="affiliation"><div class="address"><p><br />
+				<code class="email">&lt;<a class="email" href="mailto:openunix@163.com">openunix@163.com</a>&gt;</code><br />
+			</p></div></div></div></div><div><p class="copyright">版权 © 2011, 2012 http://netkiller.github.com</p></div><div><div class="abstract" title="摘要"><p class="title"><b>摘要</b></p><p></p></div></div><div><div class="abstract" title="下面是我多年积累下来的经验总结，整理成文档供大家参考:"><a id="abstract"></a><p class="title"><b>下面是我多年积累下来的经验总结，整理成文档供大家参考:</b></p><p>
+		</p><table border="0" summary="Simple list" class="simplelist"><tr><td>
+				<a class="ulink" href="../architect/index.html" target="_top">Netkiller Architect 手札</a>
+			</td><td>
+				<a class="ulink" href="../linux/index.html" target="_top">Netkiller Linux 手札</a>
+			</td><td>
+				<a class="ulink" href="../developer/index.html" target="_top">Netkiller Developer 手札</a>
+			</td><td>
+				<a class="ulink" href="../database/index.html" target="_top">Netkiller Database 手札</a>
+			</td></tr><tr><td>
+				<a class="ulink" href="../debian/index.html" target="_top">Netkiller Debian 手札</a>
+			</td><td>
+				<a class="ulink" href="../centos/index.html" target="_top">Netkiller CentOS 手札</a>
+			</td><td>
+				<a class="ulink" href="../freebsd/index.html" target="_top">Netkiller FreeBSD 手札</a>
+			</td><td>
+				<a class="ulink" href="../shell/index.html" target="_top">Netkiller Shell 手札</a>
+			</td></tr><tr><td>
+				<a class="ulink" href="../www/index.html" target="_top">Netkiller Web 手札</a>
+			</td><td>
+				<a class="ulink" href="../monitoring/index.html" target="_top">Netkiller Monitoring 手札</a>
+			</td><td>
+				<a class="ulink" href="../storage/index.html" target="_top">Netkiller Storage 手札</a>
+			</td><td>
+				<a class="ulink" href="../mail/index.html" target="_top">Netkiller Mail 手札</a>
+			</td></tr><tr><td>
+				<a class="ulink" href="../security/index.html" target="_top">Netkiller Security 手札</a>
+			</td><td>
+				<a class="ulink" href="../multimedia/index.html" target="_top">Netkiller Multimedia 手札</a>
+			</td><td>
+				<a class="ulink" href="../docbook/index.html" target="_top">Netkiller Writer 手札</a>
+			</td><td>
+				<a class="ulink" href="../version/index.html" target="_top">Netkiller Version 手札</a>
+			</td></tr><tr><td>
+				<a class="ulink" href="../postgres/index.html" target="_top">Netkiller PostgreSQL 手札</a>
+			</td><td>
+				<a class="ulink" href="../mysql/index.html" target="_top">Netkiller MySQL 手札</a>
+			</td><td>
+				<a class="ulink" href="../cryptography/index.html" target="_top">Netkiller Cryptography 手札</a>
+			</td><td>
+				<a class="ulink" href="../cisco/index.html" target="_top">Netkiller Cisco IOS 手札</a>
+			</td></tr><tr><td>
+				<a class="ulink" href="../ldap/index.html" target="_top">Netkiller LDAP 手札</a>
+			</td><td>
+				<a class="ulink" href="../intranet/index.html" target="_top">Netkiller Intranet 手札</a>
+			</td><td> </td><td> </td></tr></table><p>
+	</p></div></div></div><hr /></div><div class="toc"><p><b>目录</b></p><dl><dt><span class="section"><a href="#idp52912">1. Apache mod_php / php-fpm</a></span></dt><dd><dl><dt><span class="section"><a href="#idp53936">1.1. 用户权限</a></span></dt><dd><dl><dt><span class="section"><a href="#idp65216">1.1.1. Apache</a></span></dt><dt><span class="section"><a href="#idp65472">1.1.2. Nginx / lighttpd + fastcgi</a></span></dt></dl></dd><dt><span class="section"><a href="#idp54064">1.2. web server 版本信息</a></span></dt></dl></dd><dt><span class="section"><a href="#idp95424">2. php.ini</a></span></dt><dd><dl><dt><span class="section"><a href="#idp96240">2.1. 危险PHP函数</a></span></dt><dd><dl><dt><span class="section"><a href="#idp98368">2.1.1. chdir()函数安全演示</a></span></dt></dl></dd><dt><span class="section"><a href="#idp101168">2.2. 隐藏PHP版本信息</a></span></dt><dt><span class="section"><a href="#idp102816">2.3. 隐藏PHP出错信息</a></span></dt></dl></dd><dt><span class="section"><a href="#idp104688">3. 开发于安全</a></span></dt><dd><dl><dt><span class="section"><a href="#idp105328">3.1. 彻底解决目录于文件的安全</a></span></dt><dt><span class="section"><a href="#idp107984">3.2. Session / Cookie安全</a></span></dt><dt><span class="section"><a href="#idp114496">3.3. 注入安全</a></span></dt></dl></dd></dl></div><div class="section" title="1. Apache mod_php / php-fpm"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp52912"></a>1. Apache mod_php / php-fpm</h2></div></div></div><p>目录权限安全</p><div class="section" title="1.1. 用户权限"><div class="titlepage"><div><div><h3 class="title"><a id="idp53936"></a>1.1. 用户权限</h3></div></div></div><p>web server 启动用户不能于运行用户为同一个用户</p><p>web server 运行用户与php程序不能为同一个用户</p><pre class="screen">
+root      1082  0.0  0.1  11484  2236 ?        Ss   Mar01   0:00 nginx: master process /usr/sbin/nginx
+www-data 13650  0.0  0.0  11624  1648 ?        S    09:44   0:00 nginx: worker process
+www-data 13651  0.0  0.0  11624  1132 ?        S    09:44   0:00 nginx: worker process
+www-data 13652  0.0  0.0  11624  1132 ?        S    09:44   0:00 nginx: worker process
+www-data 13653  0.0  0.0  11624  1132 ?        S    09:44   0:00 nginx: worker process
+			</pre><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>夫进程</p><p>root 启动 web server, 此时web server 父进程应该是 root,同时父进程监听80端口</p></li><li class="listitem"><p>子进程</p><p>父进程派生许多子进程，同时使用setuid,setgid将子进程权限切换为非root</p><p>子进程用户可以通过httpd.conf设置</p><pre class="screen">
+User nobody
+Group nobody
+					</pre><p>nginx.conf</p><pre class="screen">
+$ cat /etc/nginx/nginx.conf 
+user www-data;					
+					</pre></li><li class="listitem"><p>fastcgi 进程</p><pre class="screen">
+root     13082  0.0  0.1  19880  2584 ?        Ss   09:28   0:00 php-fpm: master process (/etc/php5/fpm/php-fpm.conf)      
+www-data 13083  0.0  0.1  20168  3612 ?        S    09:28   0:00 php-fpm: pool www                                         
+www-data 13084  0.0  0.1  20168  2808 ?        S    09:28   0:00 php-fpm: pool www                                         
+www-data 13085  0.0  0.1  20168  2812 ?        S    09:28   0:00 php-fpm: pool www                                         
+www-data 13086  0.0  0.1  20168  2812 ?        S    09:28   0:00 php-fpm: pool www 
+					</pre><p>php-fpm 于apache类似，都是root父进程，然后派生子进程，由于fastcgi 使用 9000 所有我们可以不使用root启动php-fpm</p></li></ol></div><p>现在我们开始讲解安全配置问题</p><p>我们目的是避免用户通过漏洞提升权限，或者由于权限配置不当产生漏洞</p><div class="section" title="1.1.1. Apache"><div class="titlepage"><div><div><h4 class="title"><a id="idp65216"></a>1.1.1. Apache</h4></div></div></div><p>Apache 案例</p><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>Apache		: root </p></li><li class="listitem"><p>Apache 子进程 : nobody</p></li><li class="listitem"><p>HTDOCS 目录   : /var/www</p><pre class="screen">		
+/var/www
+|--include
+|--image
+|--temp
+|--...	
+						</pre></li></ol></div><p>很多人会将/var/www用户与组设置为 nobody:nogroup / nobody:nobody, 同时因为images会上传文件需要设置777, 很多书本于教程上面也是这样讲的， 这样配置会有什么问题呢？我们来分析一下：</p><p>我们假设，一个用户上传一个文件到images目录，会有几种情况：</p><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>上传一个.php文件，我们可以通过程序禁止上传.php文件</p></li><li class="listitem"><p>我们上传一个.jpg文件,OK 通过了，通过某种手段将他重命名位.php扩展名的文件，然后通过http://www.example.com/images/your.php 运行它，your.php 可以做什么呢？ 它可以查看所有文件，修改所有文件，创建其他php文件，去你可include目录下看config.php然后下载数据库。</p></li><li class="listitem"><p>内部开发人员偷偷将一个程序植入到系统中，这个做code review 可以避免</p></li></ol></div><p>如何避免这样问题出现,有一个办法，我们新建一个用户www, webserver 进程是nobody，程序目录/var/www中的代码是www用户，nobody可能读取但不能修改。/var/www/images 目录所有者是nobody可以上传图片 </p><pre class="screen">
+				
+chown www /var/www/
+chown nobody /var/www/images
+find /var/www/ -type d -exec chmod 555 {} \;
+find /var/www/ -type f -exec chmod 444 {} \;
+chmod 755 /var/www/images
+				
+				</pre><p>使所有可能目录允许运行.php文件，http://www.example.com/images/your.php 将被拒绝. include 也是同样处理方式，只允许使用include_once,require_one 包含，不允许http://www.example.com/include/your.php运行</p><pre class="screen">		
+				
+&lt;Location ~ "/((js/)|(css/)|(images/)).*\.php"&gt;
+	Order Deny,Allow
+	Deny from all
+&lt;/Location&gt;	
+
+&lt;Location /includes/&gt;
+        Order allow,deny
+        Deny from all
+&lt;/Location&gt;
+&lt;Location /library/&gt;
+        Order allow,deny
+        Deny from all
+&lt;/Location&gt;		
+
+&lt;Directory /var/www/themes/&gt;
+    &lt;Files *.php&gt;
+		Order allow,deny
+		Deny from all
+    &lt;/Files&gt;
+&lt;/Directory&gt;
+					
+				</pre></div><div class="section" title="1.1.2. Nginx / lighttpd + fastcgi"><div class="titlepage"><div><div><h4 class="title"><a id="idp65472"></a>1.1.2. Nginx / lighttpd + fastcgi</h4></div></div></div><p>Nginx / lighttpd 案例分析</p><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>nginx / lighttpd	: root </p></li><li class="listitem"><p>web server 子进程 : nobody</p></li><li class="listitem"><p>php-fpm	: root </p></li><li class="listitem"><p>php-fpm 子进程 : nobody</p></li><li class="listitem"><p>HTDOCS 目录   : /var/www</p><pre class="screen">		
+/var/www
+|--include
+|--image
+|--temp
+|--...	
+						</pre></li></ol></div><p>fastcgi 遇到的问题与上面apache案例中遇到的问题类似，不同是的fastcgi把动态于静态完全分开了，这样更容易管理，我们可以这样入手</p><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>nginx / lighttpd	: root </p></li><li class="listitem"><p>web server 子进程 : nobody</p></li><li class="listitem"><p>php-fpm	: root </p></li><li class="listitem"><p>php-fpm 子进程 : www</p></li></ol></div><pre class="screen">
+chown nobody /var/www/
+chown www /var/www/images
+find /var/www/ -type d -exec chmod 555 {} \;
+find /var/www/ -type f -exec chmod 444 {} \;
+chmod 755 /var/www/images
+				</pre><p>/var/www所有权限给nobody, images权限给www, 同时保证www用户可以读取/var/www下的程序文件</p><pre class="screen">
+location ~ ^/upload/.*\.php$
+{
+        deny all;
+}
+
+location ~ ^/static/images/.*\.php$
+{
+        deny all;
+}
+		
+location ~ /include/.*\.php$ {
+    deny all;
+}
+
+location ~ .*\.(sqlite|sq3)$ {
+    deny all;
+}
+
+				</pre><pre class="screen">
+vim /etc/php5/fpm/pool.d/www.conf
+
+user = www
+group = www
+				</pre><p>/etc/php5/fpm/pool.d/www.conf</p><pre class="screen">
+chdir = /
+改为
+chdir = /var/www
+				</pre><p>chroot可以彻底解决cd跳转问题，单配置比较繁琐</p><pre class="screen">
+chroot = /var/www
+				</pre><p>这样当用户试图通过chdir跳转到/var/www以外的目录是，将被拒绝</p></div></div><div class="section" title="1.2. web server 版本信息"><div class="titlepage"><div><div><h3 class="title"><a id="idp54064"></a>1.2. web server 版本信息</h3></div></div></div><pre class="screen">
+Apache:
+ServerTokens ProductOnly
+ServerSignature Off
+
+Nginx:
+server_tokens off;
+			</pre></div></div><div class="section" title="2. php.ini"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp95424"></a>2. php.ini</h2></div></div></div><div class="section" title="2.1. 危险PHP函数"><div class="titlepage"><div><div><h3 class="title"><a id="idp96240"></a>2.1. 危险PHP函数</h3></div></div></div><p>这些函数应该尽量避免使用它们</p><pre class="screen">
+exec, system, ini_alter, readlink, symlink, leak, proc_open, popepassthru, chroot, scandir, chgrp, chown, escapeshellcmd, escapeshellarg, shell_exec, proc_get_status, max_execution_time, opendir,readdir, chdir ,dir, unlink,delete,copy,rename
+			</pre><div class="section" title="2.1.1. chdir()函数安全演示"><div class="titlepage"><div><div><h4 class="title"><a id="idp98368"></a>2.1.1. chdir()函数安全演示</h4></div></div></div><pre class="screen">
+				
+$ cat chdir.php 
+&lt;pre&gt;
+&lt;?php
+echo "current:".getcwd();
+echo '&lt;br /&gt;';
+chdir('/');
+echo "chdir:".getcwd();
+echo '&lt;br /&gt;';
+$lines = file('etc/passwd');
+
+foreach ($lines as $line_num =&gt; $line) {
+    echo "Line #&lt;b&gt;{$line_num}&lt;/b&gt; : " . htmlspecialchars($line) . "&lt;br /&gt;\n";
+}
+?&gt;
+&lt;/pre&gt;
+
+				
+				</pre><p>运行结果</p><pre class="screen">
+current:/www
+chdir:/
+Line #0 : root:x:0:0:root:/root:/bin/bash
+Line #1 : daemon:x:1:1:daemon:/usr/sbin:/bin/sh
+Line #2 : bin:x:2:2:bin:/bin:/bin/sh
+Line #3 : sys:x:3:3:sys:/dev:/bin/sh
+Line #4 : sync:x:4:65534:sync:/bin:/bin/sync
+Line #5 : games:x:5:60:games:/usr/games:/bin/sh
+				</pre></div></div><div class="section" title="2.2. 隐藏PHP版本信息"><div class="titlepage"><div><div><h3 class="title"><a id="idp101168"></a>2.2. 隐藏PHP版本信息</h3></div></div></div><p></p><pre class="screen">
+expose_php Off
+			</pre></div><div class="section" title="2.3. 隐藏PHP出错信息"><div class="titlepage"><div><div><h3 class="title"><a id="idp102816"></a>2.3. 隐藏PHP出错信息</h3></div></div></div><pre class="screen">
+display_errors = Off
+			</pre>
+			同时开启error_log日志
+			<pre class="screen">
+error_log = php_errors.log			
+			</pre></div></div><div class="section" title="3. 开发于安全"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp104688"></a>3. 开发于安全</h2></div></div></div><div class="section" title="3.1. 彻底解决目录于文件的安全"><div class="titlepage"><div><div><h3 class="title"><a id="idp105328"></a>3.1. 彻底解决目录于文件的安全</h3></div></div></div><p>选择一个MVC开发框架，它们的目录结构一般是这样的：</p><pre class="screen">
+/www
+/www/htdocs/index.php	htdocs目录下只有一个index.php文件，他是MVC/HMVC框架入口文件
+/www/htdocs/static		这里防止静态文件		
+/www/app/				这里放置php文件
+			</pre><p>然后放行index.php文件，在URL上不允许请求任何其他php文件，并返回404错误</p></div><div class="section" title="3.2. Session / Cookie安全"><div class="titlepage"><div><div><h3 class="title"><a id="idp107984"></a>3.2. Session / Cookie安全</h3></div></div></div><p>session.save_path 默认session 存储在/tmp, 并且一明文的方式将变量存储在以sess_为前缀的文件中</p><pre class="screen">
+			
+$ cat session.php 
+&lt;?php
+session_start();
+
+if(isset($_SESSION['views']))
+  $_SESSION['views']=$_SESSION['views']+1;
+else
+  $_SESSION['views']=1;
+echo "Views=". $_SESSION['views'];
+?&gt;
+
+			
+			</pre><p>http://www.example.com/session.php 我们刷新几次再看看sess_文件中的变化</p><pre class="screen">
+$ cat /tmp/sess_d837a05b472390cd6089fc8895234d1a
+views|i:3;
+			</pre><p>经过侧记你可以看到session文件中存储的是明文数据，所以不要将敏感数据放到Session中，如果必须这样作。建议你加密存储的数据</p><p>有一个办法比较好，就是封装一下session.不再采用$_SESSION方式调用</p><pre class="screen">
+			
+Class Encrype{
+
+}			
+			
+Class Session extend Encrype {
+
+	function set($key,$value,$salt){
+		$value = Encrype($value)
+		$_SESSION[$key] = $value
+	}
+	function get($key){
+		return $_SESSION[$key]
+	}
+}
+
+Class Cookie extend Encrype {
+
+	function set($key,$value,$salt){
+		$value = Encrype($value)
+		$_COOKIE[$key] = $value
+	}
+	function get($key){
+		return $_COOKIE[$key]
+	}
+}
+			
+			</pre><div class="note" title="Cookie" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Cookie</h3><p>cookie 也需要作同样的处理,上面代码仅供参考，未做过运行测试</p></div></div><div class="section" title="3.3. 注入安全"><div class="titlepage"><div><div><h3 class="title"><a id="idp114496"></a>3.3. 注入安全</h3></div></div></div><p>SQL 注入</p><pre class="screen">
+			
+&lt;?php
+    $mysql_server_name="172.16.0.4";
+    $mysql_username="dbuser";
+    $mysql_password="dbpass";
+    $mysql_database="dbname";
+
+
+    $conn=mysql_connect($mysql_server_name, $mysql_username,
+                        $mysql_password);
+	$strsql="";
+	if($_GET['id']){
+		$strsql="select * from `order` where id=".$_GET['id'];
+	}else{
+	    $strsql="select * from `order` limit 100";
+	}
+	echo $strsql;
+    $result=@mysql_db_query($mysql_database, $strsql, $conn);
+
+    $row=mysql_fetch_row($result);
+
+    echo '&lt;font face="verdana"&gt;';
+    echo '&lt;table border="1" cellpadding="1" cellspacing="2"&gt;';
+
+
+    echo "\n&lt;tr&gt;\n";
+    for ($i=0; $i&lt;mysql_num_fields($result); $i++)
+    {
+      echo '&lt;td bgcolor="#000F00"&gt;&lt;b&gt;'.
+      mysql_field_name($result, $i);
+      echo "&lt;/b&gt;&lt;/td&gt;\n";
+    }
+    echo "&lt;/tr&gt;\n";
+
+    mysql_data_seek($result, 0);
+
+    while ($row=mysql_fetch_row($result))
+    {
+      echo "&lt;tr&gt;\n";
+      for ($i=0; $i&lt;mysql_num_fields($result); $i++ )
+      {
+        echo '&lt;td bgcolor="#00FF00"&gt;';
+        echo "$row[$i]";
+        echo '&lt;/td&gt;';
+      }
+      echo "&lt;/tr&gt;\n";
+    }
+
+    echo "&lt;/table&gt;\n";
+    echo "&lt;/font&gt;";
+
+    mysql_free_result($result);
+
+    mysql_close();
+
+			
+			</pre><p>SHELL 命令注入</p><pre class="screen">
+			
+&lt;?php
+system("iconv -f ".$_GET['from']." -t ".$_GET['from']." ".$_GET['file'])
+			
+			</pre><pre class="screen">
+
+			</pre><pre class="screen">
+			
+
+			
+			</pre></div></div></div></body></html>
