@@ -57,21 +57,83 @@ Logged in to 127.0.0.1.
 Current remote directory is /home/neo.
 ncftp /home/neo &gt;
 		
-		</pre><div class="section" title="4.1. chroot"><div class="titlepage"><div><div><h3 class="title"><a id="idp2849984"></a>4.1. chroot</h3></div></div></div><div class="section" title="4.1.1. local user"><div class="titlepage"><div><div><h4 class="title"><a id="idp2850400"></a>4.1.1. local user</h4></div></div></div><p>chroot 所有本地用户</p><pre class="screen">
+		</pre><div class="section" title="4.1. ftp 帐号的shell权限"><div class="titlepage"><div><div><h3 class="title"><a id="idp1806936"></a>4.1. ftp 帐号的shell权限</h3></div></div></div><p>我们不想让FTP用户通过shell登录系统, 可以将用户的Shell改为/sbin/nologin</p><pre class="screen">
+neo:x:1000:1000:neo,,,:/home/neo:/sbin/nologin
+			</pre></div><div class="section" title="4.2. vsftpd 认证模块"><div class="titlepage"><div><div><h3 class="title"><a id="idp1807728"></a>4.2. vsftpd 认证模块</h3></div></div></div><div class="section" title="4.2.1. pam_shells.so"><div class="titlepage"><div><div><h4 class="title"><a id="idp1807920"></a>4.2.1. pam_shells.so</h4></div></div></div><pre class="screen">
+# cat /etc/pam.d/vsftpd 
+#%PAM-1.0
+session    optional     pam_keyinit.so    force revoke
+auth       required	pam_listfile.so item=user sense=deny file=/etc/vsftpd/ftpusers onerr=succeed
+auth       required	pam_shells.so
+auth       include	system-auth
+account    include	system-auth
+session    include	system-auth
+session    required     pam_loginuid.so	
+				</pre><p>/etc/vsftpd/ftpusers 列表中的用户将不能登录ftp服务器</p></div><div class="section" title="4.2.2. virtual user"><div class="titlepage"><div><div><h4 class="title"><a id="idp1809016"></a>4.2.2. virtual user</h4></div></div></div><p>创建明文密码文件，一行用户名后回车跟一行密码</p><pre class="screen">
+# cat virtual-users.txt
+user
+password
+neo
+123456
+jam
+654321
+				</pre><p>转为数据库文件</p><pre class="screen">
+# sudo apt-get install db-util
+# db_load -T -t hash -f virtual-users.txt /etc/vsftpd/virtual-users.db
+				</pre><p>创建插件认证配置文件 /etc/pam.d/vsftpd-virtual</p><pre class="screen">
+auth required pam_userdb.so db=/etc/vsftpd/virtual-users
+account required pam_userdb.so db=/etc/vsftpd/virtual-users
+				</pre><pre class="screen">
+/etc/vsftpd/vsftpd.conf：
+
+# virtual users to use local privs, not anon privs
+virtual_use_local_privs=YES
+
+# the PAM file used by authentication of virtual uses
+pam_service_name=vsftpd-virtual
+
+# in conjunction with 'local_root',
+# specifies a home directory for each virtual user
+user_sub_token=$USER
+local_root=/var/www/virtual/$USER
+# the virtual user is restricted to the virtual FTP area
+
 chroot_local_user=YES
-				</pre></div><div class="section" title="4.1.2. /etc/vsftpd/chroot_list"><div class="titlepage"><div><div><h4 class="title"><a id="idp2851952"></a>4.1.2. /etc/vsftpd/chroot_list</h4></div></div></div><p>受限用户用户添加到文件vsftpd.chroot_list</p><pre class="screen">
+# hides the FTP server user IDs and just display "ftp" in directory listings
+hide_ids=YES
+
+guest_enable=YES
+guest_username=nobody
+
+# the umask for file creation
+local_umask=022			
+				</pre><p>guest_username=nobody 虚拟用户将使用nobody用户作为他的uid,gid.</p><pre class="screen">
+# mkdir /var/www/virtual/mary
+# chown ftp:ftp /var/www/virtual/mary				
+				</pre></div><div class="section" title="4.2.3. 虚拟用户权限"><div class="titlepage"><div><div><h4 class="title"><a id="idp1812360"></a>4.2.3. 虚拟用户权限</h4></div></div></div><pre class="screen">
+vim /etc/vsftpd.conf
+
+user_config_dir=/etc/vsftpd/conf.d
+
+mkdir /etc/vsftpd/conf.d
+				</pre><p>neo 只能下载不能上传</p><pre class="screen">
+				
+echo "anon_world_readable_only=NO" &gt; /etc/vsftpd/conf.d/neo
+				
+				</pre><p>jam 可以下上传跟下载</p><pre class="screen">
+				
+echo "anon_world_readable_only=NO" &gt; /etc/vsftpd/conf.d/jam
+echo "anon_upload_enable=YES" &gt;&gt; /etc/vsftpd/conf.d/jam
+echo "write_enable=YES" &gt;&gt; /etc/vsftpd/conf.d/jam
+				
+				</pre></div></div><div class="section" title="4.3. chroot"><div class="titlepage"><div><div><h3 class="title"><a id="idp1814096"></a>4.3. chroot</h3></div></div></div><div class="section" title="4.3.1. local user"><div class="titlepage"><div><div><h4 class="title"><a id="idp1814288"></a>4.3.1. local user</h4></div></div></div><p>chroot 所有本地用户</p><pre class="screen">
+chroot_local_user=YES
+				</pre></div><div class="section" title="4.3.2. /etc/vsftpd/chroot_list"><div class="titlepage"><div><div><h4 class="title"><a id="idp1814976"></a>4.3.2. /etc/vsftpd/chroot_list</h4></div></div></div><p>受限用户用户添加到文件vsftpd.chroot_list</p><pre class="screen">
 chroot_list_enable=YES
 chroot_list_file=/etc/vsftpd/chroot_list
-				</pre><p>注意：每行一个用户名</p></div></div><div class="section" title="4.2. test"><div class="titlepage"><div><div><h3 class="title"><a id="idp2854672"></a>4.2. test</h3></div></div></div><pre class="screen">
+				</pre><p>注意：每行一个用户名</p></div><div class="section" title="4.3.3. test"><div class="titlepage"><div><div><h4 class="title"><a id="idp1816912"></a>4.3.3. test</h4></div></div></div><pre class="screen">
 adduser -o --home /www --shell /sbin/nologin --uid 99 --gid 99 --group nobody www
 echo "www:chen" | chpasswd
 echo www &gt; /etc/vsftpd/chroot_list
 ncftp ftp://www:chen@172.16.0.1
-			</pre></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ftp.filezilla.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="ftp.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ftp.proftpd.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">3. FileZilla </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 5. ProFTPD + MySQL / OpenLDAP 用户认证</td></tr></table></div><script type="text/javascript">
-var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-</script><script type="text/javascript">
-try {
-var pageTracker = _gat._getTracker("UA-2033740-1");
-pageTracker._trackPageview();
-} catch(err) {}</script></body></html>
+				</pre></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ftp.filezilla.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="ftp.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ftp.proftpd.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">3. FileZilla </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 5. ProFTPD + MySQL / OpenLDAP 用户认证</td></tr></table></div></body></html>
