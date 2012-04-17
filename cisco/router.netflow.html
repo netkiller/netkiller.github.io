@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>2. Router</title><link rel="stylesheet" href="/docbook.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.75.2" /><meta name="keywords" content="pix,asa,3750,4507,5550, vlan,vtp, hsrp,vrrp, rip,ospf" /><link rel="home" href="index.html" title="Netkiller Cisco IOS 手札" /><link rel="up" href="netflow.html" title="第 8 章 Netflow" /><link rel="prev" href="netflow.html" title="第 8 章 Netflow" /><link rel="next" href="switch.netflow.html" title="3. Switch" /><script xmlns="" type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-11694057-1']);
+  _gaq.push(['_setDomainName', 'netkiller.sourceforge.net']);
+  _gaq.push(['_setAllowHash', 'false']);
+  _gaq.push(['_setAllowLinker', true]);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">2. Router</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="netflow.html">上一页</a> </td><th width="60%" align="center">第 8 章 Netflow</th><td width="20%" align="right"> <a accesskey="n" href="switch.netflow.html">下一页</a></td></tr></table><hr /></div><table xmlns="" width="100%" border="0"><tr><td align="left"><a href="http://netkiller.sourceforge.net/">Home</a> |
+                <a href="http://netkiller.github.com/">Mirror</a> |
+                <a href="/search.html">Search</a></td><td align="right"><form id="searchbox_008589143145807374698:f5uprauilyy" action="/search.html"><input type="hidden" name="cx" value="008589143145807374698:f5uprauilyy" /><input type="hidden" name="cof" value="FORID:11" /><input name="q" type="text" size="25" style="border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; border-top-style: solid; border-right-style: solid; border-bottom-style: solid; border-left-style: solid; border-top-color: rgb(126, 157, 185); border-right-color: rgb(126, 157, 185); border-bottom-color: rgb(126, 157, 185); border-left-color: rgb(126, 157, 185); padding-top: 2px; padding-right: 2px; padding-bottom: 2px; padding-left: 2px; background-image: url(http://www.google.com/cse/intl/en/images/google_custom_search_watermark.gif); background-attachment: initial; background-origin: initial; background-clip: initial; background-color: rgb(255, 255, 255); background-position: 0% 50%; background-repeat: no-repeat no-repeat; " /><input type="submit" name="sa" value="Search" /><input name="siteurl" type="hidden" value="http://netkiller.sourceforge.net/" /></form><script type="text/javascript" src="http://www.google.com/coop/cse/brand?form=searchbox_008589143145807374698%3Af5uprauilyy"></script></td></tr></table><div class="section" title="2. Router"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="router.netflow"></a>2. Router</h2></div></div></div><pre class="screen">
+		
+router#enable
+Password:*****
+router#configure terminal
+router(config)#interface FastEthernet 0/1
+router(config-if)#ip route-cache flow
+router(config-if)#exit
+router(config)#ip flow-export destination 192.168.9.101 9996
+router(config)#ip flow-export source FastEthernet 0/1
+router(config)#ip flow-export version 5
+router(config)#ip flow-cache timeout active 1
+router(config)#ip flow-cache timeout inactive 15
+router(config)#snmp-server ifindex persist
+router(config)#^Z
+router#write
+router#show ip flow export
+router#show ip cache flow
+		
+		</pre><pre class="screen">
+interface FastEthernet0/0/0
+ description Default-Shenzhen-IPLC-Hongkong-WAN
+ ip address 192.168.1.254 255.255.255.0
+ ip flow ingress
+ ip nat outside
+ ip virtual-reassembly in
+ duplex auto
+ speed auto
+!		
+ip flow-export source FastEthernet0/0/0
+ip flow-export version 5
+ip flow-export destination 192.168.1.246 2055
+
+
+		
+2911#show ip flow export
+Flow export v5 is enabled for main cache
+  Export source and destination details :
+  VRF ID : Default
+    Source(1)       192.168.1.254 (FastEthernet0/0/0)
+    Destination(1)  192.168.1.246 (2055)
+  Version 5 flow records
+  450 flows exported in 19 udp datagrams
+  0 flows failed due to lack of export packet
+  0 export packets were sent up to process level
+  0 export packets were dropped due to no fib
+  0 export packets were dropped due to adjacency issues
+  0 export packets were dropped due to fragmentation failures
+  0 export packets were dropped due to encapsulation fixup failures
+2911#show ip cache flow
+IP packet size distribution (198733 total packets):
+   1-32   64   96  128  160  192  224  256  288  320  352  384  416  448  480
+   .000 .006 .079 .011 .006 .006 .010 .007 .004 .006 .005 .006 .005 .007 .004
+
+    512  544  576 1024 1536 2048 2560 3072 3584 4096 4608
+   .004 .004 .101 .061 .661 .000 .000 .000 .000 .000 .000
+
+IP Flow Switching Cache, 278544 bytes
+  181 active, 3915 inactive, 899 added
+  27986 ager polls, 0 flow alloc failures
+  Active flows timeout in 30 minutes
+  Inactive flows timeout in 15 seconds
+IP Sub Flow Cache, 34056 bytes
+  145 active, 879 inactive, 496 added, 496 added to flow
+  0 alloc failures, 0 force free
+  1 chunk, 1 chunk added
+  last clearing of statistics never
+Protocol         Total    Flows   Packets Bytes  Packets Active(Sec) Idle(Sec)
+--------         Flows     /Sec     /Flow  /Pkt     /Sec     /Flow     /Flow
+TCP-WWW            184      0.0        69  1214      2.1       2.9       7.7
+TCP-other           50      0.0         3   125      0.0       0.6       9.8
+UDP-other          422      0.0       131  1073      9.4      14.7      15.4
+ICMP                62      0.0         3    83      0.0      15.6      15.4
+Total:             718      0.1        95  1094     11.7      10.8      13.0
+
+SrcIf         SrcIPaddress    DstIf         DstIPaddress    Pr SrcP DstP  Pkts
+
+SrcIf         SrcIPaddress    DstIf         DstIPaddress    Pr SrcP DstP  Pkts
+Fa0/0/0       14.107.17.191   Gi0/1         192.168.1.254   11 405A 2868     1
+Fa0/0/0       192.168.1.216   Null          192.168.1.255   11 0715 0089     1
+Fa0/0/0       114.95.139.199  Gi0/1         192.168.1.254   11 2C00 2868     1
+Fa0/0/0       121.10.120.164  Gi0/1         192.168.1.254   11 1F40 2868     2
+Fa0/0/0       117.63.26.75    Local         192.168.1.254   01 0000 0303     1
+Fa0/0/0       112.112.179.108 Gi0/1         192.168.1.254   11 0413 2868  1574
+Fa0/0/0       121.10.24.67    Gi0/1         192.168.1.254   11 1F40 2868    41
+Fa0/0/0       123.245.109.226 Gi0/1         192.168.1.254   11 2CAD 2868     1
+Fa0/0/0       74.125.235.3    Gi0/2         192.168.1.254   06 0050 0A45     1
+Fa0/0/0       117.82.149.18   Gi0/1         192.168.1.254   11 31DC 2868     4
+Fa0/0/0       58.52.129.128   Gi0/1         192.168.1.254   11 8EFB 2868     8
+Fa0/0/0       14.155.27.35    Gi0/1         192.168.1.254   11 CF9E 2868    79
+Fa0/0/0       218.81.47.155   Local         192.168.1.254   01 0000 0303     2
+Fa0/0/0       218.21.87.42    Gi0/1         192.168.1.254   11 0C1B 2868    54
+Fa0/0/0       58.213.29.42    Gi0/1         192.168.1.254   11 BA85 2868     4
+Fa0/0/0       118.249.123.126 Gi0/1         192.168.1.254   11 2682 2868     3
+Fa0/0/0       111.179.55.238  Gi0/1         192.168.1.254   11 486E 2868  1203
+Fa0/0/0       61.154.157.176  Gi0/1         192.168.1.254   11 A430 2868     5
+Fa0/0/0       1.206.63.198    Gi0/1         192.168.1.254   11 205F 2868    14
+Fa0/0/0       222.68.17.88    Gi0/1         192.168.1.254   11 7333 2868    62
+Fa0/0/0       116.230.173.1   Gi0/1         192.168.1.254   11 BD78 2868    19
+Fa0/0/0       115.238.255.189 Gi0/1         192.168.1.254   06 0050 0AC3  7435
+		
+		</pre></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="netflow.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="netflow.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="switch.netflow.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 8 章 Netflow </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 3. Switch</td></tr></table></div></body></html>
