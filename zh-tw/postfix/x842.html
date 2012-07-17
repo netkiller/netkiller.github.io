@@ -1,0 +1,239 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<HTML
+><HEAD
+><TITLE
+>啟動腳本</TITLE
+>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.76b+
+"><LINK
+REL="HOME"
+TITLE="Postfix Integrated Solution"
+HREF="book1.html" tppabs="http://www.9812.net/article/postfix/book1.html"><LINK
+REL="UP"
+TITLE="整合電子郵件系統(MYSQL)"
+HREF="c668.html" tppabs="http://www.9812.net/article/postfix/c668.html"><LINK
+REL="PREVIOUS"
+TITLE="Installing Courier Maildrop"
+HREF="x821.html" tppabs="http://www.9812.net/article/postfix/x821.html"><LINK
+REL="NEXT"
+TITLE="Postfix + PostgreSQL HOW-TO"
+HREF="c848.html" tppabs="http://www.9812.net/article/postfix/c848.html"></HEAD
+><BODY
+CLASS="SECTION"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Postfix Integrated Solution</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x821.html" tppabs="http://www.9812.net/article/postfix/x821.html"
+ACCESSKEY="P"
+>&#60;&#60;&#60; Previous</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>整合電子郵件系統(MYSQL)</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="c848.html" tppabs="http://www.9812.net/article/postfix/c848.html"
+ACCESSKEY="N"
+>Next &#62;&#62;&#62;</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECTION"
+><H1
+CLASS="SECTION"
+><A
+NAME="AEN842"
+></A
+>啟動腳本</H1
+><P
+>/etc/init.d/postfix</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>[root@linuxas3 init.d]# vi /etc/init.d/postfix
+#!/bin/sh
+#
+#   Startup/shutdown script for the Postfix (Mail Server).
+#
+#   Linux chkconfig stuff:
+#
+#   chkconfig: 2345 95 50
+#   description: Startup/shutdown script for the Common UNIX \
+#                Postfix (Mail Server).
+#
+#   Copyright 2004 by netkiller, all rights reserved.
+#
+#      author: netkiller
+#       Voice: +86 13322993040
+#       EMail: openunix@163.com
+#         WWW: http://www.9812.net
+#
+# heavily edited so that it's more like other scripts in init.d on Red Hat
+# Linux
+
+
+POSTFIX=/usr/sbin/postfix
+clamav=/usr/local/clamav/sbin/clamd
+POP3=/usr/lib/courier-imap/libexec/pop3d.rc
+IMAP=/usr/lib/courier-imap/libexec/imapd.rc
+SQWEBMAIL=/bin/false
+#/usr/local/webmail/libexec/authlib/authdaemond
+case "$1" in
+    start)
+        if [ -x ${POSTFIX} ]; then
+            service saslauthd start
+            ${clamav}
+            service amavisd start
+            ${POSTFIX} start &#62; /dev/null &#38;&#38; echo -n 'Postfix Starting...'
+            ${POP3} start
+            ${IMAP} start
+            ${SQWEBMAIL} start
+        fi
+        echo
+        ;;
+    stop)
+        if [ -x ${POSTFIX} ]; then
+            ${POP3} stop
+            ${IMAP} stop
+            ${SQWEBMAIL} stop
+            service amavisd stop
+            service saslauthd stop
+            ${POSTFIX} stop &#62; /dev/null 2&#62;&#38;1 &#38;&#38; echo -n 'Postfix Stop...'
+        fi
+        echo
+        ;;
+    restart)
+        $0 stop
+        $0 start
+        ;;
+    *)
+        echo ""
+        echo "Usage: `basename $0` { start | stop | restart }"
+        echo ""
+        exit 1
+        ;;
+esac
+		</PRE
+></TD
+></TR
+></TABLE
+><P
+>設計啟動級別</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linux init.d]# chkconfig --level 345 postfix  on		
+		</PRE
+></TD
+></TR
+></TABLE
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x821.html" tppabs="http://www.9812.net/article/postfix/x821.html"
+ACCESSKEY="P"
+>&#60;&#60;&#60; Previous</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html" tppabs="http://www.9812.net/article/postfix/book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="c848.html" tppabs="http://www.9812.net/article/postfix/c848.html"
+ACCESSKEY="N"
+>Next &#62;&#62;&#62;</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Installing Courier Maildrop</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="c668.html" tppabs="http://www.9812.net/article/postfix/c668.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Postfix + PostgreSQL HOW-TO</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

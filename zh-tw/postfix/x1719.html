@@ -1,0 +1,961 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<HTML
+><HEAD
+><TITLE
+>新聞組</TITLE
+>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.76b+
+"><LINK
+REL="HOME"
+TITLE="Postfix Integrated Solution"
+HREF="book1.html" tppabs="http://www.9812.net/article/postfix/book1.html"><LINK
+REL="UP"
+TITLE="郵件伺服器周邊"
+HREF="c1628.html" tppabs="http://www.9812.net/article/postfix/c1628.html"><LINK
+REL="PREVIOUS"
+TITLE="郵件伺服器周邊"
+HREF="c1628.html" tppabs="http://www.9812.net/article/postfix/c1628.html"><LINK
+REL="NEXT"
+TITLE="mail <--> other"
+HREF="x1728.html" tppabs="http://www.9812.net/article/postfix/x1728.html"></HEAD
+><BODY
+CLASS="SECTION"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Postfix Integrated Solution</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="c1628.html" tppabs="http://www.9812.net/article/postfix/c1628.html"
+ACCESSKEY="P"
+>&#60;&#60;&#60; Previous</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>郵件伺服器周邊</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x1728.html" tppabs="http://www.9812.net/article/postfix/x1728.html"
+ACCESSKEY="N"
+>Next &#62;&#62;&#62;</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECTION"
+><H1
+CLASS="SECTION"
+><A
+NAME="AEN1719"
+></A
+>新聞組</H1
+><P
+><A
+HREF="javascript:if(confirm('http://home.9812.net/linux/article/INN/  \n\nThis file was not retrieved by Teleport Pro, because it is addressed on a domain or path outside the boundaries set for its Starting Address.  \n\nDo you want to open it from the server?'))window.location='http://home.9812.net/linux/article/INN/'" tppabs="http://home.9812.net/linux/article/INN/"
+TARGET="_top"
+>How to Install and Configure INN
+under RedHat Linux
+by netkiller	  
+	  </A
+></P
+><P
+><B
+CLASS="COMMAND"
+>news://news.9812.net</B
+></P
+><DIV
+CLASS="EXAMPLE"
+><A
+NAME="AEN1725"
+></A
+><P
+><B
+>Example 4. NNTP JavaBean</B
+></P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>package netkiller.network;
+
+/**
+ * @Author 陳景峰(Netkiller)
+ *@version 
+ **/
+
+import java.net.*;
+import java.io.*;
+import java.util.*;
+import sun.misc.*;
+
+import javax.servlet.http.*;
+import netkiller.security.*;
+
+//javadoc -private -d doc -author -version NNTP.java
+
+public class NNTP 
+{
+	private boolean debug = false;
+	private boolean isConnected = false;
+	private static Socket sock 		= null;
+	private BufferedReader reader	= null;
+	private PrintWriter writer 		= null;	
+	private static int port 		= 119;
+	
+ 	public final static String GB18030 	= "GB18030";
+ 	public final static String UTF8 	= "UTF-8";
+ 	public final static String GBK 		= "GBK";	
+	
+	private static final String encode = GB18030;
+	//private static final String encode = "UTF-8";
+	
+	//private static String host	= "news.cdut.edu.cn";
+	private static String host	= "news.newsfan.net";
+	
+	//private static String host	= "news.cn99.com";
+	//private static String server	= "news.webking.com.cn";
+	
+	
+	private static int retryTimes 	= 0;
+	private StringTokenizer	st		= null;
+	//private Vector v = new Vector();
+	//private ArrayList al = new ArrayList();
+	private String buf = null;
+	
+	public NNTP(){
+
+	}
+	public void setDebug(boolean bool){
+		this.debug = bool;	
+	}
+	private void logs(Object obj){
+		System.err.println(obj);	
+	}
+/**
+ * 連接伺服器
+ **/	
+	public void Connect(){
+		try{
+			sock = new Socket(host,port);
+			sock.setSoTimeout(600000);
+			//System.out.print(sock);
+			reader = new BufferedReader(new InputStreamReader(sock.getInputStream(),encode));
+			writer = new PrintWriter(sock.getOutputStream(),true);					
+		}catch(Exception e){
+			e.printStackTrace();
+		}		
+	}
+
+/**
+ * 連接伺服器
+ * @param host 伺服器地址,ip 或 域名
+ * @param port 連接埠
+ * @return boolean false / ture
+ **/
+	public boolean Connect(String host,int port){
+		boolean isConnect = false;
+		try{
+			sock = new Socket(host,port);
+			sock.setSoTimeout(600000);
+			//System.out.println(sock);
+			reader = new BufferedReader(new InputStreamReader(sock.getInputStream(),encode));
+			writer = new PrintWriter(sock.getOutputStream(),true);	
+			if(sock != null){
+				isConnect = true;
+			}				
+		}
+		
+		catch(java.net.UnknownHostException unknown){
+			unknown.printStackTrace();
+		}
+		catch(Exception e){
+			e.printStackTrace();
+		}
+		return isConnect;	
+	}
+
+/**
+ * 連接伺服器
+ * @param host 伺服器地址,ip 或 域名 ,連接埠預設119
+ * @return boolean false / ture
+ **/	
+	public boolean Connect(String host){
+		return Connect(host,119);
+		//HttpServletRequest req;
+		//HttpSession host = req.getSession().getAttribute();
+		//System.out.println((String)host.getAttribute("newshost"));	
+		//System.out.println((String)req.getSession().getAttribute("newshost"));	
+	}
+	
+/**
+ * 關閉socket and stream (連接與流)
+ * @param 
+ * @return
+ * @exception Cannot complete Session:Too many tries!
+ **/	
+	public void close()throws Exception{
+		try{
+			writer.println("QUIT");
+			/*
+			while((buf = reader.readLine()) != null) {
+				System.out.println(buf);
+			}
+			*/
+			if(writer != null)writer.close();
+			if(reader != null)reader.close();
+			if(sock != null)sock.close();
+			if(retryTimes++ == 10) throw new Exception("Cannot complete Session:Too many tries!");
+		}catch(Exception ex){
+		}		
+	}
+
+/**
+ * MODE reader
+ * @param 
+ * @return void
+ **/		
+	public void setModeReader(){
+		//writer.flush();
+		writer.println("MODE reader");
+		if(debug){
+			//System.err.println(reader.readLine());
+		}
+	}
+
+/**
+ * 列出組列表
+ * @param 
+ * @return Vector
+ * cn.comp.linux.development &#60;br&#62;
+ * cn.comp.linux.install &#60;br&#62;
+ * cn.comp.linux.admin &#60;br&#62;
+ * cn.comp.linux.misc &#60;br&#62;
+ * cn.comp.linux.application &#60;br&#62;
+ * cn.comp.freebsd &#60;br&#62;
+ * cn.comp.minix &#60;br&#62;
+ * cn.comp.solaris.admin &#60;br&#62;
+ * cn.comp.lang.c &#60;br&#62;
+ * cn.comp.lang.php &#60;br&#62;
+ * cn.comp.lang.perl &#60;br&#62;
+ * cn.comp.lang.python &#60;br&#62;
+ * cn.comp.lang.java.development &#60;br&#62;
+ * cn.comp.lang.java.jsp &#60;br&#62;
+ **/		
+	public Vector getNewsList(){
+		Vector v = new Vector();
+		String tmp = null;
+		int n = 1;
+		try{
+			writer.println("LIST");
+			while((buf = reader.readLine()) != null) {
+				if(debug){
+					System.err.println(buf);
+				}				
+				if(n&#62;2){
+					st = new StringTokenizer(buf);
+					st.hasMoreTokens();
+					tmp = st.nextToken(" ").toString();
+					if(tmp.equals("."))break;
+
+					//v.add(this.Base64Encoder(tmp));
+					v.add(tmp);
+					st.nextToken();
+				}	
+				n++;
+			}
+		}
+		catch(Exception e){
+			e.printStackTrace();
+		}
+		
+		finally{
+			try{
+				//this.close();
+			}catch(Exception e){
+				e.printStackTrace();
+			}
+		}
+		
+		return v;
+	}	
+	
+/**
+ * 打開組
+ * @param newsgroup 新聞組
+ * @return boolean true 組存在，false 組不存在
+ * 使用方法： 
+ * getNewsList()
+ * cn.comp.freebsd &#60;br&#62;
+ * cn.comp.solaris.admin &#60;br&#62;
+ * cn.comp.lang.c &#60;br&#62;
+ *
+ * setNewsGroup("cn.comp.freebsd")
+ * @see getNewsList()
+ **/		
+	public boolean setNewsGroup(String newsgroup){
+		boolean isSuccess = false;
+		try{
+			writer.println("GROUP "+newsgroup);
+			//writer.println("\r\n");
+			//"group cn.comp.lang.c"
+			//211 2 6 7 cn.comp.lang.php
+			//501 newsgroup
+			buf = reader.readLine();
+			if(buf.substring(0,3).equals("211")){
+				isSuccess = true;
+			}
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		return isSuccess;
+	}
+	
+/**
+ * 列出當前新聞組內的所有文章ID
+ * @return ArrayList 文章ID
+ * @see setNewsGroup(String newsgroup)
+ **/
+	public ArrayList getNewsListGroup(){
+		ArrayList al = new ArrayList();
+		try{
+			writer.println("LISTGROUP");
+			//listgroup cn.comp.lang.c
+			//211 Article list follows
+			while((buf = reader.readLine()) != null) {
+				if(buf.equals("."))break;
+			}
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		return al;
+	}	
+/**
+ * 列出 某 新聞組內的所有文章ID
+ * @param newsgroup 
+ * @return ArrayList 文章ID
+ * @see getNewsList()
+ * @see setNewsGroup(String newsgroup)
+ **/	
+	public Vector getNewsListGroup(String newsgroup){
+		Vector v = new Vector();
+		boolean isAdd = false;
+		int i =0;
+		try{
+			buf = reader.readLine();
+			this.logs(buf);
+			writer.println("LISTGROUP "+newsgroup);
+			
+			// writer.flush();
+			//System.err.println(writer.checkError());
+			
+			//listgroup cn.comp.lang.c
+			//211 Article list follows
+			while((buf = reader.readLine()) != null) {
+				//System.err.println("buffer:"+buf);
+				if(buf.equals("."))break;
+				//211 Article list follows
+				//211 list of article numbers follow
+				if(buf.length()&#62;3){
+					if(buf.substring(0,3).equals("211")){
+						isAdd = true;
+						continue;
+					}
+					if(buf.substring(0,3).equals("412")){
+						isAdd = false;
+						System.err.println(buf +":"+ newsgroup);
+						break;
+					}
+					if(buf.substring(0,3).equals("500")){
+						isAdd = false;
+						System.err.println(buf);
+						break;
+					}					
+				}
+				if(isAdd)v.add(buf);
+				if(i++&#62;50)break;
+			}			
+
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		return v;
+	}
+
+/**
+ * 通過文章ID取得Subject(標題)
+ * @param Number 文章ID 
+ * @return String 文章標題
+ * @see getNewsListGroup()
+ * @see getNewsListGroup(String newsgroup)
+ **/
+	public String getNewsTitle(String Number){
+		String strTitle = "";
+		try{
+			writer.println("HEAD "+Number);
+			//listgroup cn.comp.lang.c
+			//211 Article list follows
+			//buf = reader.readLine();
+			while((buf = reader.readLine()) != null) {
+				if(buf.equals("."))break;
+				if(buf.length()&#62;8){
+					if(buf.substring(0,8).equals("Subject:")){
+						strTitle = buf.substring(9);
+					}
+				}
+			}			
+
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		return strTitle;	
+	}
+
+	public HashMap getNewsTitle(Vector vector){
+		HashMap newsSubject = new HashMap();
+		try{
+			Enumeration enum = vector.elements();
+			while(enum.hasMoreElements()){
+				String id = (String)enum.nextElement();
+				reader.reset();
+				writer.println("HEAD "+id);
+				while((buf = reader.readLine()) != null) {
+					if(buf.equals("."))break;
+					if(buf.length()&#62;8){
+						if(buf.substring(0,8).equals("Subject:")){
+							newsSubject.put(id,buf.substring(9));
+						}
+					}
+				}
+			}			
+
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		return newsSubject;	
+	}
+
+/**
+ * 返回文章信息頭內容
+ * @param Number 文章ID 
+ * @return Vector 信息頭
+ * &#60;br&#62;
+ * Path: octopus!not-for-mail &#60;br&#62;
+ * From: openunix@163.com&#60;br&#62;
+ * Newsgroups: cn.comp.lang.c&#60;br&#62;
+ * Subject: ■ web news 測試■&#60;br&#62;
+ * Date: 3 Jul 2003 10:09:55 GMT&#60;br&#62;
+ * Organization: Chengdu Univ. of Technology.&#60;br&#62;
+ * Lines: 394&#60;br&#62;
+ * Message-ID: &#60;be0vdj$qo6$1@octopus.cdut.edu.cn&#62;&#60;br&#62;
+ * NNTP-Posting-Host: 202.103.190.130&#60;br&#62;
+ * X-Trace: octopus.cdut.edu.cn 1057226995 27398 202.103.190.130 (3 Jul 2003 10:09:55 GMT)&#60;br&#62;
+ * X-Complaints-To: yf@cdut.edu.cn&#60;br&#62;
+ * NNTP-Posting-Date: 3 Jul 2003 10:09:55 GMT&#60;br&#62;
+ * Xref: octopus cn.comp.lang.c:29 &#60;br&#62;
+ *
+ * @see getNewsListGroup()
+ * @see getNewsListGroup(String newsgroup)
+ **/	
+	public Vector getNewsHead(String Number){
+		Vector vector 			= new Vector();
+		boolean sw = true;
+		try{
+			writer.println("HEAD "+Number);
+			buf = reader.readLine();
+			buf = reader.readLine();
+			while((buf = reader.readLine()) != null) {
+				if(buf.equals("."))break;
+				/*
+				if(buf.length()&#62;4 &#38;&#38; !buf.substring(0,4).equals("Path") &#38;&#38; sw){
+					sw = false;
+					continue;	
+				}*/
+				vector.add(buf);
+			}
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		return vector;		
+	}
+/*		
+	public String[][] getNewsHead(String Number){
+		Vector vector 			= new Vector();
+		String arrNewsHead[][]	= new String[64][2];
+		StringTokenizer token 	= null;
+		boolean sw = true;
+		try{
+			writer.println("HEAD");
+			//listgroup cn.comp.lang.c
+			for(int i=0;(buf = reader.readLine()) != null;i++) {
+				if(buf.length()&#62;4 &#38;&#38; !buf.substring(0,4).equals("Path") &#38;&#38; sw){
+					sw = false;
+					continue;	
+				}
+				if(buf.length()&#60;3)break;
+				token = new StringTokenizer(buf);
+				//if(!token.hasMoreTokens())break;
+				arrNewsHead[i][0] = token.hasMoreTokens()?(String)token.nextToken():"";
+				arrNewsHead[i][1] = token.hasMoreTokens()?(String)token.nextToken():"";
+				//System.out.print(arrNewsHead[i][0]);
+				//System.out.println(arrNewsHead[i][1]);
+			}
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		return arrNewsHead;		
+	}
+*/
+
+/**
+ * 返回文章內容
+ * @param Number 文章ID 
+ * @return Vector 文章內容
+ *
+ * @see getNewsListGroup()
+ * @see getNewsListGroup(String newsgroup)
+ **/	
+	private Vector getNewsBody(String Number){
+		Vector v = new Vector();
+		String strTitle = "";
+		boolean isAdd = false;
+		try{
+			writer.println("BODY "+Number);
+			while((buf = reader.readLine()) != null) {
+				if(buf.length()&#62;3){
+					if(buf.substring(0,3).equals("222")){
+						isAdd = true;
+						continue;
+					}
+				}
+				if(buf.equals("."))break;
+				if(isAdd)v.add(buf);			
+			}			
+
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		return v;
+	}
+
+/**
+ * 返回文章內容
+ * @param Number 文章ID 
+ * @return Vector 文章內容
+ *
+ * @see getNewsContent(String Number)
+ * @see getNewsArticle(String Number)
+ **/	
+	public Vector getNewsContent(String Number){
+		return this.getNewsBody(Number);
+	}
+	
+/**
+ * 返回文章全文內容
+ * @param Number 文章ID 
+ * @return Vector 文章全文內容
+ *
+ * @see getNewsContent(String Number)
+ **/			
+	public Vector getNewsArticle(String Number){
+		Vector v = new Vector();
+		//article &#60;b4m4kv$n3v$1@octopus.cdut.edu.cn&#62;
+		//article 6
+		try{
+			writer.println("ARTICLE "+Number);
+			buf = reader.readLine();
+			while((buf = reader.readLine()) != null) {
+				if(buf.equals("."))break;
+				//if(buf.equals("211 Article list follows")){}
+				v.add(buf);
+			}
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		return v;
+	}
+/**
+ * 下一篇文章
+ * @param 
+ * @return 
+ **/	
+	public void setNewsNext(){
+		//223 6 &#60;ar08g2$8bi$1@octopus.cdut.edu.cn&#62; Article retrieved; request text separately.
+		//421 No next to retrieve.
+		try{
+			writer.println("NEXT");
+			//listgroup cn.comp.lang.c
+			//while((buf = reader.readLine()) != null) {
+			//	buf.substring(0,3);
+			//}
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		//return "1";	
+	}
+	
+/**
+ * 發表新帖
+ * @param from 用戶Email，回信地址
+ * @param group 組目的地
+ * @param subject 標題
+ * @param content 內容
+ * @return boolean true發貼成功,false 發貼失敗
+ * &#60;br&#62;setPostNews("openunix@163.com","cn.comp.linux.admin","hi all test","chen \n chen \n 中國防大學!!!!! \n"); 
+ **/	
+	public boolean setPostNews(String from,String group,String subject,String content){
+		boolean isSuccess = false;
+		try{
+			setModeReader();
+			writer.println("POST");
+			writer.println("From: "+from);
+			writer.println("Newsgroups: "+group);
+			writer.println("Subject: "+subject);
+			writer.println("");
+			writer.println(content);
+			writer.println(".");
+			writer.println("QUIT");
+			while((buf = reader.readLine()) != null) {
+				if(buf.substring(0,3).equals("240"))
+				isSuccess = true;
+				//System.out.println("Article posted");
+			}
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		return isSuccess;	
+	}
+
+/**
+ * 回覆組 , 回覆用戶的帖子
+ * @param from 用戶Email，回信地址
+ * @param group 組目的地
+ * @param subject 標題
+ * @param content 內容
+ * @param ref 參考Message-ID，就是原貼Message-ID
+ * @return boolean true發貼成功,false 發貼失敗
+ * &#60;br&#62;setPostNews("openunix@163.com","cn.comp.linux.admin","hi all test","chen \n chen \n 中國防大學!!!!! &#60;br&#62;","&#60;be954o$ugi$1@octopus.cdut.edu.cn&#62;");
+ * Message-ID: &#60;be954o$ugi$1@octopus.cdut.edu.cn&#62;&#60;br&#62;
+ * References: &#60;bds8v2$qn8$1@octopus.cdut.edu.cn&#62;&#60;br&#62;
+ **/	
+	public boolean setReNews(String from,String group,String subject,String content,String ref){
+		boolean isSuccess = false;
+		try{
+			setModeReader();
+			writer.println("POST");
+			writer.println("From: "+from);
+			writer.println("Newsgroups: "+group);
+			writer.println("Subject: "+subject);
+			writer.println("References: "+ref);
+			writer.println("");
+			writer.println(content);
+			writer.println(".");
+			writer.println("QUIT");
+			while((buf = reader.readLine()) != null) {
+				if(buf.substring(0,3).equals("240"))
+				isSuccess = true;
+				//System.out.println("Article posted");
+			}
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		return isSuccess;	
+	}
+/**
+ * 查看文章狀態
+ * @param Number 文章ID
+ * @return String 檔案ID，Message-ID:,status
+ **/	
+	public String getNewsStat(String Number){
+		String stat = null;
+		try{
+			setModeReader();
+			writer.println("STAT "+Number);
+			while((buf = reader.readLine()) != null) {
+				if(buf.substring(0,3).equals("223")){
+					stat = buf;
+					System.out.println(buf);
+					//System.out.println("Article posted");
+				}
+			}
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		return stat;
+	}
+/**
+ * ISO-8859-1 ==&#62; GBK
+ **/
+ 	
+	public String toUnicode(String in,String out,String strSource){
+		String strTarget = null;
+		try{
+			strTarget = new String(strSource.getBytes(in),out); 
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		return strTarget;
+	}
+
+/**
+ * ISO-8859-1 ==&#62; GBK
+ * @see toGBK(String strSource)
+ **/
+	public static String toChinese(String strvalue)
+   	{
+        try{
+            if(strvalue==null)
+               return null;
+            else
+            {
+               strvalue = new String(strvalue.getBytes("ISO8859_1"), "GBK");
+               return strvalue;
+        }
+        }catch(Exception e){
+              return null;
+        }
+   	}
+/*	
+	public static void checkStatus(String msg) throws Exception
+	{
+		System.out.println(msg);
+		if (msg.substring(0,3).equals("+OK"))
+		return;
+		else 
+		throw new Exception("Cannot Complete Session!");
+	}
+
+	public static void performSession() throws Exception
+	{
+			if(retryTimes++ == 10) throw new Exception("Cannot complete Session:Too many tries!");
+			performSession();
+		}
+	}
+*/	
+	public static String toUnicode(String value){ 
+    	try{ 
+            if(value!=null) {
+                 value = new String(value.getBytes("ISO8859_1"), "UTF-8");
+        	}
+        }catch(Exception e){ 
+              return null; 
+        } 
+        return value; 
+   	}   
+	public static final String Base64Encoder(String code) {
+		String tmp = null;
+		try{
+			tmp = new sun.misc.BASE64Encoder().encode(code.getBytes());
+		}
+		catch(Exception e){
+			System.out.println(e.toString());
+		}
+		return tmp;
+	}
+
+	public static final String Base64Decoder(String code) {
+		String tmp = null;
+		try{
+
+			tmp = new String(new sun.misc.BASE64Decoder().decodeBuffer(code)).toString();
+
+		}
+		catch(Exception e){
+			System.out.println(e.toString());
+		}
+		return tmp;
+	}	
+
+	public static void main(String[] args) 
+	{
+		try{
+/*			
+		BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+		BufferedWriter writer = new BufferedWriter((System.out),true);
+		//BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(System.out),true);
+		writer.print("Enter The POP3 Server:");
+		server = reader.readLine();
+		writer.print("Enter The Server Port (default is 110):");
+		String tmp = reader.readLine();
+		try{
+		port = Integer.parseInt(tmp);
+		}
+		catch(Exception e){
+		}
+		writer.print("Enter Your Username:");
+		userid = reader.readLine();
+		writer.print("Enter Your Password:");
+		passwd = reader.readLine();
+		reader.close();
+*/		
+		//performSession();
+			NNTP n = new NNTP();
+			n.setDebug(true);
+			n.Connect();
+			Vector v = new Vector();
+			System.out.print(n.Connect("news.newsfan.net",119));
+			
+			n.setModeReader();
+			
+			v = n.getNewsList();
+			
+			for(int i=0;i&#60;v.size();i++){
+				System.out.println((String)v.get(i));
+			}
+			
+			
+			//n.setNewsGroup("cn.comp.lang.python");
+			
+			System.out.println(n.setNewsGroup("測試中文"));
+			
+			//System.out.println(n.getNewsStat("24"));
+			//n.getNewsHead("24");
+			//ArrayList al = n.getNewsListGroup();
+			
+			//v = n.getNewsListGroup("精華信區.計算機");
+			//v = n.getNewsListGroup("測試中文");
+			//v = n.getNewsListGroup("1950");
+			
+			//Vector v = n.getNewsListGroup("cn.comp.linux.admin");
+			/*
+			System.out.println(v.size());
+			for(int i=0;i&#60;v.size();i++){
+				System.out.print(i+"&#62;"+(String)v.get(i));
+				//System.out.println(n.getNewsTitle((String)v.get(i)));
+			}*/
+			/*
+			for(int i=0;i&#60;v.size();i++){
+				
+			}
+			*/
+			//System.out.println(n.getNewsTitle("4370"));
+			
+			//Vector v = n.getNewsArticle("20");
+			
+			//Vector v = n.getNewsArticle("24");
+			//Vector v = n.getNewsHead("33");
+			/*
+			for(int i=0;i&#60;v.size();i++){
+				System.out.println((String)v.get(i));
+			}
+			*/
+			//n.setPostNews("openunix@163.com","cn.comp.linux.admin","hi all test","chen \n chen \n 中國防大學!!!!! \n"); 
+			/*
+			String head[][] =null;
+			 head = n.getNewsHead("24");
+			for(int i=0;i&#60;head.length;i++){
+				System.out.print(head[i][0]);
+			}
+			*/
+			n.close();
+		}catch (Exception e) {
+			e.printStackTrace();
+		}
+		System.out.println("Done");
+	}
+}
+	  
+	  </PRE
+></TD
+></TR
+></TABLE
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="c1628.html" tppabs="http://www.9812.net/article/postfix/c1628.html"
+ACCESSKEY="P"
+>&#60;&#60;&#60; Previous</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html" tppabs="http://www.9812.net/article/postfix/book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x1728.html" tppabs="http://www.9812.net/article/postfix/x1728.html"
+ACCESSKEY="N"
+>Next &#62;&#62;&#62;</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>郵件伺服器周邊</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="c1628.html" tppabs="http://www.9812.net/article/postfix/c1628.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>mail &#60;--&#62; other</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

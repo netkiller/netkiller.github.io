@@ -1,0 +1,425 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<HTML
+><HEAD
+><TITLE
+>Postfix + PostgreSQL HOW-TO</TITLE
+>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.76b+
+"><LINK
+REL="HOME"
+TITLE="Postfix Integrated Solution"
+HREF="book1.html" tppabs="http://www.9812.net/article/postfix/book1.html"><LINK
+REL="PREVIOUS"
+TITLE="啟動腳本"
+HREF="x842.html" tppabs="http://www.9812.net/article/postfix/x842.html"><LINK
+REL="NEXT"
+TITLE="Postfix"
+HREF="x884.html" tppabs="http://www.9812.net/article/postfix/x884.html"></HEAD
+><BODY
+CLASS="CHAPTER"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Postfix Integrated Solution</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x842.html" tppabs="http://www.9812.net/article/postfix/x842.html"
+ACCESSKEY="P"
+>&#60;&#60;&#60; Previous</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x884.html" tppabs="http://www.9812.net/article/postfix/x884.html"
+ACCESSKEY="N"
+>Next &#62;&#62;&#62;</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="CHAPTER"
+><H1
+><A
+NAME="POSTFIX-PGSQL"
+></A
+>Postfix + PostgreSQL HOW-TO</H1
+><P
+><A
+HREF="javascript:if(confirm('http://aribabiba.cosmoquimica.com.br/leandro/  \n\nThis file was not retrieved by Teleport Pro, because it is addressed on a domain or path outside the boundaries set for its Starting Address.  \n\nDo you want to open it from the server?'))window.location='http://aribabiba.cosmoquimica.com.br/leandro/'" tppabs="http://aribabiba.cosmoquimica.com.br/leandro/"
+TARGET="_top"
+>原文檔</A
+></P
+><P
+><A
+HREF="javascript:if(confirm('http://aribabiba.cosmoquimica.com.br/leandro/postmailadmin.tar.bz2  \n\nThis file was not retrieved by Teleport Pro, because it is addressed on a domain or path outside the boundaries set for its Starting Address.  \n\nDo you want to open it from the server?'))window.location='http://aribabiba.cosmoquimica.com.br/leandro/postmailadmin.tar.bz2'" tppabs="http://aribabiba.cosmoquimica.com.br/leandro/postmailadmin.tar.bz2"
+TARGET="_top"
+>PostmailAdmin</A
+></P
+><P
+><A
+HREF="postmailadmin.tar.gz" tppabs="http://www.9812.net/article/postfix/attach/postmailadmin.tar.gz"
+TARGET="_top"
+>本地下載</A
+></P
+><P
+>系統環境：</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linux root]# uname -a
+Linux linuxas3.9812.net 2.4.21-4.ELsmp #1 SMP Fri Oct 3 17:52:56 EDT 2003 i686 i686 i386 GNU/Linux
+[root@linux root]# psql --version
+psql (PostgreSQL) 7.3.4
+contains support for command-line editing
+	</PRE
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="SECTION"
+><H1
+CLASS="SECTION"
+><A
+NAME="AEN861"
+></A
+>PostgreSQL</H1
+><P
+>關於PostgreSQL更多信息請查看作者的文檔：</P
+><P
+><A
+HREF="javascript:if(confirm('http://www.9812.net/article/postgres/  \n\nThis file was not retrieved by Teleport Pro, because it is addressed on a domain or path outside the boundaries set for its Starting Address.  \n\nDo you want to open it from the server?'))window.location='http://www.9812.net/article/postgres/'" tppabs="http://www.9812.net/article/postgres/"
+TARGET="_top"
+>《PostgreSQL 實用實例參考》</A
+></P
+><P
+><A
+HREF="javascript:if(confirm('http://www.9812.net/article/postgres/pgsqldoc.html  \n\nThis file was not retrieved by Teleport Pro, because it is addressed on a domain or path outside the boundaries set for its Starting Address.  \n\nDo you want to open it from the server?'))window.location='http://www.9812.net/article/postgres/pgsqldoc.html'" tppabs="http://www.9812.net/article/postgres/pgsqldoc.html"
+TARGET="_top"
+>《PostgreSQL 7.4 文檔》</A
+></P
+><P
+>確認PostgreSQL是否已經安裝</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linux root]# rpm -qa |grep postgres
+postgresql-devel-7.3.4-1PGDG
+postgresql-7.3.4-1PGDG
+postgresql-python-7.3.4-1PGDG
+postgresql-contrib-7.3.4-1PGDG
+postgresql-jdbc-7.3.4-1PGDG
+postgresql-server-7.3.4-1PGDG
+postgresql-debuginfo-7.3.4-1PGDG
+postgresql-libs-7.3.4-1PGDG
+postgresql-tcl-7.3.4-1PGDG
+postgresql-test-7.3.4-1PGDG
+postgresql-pl-7.3.4-1PGDG
+postgresql-docs-7.3.4-1PGDG
+			</PRE
+></TD
+></TR
+></TABLE
+><P
+>啟動PostgreSQL 資料庫(Redhat Linux)</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[ root@server/~ ]# service postgresql start
+[ root@server/~ ]# su - postgres
+		</PRE
+></TD
+></TR
+></TABLE
+><P
+>其它系統(bsd ext)</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[ root@server/~ ]# su - postgres
+[ postgres@server/~ ]$ postmaster &#38;
+		</PRE
+></TD
+></TR
+></TABLE
+><P
+>創建用戶，資料庫</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[ postgres@server/~ ]$ $ createuser postfix
+[ postgres@server/~ ]$ $ createdb postfix
+		</PRE
+></TD
+></TR
+></TABLE
+><P
+>啟用tcp/ip連接資料庫，連接埠5432</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linux root]# vi /var/lib/pgsql/data/postgresql.conf
+
+tcpip_socket = true
+port = 5432
+		</PRE
+></TD
+></TR
+></TABLE
+><P
+>訪問規則</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linux root]# cat /var/lib/pgsql/data/pg_hba.conf
+
+local  all      all             ident   sameuser
+host   all      all         127.0.0.1         255.255.255.0   md5
+host   all      all         192.168.0.1       255.255.255.0   md5
+		</PRE
+></TD
+></TR
+></TABLE
+><P
+>登錄測試</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[ postgres@server/~ ] $ psql postfix -U postfix
+		</PRE
+></TD
+></TR
+></TABLE
+><P
+>postfix 資料庫腳本</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>[ postgres@server/~ ] $ psql postfix -U postfix
+
+CREATE TABLE "admin" (
+"username" character varying(255) NOT NULL,
+"password" character varying(255) NOT NULL,
+"created" timestamp(13) with time zone DEFAULT '1999-04-23 01:05:06',
+"modified" timestamp(13) with time zone DEFAULT '1999-04-23 01:05:06',
+"active" boolean default true,
+Constraint "admin_key" Primary Key ("username")
+);
+
+GRANT ALL ON admin TO postfix;
+
+CREATE TABLE "alias" (
+"address" character varying(255) NOT NULL,
+"goto" text NOT NULL,
+"domain" character varying(255) NOT NULL,
+"created" timestamp(13) with time zone DEFAULT '1999-04-23 01:05:06',
+"modified" timestamp(13) with time zone DEFAULT '1999-04-23 01:05:06',
+"active" boolean default true,
+Constraint "alias_key" Primary Key ("address")
+);
+
+GRANT ALL ON alias TO postfix; 
+CREATE TABLE "domain" (
+"domain" character varying(255) NOT NULL,
+"description" character varying(255) NOT NULL,
+"aliases" numeric(10,0) DEFAULT '0' NOT NULL,
+"mailboxes" numeric(10,0) DEFAULT '0' NOT NULL,
+"maxquota" numeric(10,0) DEFAULT '0' NOT NULL,
+"created" timestamp(13) with time zone DEFAULT '1999-04-23 01:05:06',
+"modified" timestamp(13) with time zone DEFAULT '1999-04-23 01:05:06',
+"active" boolean default true,
+Constraint "domain_key" Primary Key ("domain")
+);
+
+GRANT ALL ON domain TO postfix;
+
+CREATE TABLE "domain_admins" (
+"username" character varying(255) NOT NULL,
+"domains" character varying(255) NOT NULL,
+"created" timestamp(13) with time zone DEFAULT '1999-04-23 01:05:06',
+"active" boolean default true,
+Constraint "domain_admins_key" Primary Key ("username")
+);
+
+GRANT ALL ON domain_admins TO postfix; 
+
+CREATE TABLE "mailbox" (
+"username" character varying(255) NOT NULL,
+"password" character varying(255) NOT NULL,
+"name" character varying(255) NOT NULL,
+"maildir" character varying(255) NOT NULL,
+"quota" numeric(10,0) DEFAULT '0' NOT NULL,
+"domain" character varying(255) NOT NULL,
+"created" timestamp(13) with time zone DEFAULT '1999-04-23 01:05:06',
+"modified" timestamp(13) with time zone DEFAULT '1999-04-23 01:05:06',
+"active" boolean DEFAULT 't'::bool,
+"home" character varying(255) DEFAULT '/var/spool/virtual/',
+"uid" numeric(3,0) DEFAULT 200,
+"gid" numeric(3,0) DEFAULT 200,
+Constraint "mailbox_key" Primary Key ("username")
+);
+
+
+GRANT ALL ON mailbox TO postfix;
+
+CREATE TABLE "vacation" (
+"email" character varying(255) NOT NULL,
+"subject" character varying(255) NOT NULL,
+"body" text,
+"cache" text NOT NULL,
+"domain" character varying(255) NOT NULL,
+"created" timestamp(13) with time zone DEFAULT '1999-04-23 01:05:06',
+"active" boolean default true,
+Constraint "vacation_key" Primary Key ("email")
+);
+
+GRANT ALL ON vacation TO postfix; 
+
+INSERT INTO domain (domain,description,aliases,mailbox,maxquota) values ('dominio.com.br','dominio virtual',1,1,1);
+INSERT INTO mailbox (username,password,name,maildir) values ('teste@dominio.com.br','$1$Fi8IP53B$3yeGqD1Cnax.f.yAkLiAd1','name','teste@dominio.com.br/');
+
+De "\q" para sair do psql
+
+    	</PRE
+></TD
+></TR
+></TABLE
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x842.html" tppabs="http://www.9812.net/article/postfix/x842.html"
+ACCESSKEY="P"
+>&#60;&#60;&#60; Previous</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html" tppabs="http://www.9812.net/article/postfix/book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x884.html" tppabs="http://www.9812.net/article/postfix/x884.html"
+ACCESSKEY="N"
+>Next &#62;&#62;&#62;</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>啟動腳本</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Postfix</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

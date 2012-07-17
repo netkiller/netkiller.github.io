@@ -1,0 +1,431 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<HTML
+><HEAD
+><TITLE
+>郵件伺服器周邊</TITLE
+>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.76b+
+"><LINK
+REL="HOME"
+TITLE="Postfix Integrated Solution"
+HREF="book1.html" tppabs="http://www.9812.net/article/postfix/book1.html"><LINK
+REL="PREVIOUS"
+TITLE="Java Mail API"
+HREF="x1621.html" tppabs="http://www.9812.net/article/postfix/x1621.html"><LINK
+REL="NEXT"
+TITLE="新聞組"
+HREF="x1719.html" tppabs="http://www.9812.net/article/postfix/x1719.html"></HEAD
+><BODY
+CLASS="CHAPTER"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Postfix Integrated Solution</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x1621.html" tppabs="http://www.9812.net/article/postfix/x1621.html"
+ACCESSKEY="P"
+>&#60;&#60;&#60; Previous</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x1719.html" tppabs="http://www.9812.net/article/postfix/x1719.html"
+ACCESSKEY="N"
+>Next &#62;&#62;&#62;</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="CHAPTER"
+><H1
+><A
+NAME="AEN1628"
+></A
+>郵件伺服器周邊</H1
+><DIV
+CLASS="SECTION"
+><H1
+CLASS="SECTION"
+><A
+NAME="AEN1633"
+></A
+>郵件列表</H1
+><DIV
+CLASS="PROCEDURE"
+><P
+><B
+>mailman的安裝</B
+></P
+><OL
+TYPE="1"
+><LI
+><P
+>下載mailman</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 src]# wget http://ftp.gnu.org/gnu/mailman/mailman-2.1.5.tgz
+[root@linuxas3 src]# tar zxvf mailman-2.1.5.tgz
+[root@linuxas3 src]# cd mailman-2.1.5
+[root@linuxas3 mailman-2.1.5]#
+			</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>編譯、安裝mailman</P
+><P
+>建議把mailman安裝在/home目錄下。</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 mailman-2.1.5]# groupadd mailman
+[root@linuxas3 mailman-2.1.5]# useradd -g "mailman" -c "Mailman User" mailman 
+[root@linuxas3 mailman-2.1.5]# chmod a+rx,g+ws /home/mailman
+[root@linuxas3 mailman-2.1.5]# id mailman
+uid=502(mailman) gid=502 groups=502
+
+[root@linuxas3 mailman-2.1.5]# ./configure --prefix=/home/mailman \
+--with-mail-gid=nobody  --with-cgi-gid=postfix \
+--with-username=mailman --with-groupname=mailman \
+--with-mailhost=lists.9812.net --with-urlhost=lists.9812.net (不要加http://)
+
+configuration completed at Tue May 11 17:09:11 HKT 2004
+提示上面信息表示成功
+[root@linuxas3 mailman-2.1.5]# make
+[root@linuxas3 mailman-2.1.5]# make install
+[root@linuxas3 mailman-2.1.5]# cd /home/mailman/
+			</PRE
+></TD
+></TR
+></TABLE
+><P
+>--with-mailhost 郵件伺服器主機，設為mail.example.org 你的郵件列表即mailman@mail.example.org,一般設為example.org較好,也有一些用戶設為lists.example.org</P
+><P
+>如果安裝在其它目錄，請接操作下面幾個步驟：</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 mailman-2.1.5]# mkdir /usr/local/mailman
+[root@linuxas3 mailman-2.1.5]# chown mailman.mailman /usr/local/mailman
+[root@linuxas3 mailman-2.1.5]# chmod 02775 /usr/local/mailman
+			</PRE
+></TD
+></TR
+></TABLE
+><P
+>安裝完後檢查權限：</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 mailman]# /home/mailman/bin/check_perms
+			</PRE
+></TD
+></TR
+></TABLE
+><P
+>檢查權限是否正常，如果得到"No Problem found"，恭喜你，安裝這一部分成功結束了。 </P
+><P
+>如果有問題可以使用-f 修復</P
+><P
+>			<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 mailman]# /home/mailman/bin/check_perms -f
+			</PRE
+></TD
+></TR
+></TABLE
+>
+			</P
+><P
+>修復再檢查一次</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 mailman-2.1.5]# /home/mailman/bin/check_perms
+No problems found
+[root@linuxas3 mailman-2.1.5]#
+			</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>配置mailman</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 mailman-2.1.5]# cd /home/mailman/
+加上mailman的cron:
+[root@linuxas3 mailman]# cd cron/
+[root@linuxas3 cron]# crontab -u mailman crontab.in
+[root@linuxas3 cron]# cd ..
+把mailman加到啟動組裡：
+[root@linuxas3 mailman]# cp scripts/mailman /etc/init.d/
+[root@linuxas3 mailman]# chkconfig mailman on
+[root@linuxas3 mailman]#
+			</PRE
+></TD
+></TR
+></TABLE
+><P
+>修改/home/mailman/Mailman/mm_cfg.py，加上：</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>###############################################
+# Here's where we get the distributed defaults.
+
+from Defaults import *
+
+##################################################
+# Put YOUR site-specific settings below this line.
+MTA='Postfix'
+DEFAULT_HOST_NAME = 'lists.test.org'
+DEFAULT_EMAIL_HOST = 'lists.test.org'
+DEFAULT_URL = 'http://lists.test.org'
+DEFAULT_URL_HOST = 'lists.test.org'
+DEFAULT_SERVER_LANGUAGE = 'zh_CN'
+POSTFIX_STYLE_VIRTUAL_DOMAINS = ['lists.test.org', 'test.org']
+add_virtualhost(DEFAULT_URL_HOST, DEFAULT_EMAIL_HOST)
+			</PRE
+></TD
+></TR
+></TABLE
+><P
+>lists.test.org改為你的域名,如果安裝時指定--with-mailhost=lists.9812.net --with-urlhost=lists.9812.net不需要設置下面選項，刪除它</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>DEFAULT_HOST_NAME = 'lists.test.org'
+DEFAULT_EMAIL_HOST = 'lists.test.org'
+DEFAULT_URL = 'http://lists.test.org'
+DEFAULT_URL_HOST = 'lists.test.org'
+			</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>postfix相關配置</P
+><P
+>還需要修改postfix的配置檔案才能使mailman工作正常，修改main.cf，加上：</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 mailman]# vi /etc/postfix/main.cf
+owner_request_special = no
+recipient_delimiter = +
+unknown_local_recipient_reject_code = 550
+			</PRE
+></TD
+></TR
+></TABLE
+><P
+>修改alias_maps和virtual_maps為：</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 postfix]# vi main.cf
+myorigin = lists.test.org
+
+virtual_maps = hash:/home/mailman/data/virtual-mailman, mysql:/etc/postfix/mysql-virtual.cf
+virtual_mailbox_maps = hash:/data/mailman/data/virtual-mailman,  mysql:/etc/postfix/mysql-virtual-maps.cf
+
+alias_maps = hash:/etc/aliases, hash:/home/mailman/data/aliases,mysql:/etc/postfix/mysql-aliases.cf
+alias_database = hash:/etc/aliases, hash:/home/mailman/data/aliases
+
+			</PRE
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="EXAMPLE"
+><A
+NAME="AEN1668"
+></A
+><P
+><B
+>Example 1. main.cf</B
+></P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>#======= BASE ==============
+mail_spool_directory = /var/mail/
+#myhostname = mail.example.net
+myhostname = mail.gomi.com.hk
+#mydomain = example.net
+mydomain = gomi.com.hk
+#myorigin = $mydomain
+myorigin = as3.9812.net
+#home_mailbox=./Maildir/
+mydestination = $myhostname, $mydomain, $transport_maps
+local_recipient_maps =
+#mynetworks = 127.0.0.1, 192.168.0.0/24
+
+#======= Maildrop  =============
+mailbox_command= /usr/lib/courier-imap/bin/deliverquota -w 90 ~/Maildir
+#mailbox_command = /usr/local/courier/bin/maildrop
+#mailbox_command = /usr/bin/maildrop -d "$USER" -f "$SENDER" "$EXTENSION"
+#mailbox_transport = maildrop
+#fallback_transport = maildrop
+local_destination_concurrency_limit = 1
+
+#======= MYSQL =============
+virtual_mailbox_base = /var/mail
+transport_maps = mysql:/etc/postfix/mysql-transport.cf
+alias_maps = hash:/etc/aliases, hash:/home/mailman/data/aliases, mysql:/etc/postfix/mysql-aliases.cf
+alias_database = hash:/etc/aliases, hash:/home/mailman/data/aliases
+virtual_alias_maps = hash:/home/mailman/data/virtual-mailman, mysql:/etc/postfix/mysql-aliases.cf
+virtual_maps = hash:/home/mailman/data/virtual-mailman, mysql:/etc/postfix/mysql-virtual.cf
+#virtual_maps = mysql:/etc/postfix/mysql_aliases.cf
+#virtual_mailbox_maps = mysql:/etc/postfix/mysql_virtual.cf
+virtual_mailbox_maps = hash:/home/mailman/data/virtual-mailman, mysql:/etc/postfix/mysql-virtual-maps.cf
+#virtual_uid_maps = mysql:/etc/postfix/mysql-virtual-uid.cf
+#virtual_gid_maps = mysql:/etc/postfix/mysql-virtual-gid.cf
+virtual_uid_maps = static:1000
+virtual_gid_maps = static:1000
+#======= Quota ============
+#50MB
+virtual_mailbox_limit = 500000000
+#5MB
+message_size_limit = 50000000
+virtual_mailbox_limit_inbox = no
+virtual_mailbox_limit_maps = mysql:/etc/postfix/mysql-quota.cf
+virtual_mailbox_limit_override = yes
+virtual_maildir_extended = yes
+virtual_create_maildirsize = yes
+#====== SASL ================
+smtpd_sasl_auth_enable = yes
+smtpd_sasl_security_options = noanonymous
+broken_sasl_auth_clients = yes
+smtpd_recipient_restrictions = permit_sasl_authenticated permit_auth_destination reject
+#smtpd_sasl_local_domain = $mydomain
+smtpd_client_restrictions = permit_sasl_authenticated
+#============ Amavis ================
+soft_bounce=yes
+content_filter = smtp-amavis:[127.0.0.1]:10024
+
+#============ Mailman ================
+#alias_maps = hash:/etc/postfix/aliases,hash:/home/mailman/data/aliases
+#virtual_alias_maps = hash:/etc/postfix/virtual,hash:/home/mailman/data/virtual-mailman
+#virtual_maps = hash:/etc/postfix/virtual, regexp:/etc/postfix/virtual_regexp
+owner_request_special = no
+recipient_delimiter = +
+#unknown_local_recipient_reject_code = 550
+[root@linuxas3 postfix]#
+			</PRE
+></TD
+></TR
+></TABLE
+><P
+>然後在postfix_transport表裡添加一個記錄：</P
+><P
+><B
+CLASS="COMMAND"
+>insert into postfix_transport set domain='lists.test.org',transport='local:';</B
+></P
+></DIV
+></LI
+><LI
+><P
+>

@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>2. Redis</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.76.1" /><meta name="keywords" content="MySQL, PostgreSQL, Oracle, NoSQL, ER, TokyoCabinet/Tyrant, Memcache, Membase, Redis, Flare, Voldemort, LevelDB, MongoDB, GreenSQL, RDBMS, ORDBMS" /><link rel="home" href="../index.html" title="Netkiller Database 手札" /><link rel="up" href="key-value.html" title="第 23 章 key-value cache" /><link rel="prev" href="key-value.html" title="第 23 章 key-value cache" /><link rel="next" href="flare.html" title="3. Flare" /><script xmlns="" type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-11694057-1']);
+  _gaq.push(['_setDomainName', 'netkiller.sourceforge.net']);
+  _gaq.push(['_setAllowHash', 'false']);
+  _gaq.push(['_setAllowLinker', true]);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">2. Redis</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="key-value.html">上一頁</a> </td><th width="60%" align="center">第 23 章 key-value cache</th><td width="20%" align="right"> <a accesskey="n" href="flare.html">下一頁</a></td></tr></table><hr /></div><table xmlns="" width="100%" border="0"><tr><td align="left"><a href="http://netkiller.sourceforge.net/">Home</a> |
+                <a href="http://netkiller.github.com/">Mirror</a> |
+                <a href="/search.html">Search</a></td><td align="right"><form id="searchbox_008589143145807374698:f5uprauilyy" action="/search.html"><input type="hidden" name="cx" value="008589143145807374698:f5uprauilyy" /><input type="hidden" name="cof" value="FORID:11" /><input name="q" type="text" size="25" style="border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; border-top-style: solid; border-right-style: solid; border-bottom-style: solid; border-left-style: solid; border-top-color: rgb(126, 157, 185); border-right-color: rgb(126, 157, 185); border-bottom-color: rgb(126, 157, 185); border-left-color: rgb(126, 157, 185); padding-top: 2px; padding-right: 2px; padding-bottom: 2px; padding-left: 2px; background-image: url(http://www.google.com/cse/intl/en/images/google_custom_search_watermark.gif); background-attachment: initial; background-origin: initial; background-clip: initial; background-color: rgb(255, 255, 255); background-position: 0% 50%; background-repeat: no-repeat no-repeat; " /><input type="submit" name="sa" value="Search" /><input name="siteurl" type="hidden" value="http://netkiller.sourceforge.net/" /></form><script type="text/javascript" src="http://www.google.com/coop/cse/brand?form=searchbox_008589143145807374698%3Af5uprauilyy"></script></td></tr></table><div class="section" title="2. Redis"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="redis"></a>2. Redis</h2></div></div></div><p>http://redis.io/</p><pre class="screen">
+$ sudo apt-get install redis-server
+		</pre><pre class="screen">
+		
+$ dpkg -s redis-server
+Package: redis-server
+Status: install ok installed
+Priority: optional
+Section: database
+Installed-Size: 208
+Maintainer: Chris Lamb &lt;lamby@debian.org&gt;
+Architecture: amd64
+Source: redis
+Version: 2:1.2.6-1
+Depends: libc6 (&gt;= 2.7), adduser
+Conffiles:
+ /etc/redis/redis.conf a19bad63017ec19def2c3a8a07bdc362
+ /etc/logrotate.d/redis-server 06755b99ef70d62a56cff94cbfc36de7
+ /etc/init.d/redis-server 3742555c10ab16fdd67fcbaf92faf694
+ /etc/bash_completion.d/redis-cli 848565df7f222dc03c8d5cb34b9e0188
+Description: Persistent key-value database with network interface
+ Redis is a key-value database in a similar vein to memcache but the dataset
+ is non-volatile. Redis additionally provides native support for atomically
+ manipulating and querying data structures such as lists and sets.
+ .
+ The dataset is stored entirely in memory and periodically flushed to disk.
+Homepage: http://code.google.com/p/redis/
+		
+		</pre><pre class="screen">
+		
+$ cat /etc/redis/redis.conf
+
+# Redis configuration file example
+
+# By default Redis does not run as a daemon. Use 'yes' if you need it.
+# Note that Redis will write a pid file in /var/run/redis.pid when daemonized.
+daemonize yes
+
+# When run as a daemon, Redis write a pid file in /var/run/redis.pid by default.
+# You can specify a custom pid file location here.
+pidfile /var/run/redis.pid
+
+# Accept connections on the specified port, default is 6379
+port 6379
+
+# If you want you can bind a single interface, if the bind option is not
+# specified all the interfaces will listen for connections.
+#
+bind 127.0.0.1
+
+# Close the connection after a client is idle for N seconds (0 to disable)
+timeout 300
+
+# Set server verbosity to 'debug'
+# it can be one of:
+# debug (a lot of information, useful for development/testing)
+# notice (moderately verbose, what you want in production probably)
+# warning (only very important / critical messages are logged)
+loglevel notice
+
+# Specify the log file name. Also 'stdout' can be used to force
+# the demon to log on the standard output. Note that if you use standard
+# output for logging but daemonize, logs will be sent to /dev/null
+logfile /var/log/redis/redis-server.log
+
+# Set the number of databases. The default database is DB 0, you can select
+# a different one on a per-connection basis using SELECT &lt;dbid&gt; where
+# dbid is a number between 0 and 'databases'-1
+databases 16
+
+################################ SNAPSHOTTING  #################################
+#
+# Save the DB on disk:
+#
+#   save &lt;seconds&gt; &lt;changes&gt;
+#
+#   Will save the DB if both the given number of seconds and the given
+#   number of write operations against the DB occurred.
+#
+#   In the example below the behaviour will be to save:
+#   after 900 sec (15 min) if at least 1 key changed
+#   after 300 sec (5 min) if at least 10 keys changed
+#   after 60 sec if at least 10000 keys changed
+save 900 1
+save 300 10
+save 60 10000
+
+# Compress string objects using LZF when dump .rdb databases?
+# For default that's set to 'yes' as it's almost always a win.
+# If you want to save some CPU in the saving child set it to 'no' but
+# the dataset will likely be bigger if you have compressible values or keys.
+rdbcompression yes
+
+# The filename where to dump the DB
+dbfilename dump.rdb
+
+# For default save/load DB in/from the working directory
+# Note that you must specify a directory not a file name.
+dir /var/lib/redis
+
+################################# REPLICATION #################################
+
+# Master-Slave replication. Use slaveof to make a Redis instance a copy of
+# another Redis server. Note that the configuration is local to the slave
+# so for example it is possible to configure the slave to save the DB with a
+# different interval, or to listen to another port, and so on.
+#
+# slaveof &lt;masterip&gt; &lt;masterport&gt;
+
+# If the master is password protected (using the "requirepass" configuration
+# directive below) it is possible to tell the slave to authenticate before
+# starting the replication synchronization process, otherwise the master will
+# refuse the slave request.
+#
+# masterauth &lt;master-password&gt;
+
+################################## SECURITY ###################################
+
+# Require clients to issue AUTH &lt;PASSWORD&gt; before processing any other
+# commands.  This might be useful in environments in which you do not trust
+# others with access to the host running redis-server.
+#
+# This should stay commented out for backward compatibility and because most
+# people do not need auth (e.g. they run their own servers).
+#
+# requirepass foobared
+
+################################### LIMITS ####################################
+
+# Set the max number of connected clients at the same time. By default there
+# is no limit, and it's up to the number of file descriptors the Redis process
+# is able to open. The special value '0' means no limts.
+# Once the limit is reached Redis will close all the new connections sending
+# an error 'max number of clients reached'.
+#
+# maxclients 128
+
+# Don't use more memory than the specified amount of bytes.
+# When the memory limit is reached Redis will try to remove keys with an
+# EXPIRE set. It will try to start freeing keys that are going to expire
+# in little time and preserve keys with a longer time to live.
+# Redis will also try to remove objects from free lists if possible.
+#
+# If all this fails, Redis will start to reply with errors to commands
+# that will use more memory, like SET, LPUSH, and so on, and will continue
+# to reply to most read-only commands like GET.
+#
+# WARNING: maxmemory can be a good idea mainly if you want to use Redis as a
+# 'state' server or cache, not as a real DB. When Redis is used as a real
+# database the memory usage will grow over the weeks, it will be obvious if
+# it is going to use too much memory in the long run, and you'll have the time
+# to upgrade. With maxmemory after the limit is reached you'll start to get
+# errors for write operations, and this may even lead to DB inconsistency.
+#
+# maxmemory &lt;bytes&gt;
+
+############################## APPEND ONLY MODE ###############################
+
+# By default Redis asynchronously dumps the dataset on disk. If you can live
+# with the idea that the latest records will be lost if something like a crash
+# happens this is the preferred way to run Redis. If instead you care a lot
+# about your data and don't want to that a single record can get lost you should
+# enable the append only mode: when this mode is enabled Redis will append
+# every write operation received in the file appendonly.log. This file will
+# be read on startup in order to rebuild the full dataset in memory.
+#
+# Note that you can have both the async dumps and the append only file if you
+# like (you have to comment the "save" statements above to disable the dumps).
+# Still if append only mode is enabled Redis will load the data from the
+# log file at startup ignoring the dump.rdb file.
+#
+# The name of the append only file is "appendonly.log"
+#
+# IMPORTANT: Check the BGREWRITEAOF to check how to rewrite the append
+# log file in background when it gets too big.
+
+appendonly no
+
+# The fsync() call tells the Operating System to actually write data on disk
+# instead to wait for more data in the output buffer. Some OS will really flush
+# data on disk, some other OS will just try to do it ASAP.
+#
+# Redis supports three different modes:
+#
+# no: don't fsync, just let the OS flush the data when it wants. Faster.
+# always: fsync after every write to the append only log . Slow, Safest.
+# everysec: fsync only if one second passed since the last fsync. Compromise.
+#
+# The default is "always" that's the safer of the options. It's up to you to
+# understand if you can relax this to "everysec" that will fsync every second
+# or to "no" that will let the operating system flush the output buffer when
+# it want, for better performances (but if you can live with the idea of
+# some data loss consider the default persistence mode that's snapshotting).
+
+appendfsync always
+# appendfsync everysec
+# appendfsync no
+
+############################### ADVANCED CONFIG ###############################
+
+# Glue small output buffers together in order to send small replies in a
+# single TCP packet. Uses a bit more CPU but most of the times it is a win
+# in terms of number of queries per second. Use 'yes' if unsure.
+glueoutputbuf yes
+
+# Use object sharing. Can save a lot of memory if you have many common
+# string in your dataset, but performs lookups against the shared objects
+# pool so it uses more CPU and can be a bit slower. Usually it's a good
+# idea.
+#
+# When object sharing is enabled (shareobjects yes) you can use
+# shareobjectspoolsize to control the size of the pool used in order to try
+# object sharing. A bigger pool size will lead to better sharing capabilities.
+# In general you want this value to be at least the double of the number of
+# very common strings you have in your dataset.
+#
+# WARNING: object sharing is experimental, don't enable this feature
+# in production before of Redis 1.0-stable. Still please try this feature in
+# your development environment so that we can test it better.
+shareobjects no
+shareobjectspoolsize 1024
+		
+		</pre><pre class="screen">
+$ sudo /etc/init.d/redis-server start
+		</pre><div class="section" title="2.1. Test Redis"><div class="titlepage"><div><div><h3 class="title"><a id="idp1017584"></a>2.1. Test Redis</h3></div></div></div><p><a class="ulink" href="http://redis.io/commands" target="_top">http://redis.io/commands</a></p><pre class="screen">
+$ redis-cli info
+redis_version:1.2.6
+arch_bits:64
+multiplexing_api:epoll
+uptime_in_seconds:859
+uptime_in_days:0
+connected_clients:1
+connected_slaves:0
+used_memory:619490
+used_memory_human:604.97K
+changes_since_last_save:0
+bgsave_in_progress:0
+last_save_time:1311100746
+bgrewriteaof_in_progress:0
+total_connections_received:4
+total_commands_processed:0
+role:master
+
+$ redis-cli set name neo
+OK
+$ redis-cli get name
+neo
+
+$ telnet localhost 6379
+Trying ::1...
+telnet: connect to address ::1: Connection refused
+Trying 127.0.0.1...
+Connected to localhost (127.0.0.1).
+Escape character is '^]'.
+get name
+$3
+neo
+quit
+Connection closed by foreign host.
+
+			</pre></div></div><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
+            /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+
+            if(document.domain == 'netkiller.github.com'){
+            var disqus_shortname = 'netkiller'; // required: replace example with your forum shortname
+            }else{
+			var disqus_shortname = 'neochan';
+            }
+
+            /* * * DON'T EDIT BELOW THIS LINE * * */
+            (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+            })();
+        </script><noscript xmlns="">Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><a xmlns="" href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="key-value.html">上一頁</a> </td><td width="20%" align="center"><a accesskey="u" href="key-value.html">上一級</a></td><td width="40%" align="right"> <a accesskey="n" href="flare.html">下一頁</a></td></tr><tr><td width="40%" align="left" valign="top">第 23 章 key-value cache </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始頁</a></td><td width="40%" align="right" valign="top"> 3. Flare</td></tr></table></div></body></html>

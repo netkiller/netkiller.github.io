@@ -1,0 +1,462 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<HTML
+><HEAD
+><TITLE
+>OpenLDAP</TITLE
+>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.76b+
+"><LINK
+REL="HOME"
+TITLE="Postfix Integrated Solution"
+HREF="book1.html" tppabs="http://www.9812.net/article/postfix/book1.html"><LINK
+REL="PREVIOUS"
+TITLE="BIND 9 例子"
+HREF="x303.html" tppabs="http://www.9812.net/article/postfix/x303.html"><LINK
+REL="NEXT"
+TITLE="添加條目"
+HREF="x369.html" tppabs="http://www.9812.net/article/postfix/x369.html"></HEAD
+><BODY
+CLASS="CHAPTER"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Postfix Integrated Solution</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x303.html" tppabs="http://www.9812.net/article/postfix/x303.html"
+ACCESSKEY="P"
+>&#60;&#60;&#60; Previous</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x369.html" tppabs="http://www.9812.net/article/postfix/x369.html"
+ACCESSKEY="N"
+>Next &#62;&#62;&#62;</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="CHAPTER"
+><H1
+><A
+NAME="OPENLDAP"
+></A
+>OpenLDAP</H1
+><P
+><IMG
+SRC="LDAPworm.gif" tppabs="http://www.openldap.org/images/headers/LDAPworm.gif"></P
+><DIV
+CLASS="SECTION"
+><H1
+CLASS="SECTION"
+><A
+NAME="CONFIGURE"
+></A
+>配置OpenLDAP</H1
+><P
+>請參考我的另一篇文檔<A
+HREF="javascript:if(confirm('http://home.9812.net/linux/article/openldap/OpenLDAP.htm  \n\nThis file was not retrieved by Teleport Pro, because it is addressed on a domain or path outside the boundaries set for its Starting Address.  \n\nDo you want to open it from the server?'))window.location='http://home.9812.net/linux/article/openldap/OpenLDAP.htm'" tppabs="http://home.9812.net/linux/article/openldap/OpenLDAP.htm"
+TARGET="_top"
+>實戰OpenLDAP</A
+></P
+><P
+>查看OpenLDAP是否安裝</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linux src]# rpm -aq |grep openldap
+openldap-devel-2.0.27-8
+openldap-servers-2.0.27-8
+openldap-clients-2.0.27-8
+openldap-2.0.27-8		
+		</PRE
+></TD
+></TR
+></TABLE
+><P
+>配置<TT
+CLASS="FILENAME"
+>/etc/ldap.conf</TT
+></P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+><TT
+CLASS="USERINPUT"
+><B
+>vi <TT
+CLASS="FILENAME"
+>/etc/ldap.conf</TT
+></B
+></TT
+>
+# Your LDAP server. Must be resolvable without using LDAP.
+<TT
+CLASS="VARNAME"
+>host</TT
+> 127.0.0.1
+
+# The distinguished name of the search base.
+#base dc=example,dc=com
+<TT
+CLASS="VARNAME"
+>base</TT
+> dc=example,dc=net
+		</PRE
+></TD
+></TR
+></TABLE
+><P
+>配置<TT
+CLASS="FILENAME"
+>.schema</TT
+></P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linux src]# cp authldap.schema qmail.schema /etc/openldap/schema/
+[root@linux src]# ls /etc/openldap/schema/
+authldap.schema        inetorgperson.schema          misc.schema.default
+corba.schema           inetorgperson.schema.default  nis.schema
+corba.schema.default   java.schema                   nis.schema.default
+core.schema            java.schema.default           openldap.schema
+core.schema.default    krb5-kdc.schema               openldap.schema.default
+cosine.schema          krb5-kdc.schema.default       qmail.schema
+cosine.schema.default  misc.schema                   redhat
+[root@linux src]#
+		</PRE
+></TD
+></TR
+></TABLE
+><P
+>配置<TT
+CLASS="FILENAME"
+>/etc/openldap/slapd.conf</TT
+></P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linux src]# <TT
+CLASS="USERINPUT"
+><B
+>vi /etc/openldap/slapd.conf</B
+></TT
+>
+
+include         /etc/openldap/schema/core.schema
+include         /etc/openldap/schema/cosine.schema
+include         /etc/openldap/schema/inetorgperson.schema
+include         /etc/openldap/schema/nis.schema
+include         /etc/openldap/schema/redhat/rfc822-MailMember.schema
+include         /etc/openldap/schema/redhat/autofs.schema
+include         /etc/openldap/schema/redhat/kerberosobject.schema
+# courier imap
+include /etc/openldap/schema/authldap.schema
+# postfix qmail
+include /etc/openldap/schema/qmail.schema
+
+#prevents user froom looking at passwords
+access to attr=userpassword,clearpassword
+by anonymous auth
+by self write
+by dn="cn=admin,dc=example,dc=net" write
+by dn="cn=courier,dc=example,dc=net" read
+by * none
+#files need access to this
+access to attr=accountstatus
+by dn="cn=admin,dc=example,dc=net" read
+by dn="cn=courier,dc=example,dc=net" read
+access to *
+by dn="cn=admin,dc=example,dc=net" write
+by users read
+by self write
+by * none
+
+#######################################################################
+# ldbm database definitions
+#######################################################################
+
+database       ldbm
+#suffix         "dc=my-domain,dc=com"
+suffix          "dc=example,dc=net"
+#suffix         "o=My Organization Name,c=US"
+#rootdn         "cn=Manager,dc=my-domain,dc=com"
+rootdn          "cn=Manager,dc=example,dc=net"
+#rootdn         "cn=Manager,o=My Organization Name,c=US"
+# Cleartext passwords, especially for the rootdn, should
+# be avoided.  See slappasswd(8) and slapd.conf(5) for details.
+# Use of strong authentication encouraged.
+# rootpw                secret
+# rootpw         {crypt}ijFYNcSNctBYg
+rootpw			 {crypt}$1$tKdtixgz$y38ohV/5h3DBOLxMaF6Ai/
+		</PRE
+></TD
+></TR
+></TABLE
+><P
+>crypt 密碼產生很簡單，很多語言裡都有crypt(key,salt)函數，不過最簡單的辦法是，使用UNIX Shadow 密碼，</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linux src]# <TT
+CLASS="USERINPUT"
+><B
+>cat /etc/shadow</B
+></TT
+>
+root:$1$tKdtixgz$y38ohV/5h3DBOLxMaF6Ai/:12361:0:99999:7:::
+bin:*:12361:0:99999:7:::
+daemon:*:12361:0:99999:7:::
+adm:*:12361:0:99999:7:::
+lp:*:12361:0:99999:7:::
+sync:*:12361:0:99999:7:::
+shutdown:*:12361:0:99999:7:::
+halt:*:12361:0:99999:7:::
+mail:*:12361:0:99999:7:::
+news:*:12361:0:99999:7:::
+uucp:*:12361:0:99999:7:::
+operator:*:12361:0:99999:7:::
+games:*:12361:0:99999:7:::
+gopher:*:12361:0:99999:7:::
+ftp:*:12361:0:99999:7:::
+nobody:*:12361:0:99999:7:::
+rpm:!!:12361:0:99999:7:::
+vcsa:!!:12361:0:99999:7:::
+nscd:!!:12361:0:99999:7:::
+sshd:!!:12361:0:99999:7:::
+rpc:!!:12361:0:99999:7:::
+rpcuser:!!:12361:0:99999:7:::
+nfsnobody:!!:12361:0:99999:7:::
+mailnull:!!:12361:0:99999:7:::
+smmsp:!!:12361:0:99999:7:::
+pcap:!!:12361:0:99999:7:::
+apache:!!:12361:0:99999:7:::
+squid:!!:12361:0:99999:7:::
+webalizer:!!:12361:0:99999:7:::
+xfs:!!:12361:0:99999:7:::
+named:!!:12361:0:99999:7:::
+ntp:!!:12361:0:99999:7:::
+gdm:!!:12361:0:99999:7:::
+amanda:!!:12361:0:99999:7:::
+canna:!!:12361:0:99999:7:::
+mysql:!!:12361:0:99999:7:::
+postgres:$1$84N0N0OR$UMZvKUpUZ1/iZOSet9b49.:12416:0:99999:7:::
+pvm:!!:12361:0:99999:7:::
+desktop:!!:12361:0:99999:7:::
+radvd:!!:12361:0:99999:7:::
+guest:!!:12362:0:99999:7:::
+cvs:$1$otg8oROn$3iO2.cifZBp.RLjeKFVqS/:12368:0:99999:7:::
+cvsroot:$1$KrwdCtt0$DO7CRXweQhRtmVSIwGEUe/:12368:0:99999:7:::
+chen:$1$IFyZtPDW$aofwx1MF87m.01WtGv7cq0:12492:0:99999:7:::
+ming:$1$55wV30qQ$xzJULQ4dUQZTe8dykc4nh/:12398:0:99999:7:::
+axia:$1$3y5Cq/g4$2lPGV6o11pSy0lmjF54860:12451:0:99999:7:::
+crm:$1$wWh6t77G$0UNVYs/EOeIbJyBeEySj/1:12472:0:99999:7:::
+ldap:!!:12520::::::
+[root@linux src]#
+		</PRE
+></TD
+></TR
+></TABLE
+><P
+>我上面使用的密碼({crypt}$1$tKdtixgz$y38ohV/5h3DBOLxMaF6Ai/)，就是root的密碼</P
+><P
+>注意事項
+			<A
+NAME="AEN355"
+HREF="#FTN.AEN355"
+>[1]</A
+>
+		</P
+><P
+>啟動OpenLDAP</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linux src]# service ldap
+Usage: /etc/init.d/ldap {start|stop|restart|status|condrestart}
+[root@linux src]# service ldap start
+Starting slapd:                                            [  OK  ]
+[root@linux src]#
+		</PRE
+></TD
+></TR
+></TABLE
+></DIV
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Notes</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN355"
+HREF="c324.html#AEN355" tppabs="http://www.9812.net/article/postfix/c324.html#AEN355"
+>[1]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>				<P
+></P
+><UL
+><LI
+><P
+>OpenLDAP預設使用ldbm資料庫,你也可以使用Berkeley DB(bdb)</P
+></LI
+><LI
+><P
+>在很多LDAP文檔中,一些用戶喜歡將LDAP管理員用戶rootdn "cn=Manager,dc=example,dc=net" 
+		改為"cn=admin,dc=example,dc=net" 或者 "cn=root,dc=example,dc=net" 其實這改成什麼都是一樣的，與權限無關。</P
+></LI
+><LI
+><P
+>不要使用明文(rootpw secret)不安全，rootpw 前面不能有空格，否則提示ldap_bind: Invalid credentials</P
+></LI
+><LI
+><P
+>如果你想使用更複雜的加密算法，可以參考我的另一篇文章<A
+HREF="javascript:if(confirm('http://home.9812.net/linux/article/pureftpd/  \n\nThis file was not retrieved by Teleport Pro, because it is addressed on a domain or path outside the boundaries set for its Starting Address.  \n\nDo you want to open it from the server?'))window.location='http://home.9812.net/linux/article/pureftpd/'" tppabs="http://home.9812.net/linux/article/pureftpd/"
+TARGET="_top"
+>《Pure-FTPd + LDAP + MySQL + PGSQL + Virtual-Users + Quota How To》 (第二版)2003-07-24</A
+></P
+></LI
+></UL
+>
+	
+			</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x303.html" tppabs="http://www.9812.net/article/postfix/x303.html"
+ACCESSKEY="P"
+>&#60;&#60;&#60; Previous</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html" tppabs="http://www.9812.net/article/postfix/book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x369.html" tppabs="http://www.9812.net/article/postfix/x369.html"
+ACCESSKEY="N"
+>Next &#62;&#62;&#62;</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>BIND 9 例子</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>添加條目</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

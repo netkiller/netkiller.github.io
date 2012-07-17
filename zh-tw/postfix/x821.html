@@ -1,0 +1,502 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<HTML
+><HEAD
+><TITLE
+>Installing Courier Maildrop</TITLE
+>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.76b+
+"><LINK
+REL="HOME"
+TITLE="Postfix Integrated Solution"
+HREF="book1.html" tppabs="http://www.9812.net/article/postfix/book1.html"><LINK
+REL="UP"
+TITLE="整合電子郵件系統(MYSQL)"
+HREF="c668.html" tppabs="http://www.9812.net/article/postfix/c668.html"><LINK
+REL="PREVIOUS"
+TITLE="Installing Courier POP and IMAP"
+HREF="x794.html" tppabs="http://www.9812.net/article/postfix/x794.html"><LINK
+REL="NEXT"
+TITLE="啟動腳本"
+HREF="x842.html" tppabs="http://www.9812.net/article/postfix/x842.html"></HEAD
+><BODY
+CLASS="SECTION"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Postfix Integrated Solution</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x794.html" tppabs="http://www.9812.net/article/postfix/x794.html"
+ACCESSKEY="P"
+>&#60;&#60;&#60; Previous</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>整合電子郵件系統(MYSQL)</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x842.html" tppabs="http://www.9812.net/article/postfix/x842.html"
+ACCESSKEY="N"
+>Next &#62;&#62;&#62;</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECTION"
+><H1
+CLASS="SECTION"
+><A
+NAME="AEN821"
+></A
+>Installing Courier Maildrop</H1
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>                                          Maildir format                           Web-mail email client
+                                              mailboxes
+         /-----------\       /----------\      ***********          /---------\       /----------\
+         |           |       |          |      *  Inbox  *          |         |       |          |
+         |           | ====&#62; | Maildrop | ===&#62; *         * &#60;======&#62; | Courier |       | Postman  |
+&#60;===     |  Postfix  |       |          | =\   ***********          |  IMAPD  |       | with     |         /---------\
+    ===&#62; |   MTA     |       \----------/  |                        |         | IMAP  | Apache   |         |         |
+   SMTP  |           |            |        |====&#62; ************      |         | &#60;---&#62; |          | &#60;-----&#62; | User's  |
+   to &#38;  | (Message  |        filtering    |      *   YYY    *      |         |       |          |  HTTP   | web     |
+   from  |  Transfer |        rules in     \=&#62;************   * &#60;==&#62; |         |       |          |  or     | browser |
+   other |  Agent)   |        .mailfilter     *   XXX    * ***      |         | IMAP  |  SMTP    |  HTTPS  |         |
+   MTAs  |           | &#60;--\      ***          *          * &#60;======&#62; |         | &#60;-\   |   Out    |         |         |
+         \-----------/     \                  ************          \---------/    \  \----------/         |         |
+                            \                                                       \      V               \---------/
+                             \---&#60;----------------------------------------&#60;---------------/
+                                                       SMTP outgoing mail             \
+                                                                                       \    /------------------------\
+                                                                 \                      \-&#62; |                        |
+                                                                  \                         |  IMAP capable Email    |
+                                                                   \                        |  client                |
+                                                                    \                       |                        |
+                                                                     \-----------&#60;--------- |&#60; SMTP outgoing mail    |
+                                                                                            |                        |
+                                                                                            \------------------------/ 
+		</PRE
+></TD
+></TR
+></TABLE
+><P
+><I
+CLASS="CITETITLE"
+>作者:love100 出處:chinunix.net Mail版</I
+>
+		<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>                                       
+maildrop是一個替代郵件代理並且包含郵件過濾的語言，系統管理員用 
+
+這個maildrop即可以取代已經存在的郵件投遞代理，或者用戶可以用已 
+
+經存在的郵件投遞代理的'forward to 
+
+program'機制來取代來運行maildrop. 
+
+maildrop首先從標準輸入讀取E-mail信息,其後面所帶的回車符號將自動 
+
+被刪除，一個E-mail信息包含header lines 後面跟着一個空行，然後跟 
+
+着信息的內容，信息的內容也可能在第一個header lines 
+
+之前包含mbox-style From_ line,如果信息內容沒有包含From_line,那 
+
+麼maildrop將自動創建一個. 
+
+如果檔案/etc/maildroprc存在，郵件投遞或郵件過濾將從/etc/maildro 
+
+prc中讀出。maildrop的投遞/過濾指令可能把信息保存在一個特殊的mai 
+
+lbox,或者丟棄它，或者返回給發送者，或者轉發到不同的郵件地址。 
+
+如果檔案/etc/maildroprc不存在，或者郵件投遞或郵件過濾沒有完全的 
+
+處理信息，這時maildrop將從$HOME/.mailfilter讀取規則，如果.mailf 
+
+ilter不存在，或者郵件投遞或郵件過濾沒有完全的處理信息,maildrop 
+
+將保存E-mail信息到預設的mailbox裡。 
+
+
+maildrop知道怎樣投遞到一個標準的mailbox檔案，也知道怎樣投遞到一 
+
+個maildirs,maildir格式的目錄在Courier和qmail中使用，還有一些郵 
+
+件伺服器也知道如何去讀maildirs。當投遞mailbox檔案時，maildrop將 
+
+鎖定mailbox,直到投遞結束。 
+
+maildrop讀取信息的規則為：在From_header之前致少一空行，maildrop 
+
+在讀取規則時將忽略此空行,因此maildrop要求規則中至少有一個空行。 
+通常郵件投遞模式分為三種（maildrop依賴投遞模式的不同也有小小的 
+
+差異）： 
+1.手動模式. 
+一個檔案包含過濾指令 例：maildrop -filename(保存過濾指信令的文 
+
+件),首先maildrop讀取/etc/maildroprc檔案裡面的指令，然後從filena 
+
+me讀取過濾指令.如果filename裡面沒有轉發，回覆，刪除或到一個特殊 
+
+的maildox,那麼它將投遞到系統用戶的mailbox中. 
+
+2投遞模式. 
+maildrop如果沒有指定 -filename時，maildrop將在投遞模式運行，maildrop將改變當前目錄到用戶的的主目錄，這時讀取/etc/maildroprc,再讀取 $HOME/.mailfilter 
+
+3 嵌入模式 
+主要用於Courier上，在此不做闡述. 
+
+安全 
+maildrop在setuid位下安裝是安全的。Courier為了讓maildrop在嵌入模式下使用因此它的setuid位是預設的。如果root運行maildrop 則-d這個選項會被用來指定這個信息的接受者，maildrop立馬會重制用戶的ID,讀取$HOME/.mailfilter檔案，並將信息投遞到指定的用戶。 
+
+系統管理員能通過配置來限制maildrop -d 這個選項是否給每個用戶來使用（郵件系統用戶本伸除外） 
+maildrop的（簡單）用法： 
+-A "Header:value" 
+增加一個附加的頭部信息。 
+-d user 
+在投遞模式設置用戶的ID 
+-f address 
+設置變數"FROM"為一個地址 
+-m 
+在嵌入模式下運行 
+-M filterfile 
+在一個特殊的嵌入模式運行 
+cc dotlock flock log logfile to xfilter 
+都不能運行在嵌入模式下 
+（待續）
+			</PRE
+></TD
+></TR
+></TABLE
+>
+		</P
+><DIV
+CLASS="PROCEDURE"
+><OL
+TYPE="1"
+><LI
+><P
+>安裝</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 maildrop-1.6.3]# ./configure --prefix=/usr/local/courier \
+--enable-sendmail=/usr/sbin/sendmail \
+--enable-maildropmysql --with-mysqlconfig=/etc/postfix/mysql_maildrop.conf \
+--enable-maildirquota --with-trashquota --with-dirsync \
+--enable-trusted-users='root maildrop' \
+--enable-maildrop-uid=1000 \
+--enable-maildrop-gid=1000
+[root@linuxas3 maildrop-1.6.3]# make 
+[root@linuxas3 maildrop-1.6.3]# make install (as root) 
+				</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>配置 mysql_maildrop.conf</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 maildrop-1.6.3]# cp maildropmysql.config /etc/postfix/mysql_maildrop.conf
+[root@linuxas3 maildrop-1.6.3]# cd /etc/postfix/
+[root@linuxas3 postfix]# vi mysql_maildrop.conf
+
+hostname localhost
+port 3306
+socket /var/lib/mysql/mysql.sock
+database postfix
+dbuser postfix 
+dbpw xxxxx
+dbtable postfix_users
+default_uidnumber 1000
+default_gidnumner 1000
+uid_field user
+uidnumber_field uid
+gidnumber_field gid
+maildir_field maildir
+homedirectory_field home
+quota_field quota
+mailstatus_field status
+where_clause ""
+				</PRE
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="EXAMPLE"
+><A
+NAME="AEN834"
+></A
+><P
+><B
+>Example 1. mysql_maildrop.conf</B
+></P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 postfix]# cat mysql_maildrop.conf
+# The attributes are:
+#
+# mail - The full email address of the user (ie user@yourdomain.com)
+#        This is the primary attribute searched upon by maildrop.
+#
+# maildir - The location (full path including name) of the users
+#           mail directory (Maildir)
+#
+# homedirectory - The location (full path including name) of the
+#                 users home directory.  This may be the same as the
+#                 users maildir.
+#
+# uidnumber - The uid of the user that owns the mail files for
+#             this user.  This may be a specific uid per user,
+#             or a single uid for every user (full 'virtual' user
+#             configuration), or a combination.
+#
+# gidnumber - The gid of the user that owns the mail files for
+#             this user.  This may be a specific gid per user,
+#             or a single gid for every user (full 'virtual' user
+#             configuration), or a combination.
+#
+# quota     - *OPTIONAL* The quota for this user.  If blank, or
+#             non-existent defaults to no quota.
+# mailstatus - account status
+#
+# A sample LDAP entry is given at the end of this file.
+#
+# --- Actual configuration begins here -----------------------------
+
+# hostname - host name of your ldap server
+hostname        localhost
+port            3306
+socket          /var/lib/mysql/mysql.sock
+database        postfix
+dbuser          postfix
+dbpw            6AJx9Nqv9x8hg
+dbtable         postfix_users
+
+#not used now
+#timeout                5
+
+# default_uid - default uid (number only) to use incase uidnumber attribute not
+# found in users mysql entry
+default_uidnumber       1000
+
+# default_gid - default gid (number only) to use incase gidnumber attribute not
+# found in users ldap entry
+default_gidnumber       1000
+
+# MySQL Field definitions
+#
+# This section allows you to specify the actual attributes you
+# use in your Mysql record
+#
+# The example attribute mapping shown below is also the default
+# mapping used by maildrop in the case that any are missing
+
+# UID_FIELD - MySQL attribute which contains the users name (w or w/o domain)
+uid_field               user
+
+# UIDNUMBER_FIELD - MySQL attribute which contains the system uid to deliver
+# mail as
+uidnumber_field         uid
+
+# GIDNUMBER_FIELD - MySQL attribute which contains the system gid to deliver
+# mail as
+gidnumber_field         gid
+
+# MAILDIR_FIELD - MySQL attribute which contains the path to the users
+# custom maildir
+maildir_field           maildir
+
+# HOMEDIRECTORY_FIELD - MySQL attribute which contains the path to the users
+# home directory
+homedirectory_field     home
+
+# QUOTA_FIELD - MySQL attribute which contains the users quota
+quota_field             quota
+
+# MYSQL_DEFAULT_STATUS_FIELD - MySQL attribute which could be created in the
+# MySQL entry to set whether or not the user is allowed to receive email on
+# this box..
+#               -- looks unused for now; but must be valid column ! (2001-11-03)
+mailstatus_field        status
+
+# MYSQL_DEFAULT_WHERE_CLAUSE - This is optional !
+# It can be set to any fixed string starting with keyword 'AND'.
+# It will then be appended to the WHERE clause of our query.
+where_clause            ""
+[root@linuxas3 postfix]#
+
+					</PRE
+></TD
+></TR
+></TABLE
+></DIV
+></LI
+><LI
+><P
+>配置 master.cf</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 postfix]# vi master.cf
+maildrop  unix  -       n       n       -       -       pipe
+  flags=DRhu user=vmail argv=/usr/local/bin/maildrop -d ${recipient}
+
+				</PRE
+></TD
+></TR
+></TABLE
+><P
+>改為</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>maildrop  unix  -       n       n       -       -       pipe
+  flags=DRhu user=postfix argv=/usr/local/courier/bin/maildrop -d ${recipient}
+				</PRE
+></TD
+></TR
+></TABLE
+></LI
+></OL
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x794.html" tppabs="http://www.9812.net/article/postfix/x794.html"
+ACCESSKEY="P"
+>&#60;&#60;&#60; Previous</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html" tppabs="http://www.9812.net/article/postfix/book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x842.html" tppabs="http://www.9812.net/article/postfix/x842.html"
+ACCESSKEY="N"
+>Next &#62;&#62;&#62;</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Installing Courier POP and IMAP</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="c668.html" tppabs="http://www.9812.net/article/postfix/c668.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>啟動腳本</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

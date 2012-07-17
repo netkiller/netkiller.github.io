@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>4. 多媒體數據分離</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.76.1" /><link rel="home" href="../index.html" title="Netkiller Architect 手札" /><link rel="up" href="system.html" title="第 2 章 Systems architecture(系統架構)" /><link rel="prev" href="static.html" title="3. 靜態化" /><link rel="next" href="compress.html" title="5. 壓縮數據傳輸" /><script xmlns="" type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-11694057-1']);
+  _gaq.push(['_setDomainName', 'netkiller.sourceforge.net']);
+  _gaq.push(['_setAllowHash', 'false']);
+  _gaq.push(['_setAllowLinker', true]);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">4. 多媒體數據分離</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="static.html">上一頁</a> </td><th width="60%" align="center">第 2 章 Systems architecture(系統架構)</th><td width="20%" align="right"> <a accesskey="n" href="compress.html">下一頁</a></td></tr></table><hr /></div><table xmlns="" width="100%" border="0"><tr><td align="left"><a href="http://netkiller.sourceforge.net/">Home</a> |
+                <a href="http://netkiller.github.com/">Mirror</a> |
+                <a href="/search.html">Search</a></td><td align="right"><form id="searchbox_008589143145807374698:f5uprauilyy" action="/search.html"><input type="hidden" name="cx" value="008589143145807374698:f5uprauilyy" /><input type="hidden" name="cof" value="FORID:11" /><input name="q" type="text" size="25" style="border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; border-top-style: solid; border-right-style: solid; border-bottom-style: solid; border-left-style: solid; border-top-color: rgb(126, 157, 185); border-right-color: rgb(126, 157, 185); border-bottom-color: rgb(126, 157, 185); border-left-color: rgb(126, 157, 185); padding-top: 2px; padding-right: 2px; padding-bottom: 2px; padding-left: 2px; background-image: url(http://www.google.com/cse/intl/en/images/google_custom_search_watermark.gif); background-attachment: initial; background-origin: initial; background-clip: initial; background-color: rgb(255, 255, 255); background-position: 0% 50%; background-repeat: no-repeat no-repeat; " /><input type="submit" name="sa" value="Search" /><input name="siteurl" type="hidden" value="http://netkiller.sourceforge.net/" /></form><script type="text/javascript" src="http://www.google.com/coop/cse/brand?form=searchbox_008589143145807374698%3Af5uprauilyy"></script></td></tr></table><div class="section" title="4. 多媒體數據分離"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="media"></a>4. 多媒體數據分離</h2></div></div></div><div class="section" title="4.1. 圖片伺服器分離"><div class="titlepage"><div><div><h3 class="title"><a id="idp265920"></a>4.1. 圖片伺服器分離</h3></div></div></div><div class="orderedlist" title="為什麼要將圖片伺服器分離出來？"><p class="title"><strong>為什麼要將圖片伺服器分離出來？</strong></p><ol class="orderedlist" type="1"><li class="listitem"><p>圖片通常比較大，下載需要更長的時間，而web容器並發數也是相當寶貴的僅次於資料庫。</p></li><li class="listitem"><p>傳統瀏覽器一個窗口只占用一個連結數，目前主流瀏覽器都支持多綫程下載，下載HTML頁面同時，採用多綫程下載其它多媒體數據。</p></li></ol></div><p>
+				我們舉一個例子，你的伺服器並發能力只用1000，早期瀏覽器不支持多綫程，所以同一時刻，你的伺服器可以承受1000個人同時訪問。
+				但現在不同了，基本所有的瀏覽器都支持多綫程，假如你的頁面中有9張小圖片,同一時刻你的伺服器僅僅能應付1000/10 = 100個用戶。
+			</p><p>所以我們要將圖片和其他多媒體檔案分離出來，單獨使用一台伺服器處理請求。</p><div class="tip" title="提示" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">提示</h3><p>圖片伺服器建議使用lighttpd與squid緩存配合使用效果更好或購買CDN的服務。</p></div></div><div class="section" title="4.2. 目錄層次規劃"><div class="titlepage"><div><div><h3 class="title"><a id="idp269984"></a>4.2. 目錄層次規劃</h3></div></div></div><p>日期有利於歸檔</p><pre class="screen">
+/www/images
+/www/images/2008
+/www/images/2008/01
+/www/images/2008/01/01
+			</pre><p>分類不同用途的檔案</p><pre class="screen">
+/www/images
+/www/images/theme/2009
+
+# article id 000001
+/www/images/article/2009/01/000001
+
+# product id 00001
+/www/images/product/2009/01/01/00001
+
+# member name neo
+/www/images/member/2009/01/01/neo
+			</pre><p>根據你的數據量，創建目錄深度, 並且目錄深度有規律可循。</p><p>雖然64bit 檔案系統不限制檔案數量與目錄深度，但是我還是建議按我的方式規劃目錄。</p><p>這樣規劃目錄便于緩存控制，如：</p><p>images/2008/* 永久緩存</p><p>images/2009/* 緩存一個月</p><p>images/2010/* 緩存一小時</p><p>images/2010/06/* 緩存5分鐘</p></div><div class="section" title="4.3. 多域名訪問"><div class="titlepage"><div><div><h3 class="title"><a id="idp270112"></a>4.3. 多域名訪問</h3></div></div></div><p>部分瀏覽器（IE）相同域名只能創建2個綫程，在頁面中使用多個域名可以解決這個限制</p><pre class="screen">
+img1.example.com IN CNAME images.example.com.
+img2.example.com IN CNAME images.example.com.
+img3.example.com IN CNAME images.example.com.
+...
+imgN.example.com IN CNAME images.example.com.
+			</pre></div></div><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
+            /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+
+            if(document.domain == 'netkiller.github.com'){
+            var disqus_shortname = 'netkiller'; // required: replace example with your forum shortname
+            }else{
+			var disqus_shortname = 'neochan';
+            }
+
+            /* * * DON'T EDIT BELOW THIS LINE * * */
+            (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+            })();
+        </script><noscript xmlns="">Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><a xmlns="" href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="static.html">上一頁</a> </td><td width="20%" align="center"><a accesskey="u" href="system.html">上一級</a></td><td width="40%" align="right"> <a accesskey="n" href="compress.html">下一頁</a></td></tr><tr><td width="40%" align="left" valign="top">3. 靜態化 </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始頁</a></td><td width="40%" align="right" valign="top"> 5. 壓縮數據傳輸</td></tr></table></div></body></html>

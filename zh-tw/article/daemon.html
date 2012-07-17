@@ -1,0 +1,595 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>Linux 應用程序開發入門</title><link rel="stylesheet" href="article.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.75.2" /><meta name="description" content="我會實現一個守護進程，從這個程序你將瞭解，Linux 應用程序開發基本流程 我們將實現一個遠程shell的功能，可以通過tcp協議，運行遠程機器上的命令或shell腳本 通過這個命令可以實現批量操作，管理上千台伺服器。需要發揮你的想象力，靈活使用它。 寫這個腳本，我是為了替代SSH遠程操作，因為SSH不能控制運行命令，操作風險大，也不安全。 程序還不完善，還需要很多後續改進工作，比如通過SSL建立Socket連結，用戶認證，ACL訪問控制等等." /><meta name="keywords" content="python, os.fork, getopt.getopt, logging, init.d, rc.d, inittab, nodekeeper" /></head><body><div xml:lang="zh-cn" class="article" title="Linux 應用程序開發入門" lang="zh-cn"><div class="titlepage"><div><div><h2 class="title"><a id="idp4288"></a>Linux 應用程序開發入門</h2></div><div><div class="author"><h3 class="author"><span class="firstname">Neo Chen</span> <span class="surname">(netkiller)</span></h3><div class="affiliation"><div class="address"><p><br />
+				<code class="email">&lt;<a class="email" href="mailto:openunix@163.com">openunix@163.com</a>&gt;</code><br />
+			</p></div></div></div></div><div><p class="copyright">版權 © 2011, 2012 http://netkiller.github.com</p></div><div><p class="pubdate">$Date: 2012-02-01 14:03:53 +0800 (Wed, 01 Feb 2012) $</p></div><div><div class="abstract" title="摘要"><p class="title"><b>摘要</b></p><p>我會實現一個守護進程，從這個程序你將瞭解，Linux 應用程序開發基本流程</p><p>我們將實現一個遠程shell的功能，可以通過tcp協議，運行遠程機器上的命令或shell腳本</p><p>通過這個命令可以實現批量操作，管理上千台伺服器。需要發揮你的想象力，靈活使用它。</p><p>寫這個腳本，我是為了替代SSH遠程操作，因為SSH不能控制運行命令，操作風險大，也不安全。</p><p>程序還不完善，還需要很多後續改進工作，比如通過SSL建立Socket連結，用戶認證，ACL訪問控制等等.</p></div></div><div><div class="abstract" title="下面是我多年積累下來的經驗總結，整理成文檔供大家參考:"><a id="abstract"></a><p class="title"><b>下面是我多年積累下來的經驗總結，整理成文檔供大家參考:</b></p><p>
+		</p><table border="0" summary="Simple list" class="simplelist"><tr><td>
+				<a class="ulink" href="../architect/index.html" target="_top">Netkiller Architect 手札</a>
+			</td><td>
+				<a class="ulink" href="../linux/index.html" target="_top">Netkiller Linux 手札</a>
+			</td><td>
+				<a class="ulink" href="../developer/index.html" target="_top">Netkiller Developer 手札</a>
+			</td><td>
+				<a class="ulink" href="../database/index.html" target="_top">Netkiller Database 手札</a>
+			</td></tr><tr><td>
+				<a class="ulink" href="../debian/index.html" target="_top">Netkiller Debian 手札</a>
+			</td><td>
+				<a class="ulink" href="../centos/index.html" target="_top">Netkiller CentOS 手札</a>
+			</td><td>
+				<a class="ulink" href="../freebsd/index.html" target="_top">Netkiller FreeBSD 手札</a>
+			</td><td>
+				<a class="ulink" href="../shell/index.html" target="_top">Netkiller Shell 手札</a>
+			</td></tr><tr><td>
+				<a class="ulink" href="../www/index.html" target="_top">Netkiller Web 手札</a>
+			</td><td>
+				<a class="ulink" href="../monitoring/index.html" target="_top">Netkiller Monitoring 手札</a>
+			</td><td>
+				<a class="ulink" href="../storage/index.html" target="_top">Netkiller Storage 手札</a>
+			</td><td>
+				<a class="ulink" href="../mail/index.html" target="_top">Netkiller Mail 手札</a>
+			</td></tr><tr><td>
+				<a class="ulink" href="../security/index.html" target="_top">Netkiller Security 手札</a>
+			</td><td>
+				<a class="ulink" href="../multimedia/index.html" target="_top">Netkiller Multimedia 手札</a>
+			</td><td>
+				<a class="ulink" href="../docbook/index.html" target="_top">Netkiller Writer 手札</a>
+			</td><td>
+				<a class="ulink" href="../version/index.html" target="_top">Netkiller Version 手札</a>
+			</td></tr><tr><td>
+				<a class="ulink" href="../postgres/index.html" target="_top">Netkiller PostgreSQL 手札</a>
+			</td><td>
+				<a class="ulink" href="../mysql/index.html" target="_top">Netkiller MySQL 手札</a>
+			</td><td>
+				<a class="ulink" href="../cryptography/index.html" target="_top">Netkiller Cryptography 手札</a>
+			</td><td>
+				<a class="ulink" href="../cisco/index.html" target="_top">Netkiller Cisco IOS 手札</a>
+			</td></tr><tr><td>
+				<a class="ulink" href="../ldap/index.html" target="_top">Netkiller LDAP 手札</a>
+			</td><td>
+				<a class="ulink" href="../intranet/index.html" target="_top">Netkiller Intranet 手札</a>
+			</td><td> </td><td> </td></tr></table><p>
+	</p></div></div></div><hr /></div><div class="toc"><p><b>目錄</b></p><dl><dt><span class="section"><a href="#idp55312">1. 環境</a></span></dt><dt><span class="section"><a href="#idp58496">2. nodekeeper 主程序</a></span></dt><dd><dl><dt><span class="section"><a href="#idp59760">2.1. 幫助信息</a></span></dt><dt><span class="section"><a href="#idp71040">2.2. 參數處理</a></span></dt><dt><span class="section"><a href="#idp74848">2.3. 後台運行</a></span></dt><dt><span class="section"><a href="#idp78752">2.4. 日誌記錄</a></span></dt><dt><span class="section"><a href="#idp81616">2.5. 多綫程</a></span></dt></dl></dd><dt><span class="section"><a href="#idp58624">3. 配置檔案</a></span></dt><dt><span class="section"><a href="#idp88784">4. init.d 腳本</a></span></dt><dd><dl><dt><span class="section"><a href="#idp95648">4.1. start/stop</a></span></dt><dt><span class="section"><a href="#idp97232">4.2. service start/stop</a></span></dt></dl></dd></dl></div><div class="section" title="1. 環境"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp55312"></a>1. 環境</h2></div></div></div><p>OS: Ubuntu 11.10</p><p>Python: 3.2.2</p><p>程序目錄: /srv/nodekeeper</p><p>目錄與相關檔案</p><pre class="screen">
+$ cd /srv
+$ find nodekeeper | grep -v .svn
+nodekeeper
+nodekeeper/nodekeeper.ubuntu
+nodekeeper/nodekeeper.cenos
+nodekeeper/etc
+nodekeeper/etc/commands.cfg
+nodekeeper/etc/protocol.cfg
+nodekeeper/bin
+nodekeeper/bin/nodekeeper
+nodekeeper/bin/console
+		</pre></div><div class="section" title="2. nodekeeper 主程序"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp58496"></a>2. nodekeeper 主程序</h2></div></div></div><pre class="screen">
+		
+$ cat nodekeeper/bin/nodekeeper
+#!/usr/bin/env python3
+#/bin/env python3
+#-*- coding: utf-8 -*-
+##############################################
+# Home  : http://netkiller.sf.net
+# Author: Neo &lt;openunix@163.com&gt;
+##############################################
+
+import asyncore, asynchat, socket, threading
+import subprocess, os, sys, getopt, configparser, logging
+import string, re
+from multiprocessing import Process
+
+class Backend(asyncore.dispatcher):
+    queue = []
+    def __init__(self, host, port,config):
+        asyncore.dispatcher.__init__(self)
+
+        self.host = host
+        self.port = port
+        self.config = config
+
+        self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.bind((host,port))
+        self.listen(10)
+
+        try:
+            cfg = Protocol(config['protocol'], self.host)
+            #self.protocols = cfg.items(self.host)
+            self.protocols = cfg.all()
+            self.sections = cfg.sections()
+        except configparser.NoSectionError as err:
+            print("Error: %s %s" %(err, config['protocol']))
+            sys.exit(2)
+        try:
+            logging.basicConfig(level=logging.NOTSET,
+                    format='%(asctime)s %(levelname)-8s %(message)s',
+                    datefmt='%Y-%m-%d %H:%M:%S',
+                    filename=config['logfile'],
+                    filemode='a')
+            self.logging = logging.getLogger()
+            #self.logging.debug('Test')
+        except AttributeError as err:
+            print("Error: %s %s" %(err, config['logfile']))
+            sys.exit(2)
+
+    def handle_accept (self):
+        conn, addr = self.accept()
+        self.queue.append(addr)
+        request_handler(conn, self)
+    def handle_connect(self):
+        pass
+    def handle_expt(self):
+        self.close()
+    def handle_close(self):
+        self.close()
+
+class request_handler(asynchat.async_chat):
+
+    def __init__(self, sock, resource):
+        asynchat.async_chat.__init__(self, sock=sock)
+        self.sessions = resource
+        self.buffer = b''
+        self.set_terminator(b"\r\n")
+        self.logging 	= resource.logging
+        self.protocols 	= resource.protocols
+        self.sections 	= resource.sections
+        self.host 	= self.sessions.host
+
+    def handle_connect(self):
+        # connection succeeded
+        #self.logging.info('')
+        pass
+
+    def handle_expt(self):
+        # connection failed
+        self.close()
+
+    def collect_incoming_data(self, data):
+        """Buffer the data"""
+        #self.buffer.append(data)
+        self.buffer = data
+
+    def found_terminator(self):
+        try:
+            buffer = bytes.decode(self.buffer)
+        except UnicodeDecodeError:
+            print("\r\nError: ",err)
+            buffer = ''
+        try:
+            execute = re.split(' ', buffer)
+            command = execute[0]
+            parameter = ' '.join( execute[1:])
+            response = b''
+            screen = ''
+            if self.buffer == b'quit' or self.buffer == b'exit' :
+                self.push(b'shutdown!!!\r\n')
+                self.close_when_done()
+            elif self.buffer == b'help' or self.buffer == b'?':
+                screen = "Help may be requested at any point in a command by entering a question mark '?' or 'help'. the help list will be showing the available options.\r\n"
+            
+                for cmd,v in self.protocols :
+                    screen += cmd + "\r\n"
+            elif self.buffer == b'sections' :
+                for sect in self.sections :
+                    screen += sect + "\r\n"
+            elif self.buffer == b'help.html' :
+                for cmd,v in self.protocols :
+                    screen += '&lt;a href="?host='+self.host+'&amp;cmd='+cmd+'"&gt;'+ cmd +'&lt;/a&gt;&lt;br /&gt;' + "\r\n"
+            elif self.buffer == b'enable':
+                self.prompt = b'#'
+            elif self.buffer == b'end' or self.buffer == b'^z':
+                self.prompt = b'&gt;'
+            else:
+                proto = dict(self.protocols)
+                if command in proto :
+                    run = proto[command] + ' ' + parameter
+                    screen = subprocess.getoutput(run)
+    
+            if screen :
+                response = bytes(screen + "\r\n",'utf8')
+                self.push(response)
+                self.logging.info(bytes.decode(self.buffer))
+            self.buffer = b''
+            self.close_when_done()
+        except :
+            self.close_when_done()
+            sys.exit(2)
+
+class Protocol():
+    config = None
+    agreement = None
+    def __init__(self,cfg = 'protocol.cfg',sections = ''):
+        self.config = configparser.SafeConfigParser()
+        self.config.read(cfg)
+        #self.agreement = self.config.items('common')
+    def sections(self):
+        return self.config.sections()
+    def items(self, sections):
+        self.agreement = self.config.items(sections)
+        return self.agreement
+    def dicts(self):
+        return dict(self.agreement)
+    def all(self):
+        self.agreement = []
+        for section in self.config.sections():
+            self.agreement += self.config.items(section)
+        return self.agreement
+
+
+def main():
+    daemon = False
+    host = 'localhost'
+    port = 7800
+    pidfile = ''
+    logfile = ''
+    cfgfile = ''
+
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "h:p:d?v", [ "daemon","host=","port=", 'help',"h=","p=", "basedir=", "pidfile=", "config=", "protocol=", "logfile="])
+
+        if not opts :
+            usage()
+            sys.exit()
+        for o, a in opts :
+            if o in ('-?', '--help') :
+                usage()
+                sys.exit()
+            elif o in ("-v", "--verbose"):
+                usage()
+                sys.exit()
+            elif o in ("-d", "--daemon"):
+                daemon = True
+            elif o in ("-h", "--host"):
+                host = a
+            elif o in ("-p", "--port"):
+                port = int(a)
+            elif o in ("--basedir"):
+                BASEDIR = a
+            elif o in ("--pidfile"):
+                pidfile = a
+            elif o in ("--config"):
+                cfgfile = a
+            elif o in ("--protocol"):
+                protocol = a		
+            elif o in ("--logfile"):
+                logfile = a
+            else:
+                assert False, "unhandled option"
+    except getopt.GetoptError as err:
+        # print help information and exit:
+        usage()
+        sys.exit(2)
+
+    try:
+
+        if daemon :
+            pid = os.fork()
+            if pid &gt; 0:
+                #exit first parent
+                sys.exit(0)
+        myself = str(sys.argv[0].split('/')[-1:][0])
+        #pidfile = os.getpid()
+        if not pidfile :
+            pidfile = '/var/run/'+myself+'.pid'
+        file = open(pidfile,'w')
+        file.write(str(os.getpid()))
+        file.close()
+        if not cfgfile :
+            cfgfile = ''+myself+'.cfg'
+        if not logfile :
+            logfile = '/var/log/'+myself+'.log'
+        config = dict({'cfgfile':cfgfile, 'pidfile':pidfile, 'logfile':logfile, 'protocol':protocol})
+
+        Backend(host,port,config)
+        asyncore.loop(timeout=30, use_poll=True)
+
+    except socket.error as err:
+        print("\r\nError: ",err)
+        sys.exit(2)
+    except IOError as err:
+        print("\r\nError: ",err)
+        sys.exit(2)
+
+def usage():
+    myself = str(sys.argv[0].split('/')[-1:][0])
+
+    print("Usage: %s -d -h &lt;ip address&gt; -p &lt;7800&gt;" % myself );
+    print("Development and deployment administration platform")
+    print("\r\nMandatory arguments to long options are mandatory for short options too.")
+    print("\t-?, --help")
+    print("\t-v, --verbose")
+    print("\t-d, --daemon")
+    print("\t-h, --host \t\t(default localhost)")
+    print("\t-p, --port")
+    print("\t    --config \t\t(default %s.cfg)" % myself)
+    print("\t    --protocol \t\t(default %s.cfg)" % "protocol.cfg")
+    print("\t    --pidfile \t\t(default /var/run/%s.pid)" % myself)
+    print("\t    --logfile \t\t(default /var/log/%s.log)" % myself)
+    print("\r\nExample:")
+    print("\t%s --daemon --host localhost --port 7800" % myself)
+    print("\t%s -d -h localhost -p 7800" % myself)
+    print("\r\nSee http://netkiller.sf.net/ for updates, bug reports, and answers, \r\nif you have no web access, by sending email to Neo Chan&lt;openunix@163.com&gt;. ")
+    # Exit status is 0 if OK, 1 if minor problems, 2 if serious trouble.
+
+if __name__ == '__main__':
+    try:
+        main()
+    except KeyboardInterrupt:
+        print ("Crtl+C Pressed. Shutting down.")
+
+		
+		</pre><div class="section" title="2.1. 幫助信息"><div class="titlepage"><div><div><h3 class="title"><a id="idp59760"></a>2.1. 幫助信息</h3></div></div></div><p>usage()</p><pre class="screen">
+			
+Usage: nodekeeper -d -h &lt;ip address&gt; -p &lt;7800&gt;
+Development and deployment administration platform
+
+Mandatory arguments to long options are mandatory for short options too.
+	-?, --help
+	-v, --verbose
+	-d, --daemon
+	-h, --host 		(default localhost)
+	-p, --port
+	    --config 		(default nodekeeper.cfg)
+	    --protocol 		(default protocol.cfg.cfg)
+	    --pidfile 		(default /var/run/nodekeeper.pid)
+	    --logfile 		(default /var/log/nodekeeper.log)
+
+Example:
+	nodekeeper --daemon --host localhost --port 7800
+	nodekeeper -d -h localhost -p 7800
+
+See http://netkiller.sf.net/ for updates, bug reports, and answers, 
+if you have no web access, by sending email to Neo Chan&lt;openunix@163.com&gt;.
+			
+			</pre></div><div class="section" title="2.2. 參數處理"><div class="titlepage"><div><div><h3 class="title"><a id="idp71040"></a>2.2. 參數處理</h3></div></div></div><p>getopt.getopt 實現Unix風格的命令參數，例如:</p><pre class="screen">
+nodekeeper --daemon --host localhost --port 7800
+
+--host localhost --port 7800 IP地址與連接埠參數
+--daemon 參數實現後台運行
+			</pre><p>具體實現代碼</p><pre class="screen">
+			
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "h:p:d?v", [ "daemon","host=","port=", 'help',"h=","p=", "basedir=", "pidfile=", "config=", "protocol=", "logfile="])
+
+        if not opts :
+            usage()
+            sys.exit()
+        for o, a in opts :
+            if o in ('-?', '--help') :
+                usage()
+                sys.exit()
+            elif o in ("-v", "--verbose"):
+                usage()
+                sys.exit()
+            elif o in ("-d", "--daemon"):
+                daemon = True
+            elif o in ("-h", "--host"):
+                host = a
+            elif o in ("-p", "--port"):
+                port = int(a)
+            elif o in ("--basedir"):
+                BASEDIR = a
+            elif o in ("--pidfile"):
+                pidfile = a
+            elif o in ("--config"):
+                cfgfile = a
+            elif o in ("--protocol"):
+                protocol = a		
+            elif o in ("--logfile"):
+                logfile = a
+            else:
+                assert False, "unhandled option"
+    except getopt.GetoptError as err:
+        # print help information and exit:
+        usage()
+        sys.exit(2)
+			
+			</pre></div><div class="section" title="2.3. 後台運行"><div class="titlepage"><div><div><h3 class="title"><a id="idp74848"></a>2.3. 後台運行</h3></div></div></div><p>--daemon 參數實現後台運行，原理是首先通過os.fork()克隆一個進程，然後退出當前進程，克隆的新進程繼續運行</p><p>如果是Shell程序，你可使用“&amp;”符號後台運行，但作為一個應用程序，使用“&amp;”顯得不專業。</p><p>具體實現的代碼如下</p><pre class="screen">
+			
+        if daemon :
+            pid = os.fork()
+            if pid &gt; 0:
+                #exit first parent
+                sys.exit(0)
+			
+			</pre><p>程序一旦進入後台，當前進程即將關閉，所以你必須保存PID，為後面的推出程序操作使用，這裡我們可以通過 --pidfile 指定一個pid檔案</p></div><div class="section" title="2.4. 日誌記錄"><div class="titlepage"><div><div><h3 class="title"><a id="idp78752"></a>2.4. 日誌記錄</h3></div></div></div><p>程序一旦進入後台，你只能通過ps，pstree, top 等命令查看狀態，運行情況必須通過日誌的形式，打印出來</p><p>具體實現代碼如下：</p><pre class="screen">
+			
+			logging.basicConfig(level=logging.NOTSET,
+                    format='%(asctime)s %(levelname)-8s %(message)s',
+                    datefmt='%Y-%m-%d %H:%M:%S',
+                    filename=config['logfile'],
+                    filemode='a')
+            self.logging = logging.getLogger()
+            self.logging.debug('Test')
+			
+			</pre></div><div class="section" title="2.5. 多綫程"><div class="titlepage"><div><div><h3 class="title"><a id="idp81616"></a>2.5. 多綫程</h3></div></div></div><p>繼承 asynchat.async_chat 實現多綫程</p><pre class="screen">
+			
+class request_handler(asynchat.async_chat):
+
+    def __init__(self, sock, resource):
+        asynchat.async_chat.__init__(self, sock=sock)
+			
+			</pre><p>連接數限制</p><pre class="screen">
+        self.listen(10)			
+			</pre><p>可以將這個參數提出來，然後通過命令行設置。</p><pre class="screen">
+nodekeeper --daemon --maxconn 100 --host localhost --port 7800
+			
+self.max_connect = maxconn
+
+self.listen(self.max_connect)			
+			</pre></div></div><div class="section" title="3. 配置檔案"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp58624"></a>3. 配置檔案</h2></div></div></div><pre class="screen">
+		
+$ cat nodekeeper/etc/protocol.cfg 
+[system]
+ls = ls
+os.hosts = cat /etc/hosts
+os.issue = cat /etc/issue
+os.memory = free
+os.who = who
+os.harddisk = df -h
+os.uptime = uptime
+os.cpuinfo = cat /proc/cpuinfo
+os.meminfo = cat /proc/meminfo
+os.dmesg = dmesg
+os.process = ps aux
+os.summary = echo
+network.status = netstat -n | awk '/^tcp/ {++S[$NF]} END {for(a in S) print a, S[a]}'
+network.netstat = netstat -nlp
+network.ifconfig = ifconfig
+network.route = ip route
+
+[apache]
+apache.start = /usr/local/apache/bin/apachectl start
+apache.stop = /usr/local/apache/bin/apachectl stop
+apache.restart = /usr/local/apache/bin/apachectl restart
+apache.status = ps ax |grep httpd
+apache.conf = cat /usr/local/apache/conf/httpd.conf
+apache.conf.vhost = cat /usr/local/apache/conf/extra/httpd-vhosts.conf
+apache.logs.now = 
+apache.logs.tail = 
+
+[resin]
+resin.start = /usr/local/resin/bin/httpd.sh start
+resin.stop = /usr/local/resin/bin/httpd.sh stop
+resin.restart = /usr/local/resin/bin/httpd.sh restart
+resin.status = /usr/local/resin/bin/httpd.sh status
+resin.conf = cat /usr/local/resin/conf/resin.conf
+
+[www]
+www.list = ls -1 /www
+www.permission = find /www -type d -exec chmod 755 {} \; find /www -type f -exec chmod 644 {} \; 
+www.permission.777 = chmod 777 -R /www/*
+lamp.status = ps ax |grep -E "mysqld|httpd|resin"
+
+[samba]
+samba.start = /etc/init.d/smb start
+samba.stop = /etc/init.d/smb stop
+samba.restart = /etc/init.d/smb restart
+samba.status = /etc/init.d/smb status
+
+[mysql]
+mysql.start = /etc/init.d/mysql start
+mysql.stop = /etc/init.d/mysql stop
+mysql.restart = /etc/init.d/mysql restart
+
+[memcache]
+memcache.start = /etc/init.d/memcache start
+memcache.stop = /etc/init.d/memcache stop
+memcache.restart = /etc/init.d/memcache restart
+
+[vsftpd]
+vsftpd.start = /etc/init.d/vsftpd start
+vsftpd.stop = /etc/init.d/vsftpd stop
+vsftpd.restart = /etc/init.d/vsftpd restart
+vsftpd.status = /etc/init.d/vsftpd status
+
+		
+		</pre></div><div class="section" title="4. init.d 腳本"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp88784"></a>4. init.d 腳本</h2></div></div></div><p>Linux 所有守護進程都是用init.d下面的腳本來管理</p><p>當人你也可以直接運行命令：</p><pre class="screen">
+nodekeeper --daemon --host localhost --port 7800
+		</pre><p>但這樣只能算是一個半成品，也不夠專業，我們寫的是linux運用程序，必須遵循Linux規範，所有要實現一個init.d腳本</p><pre class="screen">
+		
+$ cat nodekeeper
+#! /bin/sh
+
+### BEGIN INIT INFO
+# Provides:          nodekeeper
+# Required-Start:    $local_fs $remote_fs $network $syslog
+# Required-Stop:     $local_fs $remote_fs $network $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: starts the nodekeeper web server
+# Description:       starts nodekeeper using start-stop-daemon
+### END INIT INFO
+
+PATH=/srv/nodekeeper/bin:$PATH
+DAEMON=/srv/nodekeeper/bin/nodekeeper
+NAME=nodekeeper
+DESC=nodekeeper
+BASEDIR="/srv/nodekeeper"
+HOST=$(ifconfig  | grep 'inet addr:'| grep -v '127.0.0.1' | cut -d: -f2 | awk '{ print $1}'|head -n 1)
+PORT=7800
+CONFIG=$BASEDIR/etc/$NAME.cfg
+LOGFILE=$BASEDIR/log/$NAME.log
+PIDFILE=$BASEDIR/run/$NAME.pid
+PIDFILE=/var/run/$NAME.pid
+PROTOCOL=$BASEDIR/etc/protocol.cfg
+
+DAEMON_OPTS="--daemon --host $HOST --port $PORT --config=$CONFIG --protocol=$PROTOCOL --pidfile=$PIDFILE --logfile=$LOGFILE"
+
+test -x $DAEMON || exit 0
+
+# Include nodekeeper defaults if available
+if [ -f /etc/default/nodekeeper ] ; then
+	. /etc/default/nodekeeper
+fi
+
+set -e
+
+. /lib/lsb/init-functions
+
+#test_nodekeeper_config() {
+#  if $DAEMON -t $DAEMON_OPTS &gt;/dev/null 2&gt;&amp;1
+#  then
+#    return 0
+#  else
+#    $DAEMON -t $DAEMON_OPTS
+#    return $?
+#  fi
+#}
+
+case "$1" in
+  start)
+	echo -n "Starting $DESC: "
+	start-stop-daemon --start --quiet --pidfile /var/run/$NAME.pid \
+		--exec $DAEMON -- $DAEMON_OPTS || true
+	echo "$NAME."
+	;;
+  stop)
+	echo -n "Stopping $DESC: "
+	start-stop-daemon --stop --quiet --pidfile /var/run/$NAME.pid \
+		--exec $DAEMON || true
+	echo "$NAME."
+	;;
+  restart|force-reload)
+	echo -n "Restarting $DESC: "
+	start-stop-daemon --stop --quiet --pidfile \
+		/var/run/$NAME.pid --exec $DAEMON || true
+	sleep 1
+
+	start-stop-daemon --start --quiet --pidfile \
+		/var/run/$NAME.pid --exec $DAEMON -- $DAEMON_OPTS || true
+	echo "$NAME."
+	;;
+  reload)
+        echo -n "Reloading $DESC configuration: "
+
+        start-stop-daemon --stop --signal HUP --quiet --pidfile /var/run/$NAME.pid \
+            --exec $DAEMON || true
+        echo "$NAME."
+        ;;
+  configtest)
+        echo -n "Testing $DESC configuration: "
+        if test_nodekeeper_config
+        then
+          echo "$NAME."
+        else
+          exit $?
+        fi
+        ;;
+  status)
+	status_of_proc -p /var/run/$NAME.pid "$DAEMON" nodekeeper &amp;&amp; exit 0 || exit $?
+	;;
+  *)
+	echo "Usage: $NAME {start|stop|restart|reload|force-reload|status|configtest}" &gt;&amp;2
+	exit 1
+	;;
+esac
+
+exit 0
+		
+		</pre><p>我們將使用DAEMON_OPTS變數，提供所有需要的參數</p><pre class="screen">
+DAEMON_OPTS="--daemon --host $HOST --port $PORT --config=$CONFIG --protocol=$PROTOCOL --pidfile=$PIDFILE --logfile=$LOGFILE"
+		</pre><div class="section" title="4.1. start/stop"><div class="titlepage"><div><div><h3 class="title"><a id="idp95648"></a>4.1. start/stop</h3></div></div></div><pre class="screen">
+/etc/init.d/nodekeeper start
+/etc/init.d/nodekeeper stop
+			</pre></div><div class="section" title="4.2. service start/stop"><div class="titlepage"><div><div><h3 class="title"><a id="idp97232"></a>4.2. service start/stop</h3></div></div></div><pre class="screen">
+service nodekeeper start
+service nodekeeper stop
+			</pre></div></div></div></body></html>

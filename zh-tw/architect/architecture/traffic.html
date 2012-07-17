@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>2. Traffic</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.76.1" /><link rel="home" href="../index.html" title="Netkiller Architect 手札" /><link rel="up" href="overview.html" title="第 1 章 Architecture Overview" /><link rel="prev" href="overview.html" title="第 1 章 Architecture Overview" /><link rel="next" href="dfs.html" title="3. Distributed File System(簇檔案系統)" /><script xmlns="" type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-11694057-1']);
+  _gaq.push(['_setDomainName', 'netkiller.sourceforge.net']);
+  _gaq.push(['_setAllowHash', 'false']);
+  _gaq.push(['_setAllowLinker', true]);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">2. Traffic</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="overview.html">上一頁</a> </td><th width="60%" align="center">第 1 章 Architecture Overview</th><td width="20%" align="right"> <a accesskey="n" href="dfs.html">下一頁</a></td></tr></table><hr /></div><table xmlns="" width="100%" border="0"><tr><td align="left"><a href="http://netkiller.sourceforge.net/">Home</a> |
+                <a href="http://netkiller.github.com/">Mirror</a> |
+                <a href="/search.html">Search</a></td><td align="right"><form id="searchbox_008589143145807374698:f5uprauilyy" action="/search.html"><input type="hidden" name="cx" value="008589143145807374698:f5uprauilyy" /><input type="hidden" name="cof" value="FORID:11" /><input name="q" type="text" size="25" style="border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; border-top-style: solid; border-right-style: solid; border-bottom-style: solid; border-left-style: solid; border-top-color: rgb(126, 157, 185); border-right-color: rgb(126, 157, 185); border-bottom-color: rgb(126, 157, 185); border-left-color: rgb(126, 157, 185); padding-top: 2px; padding-right: 2px; padding-bottom: 2px; padding-left: 2px; background-image: url(http://www.google.com/cse/intl/en/images/google_custom_search_watermark.gif); background-attachment: initial; background-origin: initial; background-clip: initial; background-color: rgb(255, 255, 255); background-position: 0% 50%; background-repeat: no-repeat no-repeat; " /><input type="submit" name="sa" value="Search" /><input name="siteurl" type="hidden" value="http://netkiller.sourceforge.net/" /></form><script type="text/javascript" src="http://www.google.com/coop/cse/brand?form=searchbox_008589143145807374698%3Af5uprauilyy"></script></td></tr></table><div class="section" title="2. Traffic"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="traffic"></a>2. Traffic</h2></div></div></div><p>數不清的用戶在訪問你的伺服器</p><p>頻寬與伺服器可以隨時增加，但也有限</p><p>瓶頸無處不在</p><pre class="screen">
+	
+
+user -&gt; \                                     /--1G--&gt; | server |
+user -&gt;  |--1G--&gt; [Firewal] --1G--&gt; [Switch] ----1G--&gt; | server |
+user -&gt; /                                     \--1G--&gt; | server |
+
+	
+	</pre><div class="section" title="2.1. bandwidth"><div class="titlepage"><div><div><h3 class="title"><a id="traffic.bandwidth"></a>2.1. bandwidth</h3></div></div></div><p>主流網絡設備頻寬均為1G，目前來看10G仍不普及，僅在存儲領域封閉使用，價格非常昂貴</p><p>firewall (1G) - switch (Forwarding bandwidth / 1G) - server (NIC 1G)</p><div class="section" title="2.1.1. firewall"><div class="titlepage"><div><div><h4 class="title"><a id="idp139136"></a>2.1.1. firewall</h4></div></div></div><p>怎麼能提高頻寬呢？</p><p>首先是防火牆，這個設備非常重要。 100M 基本淘汰，10G 防火牆尚未普及，1G頻寬如果不夠怎麼辦？答案是買2個，3個...</p><p>為什麼不買10G的。在下面會談到會話數，你一看就明白了。10G防火牆會話數不是1G防火牆會話數的十倍。</p></div><div class="section" title="2.1.2. switch"><div class="titlepage"><div><div><h4 class="title"><a id="idp140832"></a>2.1.2. switch</h4></div></div></div><p>目前主流交換機 Cisco WS-C2960G-48TC-L，48個RJ45口與2或4個SFP光纖口均為1G頻寬</p><p>一般中小企業1台交換機足夠，再上一個台階超過40台伺服器，就會有出現多台交換機互連問題，使用乙太網口與SFP光纖口的頻寬是一樣的，唯一區別是傳輸距離。</p><p>每個交換機後面都對應幾十台伺服器，每個伺服器1G網卡，如果這些伺服器滿負荷傳輸，交換機與交換機間數據傳輸就會帶來瓶頸。</p><p>通過連接埠聚合可以解決交換機間數據傳輸瓶頸，另種方式是交換機堆疊。</p><pre class="screen">
+          +----------+                          +----------+
+          |          |gi0/0/1            gi0/0/1|          |
+          | Switch A +--------------------------+ Switch B |
+          |          +--------------------------+          |
+          |          |gi0/0/2            gi0/0/2|          |
+          +----------+                          +----------+
+			</pre><p>比如你有5個機櫃，將交換機放置到3號機櫃，處于中間位置，所有交換機放入該機櫃，然後堆疊，從中心機櫃向兩側分綫</p><div><img src="../images/topology/cabinet-3750.png" /></div><p>對於不大不小的企業，直接採購IDC箱式交換機</p><div><img src="../images/topology/cabinet-4xxx.png" /></div></div><div class="section" title="2.1.3. Server"><div class="titlepage"><div><div><h4 class="title"><a id="idp146688"></a>2.1.3. Server</h4></div></div></div><p>目前主流服務都配備2到4個網口，像IBM / HP / DELL 等品牌伺服器你無需關心網卡問題.</p><p>這裡主要是針對自行安裝或使用PC伺服器的用戶，因為很多PC伺服器使用Realtak網卡。那麼Realtak與Broadcom的NetXtreme有什麼不同？</p><p>建議你安裝一個windows系統在伺服器上，然後看看網卡驅動屬性。Realtak 僅僅提供基本網絡功能，QOS質量訪問服務由驅動程式提供（軟QOS）而NetXtreme 提供非常豐富的功能，並且都是硬件實現。</p><p>話題回到頻寬上，linux 支持 bonding 網卡，可以幫你解決伺服器網絡通信頻寬問題，bonding 還可以解決網卡故障轉移，傳輸流量負載均衡等等。</p><p>在我的《Netkiller Linux 手札》中你可以找到具體的設置方法。</p></div></div><div class="section" title="2.2. Session"><div class="titlepage"><div><div><h3 class="title"><a id="traffic.session"></a>2.2. Session</h3></div></div></div><p>firewall (nat session) - switch (Forwarding bandwidth) - os (ulimit,sysctl) - application (httpd,vsftpd,tomcat ...)</p><p>會話數，國人俗稱並發數。當你的頻寬沒有滿，但tcp不能建立連接，這時你就要考慮會話數了。</p><div class="section" title="2.2.1. firewall"><div class="titlepage"><div><div><h4 class="title"><a id="idp150576"></a>2.2.1. firewall</h4></div></div></div><p>購買防火牆的時候主要有兩個指標，一是會話數，二是頻寬，三是配備模組。售前工程師都會交代清楚。</p><p>例如 Cisco ASA 5550 會話數65萬，2個1G介面，可選IPS模組等等...</p><p>使用下面命令可以查看當前會話數</p><pre class="screen">
+show conn count
+			</pre></div><div class="section" title="2.2.2. Server"><div class="titlepage"><div><div><h4 class="title"><a id="idp152768"></a>2.2.2. Server</h4></div></div></div><p>Linux 影響會話數的的參數與配置檔案</p><p>/etc/security/limits.conf , /etc/security/limits.d</p><p>nofile - max number of open files 在POSIX系統中硬件，管道，Socket 均被看作是一個設備，如硬碟是塊設備，顯示器是字元設備，操作這些設備均使用c的open函數，被算作打開一個檔案。所有設備都是如此，加上web伺服器還要讀取很多HTML檔案，系統對nofile 開銷是非常巨大的。</p><p>nproc - max number of processes 目前多綫程是主流，使用多綫程技術這個參數可以不關心。像Oracle,PostgreSQL, Apache prefork,你就需要關心這個參數</p><p>/etc/sysctl.conf , /etc/sysctl.d/</p><p>net.ipv4.ip_local_port_range = 1024 65500 可用連接埠範圍</p><p>tcp 協議當你嘗試主動與伺服器建立連接，如：telnet 172.16.0.1 80,本地會開啟一個大於1024小於65500的連接埠</p><p>client: localhost:1025 --- 172.16.0.1:80 server</p><p>以上參數要綜合你的CPU處理能力，內存空間，硬碟IO等等，才能配置出合理數值</p><p>配置過大（小馬拉大車），超出你的伺服器處理能力，導致伺服器無響應，最終只能重啟</p><p>配置過小（大馬拉小車），你的伺服器長時間處于空間狀態，CPU，內存沒有得到合理使用</p><p>在我的《Netkiller Linux 手札》中你可以找到具體的設置方法。</p></div><div class="section" title="2.2.3. application"><div class="titlepage"><div><div><h4 class="title"><a id="idp152896"></a>2.2.3. application</h4></div></div></div><p>連接數受限與limits與sysctl</p><p>apache : httpd/conf/extra/httpd-mpm.conf</p><pre class="screen">
+			
+&lt;IfModule mpm_worker_module&gt;
+    ServerLimit         16
+    ThreadLimit         256
+    StartServers        8
+    MaxClients          4096
+    MinSpareThreads     64
+    MaxSpareThreads     256
+    ThreadsPerChild     256
+    MaxRequestsPerChild 10000
+&lt;/IfModule&gt;
+			
+			</pre><p>mysql : /etc/my.cnf</p><pre class="screen">
+			
+[mysqld]
+max_connections=250
+			
+			</pre><p>不依依列舉，有興趣看我的系列文檔。</p></div></div><div class="section" title="2.3. IO"><div class="titlepage"><div><div><h3 class="title"><a id="traffic.io"></a>2.3. IO</h3></div></div></div><p>IO (Input/Output) 輸入/輸出，在國內被泛指硬碟IO，沒辦法這裡也不例外，也被指為硬碟IO</p><p>影響IO的幾個參數：</p><p>硬碟轉速與硬碟速率</p><p>RAID卡速率</p><p>以Dell為例，去官網查看一下http://www.dell.com/content/topics/topic.aspx/global/products/pvaul/topics/en/us/raid_controller?c=us&amp;l=en&amp;cs=555</p><p>PERC H700 Integrated / Adapter: 6Gb/s SAS</p><p>SAS 硬碟介面 3Gbps，理論讀寫速度300MB/S，實際情況沒有這麼理想。</p><p>RAID0 / RAID10是提高IO最有效的手段，但是你從上面數據計算。6塊SAS硬碟做Raid 0 傳輸速率可以達到18Gb/s，但RAID卡H700只能達到6Gb/s，整體頻寬並沒有提高。</p><p>這樣做的意義是在Raid頻寬與硬碟速度不變的情況下，讀寫所花費的時間減少了，提高了列隊處理速度，減少IO排隊。</p><p>IO的問題就是IO排隊等待問題，而不是傳輸頻寬不夠用</p><div class="section" title="2.3.1. 分佈IO"><div class="titlepage"><div><div><h4 class="title"><a id="idp165120"></a>2.3.1. 分佈IO</h4></div></div></div><p>在經濟緊張的情況下，可以使用多塊獨立硬碟分佈IO，每塊硬件分別做獨立存儲，比如資料庫可以採用這種方案：可以一塊硬碟存數據，一塊硬碟做索引，另一塊做日誌等等，禁止交叉。</p><p>在經濟允許的情況下，你可以配置多個RAID卡，外掛DAS。或者採用集群加分散式檔案系統方案</p></div><div class="section" title="2.3.2. FC SAN"><div class="titlepage"><div><div><h4 class="title"><a id="idp166480"></a>2.3.2. FC SAN</h4></div></div></div><p>8Gb Fibre Channel</p><p>我曾經測試過本地硬碟（146G 15RPM * 8 做RAID10）</p></div><div class="section" title="2.3.3. iSCSI / FCoE"><div class="titlepage"><div><div><h4 class="title"><a id="idp167520"></a>2.3.3. iSCSI / FCoE</h4></div></div></div><p>http://zh.wikipedia.org/wiki/ISCSI</p><p>iSCSI 可以提供1GB，10GB數據傳輸，傳輸介質可以選擇雙絞綫或者光纖</p><p>FCoE 通過乙太網傳輸FC協議，與iSCSI有很多相似之處</p></div><div class="section" title="2.3.4. InfiniBand 或 RDMA"><div class="titlepage"><div><div><h4 class="title"><a id="idp168944"></a>2.3.4. InfiniBand 或 RDMA</h4></div></div></div><p>提供10Gbps ~ 120Gbps 的IO速度</p><p>http://en.wikipedia.org/wiki/InfiniBand</p><p>http://www.infinibandta.org/</p></div></div></div><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
+            /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+
+            if(document.domain == 'netkiller.github.com'){
+            var disqus_shortname = 'netkiller'; // required: replace example with your forum shortname
+            }else{
+			var disqus_shortname = 'neochan';
+            }
+
+            /* * * DON'T EDIT BELOW THIS LINE * * */
+            (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+            })();
+        </script><noscript xmlns="">Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><a xmlns="" href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="overview.html">上一頁</a> </td><td width="20%" align="center"><a accesskey="u" href="overview.html">上一級</a></td><td width="40%" align="right"> <a accesskey="n" href="dfs.html">下一頁</a></td></tr><tr><td width="40%" align="left" valign="top">第 1 章 Architecture Overview </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始頁</a></td><td width="40%" align="right" valign="top"> 3. Distributed File System(簇檔案系統)</td></tr></table></div></body></html>

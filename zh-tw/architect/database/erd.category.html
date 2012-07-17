@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>3. 分類表設計</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.76.1" /><link rel="home" href="../index.html" title="Netkiller Architect 手札" /><link rel="up" href="rdbms.html" title="第 3 章 RDBMS 資料庫設計" /><link rel="prev" href="erd.user.html" title="2. 用戶帳號表" /><link rel="next" href="erd.article.html" title="4. 文章表設計" /><script xmlns="" type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-11694057-1']);
+  _gaq.push(['_setDomainName', 'netkiller.sourceforge.net']);
+  _gaq.push(['_setAllowHash', 'false']);
+  _gaq.push(['_setAllowLinker', true]);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">3. 分類表設計</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="erd.user.html">上一頁</a> </td><th width="60%" align="center">第 3 章 RDBMS 資料庫設計</th><td width="20%" align="right"> <a accesskey="n" href="erd.article.html">下一頁</a></td></tr></table><hr /></div><table xmlns="" width="100%" border="0"><tr><td align="left"><a href="http://netkiller.sourceforge.net/">Home</a> |
+                <a href="http://netkiller.github.com/">Mirror</a> |
+                <a href="/search.html">Search</a></td><td align="right"><form id="searchbox_008589143145807374698:f5uprauilyy" action="/search.html"><input type="hidden" name="cx" value="008589143145807374698:f5uprauilyy" /><input type="hidden" name="cof" value="FORID:11" /><input name="q" type="text" size="25" style="border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; border-top-style: solid; border-right-style: solid; border-bottom-style: solid; border-left-style: solid; border-top-color: rgb(126, 157, 185); border-right-color: rgb(126, 157, 185); border-bottom-color: rgb(126, 157, 185); border-left-color: rgb(126, 157, 185); padding-top: 2px; padding-right: 2px; padding-bottom: 2px; padding-left: 2px; background-image: url(http://www.google.com/cse/intl/en/images/google_custom_search_watermark.gif); background-attachment: initial; background-origin: initial; background-clip: initial; background-color: rgb(255, 255, 255); background-position: 0% 50%; background-repeat: no-repeat no-repeat; " /><input type="submit" name="sa" value="Search" /><input name="siteurl" type="hidden" value="http://netkiller.sourceforge.net/" /></form><script type="text/javascript" src="http://www.google.com/coop/cse/brand?form=searchbox_008589143145807374698%3Af5uprauilyy"></script></td></tr></table><div class="section" title="3. 分類表設計"><div class="titlepage"><div><div><h3 class="title"><a id="erd.category"></a>3. 分類表設計</h3></div></div></div><div class="section" title="3.1. 樹形分類表"><div class="titlepage"><div><div><h4 class="title"><a id="idp333344"></a>3.1. 樹形分類表</h4></div></div></div><pre class="screen">
+			
+ +-----------+
+ | category  |
+ |-----------|
+ |id         | &lt;---+
+ |title      |     |
+ |description|    1:n
+ |status     |     |
+ |parent_id  | o---+
+ +-----------+
+			
+			</pre><pre class="programlisting">
+		
+CREATE TABLE `category` (
+	`id` SMALLINT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+	`name` VARCHAR(10) NOT NULL,
+	`description` VARCHAR(255) NULL,
+	`status` ENUM('enable','desable') NOT NULL DEFAULT 'enable',
+	`parent_id` SMALLINT(10) UNSIGNED NOT NULL DEFAULT '0',
+	PRIMARY KEY (`id`),
+	CONSTRAINT `FK1` FOREIGN KEY (`parent_id`) REFERENCES `category` (`id`)
+)
+COMMENT='goods category'
+ENGINE=InnoDB
+ROW_FORMAT=DEFAULT
+		
+		</pre></div><div class="section" title="3.2. 多對多分類"><div class="titlepage"><div><div><h4 class="title"><a id="idp335888"></a>3.2. 多對多分類</h4></div></div></div><p>多對多分類,主要用於滿足，一個產品/文章屬於多個分類的需求。</p><pre class="programlisting">
+		
+      +------------+
+      | category   |
+      |------------|
+ +--&gt; |id          | &lt;---+
+ |    |title       |     |     +----------------------+
+1:n   |description |    1:n    | categroy_has_product |
+ |    |status      |     |     +----------------------+
+ +--o |parent_id   |     |     | id                   |
+      +------------+     +---o | category_id          |
+                         +---o | product_id           |
+      +------------+     |     +----------------------+
+      | product    |    1:n
+      +------------+     |
+      |id          | &lt;---+
+      |price       |
+      |quantity    |
+      |...         |
+      |status      |
+      +------------+
+		
+		</pre></div><div class="section" title="3.3. 快速檢索子分類設計"><div class="titlepage"><div><div><h4 class="title"><a id="idp337872"></a>3.3. 快速檢索子分類設計</h4></div></div></div><p>上面我剛剛講過怎樣實現“不限子樹的分類樹”，我們可以實現不限層次的無線分類表。</p><pre class="screen">
+			
+ +-----------+
+ | category  |
+ |-----------|
+ |id         | &lt;---+
+ |title      |     |
+ |description|    1:n
+ |status     |     |
+ |parent_id  | o---+
+ +-----------+
+			
+			</pre><p>
+				問題出來了，當我需要讀取一個分類（任意分類）下的所有子分類，怎樣實現，很多人會說用“遞歸”。
+				當然“遞歸”可是現實我們的需求，在幾百個分類的項目中，使用遞歸也不是不可以的，但是當數量非常龐大時怎麼辦？
+			</p><p>當然有更好的解決方案，請看下面</p><pre class="screen">
+			
+ +-----------+
+ | category  |
+ |-----------|
+ |id         | &lt;---+
+ |title      |     |
+ |description|    1:n
+ |status     |     |
+ |parent_id  | o---+
+ |path       |
+ +-----------+
+			
+			</pre><pre class="screen">
+			
++-------------------------------------------------------------------------+
+| category                                                                |
++----+-----------+-----------------------+--------+-----------+-----------+
+| id | name      | description           | status | parent_id | path      |
++----+-----------+-----------------------+--------+-----------+-----------+
+|  1 | 中國    | 中華人民共和家                                    | Y      |      NULL | 1/        |
+|  4 | 廣東省 | 廣東省                                                      | Y      |         1 | 1/4       |
+|  5 | 深圳市 | NULL                      | Y      |         4 | 1/4/5     |
+|  6 | 寶安區 | NULL                      | Y      |         5 | 1/4/5/6   |
+|  7 | 龍華鎮 | NULL                      | Y      |         6 | 1/4/5/6/7 |
++----+-----------+-----------------------+--------+-----------+-----------+
+			
+			</pre><pre class="programlisting">
+			
+CREATE TABLE `category` (
+	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '分類ID',
+	`name` VARCHAR(50) NOT NULL COMMENT '分類名稱',
+	`description` VARCHAR(200) NULL DEFAULT NULL COMMENT '分類描述',
+	`status` ENUM('Y','N') NOT NULL DEFAULT 'Y' COMMENT '分類狀態有繼承性',
+	`parent_id` INT(10) NULL DEFAULT '1' COMMENT '分類父ID',
+	`path` VARCHAR(255) NOT NULL COMMENT '分類遞歸路徑索引',
+	INDEX `PK` (`id`),
+	INDEX `relation` (`id`, `parent_id`),
+	INDEX `FK_category_category` (`parent_id`),
+	INDEX `path` (`path`)
+)
+COMMENT='分類表'
+ENGINE=InnoDB
+ROW_FORMAT=DEFAULT
+AUTO_INCREMENT=0
+
+insert into category(`name`,`description`,`status`,`parent_id`,`path`) values('中國','中華人民共和家','Y',null,'1/')
+			
+			</pre><pre class="programlisting">
+			
+ALTER TABLE `category`
+	ADD CONSTRAINT `FK_category_category` FOREIGN KEY (`parent_id`) REFERENCES `category` (`id`)
+			
+			</pre><p>抽取廣東子樹</p><pre class="programlisting">
+			
+select * from category where path like '1/4%';
+			
+			</pre><pre class="screen">
+			
+mysql&gt; select * from category where path like '1/4%';
++----+-----------+-------------+--------+-----------+-----------+
+| id | name      | description | status | parent_id | path      |
++----+-----------+-------------+--------+-----------+-----------+
+|  4 | 廣東省 | 廣東省   | Y      |         1 | 1/4       |
+|  5 | 深圳市 | NULL        | Y      |         4 | 1/4/5     |
+|  6 | 寶安區 | NULL        | Y      |         5 | 1/4/5/6   |
+|  7 | 龍華鎮 | NULL        | Y      |         6 | 1/4/5/6/7 |
++----+-----------+-------------+--------+-----------+-----------+
+4 rows in set (0.00 sec)
+			
+			</pre></div><div class="section" title="3.4. Example"><div class="titlepage"><div><div><h4 class="title"><a id="idp338000"></a>3.4. Example</h4></div></div></div><div class="example"><a id="idp346960"></a><p class="title"><strong>例 3.1. identity_card 身份證歸屬地表</strong></p><div class="example-contents"><pre class="programlisting">
+CREATE TABLE `identity_card` (
+	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '唯一主鍵',
+	`pid` INT(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '父ID',
+	`path` VARCHAR(50) NOT NULL COMMENT '路徑',
+	`number` VARCHAR(18) NOT NULL COMMENT '身份證號碼段',
+	`zone` VARCHAR(50) NOT NULL COMMENT '行政區域',
+	`status` ENUM('Y','N') NOT NULL DEFAULT 'N' COMMENT '狀態',
+	`modified` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '創建與修改時間',
+	PRIMARY KEY (`id`),
+	INDEX `FK_identity_card_identity_card` (`pid`),
+	INDEX `path` (`path`),
+	INDEX `number` (`number`),
+	CONSTRAINT `FK_identity_card_identity_card` FOREIGN KEY (`pid`) REFERENCES `identity_card` (`id`) ON UPDATE CASCADE ON DELETE CASCADE
+)
+COMMENT='identity card number'
+COLLATE='utf8_general_ci'
+ENGINE=InnoDB;
+				</pre><pre class="screen">
+"id"	"pid"	"path"	"number"	"zone"	"status"	"modified"
+"1012"	"1"	"1.1012"	"330000"	"浙江省"	"Y"	"2012-05-16 17:18:14"
+"1041"	"1012"	"1.1012.1041"	"330300"	"溫州市"	"Y"	"2012-05-16 17:44:18"
+"1052"	"1041"	"1.1012.1041.1052"	"330381"	"瑞安市"	"Y"	"2012-05-16 17:44:25"
+"1367"	"1"	"1.1367"	"360000"	"江西省"	"Y"	"2012-05-16 16:57:23"
+"1451"	"1367"	"1.1367.1451"	"360900"	"宜春市"	"Y"	"2012-05-16 17:44:58"
+"1990"	"1"	"1.1990"	"430000"	"湖南省"	"Y"	"2012-05-16 16:50:50"
+"1991"	"1990"	"1.1990.1991"	"430100"	"長沙市"	"Y"	"2012-05-16 16:50:54"
+"2124"	"1990"	"1.1990.2124"	"431300"	"婁底市"	"Y"	"2012-05-16 16:54:45"
+				</pre></div></div><br class="example-break" /></div></div><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
+            /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+
+            if(document.domain == 'netkiller.github.com'){
+            var disqus_shortname = 'netkiller'; // required: replace example with your forum shortname
+            }else{
+			var disqus_shortname = 'neochan';
+            }
+
+            /* * * DON'T EDIT BELOW THIS LINE * * */
+            (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+            })();
+        </script><noscript xmlns="">Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><a xmlns="" href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="erd.user.html">上一頁</a> </td><td width="20%" align="center"><a accesskey="u" href="rdbms.html">上一級</a></td><td width="40%" align="right"> <a accesskey="n" href="erd.article.html">下一頁</a></td></tr><tr><td width="40%" align="left" valign="top">2. 用戶帳號表 </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始頁</a></td><td width="40%" align="right" valign="top"> 4. 文章表設計</td></tr></table></div></body></html>

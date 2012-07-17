@@ -1,0 +1,774 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<HTML
+><HEAD
+><TITLE
+>Installing Postfix</TITLE
+>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.76b+
+"><LINK
+REL="HOME"
+TITLE="Postfix Integrated Solution"
+HREF="book1.html" tppabs="http://www.9812.net/article/postfix/book1.html"><LINK
+REL="UP"
+TITLE="整合電子郵件系統(MYSQL)"
+HREF="c668.html" tppabs="http://www.9812.net/article/postfix/c668.html"><LINK
+REL="PREVIOUS"
+TITLE="Cyrus-SASL"
+HREF="x684.html" tppabs="http://www.9812.net/article/postfix/x684.html"><LINK
+REL="NEXT"
+TITLE="Installing Courier POP and IMAP"
+HREF="x794.html" tppabs="http://www.9812.net/article/postfix/x794.html"></HEAD
+><BODY
+CLASS="SECTION"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Postfix Integrated Solution</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x684.html" tppabs="http://www.9812.net/article/postfix/x684.html"
+ACCESSKEY="P"
+>&#60;&#60;&#60; Previous</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>整合電子郵件系統(MYSQL)</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x794.html" tppabs="http://www.9812.net/article/postfix/x794.html"
+ACCESSKEY="N"
+>Next &#62;&#62;&#62;</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECTION"
+><H1
+CLASS="SECTION"
+><A
+NAME="AEN730"
+></A
+>Installing Postfix</H1
+><DIV
+CLASS="PROCEDURE"
+><P
+><B
+>編譯安裝</B
+></P
+><OL
+TYPE="1"
+><LI
+><P
+>xxxx</P
+></LI
+><LI
+><P
+>添加postfix用戶
+				<A
+NAME="AEN738"
+HREF="#FTN.AEN738"
+>[1]</A
+>BSD
+				</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linux src]# <TT
+CLASS="USERINPUT"
+><B
+>groupadd -g 1000 postfix</B
+></TT
+>
+[root@linux src]# <TT
+CLASS="USERINPUT"
+><B
+>groupadd -g 1001 postdrop</B
+></TT
+>
+[root@linux src]# <TT
+CLASS="USERINPUT"
+><B
+>useradd postfix -u 1000 -g 1000 -d /dev/null -s /bin/false</B
+></TT
+>
+				</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>給Postfix郵箱空間配額打補丁</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linux src]# <TT
+CLASS="USERINPUT"
+><B
+>patch -p0 &#60; postfix-2.0.19.patch</B
+></TT
+>
+patching file postfix-2.0.19/src/global/mail_params.h
+patching file postfix-2.0.19/src/util/file_limit.c
+patching file postfix-2.0.19/src/virtual/mailbox.c
+patching file postfix-2.0.19/src/virtual/maildir.c
+patching file postfix-2.0.19/src/virtual/virtual.c
+patching file postfix-2.0.19/src/virtual/virtual.h
+				</PRE
+></TD
+></TR
+></TABLE
+><P
+>編譯安裝</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linux src]# <TT
+CLASS="USERINPUT"
+><B
+>cd postfix-2.0.19</B
+></TT
+>
+[root@linux postfix-2.0.19]# <TT
+CLASS="USERINPUT"
+><B
+>make tidy</B
+></TT
+>
+[root@linux postfix-2.0.19]# <TT
+CLASS="USERINPUT"
+><B
+>make clean</B
+></TT
+>
+[root@linux postfix-2.0.19]# <TT
+CLASS="USERINPUT"
+><B
+>make -f Makefile.init makefiles 'CCARGS=-DUSE_SASL_AUTH -DHAS_MYSQL -I/usr/include/mysql -I/usr/include/sasl' \</B
+></TT
+>
+<TT
+CLASS="USERINPUT"
+><B
+>'AUXLIBS=-L/usr/lib/mysql -L/usr/lib/sasl2 -lmysqlclient -lsasl2 -lz -lm'</B
+></TT
+>
+[root@linux postfix-2.0.19]# <TT
+CLASS="USERINPUT"
+><B
+>make</B
+></TT
+>
+[root@linux postfix-2.0.19]# <TT
+CLASS="USERINPUT"
+><B
+>make install</B
+></TT
+>
+				</PRE
+></TD
+></TR
+></TABLE
+><P
+>make tidy(如果你之前編譯過Postfix使用此命令)</P
+><P
+>make upgrade(升級老版本使用此命令)</P
+><P
+>make -f Makefile.init makefiles 'CCARGS=-DHAS_LDAP -I&#60;ldap的include目錄&#62; -DUSE_SASL_AUTH -I/usr/local/include/sasl' 'AUXLIBS=-L&#60;ldap的lib目錄&#62; -llber -lldap -L/usr/local/lib -lsasl2' </P
+><P
+>!!!!!!這裡切記要指定正確的SASL2的INCLUDE和LIB位置。由於現在很多linux發行版上都已經帶有了sasl，如果不指定的話，很可能會使用了不同版本的標頭檔和庫，在這種情況下，每次連接SMTP時，smtpd就會發生致命錯誤“Fatal: SASL per-connection server init...”而崩潰。</P
+></LI
+><LI
+><P
+>配置安裝目錄</P
+><P
+>安裝程序會提問一些問題，可以直接按回車採用預設值。</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>Please specify the prefix for installed file names. Specify this ONLY
+if you are building ready-to-install packages for distribution to other
+machines.
+install_root: [/]
+
+Please specify a directory for scratch files while installing Postfix. You
+must have write permission in this directory.
+tempdir: [/root/src/postfix-2.0.19]
+
+Please specify the final destination directory for installed Postfix
+configuration files.
+config_directory: [/etc/postfix]
+
+Please specify the final destination directory for installed Postfix
+daemon programs. This directory should not be in the command search path
+of any users.
+daemon_directory: [/usr/libexec/postfix]
+
+Please specify the final destination directory for installed Postfix
+administrative commands. This directory should be in the command search
+path of adminstrative users.
+command_directory: [/usr/sbin]
+
+Please specify the final destination directory for Postfix queues.
+queue_directory: [/var/spool/postfix]
+
+Please specify the final destination pathname for the installed Postfix
+sendmail command. This is the Sendmail-compatible mail posting interface.
+sendmail_path: [/usr/sbin/sendmail]
+
+Please specify the final destination pathname for the installed Postfix
+newaliases command. This is the Sendmail-compatible command to build
+alias databases for the Postfix local delivery agent.
+newaliases_path: [/usr/bin/newaliases]
+
+Please specify the final destination pathname for the installed Postfix
+mailq command. This is the Sendmail-compatible mail queue listing command.
+mailq_path: [/usr/bin/mailq]
+
+Please specify the owner of the Postfix queue. Specify an account with
+numerical user ID and group ID values that are not used by any other
+accounts on the system.
+mail_owner: [postfix]
+
+Please specify the group for mail submission and for queue management
+commands. Specify a group name with a numerical group ID that is
+not shared with other accounts, not even with the Postfix mail_owner
+account. You can no longer specify "no" here.
+setgid_group: [postdrop]
+
+Please specify the destination directory for the Postfix on-line manual
+pages. You can no longer specify "no" here.
+manpage_directory: [/usr/local/man]
+
+Please specify the destination directory for the Postfix sample
+configuration files.
+sample_directory: [/etc/postfix]
+
+Please specify the destination directory for the Postfix README
+files. Specify "no" if you do not want to install these files.
+readme_directory: [no]
+				</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>main.cf</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linux postfix]# vi main.cf
+#======= BASE ==============
+#mail_spool_directory = /var/mail/
+myhostname = mail.example.net
+mydomain = example.net
+home_mailbox=Maildir/
+mydestination = $myhostname, $mydomain, $transport_maps
+local_recipient_maps =
+#mailbox_command= /usr/lib/courier-imap/bin/deliverquota -w 90 ~/Maildir
+#mailbox_command = /usr/local/maildrop/bin/maildrop
+#local_destination_concurrency_limit = 1
+#======= MYSQL =============
+transport_maps = mysql:/etc/postfix/mysql_transport.cf
+virtual_mailbox_base = /var/mail
+virtual_mailbox_maps = mysql:/etc/postfix/mysql_virtual.cf
+virtual_maps = mysql:/etc/postfix/mysql_aliases.cf
+#virtual_uid_maps = mysql:/etc/postfix/uids.cf
+#virtual_gid_maps = mysql:/etc/postfix/gids.cf
+virtual_uid_maps = static:1000
+virtual_gid_maps = static:1000
+#======= Quota ============
+#50MB
+virtual_mailbox_limit = 500000000
+#5MB
+message_size_limit = 50000000
+virtual_mailbox_limit_inbox = no
+virtual_mailbox_limit_maps = mysql:/etc/postfix/mysql_quota.cf
+virtual_mailbox_limit_override = yes
+virtual_maildir_extended = yes
+virtual_create_maildirsize = yes
+#====== SASL ================
+smtpd_sasl_auth_enable = yes
+smtpd_sasl_security_options = noanonymous
+broken_sasl_auth_clients = yes
+smtpd_recipient_restrictions = permit_sasl_authenticated permit_auth_destination reject
+#smtpd_sasl_local_domain = $mydomain
+smtpd_client_restrictions = permit_sasl_authenticated
+				</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>/etc/postfix/mysql_transport.cf</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 postfix]# <TT
+CLASS="USERINPUT"
+><B
+>cat /etc/postfix/mysql_transport.cf</B
+></TT
+>
+#mysql_transport.cf
+hosts = localhost
+user = postfix
+password = 6AJx9Nqv9x8hg
+dbname = postfix
+table = postfix_transport
+select_field = transport
+where_field = domain
+[root@linuxas3 postfix]#
+				</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>/etc/postfix/mysql_virtual.cf</P
+><P
+>   </P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 postfix]# <TT
+CLASS="USERINPUT"
+><B
+>cat /etc/postfix/mysql_virtual.cf</B
+></TT
+>
+#mysql_virtual.cf
+hosts = localhost
+user = postfix
+password= 6AJx9Nqv9x8hg
+dbname = postfix
+table = postfix_users
+select_field = maildir
+where_field = user
+[root@linuxas3 postfix]#
+ 				</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>/etc/postfix/mysql_aliases.cf</P
+><P
+>   </P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 postfix]# cat /etc/postfix/mysql_aliases.cf
+#mysql.aliases.cf
+hosts = localhost
+user = postfix
+password= 6AJx9Nqv9x8hg
+dbname = postfix
+table = postfix_aliases
+select_field = rcpt
+where_field = alias
+[root@linuxas3 postfix]#
+ 				</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>/etc/postfix/mysql_quota.cf</P
+><P
+>  </P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 postfix]# cat /etc/postfix/mysql_quota.cf
+#mailboxsize-mysql.cf
+hosts = localhost
+user = postfix
+password = 6AJx9Nqv9x8hg
+dbname = postfix
+table = postfix_users
+select_field = quota
+where_field = user
+[root@linuxas3 postfix]#
+ 				</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>運行,測試</P
+><P
+>postfix start</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 src]# telnet localhost 25
+Trying 127.0.0.1...
+Connected to linuxas3.9812.net (127.0.0.1).
+Escape character is '^]'.
+220 mail.example.net ESMTP Postfix
+quit
+221 Bye
+Connection closed by foreign host.
+[root@linuxas3 src]#
+ 				</PRE
+></TD
+></TR
+></TABLE
+></LI
+></OL
+></DIV
+><P
+>卸載Postfix
+			<A
+NAME="AEN791"
+HREF="#FTN.AEN791"
+>[2]</A
+>
+		</P
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Notes</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN738"
+HREF="x730.html#AEN738" tppabs="http://www.9812.net/article/postfix/x730.html#AEN738"
+>[1]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>BSD 平台請使用下面命令：</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+># pw groupadd postfix -g 2003
+# pw groupadd postdrop -g 2004
+# pw useradd postfix -u 2003 -g 2003 -d /dev/null -s /nologin
+				</PRE
+></TD
+></TR
+></TABLE
+></TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN791"
+HREF="x730.html#AEN791" tppabs="http://www.9812.net/article/postfix/x730.html#AEN791"
+>[2]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>複製下面命令粘貼到CLI上即可。
+			<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>postfix stop
+rm -rf /usr/libexec/postfix/bounce
+rm -rf /usr/libexec/postfix/cleanup
+rm -rf /usr/libexec/postfix/error
+rm -rf /usr/libexec/postfix/flush
+rm -rf /usr/libexec/postfix/lmtp
+rm -rf /usr/libexec/postfix/local
+rm -rf /usr/libexec/postfix/master
+rm -rf /usr/libexec/postfix/nqmgr
+rm -rf /usr/libexec/postfix/pickup
+rm -rf /usr/libexec/postfix/pipe
+rm -rf /usr/libexec/postfix/proxymap
+rm -rf /usr/libexec/postfix/qmgr
+rm -rf /usr/libexec/postfix/qmqpd
+rm -rf /usr/libexec/postfix/showq
+rm -rf /usr/libexec/postfix/smtp
+rm -rf /usr/libexec/postfix/smtpd
+rm -rf /usr/libexec/postfix/spawn
+rm -rf /usr/libexec/postfix/trivial-rewrite
+rm -rf /usr/libexec/postfix/virtual
+rm -rf /usr/sbin/postalias
+rm -rf /usr/sbin/postcat
+rm -rf /usr/sbin/postconf
+rm -rf /usr/sbin/postfix
+rm -rf /usr/sbin/postkick
+rm -rf /usr/sbin/postlock
+rm -rf /usr/sbin/postlog
+rm -rf /usr/sbin/postmap
+rm -rf /usr/sbin/postsuper
+rm -rf /usr/sbin/postdrop
+rm -rf /usr/sbin/postqueue
+rm -rf /usr/sbin/sendmail
+rm -rf /usr/bin/newaliases
+rm -rf /usr/bin/mailq
+rm -rf /etc/postfix/LICENSE
+rm -rf /etc/postfix/access
+rm -rf /etc/postfix/aliases
+rm -rf /etc/postfix/canonical
+rm -rf /etc/postfix/main.cf
+rm -rf /etc/postfix/main.cf.default
+rm -rf /etc/postfix/master.cf
+rm -rf /etc/postfix/pcre_table
+rm -rf /etc/postfix/postfix-files
+rm -rf /etc/postfix/regexp_table
+rm -rf /etc/postfix/relocated
+rm -rf /etc/postfix/transport
+rm -rf /etc/postfix/virtual
+rm -rf /etc/postfix/postfix-script
+rm -rf /etc/postfix/post-install
+rm -rf /usr/local/man/man1/mailq.1
+rm -rf /usr/local/man/man1/newaliases.1
+rm -rf /usr/local/man/man1/postalias.1
+rm -rf /usr/local/man/man1/postcat.1
+rm -rf /usr/local/man/man1/postconf.1
+rm -rf /usr/local/man/man1/postdrop.1
+rm -rf /usr/local/man/man1/postfix.1
+rm -rf /usr/local/man/man1/postkick.1
+rm -rf /usr/local/man/man1/postlock.1
+rm -rf /usr/local/man/man1/postlog.1
+rm -rf /usr/local/man/man1/postmap.1
+rm -rf /usr/local/man/man1/postqueue.1
+rm -rf /usr/local/man/man1/postsuper.1
+rm -rf /usr/local/man/man1/sendmail.1
+rm -rf /usr/local/man/man5/access.5
+rm -rf /usr/local/man/man5/aliases.5
+rm -rf /usr/local/man/man5/canonical.5
+rm -rf /usr/local/man/man5/pcre_table.5
+rm -rf /usr/local/man/man5/regexp_table.5
+rm -rf /usr/local/man/man5/relocated.5
+rm -rf /usr/local/man/man5/transport.5
+rm -rf /usr/local/man/man5/virtual.5
+rm -rf /usr/local/man/man8/bounce.8
+rm -rf /usr/local/man/man8/cleanup.8
+rm -rf /usr/local/man/man8/defer.8
+rm -rf /usr/local/man/man8/error.8
+rm -rf /usr/local/man/man8/flush.8
+rm -rf /usr/local/man/man8/lmtp.8
+rm -rf /usr/local/man/man8/local.8
+rm -rf /usr/local/man/man8/master.8
+rm -rf /usr/local/man/man8/nqmgr.8
+rm -rf /usr/local/man/man8/pickup.8
+rm -rf /usr/local/man/man8/pipe.8
+rm -rf /usr/local/man/man8/proxymap.8
+rm -rf /usr/local/man/man8/qmgr.8
+rm -rf /usr/local/man/man8/qmqpd.8
+rm -rf /usr/local/man/man8/showq.8
+rm -rf /usr/local/man/man8/smtp.8
+rm -rf /usr/local/man/man8/smtpd.8
+rm -rf /usr/local/man/man8/spawn.8
+rm -rf /usr/local/man/man8/trivial-rewrite.8
+rm -rf /usr/local/man/man8/virtual.8
+rm -rf /etc/postfix/sample-aliases.cf
+rm -rf /etc/postfix/sample-auth.cf
+rm -rf /etc/postfix/sample-canonical.cf
+rm -rf /etc/postfix/sample-compatibility.cf
+rm -rf /etc/postfix/sample-debug.cf
+rm -rf /etc/postfix/sample-filter.cf
+rm -rf /etc/postfix/sample-flush.cf
+rm -rf /etc/postfix/sample-ldap.cf
+rm -rf /etc/postfix/sample-lmtp.cf
+rm -rf /etc/postfix/sample-local.cf
+rm -rf /etc/postfix/sample-mime.cf
+rm -rf /etc/postfix/sample-misc.cf
+rm -rf /etc/postfix/sample-pcre-access.cf
+rm -rf /etc/postfix/sample-pcre-body.cf
+rm -rf /etc/postfix/sample-pcre-header.cf
+rm -rf /etc/postfix/sample-qmqpd.cf
+rm -rf /etc/postfix/sample-rate.cf
+rm -rf /etc/postfix/sample-regexp-access.cf
+rm -rf /etc/postfix/sample-regexp-body.cf
+rm -rf /etc/postfix/sample-regexp-header.cf
+rm -rf /etc/postfix/sample-relocated.cf
+rm -rf /etc/postfix/sample-resource.cf
+rm -rf /etc/postfix/sample-rewrite.cf
+rm -rf /etc/postfix/sample-smtp.cf
+rm -rf /etc/postfix/sample-smtpd.cf
+rm -rf /etc/postfix/sample-transport.cf
+rm -rf /etc/postfix/sample-virtual.cf
+rm -rf /etc/postfix
+rm -rf /usr/libexec/postfix
+rm -rf /var/spool/postfix
+			</PRE
+></TD
+></TR
+></TABLE
+>
+			</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x684.html" tppabs="http://www.9812.net/article/postfix/x684.html"
+ACCESSKEY="P"
+>&#60;&#60;&#60; Previous</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html" tppabs="http://www.9812.net/article/postfix/book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x794.html" tppabs="http://www.9812.net/article/postfix/x794.html"
+ACCESSKEY="N"
+>Next &#62;&#62;&#62;</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Cyrus-SASL</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="c668.html" tppabs="http://www.9812.net/article/postfix/c668.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Installing Courier POP and IMAP</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

@@ -1,0 +1,955 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<HTML
+><HEAD
+><TITLE
+>反病毒,反垃圾郵件部分(Anti-Virus,Anti-Spam)</TITLE
+>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.76b+
+"><LINK
+REL="HOME"
+TITLE="Postfix Integrated Solution"
+HREF="book1.html" tppabs="http://www.9812.net/article/postfix/book1.html"><LINK
+REL="PREVIOUS"
+TITLE="Courier-IMAP"
+HREF="x924.html" tppabs="http://www.9812.net/article/postfix/x924.html"><LINK
+REL="NEXT"
+TITLE="防病毒系統 NAI McAfee AntiVirus (uvscan)"
+HREF="x996.html" tppabs="http://www.9812.net/article/postfix/x996.html"></HEAD
+><BODY
+CLASS="CHAPTER"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Postfix Integrated Solution</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x924.html" tppabs="http://www.9812.net/article/postfix/x924.html"
+ACCESSKEY="P"
+>&#60;&#60;&#60; Previous</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x996.html" tppabs="http://www.9812.net/article/postfix/x996.html"
+ACCESSKEY="N"
+>Next &#62;&#62;&#62;</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="CHAPTER"
+><H1
+><A
+NAME="ANTI"
+></A
+>反病毒,反垃圾郵件部分(Anti-Virus,Anti-Spam)</H1
+><P
+>這裡需要開通一個病毒通知郵箱virusalert@yourdomain.org和廣告通知郵箱spam@yourdomain.org，
+	我習慣于將virusalert 轉信到 postmaster@example.org ,只要在postfix_aliases表中插入記錄即可.
+	</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>INSERT INTO `postfix_aliases` (`alias` , `rcpt`) VALUES ('virusalert', 'postmaster@example.org');
+INSERT INTO `postfix_aliases` (`alias` , `rcpt`) VALUES ('spamalert', 'postmaster@example.org');
+INSERT INTO `postfix_aliases` (`alias` , `rcpt`) VALUES ('notspam', 'postmaster@example.org');
+	</PRE
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="SECTION"
+><H1
+CLASS="SECTION"
+><A
+NAME="AEN943"
+></A
+>AMaViS</H1
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>      .......................................
+      :                Postfix              :
+   -----&#62;smtpd \                            :
+      :         -pre-cleanup-\       /local----&#62;
+   ----&#62;pickup /              -queue-       :
+      :             -cleanup-/   |   \smtp-----&#62;
+      :     bounces/    ^        v          :
+      : and locally     |        v          :
+      :   forwarded   smtpd  smtp-amavis    :
+      :    messages   10025      |          :
+      ...........................|...........
+                        ^        |
+                        |        v
+            ............|..............................
+            :           |   $inet_socket_port=10024   :
+            :           |                             :
+            : $forward_method='smtp:127.0.0.1:10025'  :
+            : $notify_method ='smtp:127.0.0.1:10025'  :
+            :                                         :
+            :    amavisd-new                          :
+            ...........................................
+		</PRE
+></TD
+></TR
+></TABLE
+><P
+>安裝各種壓縮軟件，在這裡壓縮軟件主要作用解壓郵件附件，然後再查殺病毒。</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+># rpm -ivh unrar-3.2.3-2.9.i386.rpm 
+# rpm -ivh zoo-2.10-11.9.i386.rpm 
+# rpm -ivh unzoo-4.4-2.i386.rpm 
+# rpm -ivh arc-5.21e-6.i386.rpm 
+# rpm -ivh nomarch-1.3-1mdk.i586.rpm 
+# rpm -ivh unarj-2.65-3.9.i386.rpm 
+# rpm -ivh arj-3.10-0.1.i386.rpm 
+# rpm -ivh freeze-2.5.0-7.i386.rpm 
+# mkdir cmpress 
+# tar -zxvf compress-4.0.1.tar.gz -C compress 
+# cd compress 
+# make 
+# make install 
+		</PRE
+></TD
+></TR
+></TABLE
+><P
+>安裝amavisd之前，首先安裝CPAN perl -MCPAN -e shell，CPAN可以手動配置，也可以自動配置，建議使用手動配置，這樣你可以選擇下載URL，我選擇的是linuxforum.net</P
+><P
+>自動配置 提示Are you ready for manual configuration? [yes]輸入no然後回車</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 src]# perl -MCPAN -e shell
+We have to reconfigure CPAN.pm due to following uninitialized parameters:
+
+cpan_home, keep_source_where, build_dir, build_cache, scan_cache, index_expire, gzip, tar, unzip, ma
+ke, pager, makepl_arg, make_arg, make_install_arg, urllist, inhibit_startup_message, ftp_proxy, http
+_proxy, no_proxy, prerequisites_policy, cache_metadata
+
+/usr/lib/perl5/5.8.0/CPAN/Config.pm initialized.
+
+
+CPAN is the world-wide archive of perl resources. It consists of about
+100 sites that all replicate the same contents all around the globe.
+Many countries have at least one CPAN site already. The resources
+found on CPAN are easily accessible with the CPAN.pm module. If you
+want to use CPAN.pm, you have to configure it properly.
+
+If you do not want to enter a dialog now, you can answer 'no' to this
+question and I'll try to autoconfigure. (Note: you can revisit this
+dialog anytime later by typing 'o conf init' at the cpan prompt.)
+
+Are you ready for manual configuration? [yes]no
+		</PRE
+></TD
+></TR
+></TABLE
+><P
+>手動配置</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 src]# perl -MCPAN -e shell
+We have to reconfigure CPAN.pm due to following uninitialized parameters:
+
+cpan_home, keep_source_where, build_dir, build_cache, scan_cache, index_expire, gzip, tar, unzip, ma
+ke, pager, makepl_arg, make_arg, make_install_arg, urllist, inhibit_startup_message, ftp_proxy, http
+_proxy, no_proxy, prerequisites_policy, cache_metadata
+
+/usr/lib/perl5/5.8.0/CPAN/Config.pm initialized.
+
+
+CPAN is the world-wide archive of perl resources. It consists of about
+100 sites that all replicate the same contents all around the globe.
+Many countries have at least one CPAN site already. The resources
+found on CPAN are easily accessible with the CPAN.pm module. If you
+want to use CPAN.pm, you have to configure it properly.
+
+If you do not want to enter a dialog now, you can answer 'no' to this
+question and I'll try to autoconfigure. (Note: you can revisit this
+dialog anytime later by typing 'o conf init' at the cpan prompt.)
+
+Are you ready for manual configuration? [yes]
+
+
+The following questions are intended to help you with the
+configuration. The CPAN module needs a directory of its own to cache
+important index files and maybe keep a temporary mirror of CPAN files.
+This may be a site-wide directory or a personal directory.
+
+
+
+I see you already have a  directory
+    /root/.cpan
+Shall we use it as the general CPAN build and cache directory?
+
+CPAN build and cache directory? [/root/.cpan]
+
+
+If you want, I can keep the source files after a build in the cpan
+home directory. If you choose so then future builds will take the
+files from there. If you don't want to keep them, answer 0 to the
+next question.
+
+
+
+How big should the disk cache be for keeping the build directories
+with all the intermediate files?
+
+Cache size for build directory (in MB)? [10]
+
+
+By default, each time the CPAN module is started, cache scanning
+is performed to keep the cache size in sync. To prevent from this,
+disable the cache scanning with 'never'.
+
+Perform cache scanning (atstart or never)? [atstart]
+
+
+To considerably speed up the initial CPAN shell startup, it is
+possible to use Storable to create a cache of metadata. If Storable
+is not available, the normal index mechanism will be used.
+
+Cache metadata (yes/no)? [yes]
+
+
+The next option deals with the charset your terminal supports. In
+general CPAN is English speaking territory, thus the charset does not
+matter much, but some of the aliens out there who upload their
+software to CPAN bear names that are outside the ASCII range. If your
+terminal supports UTF-8, you say no to the next question, if it
+supports ISO-8859-1 (also known as LATIN1) then you say yes, and if it
+supports neither nor, your answer does not matter, you will not be
+able to read the names of some authors anyway. If you answer no, names
+will be output in UTF-8.
+
+Your terminal expects ISO-8859-1 (yes/no)? [yes]
+
+
+The CPAN module can detect when a module that which you are trying to
+build depends on prerequisites. If this happens, it can build the
+prerequisites for you automatically ('follow'), ask you for
+confirmation ('ask'), or just ignore them ('ignore'). Please set your
+policy to one of the three values.
+
+Policy on building prerequisites (follow, ask or ignore)? [ask]
+
+
+The CPAN module will need a few external programs to work properly.
+Please correct me, if I guess the wrong path for a program. Don't
+panic if you do not have some of them, just press ENTER for those. To
+disable the use of a download program, you can type a space followed
+by ENTER.
+
+Where is your gzip program? [/bin/gzip]
+Where is your tar program? [/bin/tar]
+Where is your unzip program? [/usr/bin/unzip]
+Where is your make program? [/usr/bin/make]
+Where is your links program? [/usr/bin/links]
+Where is your wget program? [/usr/bin/wget]
+Warning: ncftpget not found in PATH
+Where is your ncftpget program? []
+Warning: ncftp not found in PATH
+Where is your ncftp program? []
+Where is your ftp program? [/usr/kerberos/bin/ftp]
+What is your favorite pager program? [/usr/bin/less]
+What is your favorite shell? [/bin/bash]
+
+
+Every Makefile.PL is run by perl in a separate process. Likewise we
+run 'make' and 'make install' in processes. If you have any
+parameters (e.g. PREFIX, LIB, UNINST or the like) you want to pass
+to the calls, please specify them here.
+
+If you don't understand this question, just press ENTER.
+
+Parameters for the 'perl Makefile.PL' command?
+Typical frequently used settings:
+
+    POLLUTE=1        increasing backwards compatibility
+    LIB=~/perl       non-root users (please see manual for more hints)
+
+Your choice:  []
+Parameters for the 'make' command?
+Typical frequently used setting:
+
+    -j3              dual processor system
+
+Your choice:  []
+Parameters for the 'make install' command?
+Typical frequently used setting:
+
+    UNINST=1         to always uninstall potentially conflicting files
+
+Your choice:  []
+
+
+Sometimes you may wish to leave the processes run by CPAN alone
+without caring about them. As sometimes the Makefile.PL contains
+question you're expected to answer, you can set a timer that will
+kill a 'perl Makefile.PL' process after the specified time in seconds.
+
+If you set this value to 0, these processes will wait forever. This is
+the default and recommended setting.
+
+Timeout for inactivity during Makefile.PL? [0]
+
+
+If you're accessing the net via proxies, you can specify them in the
+CPAN configuration or via environment variables. The variable in
+the $CPAN::Config takes precedence.
+
+Your ftp_proxy?
+Your http_proxy?
+Your no_proxy?
+You have no /root/.cpan/sources/MIRRORED.BY
+  I'm trying to fetch one
+CPAN: LWP::UserAgent loaded ok
+Fetching with LWP:
+  ftp://ftp.perl.org/pub/CPAN/MIRRORED.BY
+
+
+
+
+Now we need to know where your favorite CPAN sites are located. Push
+a few sites onto the array (just in case the first on the array won't
+work). If you are mirroring CPAN to your local workstation, specify a
+file: URL.
+
+First, pick a nearby continent and country (you can pick several of
+each, separated by spaces, or none if you just want to keep your
+existing selections). Then, you will be presented with a list of URLs
+of CPAN mirrors in the countries you selected, along with previously
+selected URLs. Select some of those URLs, or just keep the old list.
+Finally, you will be prompted for any extra URLs -- file:, ftp:, or
+http: -- that host a CPAN mirror.
+
+(1) Africa
+(2) Asia
+(3) Central America
+(4) Europe
+(5) North America
+(6) Oceania
+(7) South America
+Select your continent (or several nearby continents) [] 2
+Sorry! since you don't have any existing picks, you must make a
+geographic selection.
+
+(1) China
+(2) Indonesia
+(3) Israel
+(4) Japan
+(5) Malaysia
+(6) Philippines
+(7) Republic of Korea
+(8) Russian Federation
+(9) Saudi Arabia
+(10) Singapore
+(11) Taiwan
+(12) Thailand
+Select your country (or several nearby countries) [] 1
+Sorry! since you don't have any existing picks, you must make a
+geographic selection.
+
+(1) ftp://ftp.shellhung.org/pub/CPAN
+(2) ftp://mirrors.hknet.com/CPAN
+(3) http://cpan.linuxforum.net/
+Select as many URLs as you like,
+put them on one line, separated by blanks [] 3
+
+Enter another URL or RETURN to quit: []
+New set of picks:
+  http://cpan.linuxforum.net/
+
+
+WAIT support is available as a Plugin. You need the CPAN::WAIT module
+to actually use it.  But we need to know your favorite WAIT server. If
+you don't know a WAIT server near you, just press ENTER.
+
+Your favorite WAIT server?
+   [wait://ls6-www.informatik.uni-dortmund.de:1404]
+
+
+commit: wrote /usr/lib/perl5/5.8.0/CPAN/Config.pm
+
+cpan shell -- CPAN exploration and modules installation (v1.61)
+ReadLine support available (try 'install Bundle::CPAN')
+
+cpan&#62;
+		</PRE
+></TD
+></TR
+></TABLE
+><P
+>安裝下載CPAN</P
+><P
+>		</P
+><P
+>下載是amavisd用到module</P
+><P
+>		<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>cpan&#62; install CPAN
+cpan&#62; install LWP
+cpan&#62; install Archive::Tar
+cpan&#62; install Archive::Zip
+cpan&#62; install Compress::Zlib
+cpan&#62; install Convert::TNEF
+cpan&#62; install Convert::UUlib
+cpan&#62; install MIME::Base64
+cpan&#62; install MIME::Parser
+cpan&#62; install MIME::Tools
+cpan&#62; install Mail::Internet
+cpan&#62; install Net::Server
+cpan&#62; install Net::SMTP
+cpan&#62; install Digest::MD5
+cpan&#62; install IO::Stringy
+cpan&#62; install Time::HiRes
+cpan&#62; install Unix::Syslog
+		</PRE
+></TD
+></TR
+></TABLE
+>
+		</P
+><P
+>下載是SpamAssassin用到module,如果上面已經安裝，這裡不用再重複安裝。</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>cpan&#62; install ExtUtils::MakeMaker
+cpan&#62; install File::Spec
+cpan&#62; install Pod::Usage
+cpan&#62; install HTML::Parser
+cpan&#62; install Sys::Syslog
+cpan&#62; install DB_File
+cpan&#62; install Net::DNS
+cpan&#62; install Mail::Audit
+cpan&#62; install Mail::Internet
+cpan&#62; install Net::SMTP
+cpan&#62; install Digest::SHA1 
+cpan&#62; install Net::Ident 
+cpan&#62; install IO::Socket::SSL
+cpan&#62; quit
+		</PRE
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="PROCEDURE"
+><P
+><B
+>下載安裝模組</B
+></P
+><OL
+TYPE="1"
+><LI
+><P
+>登錄網站 http://search.cpan.org</P
+><P
+>輸入要查找的模組如：Time::HiRes </P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>Time::HiRes 
+High resolution alarm, sleep, gettimeofday, interval timers 
+Time-HiRes-1.59 - 08 Apr 2004 - Jarkko Hietaniemi 
+				</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>下載 Time-HiRes-1.59 或複製它的URL，然後在使用 wget下載 </P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 src]# wget http://search.cpan.org/CPAN/authors/id/J/JH/JHI/Time-HiRes-1.59.tar.gz
+				</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>解包</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 src]# tar zxvf Time-HiRes-1.59.tar.gz
+Time-HiRes-1.59/
+Time-HiRes-1.59/hints/
+Time-HiRes-1.59/hints/sco.pl
+Time-HiRes-1.59/hints/svr4.pl
+Time-HiRes-1.59/hints/dec_osf.pl
+Time-HiRes-1.59/hints/solaris.pl
+Time-HiRes-1.59/hints/dynixptx.pl
+Time-HiRes-1.59/hints/irix.pl
+Time-HiRes-1.59/Changes
+Time-HiRes-1.59/MANIFEST
+Time-HiRes-1.59/typemap
+Time-HiRes-1.59/TODO
+Time-HiRes-1.59/HiRes.pm
+Time-HiRes-1.59/fallback/
+Time-HiRes-1.59/fallback/const-c.inc
+Time-HiRes-1.59/fallback/const-xs.inc
+Time-HiRes-1.59/HiRes.xs
+Time-HiRes-1.59/META.yml
+Time-HiRes-1.59/t/
+Time-HiRes-1.59/t/HiRes.t
+Time-HiRes-1.59/Makefile.PL
+Time-HiRes-1.59/README
+[root@linuxas3 src]# cd Time-HiRes-1.59
+				</PRE
+></TD
+></TR
+></TABLE
+></LI
+><LI
+><P
+>編譯安裝</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 Time-HiRes-1.59]# perl Makefile.PL
+[root@linuxas3 Time-HiRes-1.59]# make 
+[root@linuxas3 Time-HiRes-1.59]# make test 
+[root@linuxas3 Time-HiRes-1.59]# make install 
+				</PRE
+></TD
+></TR
+></TABLE
+></LI
+></OL
+></DIV
+><P
+>有些模組例如(install Time::HiRes)安裝時提示：</P
+><P
+>then set the environment variable LC_ALL to "C" and retry</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>Configuring Time::HiRes...
+Looking for gettimeofday()... found.
+Looking for setitimer()... found.
+Looking for getitimer()... found.
+You have interval timers (both setitimer and setitimer).
+Looking for ualarm()... found.
+Looking for usleep()... found.
+Looking for nanosleep()... found.
+You can mix subsecond sleeps with signals.
+Checking if your kit is complete...
+Looks good
+Writing Makefile for Time::HiRes
+Now you may issue 'make'.  Do not forget also 'make test'.
+
+NOTE: if you get an error like this (the line number may vary):
+Makefile:91: *** missing separator
+then set the environment variable LC_ALL to "C" and retry
+from scratch (re-run perl "Makefile.PL").
+		</PRE
+></TD
+></TR
+></TABLE
+><P
+>設置環境變數LC_ALL</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>cpan&#62; <TT
+CLASS="USERINPUT"
+><B
+>exit</B
+></TT
+>
+[root@linuxas3 src]# export LC_ALL=C
+[root@linuxas3 src]# echo ${LC_ALL}
+C
+[root@linuxas3 src]#
+		</PRE
+></TD
+></TR
+></TABLE
+><P
+>然後進入CPAN環境,再安裝</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>cpan&#62; install Time::HiRes
+  /usr/bin/make install  -- OK
+		</PRE
+></TD
+></TR
+></TABLE
+><P
+>AMaViS的安裝(http://www.ijs.si/software/amavisd/)</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 src]# cd amavisd-new-20030616
+[root@linuxas3 amavisd-new-20030616]# groupadd sweep
+[root@linuxas3 amavisd-new-20030616]# adduser vscan -g sweep -d /dev/null -s/bin/false
+[root@linuxas3 amavisd-new-20030616]# adduser amavis
+
+[root@linuxas3 amavisd-new-20030616]# patch -p0 &#60;amavisd-new-courier.patch
+patching file amavisd.conf
+patching file amavisd
+
+[root@linuxas3 amavisd-new-20030616]# mkdir /var/amavis
+[root@linuxas3 amavisd-new-20030616]# chown amavis:amavis /var/amavis
+[root@linuxas3 amavisd-new-20030616]# chmod 750 /var/amavis
+
+[root@linuxas3 amavisd-new-20030616]# cp amavisd /usr/local/sbin/
+[root@linuxas3 amavisd-new-20030616]# chown root /usr/local/sbin/amavisd
+[root@linuxas3 amavisd-new-20030616]# chmod 755  /usr/local/sbin/amavisd
+
+[root@linuxas3 amavisd-new-20030616]# cp amavisd.conf /etc/
+[root@linuxas3 amavisd-new-20030616]# chown root /etc/amavisd.conf
+[root@linuxas3 amavisd-new-20030616]# chmod 644  /etc/amavisd.conf
+
+[root@linuxas3 amavisd-new-20030616]# cp amavisd_init.sh /etc/init.d/amavisd
+[root@linuxas3 amavisd-new-20030616]# chmod 744 /etc/init.d/amavisd
+[root@linuxas3 amavisd-new-20030616]# chkconfig --add  amavisd
+[root@linuxas3 amavisd-new-20030616]# chkconfig amavisd on
+[root@linuxas3 amavisd-new-20030616]# vi /etc/init.d/amavisd
+prog="/usr/local/sbin/amavisd"
+[root@linuxas3 amavisd-new-20030616]# mkdir /var/virusmails
+[root@linuxas3 amavisd-new-20030616]# chown -R amavis.amavis /var/virusmails（隔離區）
+
+amavisd-new-courier.patch 這個補丁的作用是，stop　amavis時關閉uvsan.如果不打補丁，當你amavis stop後,10024沒有被釋放。
+再次啟動amavis會提示你有程序正在使用10024連接埠.
+		</PRE
+></TD
+></TR
+></TABLE
+><P
+>Configure postfix to use amavis</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linux amavisd-new-20030616]# vi /etc/amavisd.conf
+#
+# Section I - Essential daemon and MTA settings
+#
+
+$mydomain = 'example.net';      # (no useful default)
+$myhostname = 'mail.example.net';  # fqdn of this host, default by uname(3)
+$forward_method = 'smtp:127.0.0.1:10025';
+$notify_method = $forward_method;
+
+$max_servers  =  2;   # number of pre-forked children          (default 2)
+$max_requests = 10;   # retire a child after that many accepts (default 10)
+
+$child_timeout=5*60;  # abort child if it does not complete each task in n sec
+                      # (default: 8*60 seconds)
+
+#加入你的虛擬域.否則虛擬域郵箱不能anti-spam,如果你的虛擬域很多建議使用read_hash
+@local_domains_acl = ( ".$mydomain", '.example.net', '.your.virualdomain' ); 
+# 每個域名站一行.如果域名前有"."點,則包括他的子域.
+#read_hash(\%local_domains, '/var/amavis/local_domains');
+
+@bypass_virus_checks_acl = qw( . );  # uncomment to DISABLE anti-virus code
+@local_domains_acl = ( ".$mydomain" );  # $mydomain and its subdomains
+
+#
+# Section IV - Notifications/DSN, BOUNCE/REJECT/DROP/PASS destiny, quarantine
+#
+#設置對垃圾郵件處理的方式，D_BOUNCE改為D_PASS
+#(D_DISCARD表示丟棄,D_BOUNCE表示後來彈回信息, D_REJECT表示當時彈回信息,D_PASS表示允許通過)
+$final_spam_destiny       = D_PASS;  # (defaults to D_REJECT) 
+#
+# Section V - Per-recipient and per-sender handling, whitelisting, etc.
+#
+read_hash(\%whitelist_sender, '/var/amavis/whitelist_sender');	#去掉註釋
+read_hash(\%blacklist_sender, '/var/amavis/blacklist_sender'); 	#自己添加
+read_hash(\%spam_lovers, '/var/amavis/spam_lovers'); 			#自己添加
+
+# SpamAssassin settings
+$sa_auto_whitelist = 1;    # turn on AWL (default: false) #去掉“#”註釋
+$sa_spam_subject_tag = '***SPAM*** ';   # (defaults to undef, disabled)
+
+
+$virus_admin = "virusalert\@$mydomain";
+$spam_admin = "spamalert\@$mydomain";
+
+
+@av_scanners = (
+
+# ### http://www.clamav.net/
+ ['Clam Antivirus-clamd',
+   \&#38;ask_daemon, ["CONTSCAN {}\n", "/var/run/clamav/clamd.sock"],
+   qr/\bOK$/, qr/\bFOUND$/,
+   qr/^.*?: (?!Infected Archive)(.*) FOUND$/ ],
+
+# # NOTE: run clamd under the same user as amavisd;  match the socket
+# # name (LocalSocket) in clamav.conf to the socket name in this entry
+# # When running chrooted one may prefer: ["CONTSCAN {}\n","$MYHOME/clamd"],
+
+		</PRE
+></TD
+></TR
+></TABLE
+><P
+>找到@av_scanners = (這一行，在VI中可以輸入/@av_scanners = (查到它的位置，然後去掉clamav的註釋。</P
+><P
+><TT
+CLASS="FILENAME"
+>/etc/postfix/master.cf</TT
+></P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 amavisd-new-20030616]# cd /etc/postfix/
+[root@linuxas3 postfix]# vi master.cf
+# amavis
+smtp-amavis     unix    -       -       n       -       2       smtp
+    -o smtp_data_done_timeout=1200
+    -o smtp_send_xforward_command=yes
+    -o disable_dns_lookups=yes
+127.0.0.1:10025 inet    n       -       n       -       -       smtpd
+    -o content_filter=
+    -o local_recipient_maps=
+    -o relay_recipient_maps=
+    -o smtpd_restriction_classes=
+    -o smtpd_client_restrictions=
+    -o smtpd_helo_restrictions=
+    -o smtpd_sender_restrictions=
+    -o smtpd_recipient_restrictions=permit_mynetworks,reject
+    -o mynetworks=127.0.0.0/8
+    -o strict_rfc821_envelopes=yes
+    -o smtpd_error_sleep_time=0
+    -o smtpd_soft_error_limit=1001
+    -o smtpd_hard_error_limit=1000
+		</PRE
+></TD
+></TR
+></TABLE
+><P
+>提高處理性能</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>將 /etc/amavisd.conf 的 $max_servers 數字加大，預設是 2。
+然後將該數字映到 /etc/postfix/master.cf 的 smtp-amavis 。
+例：
+$max_servers = 4
+
+smtp-amavis     unix    -       -       n       -       4       smtp
+上面smtp-amavis 中的 n 選項是chroot功能
+y啟用、n關閉。
+然後重新reload postfix和amavisd即可!
+註：做系統管理最忌重啟.很多人喜歡stop重start，其實用reload重新載入配置檔案就要以．這樣的好處是不會中斷會話．
+		</PRE
+></TD
+></TR
+></TABLE
+><P
+><TT
+CLASS="FILENAME"
+>/etc/postfix/main.cf</TT
+></P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>#============ Amavis ================
+soft_bounce=yes
+content_filter = smtp-amavis:[127.0.0.1]:10024
+		</PRE
+></TD
+></TR
+></TABLE
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x924.html" tppabs="http://www.9812.net/article/postfix/x924.html"
+ACCESSKEY="P"
+>&#60;&#60;&#60; Previous</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html" tppabs="http://www.9812.net/article/postfix/book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x996.html" tppabs="http://www.9812.net/article/postfix/x996.html"
+ACCESSKEY="N"
+>Next &#62;&#62;&#62;</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Courier-IMAP</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>防病毒系統 NAI McAfee AntiVirus (uvscan)</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

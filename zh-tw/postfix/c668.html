@@ -1,0 +1,325 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<HTML
+><HEAD
+><TITLE
+>整合電子郵件系統(MYSQL)</TITLE
+>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.76b+
+"><LINK
+REL="HOME"
+TITLE="Postfix Integrated Solution"
+HREF="book1.html" tppabs="http://www.9812.net/article/postfix/book1.html"><LINK
+REL="PREVIOUS"
+TITLE="本章測試"
+HREF="x610.html" tppabs="http://www.9812.net/article/postfix/x610.html"><LINK
+REL="NEXT"
+TITLE="pam_mysql-0.5"
+HREF="x681.html" tppabs="http://www.9812.net/article/postfix/x681.html"></HEAD
+><BODY
+CLASS="CHAPTER"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Postfix Integrated Solution</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x610.html" tppabs="http://www.9812.net/article/postfix/x610.html"
+ACCESSKEY="P"
+>&#60;&#60;&#60; Previous</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x681.html" tppabs="http://www.9812.net/article/postfix/x681.html"
+ACCESSKEY="N"
+>Next &#62;&#62;&#62;</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="CHAPTER"
+><H1
+><A
+NAME="POSTFIX-MYSQL"
+></A
+>整合電子郵件系統(MYSQL)</H1
+><P
+>Postfix + Mysql + pam_mysql-0.5 + Cyrus-SASL + Courier POP and IMAP + Maildrop + AMaViS + McAfee uvscan for linux + SpamAssassin + ...</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 root]# uname -a
+Linux linuxas3.9812.net 2.4.21-4.ELsmp #1 SMP Fri Oct 3 17:52:56 EDT 2003 i686 i686 i386 GNU/Linux
+[root@linuxas3 root]#
+	</PRE
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="SECTION"
+><H1
+CLASS="SECTION"
+><A
+NAME="AEN675"
+></A
+>Mysql</H1
+><P
+>查看MYSQL是否已經安裝</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[root@linuxas3 src]# rpm -qa |grep MySQL
+MySQL-Max-4.0.18-0
+MySQL-client-4.0.18-0
+MySQL-bench-4.0.18-0
+MySQL-shared-compat-4.0.18-0
+MySQL-server-4.0.18-0
+MySQL-embedded-4.0.18-0
+MySQL-devel-4.0.18-0
+perl-DBD-MySQL-2.1021-3
+MySQL-shared-4.0.18-0
+[root@linuxas3 src]#
+			</PRE
+></TD
+></TR
+></TABLE
+><P
+>postfix 資料庫腳本</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+># Database postfix running on localhost 
+# phpMyAdmin SQL Dump
+# version 2.5.6
+# http://www.phpmyadmin.net
+#
+# Host: localhost
+# Generation Time: Apr 21, 2004 at 03:00 PM
+# Server version: 4.0.18
+# PHP Version: 4.3.2
+# 
+# Database : `postfix`
+# 
+
+# --------------------------------------------------------
+
+#
+# Table structure for table `postfix_aliases`
+#
+
+DROP TABLE IF EXISTS `postfix_aliases`;
+CREATE TABLE `postfix_aliases` (
+  `id` int(32) unsigned NOT NULL auto_increment,
+  `alias` varchar(255) NOT NULL default '',
+  `rcpt` varchar(255) NOT NULL default '',
+  `domain` varchar(255) NOT NULL default '',
+  `create_date` datetime NOT NULL default '0000-00-00 00:00:00',
+  `change_date` datetime NOT NULL default '0000-00-00 00:00:00',
+  `active` tinyint(4) NOT NULL default '1',
+  PRIMARY KEY  (`id`),
+  UNIQUE KEY `aliases_unique` (`id`,`alias`),
+  KEY `aliases_index` (`id`,`alias`)
+) TYPE=MyISAM AUTO_INCREMENT=9 ;
+
+#
+# Dumping data for table `postfix_aliases`
+#
+
+INSERT INTO `postfix_aliases` VALUES (3, 'root@example.net', 'postmaster@example.net', 'example.net', '2003-06-26 14:58:46', '2003-06-26 14:58:46', 1);
+INSERT INTO `postfix_aliases` VALUES (8, 'postfix@example.net', 'postmaster@example.net', 'example.net', '0000-00-00 00:00:00', '0000-00-00 00:00:00', 1);
+
+# --------------------------------------------------------
+
+#
+# Table structure for table `postfix_forward`
+#
+
+DROP TABLE IF EXISTS `postfix_forward`;
+CREATE TABLE `postfix_forward` (
+  `id` int(32) unsigned NOT NULL auto_increment,
+  `username` varchar(50) NOT NULL default '',
+  `domain` varchar(40) NOT NULL default '',
+  `forward_addr` text NOT NULL,
+  PRIMARY KEY  (`id`)
+) TYPE=MyISAM AUTO_INCREMENT=1 ;
+
+#
+# Dumping data for table `postfix_forward`
+#
+
+
+# --------------------------------------------------------
+
+#
+# Table structure for table `postfix_transport`
+#
+
+DROP TABLE IF EXISTS `postfix_transport`;
+CREATE TABLE `postfix_transport` (
+  `id` int(32) unsigned NOT NULL auto_increment,
+  `domain` varchar(128) NOT NULL default 'example.net',
+  `transport` enum('local:','virtual:','maildrop:') NOT NULL default 'virtual:',
+  `description` varchar(255) NOT NULL default '',
+  `begin_date` datetime NOT NULL default '0000-00-00 00:00:00',
+  `end_date` datetime NOT NULL default '0000-00-00 00:00:00',
+  `active` tinyint(4) NOT NULL default '1',
+  PRIMARY KEY  (`id`),
+  UNIQUE KEY `transport_unique` (`domain`),
+  KEY `transport_index` (`id`,`domain`)
+) TYPE=MyISAM AUTO_INCREMENT=3 ;
+
+#
+# Dumping data for table `postfix_transport`
+#
+
+INSERT INTO `postfix_transport` VALUES (1, 'example.net', 'virtual:', '', '0000-00-00 00:00:00', '0000-00-00 00:00:00', 1);
+
+# --------------------------------------------------------
+
+#
+# Table structure for table `postfix_users`
+#
+
+CREATE TABLE `postfix_users` (
+  `id` int(32) unsigned NOT NULL auto_increment,
+  `user` varchar(50) NOT NULL default '',
+  `name` varchar(60) NOT NULL default '',
+  `passwd` varchar(128) NOT NULL default '',
+  `domain` varchar(50) NOT NULL default '9812.net',
+  `uid` smallint(5) unsigned NOT NULL default '1000',
+  `gid` smallint(5) unsigned NOT NULL default '1000',
+  `clearpw` varchar(20) binary NOT NULL default '',
+  `home` varchar(100) NOT NULL default '/var/mail/',
+  `maildir` varchar(150) NOT NULL default '',
+  `imapok` tinyint(3) unsigned NOT NULL default '1',
+  `quota` varchar(100) NOT NULL default '200000000s,20000c',
+  `create_date` datetime NOT NULL default '0000-00-00 00:00:00',
+  `last_access` int(10) unsigned NOT NULL default '0',
+  `status` varchar(5) NOT NULL default 'Y',
+  PRIMARY KEY  (`id`),
+  UNIQUE KEY `mailbox_unique` (`id`,`name`),
+  KEY `mailbox_index` (`id`,`name`)
+) TYPE=MyISAM AUTO_INCREMENT=16 ;
+
+
+#
+# Dumping data for table `postfix_users`
+#
+
+INSERT INTO `postfix_users` VALUES (1, 'chen@example.net', 'chen', 'chen', 'example.net', 1000, 1000, '', '/var/mail/', 'example.net/chen/Maildir/', 1, '200000000s,20000c', '0000-00-00 00:00:00', 0, 'Y');
+INSERT INTO `postfix_users` VALUES (2, 'postmaster@example.net', 'postmaster', 'chen', 'example.net', 1000, 1000, '', '/var/mail/', 'postmaster@example.net/Maildir/', 1, '200000000s,20000c', '0000-00-00 00:00:00', 0, 'Y');
+    
+    	</PRE
+></TD
+></TR
+></TABLE
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x610.html" tppabs="http://www.9812.net/article/postfix/x610.html"
+ACCESSKEY="P"
+>&#60;&#60;&#60; Previous</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html" tppabs="http://www.9812.net/article/postfix/book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x681.html" tppabs="http://www.9812.net/article/postfix/x681.html"
+ACCESSKEY="N"
+>Next &#62;&#62;&#62;</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>本章測試</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>pam_mysql-0.5</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

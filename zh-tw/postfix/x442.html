@@ -1,0 +1,519 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<HTML
+><HEAD
+><TITLE
+>創建所需條目</TITLE
+>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.76b+
+"><LINK
+REL="HOME"
+TITLE="Postfix Integrated Solution"
+HREF="book1.html" tppabs="http://www.9812.net/article/postfix/book1.html"><LINK
+REL="UP"
+TITLE="Postfix + OpenLDAP (Debian) 已完成 2004-9-28"
+HREF="c423.html" tppabs="http://www.9812.net/article/postfix/c423.html"><LINK
+REL="PREVIOUS"
+TITLE="Postfix + OpenLDAP (Debian) 已完成 2004-9-28"
+HREF="c423.html" tppabs="http://www.9812.net/article/postfix/c423.html"><LINK
+REL="NEXT"
+TITLE="SASL SMTP認證"
+HREF="x466.html" tppabs="http://www.9812.net/article/postfix/x466.html"></HEAD
+><BODY
+CLASS="SECTION"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Postfix Integrated Solution</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="c423.html" tppabs="http://www.9812.net/article/postfix/c423.html"
+ACCESSKEY="P"
+>&#60;&#60;&#60; Previous</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Postfix + OpenLDAP (Debian) 已完成 2004-9-28</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x466.html" tppabs="http://www.9812.net/article/postfix/x466.html"
+ACCESSKEY="N"
+>Next &#62;&#62;&#62;</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECTION"
+><H1
+CLASS="SECTION"
+><A
+NAME="AEN442"
+></A
+>創建所需條目</H1
+><DIV
+CLASS="EXAMPLE"
+><A
+NAME="AEN444"
+></A
+><P
+><B
+>Example 1. postfix-ldap.ldif</B
+></P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>debian:/etc/postfix# cat postfix-ldap.ldif
+#dn: dc=example,dc=net
+#objectclass:person
+#objectclass:organization
+#cn:example
+#sn:example
+#o:example.net
+#description:Top level of directory
+
+dn: ou=people,dc=example,dc=net
+ou: people
+objectClass: organizationalUnit
+
+dn: ou=postfix,dc=example,dc=net
+ou: postfix
+objectClass: organizationalUnit
+
+dn: cn=courier, ou=postfix, dc=example,dc=net
+objectClass: person
+cn: courier
+sn: courier
+			</PRE
+></TD
+></TR
+></TABLE
+><P
+>虛擬域</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+># example.net, postfix, example.net
+dn: vd=example.net,ou=postfix,dc=example,dc=net
+vd: example.net
+o: example.net
+transport: virtual:
+objectClass: postfixVirtualDomain
+			</PRE
+></TD
+></TR
+></TABLE
+></DIV
+><DIV
+CLASS="EXAMPLE"
+><A
+NAME="AEN449"
+></A
+><P
+><B
+>Example 2. user.ldif</B
+></P
+><P
+>本地域郵箱</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>dn:uid=neo,ou=postfix,dc=example,dc=net
+uid:neo
+cn:test
+sn:test
+mail:neo
+uidnumber:1001
+gidnumber:1001
+mailhost:mail.example.net
+homedirectory:/var/mail/
+mailbox:example.net/neo/Maildir/
+quota:200000000s,20000c
+maildrop:openunix@163.com
+userpassword:{crypt}$1$8E.vtK6o$7JdJ6dpTwaLU7x8X2FKwc1
+#clearPassword:chen
+AccountStatus:true
+objectclass:postfixAccount
+objectclass:person
+			</PRE
+></TD
+></TR
+></TABLE
+><P
+>Qmail 風格</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>dn:uid=neo,ou=postfix,dc=example,dc=net
+uid:neo
+cn:test
+sn:test
+mail:neo
+uidnumber:1001
+gidnumber:1001
+mailhost:mail.example.net
+homedirectory:/var/mail/
+mailmessagestore:example.net/neo/Maildir/
+mailquota:200000000s,20000c
+#mailbox:example.net/chen/maildir/
+userpassword:chen
+#clearPassword:chen
+objectclass:postfix
+#objectclass:couriermailaccount
+objectclass:person
+			</PRE
+></TD
+></TR
+></TABLE
+></DIV
+><DIV
+CLASS="NOTE"
+><P
+></P
+><TABLE
+CLASS="NOTE"
+WIDTH="100%"
+BORDER="0"
+><TR
+><TD
+WIDTH="25"
+ALIGN="CENTER"
+VALIGN="TOP"
+><IMG
+SRC="note.gif" tppabs="http://www.9812.net/article/postfix/stylesheet-images/note.gif"
+HSPACE="5"
+ALT="Note"></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+><P
+>mail:neo</P
+><P
+>neo = noe+ mydomain(main.cf中設置)</P
+></TD
+></TR
+></TABLE
+></DIV
+><P
+>虛擬或郵箱</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>dn:uid=test,ou=postfix,dc=example,dc=net
+uid:test
+cn:test
+sn:test
+mail:test
+uidnumber:1001
+gidnumber:1001
+mailhost:mail.example.net
+homedirectory:/var/mail/
+mailbox:example.net/test/Maildir/
+quota:200000000s,20000c
+userpassword:{crypt}$1$8E.vtK6o$7JdJ6dpTwaLU7x8X2FKwc1
+#clearPassword:chen
+AccountStatus:true
+objectclass:postfixAccount
+objectclass:person
+			</PRE
+></TD
+></TR
+></TABLE
+><P
+>Qmail 風格</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>dn:uid=test,ou=postfix,dc=example,dc=net
+uid:test
+cn:test
+sn:test
+mail:test@example.net
+uidnumber:1001
+gidnumber:1001
+mailhost:mail.example.net
+homedirectory:/var/mail/
+mailmessagestore:example.net/test/Maildir/
+mailquota:200000000s,20000c
+#mailbox:example.net/chen/maildir/
+userpassword:chen
+#clearPassword:chen
+objectclass:postfix
+#objectclass:couriermailaccount
+objectclass:person
+			</PRE
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NOTE"
+><P
+></P
+><TABLE
+CLASS="NOTE"
+WIDTH="100%"
+BORDER="0"
+><TR
+><TD
+WIDTH="25"
+ALIGN="CENTER"
+VALIGN="TOP"
+><IMG
+SRC="note.gif" tppabs="http://www.9812.net/article/postfix/stylesheet-images/note.gif"
+HSPACE="5"
+ALT="Note"></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+><P
+>虛擬域郵箱在smtp認證時要使用email地址即認證用戶帳號：test@example.net而非test</P
+></TD
+></TR
+></TABLE
+></DIV
+><P
+>創建dn</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>ldapadd -x -D "cn=admin,dc=example,dc=net" -f /etc/postfix/postfix-ldap.ldif -w chen
+ldapadd -x -D "cn=admin,dc=example,dc=net" -f /etc/postfix/user.ldif -w chen
+adding new entry "uid=test,ou=postfix,dc=example,dc=net"
+
+debian:/etc/postfix# ldapsearch -x -b 'dc=example,dc=net' 'objectclass=*'
+# extended LDIF
+#
+# LDAPv3
+# base &#60;dc=example,dc=net&#62; with scope sub
+# filter: objectclass=*
+# requesting: ALL
+#
+
+# example.net
+dn: dc=example,dc=net
+objectClass: top
+objectClass: dcObject
+objectClass: organization
+o: postfix
+dc: example
+
+# admin, example.net
+dn: cn=admin,dc=example,dc=net
+objectClass: simpleSecurityObject
+objectClass: organizationalRole
+cn: admin
+description: LDAP administrator
+
+# people, example.net
+dn: ou=people,dc=example,dc=net
+ou: people
+objectClass: organizationalUnit
+
+# postfix, example.net
+dn: ou=postfix,dc=example,dc=net
+ou: postfix
+objectClass: organizationalUnit
+
+# courier, postfix, example.net
+dn: cn=courier,ou=postfix,dc=example,dc=net
+objectClass: person
+cn: courier
+sn: courier
+
+# example.net, postfix, example.net
+dn: vd=example.net,ou=postfix,dc=example,dc=net
+vd: example.net
+o: example.net
+transport: virtual:
+objectClass: postfixVirtualDomain
+
+# chen, postfix, example.net
+dn: uid=chen,ou=postfix,dc=example,dc=net
+uid: chen
+cn: chen
+sn: chen
+mail: chen@example.net
+uidNumber: 1001
+gidNumber: 1001
+mailHost: mail.example.net
+homeDirectory: /var/mail/
+mailbox: example.net/chen/maildir/
+quota: 200000000s,20000c
+maildrop:: Y2hlbkBleGFtcGxlLm5ldCAg
+accountStatus: true
+objectClass: postfixAccount
+objectClass: person
+
+# test, postfix, example.net
+dn: uid=test,ou=postfix,dc=example,dc=net
+uid: test
+cn: test
+sn: test
+mail: test
+uidNumber: 1001
+gidNumber: 1001
+mailHost: mail.example.net
+homeDirectory: /var/mail/
+mailbox: example.net/test/Maildir/
+quota: 200000000s,20000c
+accountStatus: true
+objectClass: postfixAccount
+objectClass: person
+
+# neo, postfix, example.net
+dn: uid=neo,ou=postfix,dc=example,dc=net
+uid: neo
+cn: test
+sn: test
+mail: neo
+uidNumber: 1001
+gidNumber: 1001
+mailHost: mail.example.net
+homeDirectory: /var/mail/
+mailbox: example.net/neo/Maildir/
+quota: 200000000s,20000c
+maildrop: openunix@163.com
+accountStatus: true
+objectClass: postfixAccount
+objectClass: person
+
+# search result
+search: 2
+result: 0 Success
+
+# numResponses: 10
+# numEntries: 9
+debian:/etc/postfix#
+		</PRE
+></TD
+></TR
+></TABLE
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="c423.html" tppabs="http://www.9812.net/article/postfix/c423.html"
+ACCESSKEY="P"
+>&#60;&#60;&#60; Previous</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html" tppabs="http://www.9812.net/article/postfix/book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x466.html" tppabs="http://www.9812.net/article/postfix/x466.html"
+ACCESSKEY="N"
+>Next &#62;&#62;&#62;</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Postfix + OpenLDAP (Debian) 已完成 2004-9-28</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="c423.html" tppabs="http://www.9812.net/article/postfix/c423.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>SASL SMTP認證</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

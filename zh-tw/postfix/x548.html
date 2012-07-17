@@ -1,0 +1,542 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<HTML
+><HEAD
+><TITLE
+>POP3,IMAP</TITLE
+>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.76b+
+"><LINK
+REL="HOME"
+TITLE="Postfix Integrated Solution"
+HREF="book1.html" tppabs="http://www.9812.net/article/postfix/book1.html"><LINK
+REL="UP"
+TITLE="Postfix + OpenLDAP (Debian) 已完成 2004-9-28"
+HREF="c423.html" tppabs="http://www.9812.net/article/postfix/c423.html"><LINK
+REL="PREVIOUS"
+TITLE="配置 Postfix"
+HREF="x498.html" tppabs="http://www.9812.net/article/postfix/x498.html"><LINK
+REL="NEXT"
+TITLE="amavis (anti-virus, anti-spam)"
+HREF="x569.html" tppabs="http://www.9812.net/article/postfix/x569.html"></HEAD
+><BODY
+CLASS="SECTION"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Postfix Integrated Solution</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x498.html" tppabs="http://www.9812.net/article/postfix/x498.html"
+ACCESSKEY="P"
+>&#60;&#60;&#60; Previous</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Postfix + OpenLDAP (Debian) 已完成 2004-9-28</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x569.html" tppabs="http://www.9812.net/article/postfix/x569.html"
+ACCESSKEY="N"
+>Next &#62;&#62;&#62;</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECTION"
+><H1
+CLASS="SECTION"
+><A
+NAME="AEN548"
+></A
+>POP3,IMAP</H1
+><DIV
+CLASS="SECTION"
+><H2
+CLASS="SECTION"
+><A
+NAME="AEN550"
+></A
+>courier 認證守護進程</H2
+><P
+>其實SMTP SASL認證進程是可以與courier 認證守護進程使用同一個進程的．因為筆者使用了apt-get
+		方式安裝所以不能實現這樣功能．如果你興趣，可以採用原碼安裝
+		<A
+NAME="AEN553"
+HREF="#FTN.AEN553"
+>[1]</A
+>
+		</P
+><P
+>配置　courier</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>debian:~# cd /etc/courier/
+debian:/etc/courier#		
+		</PRE
+></TD
+></TR
+></TABLE
+><P
+>authdaemonrc</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>debian:/etc/courier# vi authdaemonrc
+
+authmodulelist="authldap"
+version="authdaemond.ldap"
+		</PRE
+></TD
+></TR
+></TABLE
+><P
+>authldaprc</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>debian:/etc/courier# cp authldaprc authldaprc.old
+debian:/etc/courier# vi authldaprc
+
+LDAP_SERVER             localhost
+LDAP_PORT               389
+LDAP_PROTOCOL_VERSION   3
+LDAP_BASEDN             ou=postfix, dc=example, dc=net
+LDAP_BINDDN             cn=admin,dc=example, dc=net
+LDAP_BINDPW             chen
+LDAP_GLOB_UID           postfix
+LDAP_GLOB_GID           postfix
+LDAP_HOMEDIR            homeDirectory
+LDAP_MAILDIR            mailbox
+LDAP_DEFAULTDELIVERY    defaultDelivery
+LDAP_MAILDIRQUOTA       quota
+LDAP_FULLNAME           cn
+#LDAP_CLEARPW           clearPassword
+LDAP_CRYPTPW            userPassword
+LDAP_DEREF              never
+LDAP_TLS                0
+註:LDAP_TLS 與Postfix 沒關係.它是OpenLDAP認證TLS.
+		</PRE
+></TD
+></TR
+></TABLE
+><P
+>重新啟動 courier-authdaemon</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>debian:/etc/courier# /etc/init.d/courier-authdaemon start
+Starting Courier authdaemon: done.
+debian:/etc/courier#
+		</PRE
+></TD
+></TR
+></TABLE
+></DIV
+><DIV
+CLASS="SECTION"
+><H2
+CLASS="SECTION"
+><A
+NAME="AEN563"
+></A
+>配置 POP</H2
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>debian:/etc/courier# vi pop3d
+AUTHMODULES="authdaemon"
+AUTHMODULES_ORIG="authdaemon"
+DEBUG_LOGIN=3
+POP3AUTH="LOGIN CRAM-MD5 CRAM-SHA1"
+POP3AUTH_ORIG="LOGIN CRAM-MD5 CRAM-SHA1"
+POP3AUTH_TLS=""
+POP3AUTH_TLS_ORIG="LOGIN PLAIN"
+PORT=110
+ADDRESS=0
+TCPDOPTS="-nodnslookup -noidentlookup"
+POP3DSTART=YES
+MAILDIRPATH=Maildir
+			</PRE
+></TD
+></TR
+></TABLE
+></DIV
+><DIV
+CLASS="SECTION"
+><H2
+CLASS="SECTION"
+><A
+NAME="AEN566"
+></A
+>配置 IMAP</H2
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>&#13;		</PRE
+></TD
+></TR
+></TABLE
+></DIV
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Notes</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN553"
+HREF="x548.html#AEN553" tppabs="http://www.9812.net/article/postfix/x548.html#AEN553"
+>[1]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>####sarge注意：由於系統中預設帶有libsasl2，必須將其卸載：
+apt-get --purge remove libsasl2
+####
+  mail:~# apt-get --purge remove libsasl2
+  Reading Package Lists... Done
+  Building Dependency Tree... Done
+  The following packages will be REMOVED:
+  apache2-common* at* exim* gnupg* libldap2* libsasl2* mailx* mutt* samba* samba-common* squid* squid-common* swat*
+  0 upgraded, 0 newly installed, 13 to remove and 0 not upgraded.
+  Need to get 0B of archives.
+  After unpacking 40.8MB disk space will be freed.
+  Do you want to continue? [Y/n] n
+  Abort.
+  mail:~# 
+  #####################################
+###ftp://ftp.andrew.cmu.edu/pub/cyrus-mail/
+  #http://www.jonfullmer.com/smtpauth/
+#sasl-authd
+  ####
+  mkdir -p /data/distfiles/src
+  cd /data/distfiles
+  wget -c ftp://ftp.andrew.cmu.edu/pub/cyrus-mail/cyrus-sasl-2.1.19.tar.gz
+  tar xfz cyrus-sasl-2.1.19.tar.gz -C src
+  cd src/cyrus-sasl-2.1.19
+  ./configure --help
+  ###
+  --enable-sample compile sample code yes
+  --enable-otp enable OTP authentication yes
+  --enable-gssapi=&#60;DIR&#62; enable GSSAPI authentication yes
+  --enable-plain enable PLAIN authentication yes
+  --enable-anon enable ANONYMOUS authentication yes
+  --enable-login enable unsupported LOGIN authentication no
+  --enable-sql enable SQL auxprop [no]
+  --with-dbpath=PATH set the DB path to use /etc/sasldb2
+  --with-dblib=DBLIB set the DB library to use berkeley
+  --with-bdb-libdir=DIR Berkeley DB lib files are in DIR
+  --with-bdb-incdir=DIR Berkeley DB include files are in DIR
+  --with-gdbm=PATH use gdbm from PATH
+  --with-devrandom=PATH set the path to /dev/random /dev/random
+  --with-pam=DIR use PAM (rooted in DIR) yes
+  --with-saslauthd=DIR enable use of the saslauth daemon using state dir DIR
+  --with-authdaemond=PATH enable use of authdaemon with default socket=PATH [no]
+  --with-openssl=PATH use OpenSSL from PATH
+  --with-mysql=PATH use MySQL from PATH
+  --with-plugindir=DIR set the directory where plugins will
+  be found /usr/lib/sasl2
+  --with-rc4 use internal rc4 routines yes
+  ###
+#添加對authdaemon的支持
+make clean
+  ./configure --prefix=/usr --sysconfdir=/etc --infodir=/usr/share/info --mandir=/usr/share/man \
+  --with-authdaemon=/data/modules/public/courier-imap/var/authdaemon/socket \
+  --enable-login \
+  --enable-plain \
+  --with-pam \
+  --enable-sample \
+  --with-plugindir=/usr/lib/sasl2 \
+  --with-saslauthd=/var/run/saslauthd \
+  --disable-otp \
+  --disable-sql \
+  --disable-pwcheck \
+  --disable-cram \
+  --disable-digest \
+  --disable-krb4 \
+  --disable-gssapi \
+  --disable-anon \
+  --without-des \
+  --without-openssl \
+  --with-dblib=berkeley \
+  --with-bdb-libdir=/usr/lib \
+  --with-bdb-incdir=/usr/include
+##補丁
+cat &#62;realmpatch &#60;&#60;MYGOD
+  --- checkpw.c.org Sun Apr 4 16:24:55 2004
+  +++ checkpw.c Sun Apr 4 16:26:32 2004
+  @@ -572,6 +572,8 @@
+  }
+  
+  /* Split out username/realm if necessary */
+  + /* disable for e-mail address login for virtual domain user. */
+  + /*
+  if(strrchr(userid,'@') != NULL) {
+  char *rtmp;
+  
+  @@ -583,6 +585,7 @@
+  *rtmp = '\0';
+  user_realm = rtmp + 1;
+  }
+  + */
+  
+  /*
+  * build request of the form:
+  MYGOD
+cd lib
+  patch -p0&#60; ../realmpatch
+  cd -
+make &#38;&#38; make install
+
+############
+  # telnet 127.0.0.1 25
+  Trying 127.0.0.1...
+  Connected to 127.0.0.1.
+  Escape character is '^]'.
+  220 bugfix.kingsoft.net ESMTP Postfix
+  ehlo mail.163.com
+  250-bugfix.kingsoft.net
+  250-PIPELINING
+  250-SIZE 10240000
+  250-VRFY
+  250-ETRN
+  250-AUTH LOGIN PLAIN #必須保證系統中sasl的lib和系統中sasl.h的一致性，也就是說，必須是同一源碼同一編譯參數生成的；
+  250-AUTH=LOGIN PLAIN #這裡支持的LOGIN PLAIN驗證方式是由上面的configure --enable-login決定的。
+  250 8BITMIME #還要注意上述enable的驗證參數的順序也是有要求的，如果某個驗證方式編譯錯誤，雖然能編譯出so檔案，但在
+  quit #調用時只要一個出錯，後面的方式將都失效。
+  221 Bye
+  Connection closed by foreign host.
+  #####################################################
+##注意/data/modules/public/courier-imap/var/authdaemon/目錄得權限預設不允許其他用戶訪問
+  chmod +x /data/modules/public/courier-imap/var/authdaemon/
+  #2.1.18才支持--with-authdaemon參數
+  #### 
+  #使用 --with-authdaemon=/data/modules/public/courier-imap/var/authdaemon/socket 支持最大的好處是authdaemon在單一連接中
+  #支持多種驗證方式
+  ###
+#vi /usr/local/sbin/sasl-server
+  #!/bin/sh
+  prefix=/usr
+  saslauthd_flags=${saslauthd_flags:-"-a pam"} # Flags to saslauthd program
+  saslauthd_runpath="/var/run/saslauthd" # Working directory
+  saslauthd_program="${prefix}/sbin/saslauthd" # Location of saslauthd
+  name="saslauthd"
+mkdir -p ${saslauthd_runpath}
+pidfile="${saslauthd_runpath}/${name}.pid"
+  flags="${saslauthd_flags} -m ${saslauthd_runpath}"
+case $1 in
+  start)
+  ${saslauthd_program} ${saslauthd_flags} &#38;
+  if [ $? -ne 0 ]
+  then
+  echo "Error:start fail."
+  fi
+  ;;
+  stop)
+  kill `cat ${pidfile}`
+  if [ $? -ne 0 ]
+  then
+  echo "Error:stop fail."
+  fi 
+  ;;
+  restart)
+  $0 stop 
+  sleep 3 
+  $0 start
+  ;;
+  *)
+  echo "$0 &#60;start|stop&#62;"
+  exit 1
+  ;;
+  esac
+  exit 0
+  ##end of sasl2-authd
+chmod +x /usr/local/sbin/sasl-server
+#system start up
+  ln -s /usr/local/sbin/sasl-server /etc/init.d/
+  #update-rc.d sasl-server start 98 2 3 4 5 . stop 10 0 1 6 .
+#注意：使用authdaemond方式無需啟動saslauthd,只需postfix中編譯sasl2支持即可。
+##
+
+##SASL配置;
+cat &#60;&#60;EOF&#62; /usr/lib/sasl2/smtpd.conf
+  pwcheck_method: authdaemond 
+  authdaemond_path: /data/modules/public/courier-imap/var/authdaemon/socket
+  mech_list: PLAIN LOGIN
+  log_level: 3 
+  #pwcheck_method: saslauthd
+  #end
+  EOF
+#注意：使用authdaemond方式無需啟動saslauthd,只需postfix中編譯sasl2支持即可。
+chmod +x /data/modules/public/courier-imap/var/authdaemon/ 
+
+##################
+  Jun 3 03:30:01 f5mail postfix/smtpd[1381]: warning: SASL authentication failure: cannot connect to Courier authdaemond: Permission denied
+  ##################
+  root-&#62;root@f5mail.oss4e.net % /var/log&#62;ls -al /data/modules/public/courier-imap/var/authdaemon/socket
+  srwxrwxrwx 1 root wheel 0 Jun 3 03:28 /data/modules/public/courier-imap/var/authdaemon/socket
+  root-&#62;root@f5mail.oss4e.net % /var/log&#62;ls -al /data/modules/public/courier-imap/var/authdaemon/ 
+  total 6
+  drwx------ 2 root wheel 512 Jun 3 03:28 . ---------&#62;&#62;&#62;&#62;&#62; 注意這個
+  drwxr-xr-x 3 root wheel 512 Jun 2 22:50 ..
+  -rw------- 1 root wheel 0 Jun 2 23:51 lock
+  -rw-r--r-- 1 root wheel 5 Jun 3 03:28 pid
+  srwxrwxrwx 1 root wheel 0 Jun 3 03:28 socket
+  root-&#62;root@f5mail.oss4e.net % /var/log&#62;chmod +x /data/modules/public/courier-imap/var/authdaemon/ 
+  #############問題解決
+#####################
+  Jun 3 03:29:19 f5mail postfix/smtpd[1381]: sql_select option missing
+  Jun 3 03:29:19 f5mail postfix/smtpd[1381]: auxpropfunc error no mechanism available 
+  Jun 3 03:32:59 f5mail postfix/smtpd[1398]: sql_select option missing
+  Jun 3 03:32:59 f5mail postfix/smtpd[1398]: auxpropfunc error no mechanism available 
+########################這個提示不影響smtp auth 的發揮 #############
+			</PRE
+></TD
+></TR
+></TABLE
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x498.html" tppabs="http://www.9812.net/article/postfix/x498.html"
+ACCESSKEY="P"
+>&#60;&#60;&#60; Previous</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html" tppabs="http://www.9812.net/article/postfix/book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x569.html" tppabs="http://www.9812.net/article/postfix/x569.html"
+ACCESSKEY="N"
+>Next &#62;&#62;&#62;</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>配置 Postfix</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="c423.html" tppabs="http://www.9812.net/article/postfix/c423.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>amavis (anti-virus, anti-spam)</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

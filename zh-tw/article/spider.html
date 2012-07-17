@@ -1,0 +1,323 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>Python Spider 爬蟲實例</title><link rel="stylesheet" href="article.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.75.2" /><meta name="description" content="." /><meta name="keywords" content="spider, , " /></head><body><div xml:lang="zh-cn" class="article" title="Python Spider 爬蟲實例" lang="zh-cn"><div class="titlepage"><div><div><h2 class="title"><a id="idp4432"></a>Python Spider 爬蟲實例</h2></div><div><div class="author"><h3 class="author"><span class="firstname">Neo Chen</span> <span class="surname">(netkiller)</span></h3><div class="affiliation"><div class="address"><p><br />
+				<code class="email">&lt;<a class="email" href="mailto:openunix@163.com">openunix@163.com</a>&gt;</code><br />
+			</p></div></div></div></div><div><p class="copyright">版權 © 2011, 2012 http://netkiller.github.com</p></div><div><div class="abstract" title="摘要"><p class="title"><b>摘要</b></p><p>.</p></div></div><div><div class="abstract" title="下面是我多年積累下來的經驗總結，整理成文檔供大家參考:"><a id="abstract"></a><p class="title"><b>下面是我多年積累下來的經驗總結，整理成文檔供大家參考:</b></p><p>
+		</p><table border="0" summary="Simple list" class="simplelist"><tr><td>
+				<a class="ulink" href="../architect/index.html" target="_top">Netkiller Architect 手札</a>
+			</td><td>
+				<a class="ulink" href="../linux/index.html" target="_top">Netkiller Linux 手札</a>
+			</td><td>
+				<a class="ulink" href="../developer/index.html" target="_top">Netkiller Developer 手札</a>
+			</td><td>
+				<a class="ulink" href="../database/index.html" target="_top">Netkiller Database 手札</a>
+			</td></tr><tr><td>
+				<a class="ulink" href="../debian/index.html" target="_top">Netkiller Debian 手札</a>
+			</td><td>
+				<a class="ulink" href="../centos/index.html" target="_top">Netkiller CentOS 手札</a>
+			</td><td>
+				<a class="ulink" href="../freebsd/index.html" target="_top">Netkiller FreeBSD 手札</a>
+			</td><td>
+				<a class="ulink" href="../shell/index.html" target="_top">Netkiller Shell 手札</a>
+			</td></tr><tr><td>
+				<a class="ulink" href="../www/index.html" target="_top">Netkiller Web 手札</a>
+			</td><td>
+				<a class="ulink" href="../monitoring/index.html" target="_top">Netkiller Monitoring 手札</a>
+			</td><td>
+				<a class="ulink" href="../storage/index.html" target="_top">Netkiller Storage 手札</a>
+			</td><td>
+				<a class="ulink" href="../mail/index.html" target="_top">Netkiller Mail 手札</a>
+			</td></tr><tr><td>
+				<a class="ulink" href="../security/index.html" target="_top">Netkiller Security 手札</a>
+			</td><td>
+				<a class="ulink" href="../postgres/index.html" target="_top">Netkiller PostgreSQL 手札</a>
+			</td><td>
+				<a class="ulink" href="../mysql/index.html" target="_top">Netkiller MySQL 手札</a>
+			</td><td>
+				<a class="ulink" href="../ldap/index.html" target="_top">Netkiller LDAP 手札</a>
+			</td></tr><tr><td>
+				<a class="ulink" href="../cryptography/index.html" target="_top">Netkiller Cryptography 手札</a>
+			</td><td>
+				<a class="ulink" href="../intranet/index.html" target="_top">Netkiller Intranet 手札</a>
+			</td><td>
+				<a class="ulink" href="../cisco/index.html" target="_top">Netkiller Cisco IOS 手札</a>
+			</td><td>
+				<a class="ulink" href="../docbook/index.html" target="_top">Netkiller Writer 手札</a>
+			</td></tr><tr><td>
+				<a class="ulink" href="../version/index.html" target="_top">Netkiller Version 手札</a>
+			</td><td>
+				<a class="ulink" href="../multimedia/index.html" target="_top">Netkiller Studio Linux 手札</a>
+			</td><td> </td><td> </td></tr></table><p>
+	</p></div></div></div><hr /></div><div class="toc"><p><b>目錄</b></p><dl><dt><span class="section"><a href="#idp51136">1. 爬蟲實力</a></span></dt></dl></div><div class="section" title="1. 爬蟲實力"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp51136"></a>1. 爬蟲實力</h2></div></div></div><p>主要的功能是爬出所有URL</p><p>稍加修改可以加入SQL注入檢查，跨站腳本攻擊檢查等等...</p><pre class="screen">
+		
+#!/usr/bin/env python3
+#-*- coding: utf-8 -*-
+##############################################
+# Home  : http://netkiller.github.com
+# Author: Neo &lt;openunix@163.com&gt;
+##############################################
+
+##############################################
+from multiprocessing import Process
+from multiprocessing import Pool
+from html.parser import HTMLParser,HTMLParseError
+import asyncore, asynchat, socket, threading, queue
+import subprocess, os, sys, getopt, configparser, logging
+import string, re
+import random,time
+import urllib.request, urllib.parse, http.client
+#from urllib.parse import urlparse
+
+queue = queue.Queue()
+
+class MyHTMLParser(HTMLParser):
+	urls 	= []
+	def handle_starttag(self, tag, attrs):
+		# Only parse the 'anchor' tag.
+		if tag == "a":
+			# Check the list of defined attributes.
+			for name, value in attrs:
+				# If href is defined, print it.
+				if name == "href":
+					#print name, "=", value
+					if value and (value.find('javascript') == -1) and (value not in ('#')):
+						self.urls.append(value)
+	#def handle_endtag(self, tag):
+		#print("Encountered  an end tag:", tag)
+	#	pass
+	#def handle_data(self, data):
+		#print("Encountered   some data:", data)
+	#	pass
+	def gethref(self):
+		return self.urls
+
+class Spider():
+	logfile = '/tmp/spider.log'
+	isdebug = False
+	depths = 0
+	link	= []
+	unlink	= []
+	
+	referer 	= ''
+	useragent 	= 'Neo spider'
+	domain		= r''
+	baseurl		= r''
+	
+	skip	= []
+	ignore	= []
+	
+	threadname = ''
+	def __init__(self, threadname = None):
+		logging.basicConfig(level=logging.NOTSET,
+			format='%(asctime)s %(levelname)-8s %(message)s',
+			datefmt='%Y-%m-%d %H:%M:%S',
+			filename=self.logfile,
+			filemode='a')
+		self.logging = logging.getLogger()
+		if threadname:
+			self.threadname = '|'+threadname
+	def setDebug(self,isdebug):
+		self.isdebug = isdebug
+		self.logging.debug('Enable Debug')
+	def setDomain(self, tmp):
+		if tmp:
+			self.domain = tmp
+	def setReferer(self,tmp):
+		if tmp:
+			self.referer = tmp
+	def setUseragent(self,tmp):
+		if tmp:
+			self.useragent = tmp
+	def setBaseUrl(self,tmp):
+		if tmp:
+			self.baseurl = tmp
+	def ufilter(self,url):
+		if (url not in self.link) :
+			self.link.append(url)
+		else:
+			if url not in self.skip:
+				self.skip.append(url)
+				self.logging.warning('Skip ' + url)	
+			return(None)
+		
+		if url[0:1] == '/':
+			return(self.baseurl + url)
+		elif url.find('http://') == -1:
+			return(self.baseurl +'/'+ url)
+		else:
+			if url.find(self.domain) == -1:
+				if url not in self.ignore:
+					self.logging.warning('Ignore ' + url)
+					self.ignore.append(url)
+				return(None)
+
+		return(url)
+
+	def working(self, myurl):
+		self.depths = self.depths + 1
+		if self.depths &gt; 256:
+			return()
+		#if self.isdebug:
+		#	self.logging.debug('&gt;&gt;&gt;' + str(self.depths))
+		url = self.ufilter(myurl)
+      			
+		if url == None:
+			return()
+		else:
+			self.link.append(myurl)
+			if self.baseurl:
+				urlparse = urllib.parse.urlparse(url)
+				self.setBaseUrl(urlparse.scheme+ '://' + urlparse.netloc)
+			#self.setDomain(urlparse.netloc)
+			#print(urlparse)
+			#uri.path
+		   	#uri.params
+		   	#uri.query
+		   	#uri.fragment
+
+		try:
+			lines	= []
+			parser = MyHTMLParser()
+			#html = urllib.request.urlopen(myurl)
+			#body = html.read()
+			#html.close()
+			req = urllib.request.Request(url)
+			req.add_header('User-agent', self.useragent)
+			req.add_header('Referer', self.referer)
+			response = urllib.request.urlopen(req, timeout = 10)
+			status 	= response.status
+			reason 	= response.reason
+			headers = response.info()
+			
+			log = str(status)+' '+reason+' '+myurl+ ' ('+ str(self.depths)+self.threadname+') '
+			
+			if self.isdebug:
+				#print(response.geturl())
+				print(log)
+				#print(headers)
+			if headers['Content-Type'] in ('text/html'):
+				if status == 200:
+					body 	= response.read()
+					parser.feed(bytes.decode(body))
+					lines = parser.gethref()
+					self.logging.info(log)
+				elif status == 302:
+					self.unlink.append(myurl)
+					self.logging.critical(log)
+				else:
+					self.logging.warning(log)
+
+				response.close()
+							
+				if lines:
+					self.referer = random.choice(lines)
+					for line in lines:
+						#result = re.match ('/http://"(.*)"/"(.*)"', line)
+						self.working(line)
+						self.depths = self.depths - 1
+						#if self.isdebug:
+						#	self.logging.debug('&lt;&lt;&lt;' + str(self.depths))
+			else:
+				self.logging.warning(log + ' ' + headers['Content-Type'])
+				response.close()
+		except socket.timeout as e:
+			self.logging.error(str(e) +' '+ myurl)			
+		except urllib.error.URLError as e:
+			if self.isdebug:
+				print (str(e) +' '+myurl + ' - ' + url) 
+			if (e.code == 404):
+				self.unlink.append(myurl)
+			else:
+				print(e.code)
+			self.logging.critical(str(e) +' '+ myurl)
+		except urllib.error.HTTPError as e:
+			self.logging.critical(str(e) +' '+ myurl)		
+		except HTMLParseError as e:
+			self.logging.error(str(e) +' '+ myurl)
+			if self.isdebug:
+				print (str(e) +' '+ myurl) 
+		except UnicodeDecodeError as e:
+			self.logging.critical(str(e) +' '+ myurl)
+		except ValueError as e:
+			if self.isdebug:
+				print (str(e) +' '+ myurl) 			
+		#else:
+			#self.logging.error(myurl)
+		#finally:
+			#self.depths = self.depths - 1
+			#pass
+
+class ThreadSpider(threading.Thread):
+	def __init__(self, queue):
+		threading.Thread.__init__(self)
+		self.queue = queue
+
+		self.spider = Spider(str(self.name))
+		self.spider.setDebug(True)
+		
+	def run(self):
+		while True:
+			#grabs host from queue
+			host = self.queue.get()
+			self.spider.setDomain(host)
+			self.spider.working(host)
+
+			#signals to queue job is done
+			self.queue.task_done()
+
+def Multithreading():
+	workers	= 5
+	hosts = ['http://www.example.com/','http://brand.example.com/','http://list.example.com/','http://item.example.com/']
+	#spawn a pool of threads, and pass them queue instance 
+	for i in range(workers):
+		t = ThreadSpider(queue)
+		t.setDaemon(True)
+		t.start()
+
+	#populate queue with data   
+	for host in hosts:
+		queue.put(host)
+
+	#wait on the queue until everything has been processed     
+	queue.join()
+
+	#p = Pool(processes = 5)
+	#p.map(test, [b'http://www.163.com/',b'http://www.sina.com/',b'http://www.qq.com/'])
+
+def test(url):
+	spider = Spider()
+	spider.setDebug(True)
+	spider.working(url)
+	print(url)
+
+def daemon(isdaemon):
+	if isdaemon :
+		pid = os.fork()
+		if pid &gt; 0:
+			sys.exit(0)
+	
+def main():
+	daemon(isdaemon = False)
+
+	myurl 		= r'http://www.example.com'
+	#myurl 		= r'http://www.example.com/mobile.html'
+	try:
+		start = time.time()
+		spider = Spider()
+		spider.setDebug(True)
+		spider.setDomain('www.example.com')
+		spider.setBaseUrl(myurl)
+		spider.working(myurl)
+		print("Elapsed Time: %s" % (time.time() - start))
+	except RuntimeError as e:
+		print(e)
+
+if __name__ == '__main__':
+	try:
+		main()
+		#Multithreading()
+	except KeyboardInterrupt:
+		print ("Crtl+C Pressed. Shutting down.")
+
+		
+		</pre></div></div></body></html>
