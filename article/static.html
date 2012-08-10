@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>网站静态内容出版解决方案</title><link rel="stylesheet" type="text/css" href="article.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.76.1" /><meta name="description" content="" /><meta name="keywords" content="cms, cdn, nginx" /></head><body><div xml:lang="zh-cn" class="article" title="网站静态内容出版解决方案" lang="zh-cn"><div class="titlepage"><div><div><h2 class="title"><a id="idp768"></a>网站静态内容出版解决方案</h2></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(netkiller)</span>, <span class="lineage">陈景峰(BG7NYT)</span></h3><div class="affiliation"><div class="address"><p><br />
+				<code class="email">&lt;<a class="email" href="mailto:openunix@163.com">openunix@163.com</a>&gt;</code><br />
+			</p></div></div></div></div><div><p class="copyright">版权 © 2011, 2012 http://netkiller.github.com</p></div><div><p class="pubdate">$Data$</p></div><div><div class="abstract" title="摘要"><p class="title"><strong>摘要</strong></p><p></p></div></div><div><div class="abstract" title="下面是我多年积累下来的经验总结，整理成文档供大家参考:"><a id="abstract"></a><p class="title"><strong>下面是我多年积累下来的经验总结，整理成文档供大家参考:</strong></p><p>
+		</p><table border="0" summary="Simple list" class="simplelist"><tr><td>
+				<a class="ulink" href="../architect/index.html" target="_top">Netkiller Architect 手札</a>
+			</td><td>
+				<a class="ulink" href="../linux/index.html" target="_top">Netkiller Linux 手札</a>
+			</td><td>
+				<a class="ulink" href="../developer/index.html" target="_top">Netkiller Developer 手札</a>
+			</td><td>
+				<a class="ulink" href="../security/index.html" target="_top">Netkiller Security 手札</a>
+			</td></tr><tr><td>
+				<a class="ulink" href="../debian/index.html" target="_top">Netkiller Debian 手札</a>
+			</td><td>
+				<a class="ulink" href="../centos/index.html" target="_top">Netkiller CentOS 手札</a>
+			</td><td>
+				<a class="ulink" href="../freebsd/index.html" target="_top">Netkiller FreeBSD 手札</a>
+			</td><td>
+				<a class="ulink" href="../shell/index.html" target="_top">Netkiller Shell 手札</a>
+			</td></tr><tr><td>
+				<a class="ulink" href="../www/index.html" target="_top">Netkiller Web 手札</a>
+			</td><td>
+				<a class="ulink" href="../monitoring/index.html" target="_top">Netkiller Monitoring 手札</a>
+			</td><td>
+				<a class="ulink" href="../storage/index.html" target="_top">Netkiller Storage 手札</a>
+			</td><td>
+				<a class="ulink" href="../mail/index.html" target="_top">Netkiller Mail 手札</a>
+			</td></tr><tr><td>
+				<a class="ulink" href="../database/index.html" target="_top">Netkiller Database 手札</a>
+			</td><td>
+				<a class="ulink" href="../postgres/index.html" target="_top">Netkiller PostgreSQL 手札</a>
+			</td><td>
+				<a class="ulink" href="../mysql/index.html" target="_top">Netkiller MySQL 手札</a>
+			</td><td>
+				<a class="ulink" href="../ldap/index.html" target="_top">Netkiller LDAP 手札</a>
+			</td></tr><tr><td>
+				<a class="ulink" href="../cryptography/index.html" target="_top">Netkiller Cryptography 手札</a>
+			</td><td>
+				<a class="ulink" href="../docbook/index.html" target="_top">Netkiller Docbook 手札</a>
+			</td><td>
+				<a class="ulink" href="../version/index.html" target="_top">Netkiller Version 手札</a>
+			</td><td>
+				<a class="ulink" href="../multimedia/index.html" target="_top">Netkiller Multimedia 手札</a>
+			</td></tr><tr><td>
+				<a class="ulink" href="../cisco/index.html" target="_top">Netkiller Cisco IOS 手札</a>
+			</td><td>
+				<a class="ulink" href="../intranet/index.html" target="_top">Netkiller Intranet 手札</a>
+			</td><td>
+				<a class="ulink" href="../management/index.html" target="_top">Netkiller Management 手札</a>
+			</td><td>
+				<a class="ulink" href="../initenv/index.html" target="_top">Netkiller Installation 手札</a>
+			</td></tr></table><p>
+	</p></div></div></div><hr /></div><div class="toc"><p><strong>目录</strong></p><dl><dt><span class="section"><a href="#idp51920">1. 架构总览</a></span></dt><dt><span class="section"><a href="#idp61152">2. CDN</a></span></dt><dt><span class="section"><a href="#idp64064">3. www 服务器</a></span></dt><dt><span class="section"><a href="#idp10272">4. CMS 服务器</a></span></dt></dl></div><div class="section" title="1. 架构总览"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp51920"></a>1. 架构总览</h2></div></div></div><p>首次访问服务器</p><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>访问www服务器</p></li><li class="listitem"><p>nginx 判断文件是否存在,如果存在将文件显示出来</p></li><li class="listitem"><p>如果文件不存在,去cms服务器上查找, 如果存在便返回给www服务器,并显示出来</p></li><li class="listitem"><p>如果cms上文件不存在,cms服务器便使用rewrite生成该文件, 同时将内容返回给www服务器,www将内容缓存在自己的服务器上,并将内容显示出来</p></li></ol></div><p>第二次次访问</p><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>访问www服务器</p></li><li class="listitem"><p>nginx 判断文件是否存在,如果存在将文件显示出来</p></li><li class="listitem"><p>如果文件不存在,去cms服务器上查找, 如果存在便返回给www服务器,并显示出来</p></li><li class="listitem"><p>如果cms上文件不存在,cms服务器便使用rewrite生成该文件, 同时将内容返回给www服务器,www将内容缓存在自己的服务器上,并将内容显示出来</p></li></ol></div></div><div class="section" title="2. CDN"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp61152"></a>2. CDN</h2></div></div></div><p></p><p></p><pre class="screen">
+		
+
+		
+		</pre><pre class="screen">
+		
+
+		
+		</pre></div><div class="section" title="3. www 服务器"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp64064"></a>3. www 服务器</h2></div></div></div><p></p><p></p><pre class="screen">
+		
+upstream  cms.mydomain.com  {
+  server   192.168.2.11		weight=5	max_fails=3  fail_timeout=30s;
+  server   192.168.2.21     weight=5	max_fails=3  fail_timeout=30s;
+  server   192.168.2.23 backup;
+  server   192.168.2.23 down;
+}
+
+server {
+    listen       80;
+    server_name  www.mydomain.com;
+
+    #charset koi8-r;
+    access_log  /var/log/nginx/www.mydomain.com.access.log  main;
+
+    location / {
+        root   /www/mydomain.com/www.mydomain.com;
+        index  index.html index.htm;
+
+		valid_referers none blocked *.mydomain.com;
+		if ($invalid_referer) {
+			#rewrite ^(.*)$  http://www.mydomain.com/cn/$1;
+			return 403;
+		}
+
+        proxy_intercept_errors  on;
+        if (!-f $request_filename) {
+          proxy_pass http://cms.mydomain.com;
+          break;
+        }
+    }
+
+    #error_page  404              /404.html;
+
+    # redirect server error pages to the static page /50x.html
+    #
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html;
+    }
+
+
+    # proxy the PHP scripts to Apache listening on 127.0.0.1:80
+    #
+    #location ~ \.php$ {
+    #    proxy_pass   http://127.0.0.1;
+    #}
+
+    # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
+    #
+    #location ~ \.php$ {
+    #    root           html;
+    #    fastcgi_pass   127.0.0.1:9000;
+    #    fastcgi_index  index.php;
+    #    #fastcgi_param  SCRIPT_FILENAME  /scripts$fastcgi_script_name;
+    #    include        fastcgi_params;
+    #}
+
+    # deny access to .htaccess files, if Apache's document root
+    # concurs with nginx's one
+    #
+    #location ~ /\.ht {
+    #    deny  all;
+    #}
+}
+		
+		</pre></div><div class="section" title="4. CMS 服务器"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp10272"></a>4. CMS 服务器</h2></div></div></div><p></p><p></p><pre class="screen">
+		
+server {
+    listen       80;
+    server_name  www.mydomain.com;
+
+    #charset koi8-r;
+    access_log  /var/log/nginx/www.mydomain.com.access.log  main;
+
+    location / {
+        root   /www/mydomain.com/www.mydomain.com;
+        index  index.html;
+    }
+}
+
+server {
+    listen       80;
+    server_name  cms.mydomain.com;
+
+    #charset koi8-r;
+    access_log  /var/log/nginx/cms.mydomain.com.access.log  main;
+
+    location / {
+        root   /www/mydomain.com/cms.mydomain.com;
+        index  index.html index.php;
+
+    }
+
+    location ~ ^/(cn|tw)/(comment|affiche)/.*\.html {
+		root /www/mydomain.com/www.mydomain.com;
+		if (!-f $request_filename) {
+			rewrite ^/(cn|tw)/(comment|affiche)/(\d+).html /publish/$2.php?id=$3&amp;lang=$1 last;
+		}
+    }
+    location /xml/ {
+		root /www/mydomain.com/www.mydomain.com/xml;
+    }
+    location ~ ^/(config|include|crontab)/ {
+		deny all;
+		break;
+    }
+
+    #error_page  404              /404.html;
+
+    # redirect server error pages to the static page /50x.html
+    #
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html;
+    }
+
+    # proxy the PHP scripts to Apache listening on 127.0.0.1:80
+    #
+    #location ~ \.php$ {
+    #    proxy_pass   http://127.0.0.1;
+    #}
+
+    # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
+    #
+    location ~ \.php$ {
+	root		/www/mydomain.com/cms.mydomain.com;
+        fastcgi_pass   127.0.0.1:9000;
+        fastcgi_index  index.php;
+        fastcgi_param  SCRIPT_FILENAME  /www/mydomain.com/cms.mydomain.com$fastcgi_script_name;
+        include        fastcgi_params;
+		fastcgi_param  DOCUMENT_ROOT /www/mydomain.com/cms.mydomain.com;
+		fastcgi_param  HOSTNAME cms.mydomain.com;
+    }
+
+    # deny access to .htaccess files, if Apache's document root
+    # concurs with nginx's one
+    #
+    location ~ /\.ht {
+        deny  all;
+    }
+}
+		
+		</pre></div></div></body></html>
