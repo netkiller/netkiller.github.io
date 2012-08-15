@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>4. php-5.4.4</title><link rel="stylesheet" type="text/css" href="docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.76.1" /><meta name="keywords" content="CentOS, Piranha, NFS, , " /><link rel="home" href="index.html" title="Netkiller Installation 手札" /><link rel="up" href="fastcgi.html" title="第 6 章 FastCGI" /><link rel="prev" href="php-5.3.13.html" title="3. php-5.3.13 + MySQL-devel-5.5.25" /><link rel="next" href="php.extension.html" title="5. Extension 扩展安装" /><script xmlns="" type="text/javascript">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>4. php-5.4.4</title><link rel="stylesheet" type="text/css" href="/docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.76.1" /><meta name="keywords" content="CentOS, Piranha, NFS, , " /><link rel="home" href="index.html" title="Netkiller Installation 手札" /><link rel="up" href="fastcgi.html" title="第 6 章 FastCGI" /><link rel="prev" href="php-5.3.13.html" title="3. php-5.3.13 + MySQL-devel-5.5.25" /><link rel="next" href="php.extension.html" title="5. Extension 扩展安装" /><script xmlns="" type="text/javascript">
 
   var _gaq = _gaq || [];
   _gaq.push(['_setAccount', 'UA-11694057-1']);
@@ -81,15 +81,40 @@ cp ./sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm
 chmod +x /etc/init.d/php-fpm
 
 ln -s /srv/php-5.4.4/ /srv/php
-		</pre><p>php-fpm.conf</p><pre class="screen">
-		
+		</pre><div class="section" title="4.1. php-fpm.conf"><div class="titlepage"><div><div><h3 class="title"><a id="idp229056"></a>4.1. php-fpm.conf</h3></div></div></div><p>php-fpm.conf</p><pre class="screen">
+			
 vim /srv/php-5.4.4/etc/php-fpm.conf &lt;&lt;end &gt; /dev/null 2&gt;&amp;1
 :25,25s/;//
 :wq
 end
-		
-		</pre><p>php.ini</p><pre class="screen">
-		
+			
+			</pre><pre class="screen">
+# grep -v '^;' /srv/php-5.4.4/etc/php-fpm.conf | grep -v '^$'
+[global]
+pid = run/php-fpm.pid
+
+rlimit_files = 4096
+
+[www]
+user = www
+group = www
+listen = 127.0.0.1:9000
+
+pm = dynamic
+pm.max_children = 512
+pm.start_servers = 2
+pm.min_spare_servers = 1
+pm.max_spare_servers = 3
+
+pm.status_path = /status
+
+ping.path = /ping
+ping.response = pong
+access.format = "%R - %u %t \"%m %r%Q%q\" %s %f %{mili}d %{kilo}M %C%%"
+
+slowlog = log/$pool.log.slow
+			</pre></div><div class="section" title="4.2. php.ini-development"><div class="titlepage"><div><div><h3 class="title"><a id="idp231520"></a>4.2. php.ini-development</h3></div></div></div><p>php.ini</p><pre class="screen">
+			
 vim /srv/php-5.4.4/etc/php.ini &lt;&lt;EOF &gt; /dev/null 2&gt;&amp;1
 :%s!;include_path = ".:/php/includes"!include_path = ".:/srv/php-5.4.4/lib/php:/srv/php-5.4.4/share"!
 :%s:extension_dir = "./":extension_dir = "/srv/php-5.4.4/lib/php/extensions":
@@ -100,8 +125,8 @@ vim /srv/php-5.4.4/etc/php.ini &lt;&lt;EOF &gt; /dev/null 2&gt;&amp;1
 :%s$;date.timezone =$date.timezone = Asia/Hong_Kong$
 :wq
 EOF
-		
-		</pre></div><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
+			
+			</pre></div></div><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
             /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
 
             if(document.domain == 'netkiller.github.com'){
