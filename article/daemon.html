@@ -1,8 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>Linux 应用程序开发入门</title><link rel="stylesheet" type="text/css" href="article.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.76.1" /><meta name="description" content="我会实现一个守护进程，从这个程序你将了解，Linux 应用程序开发基本流程 我们将实现一个远程shell的功能，可以通过tcp协议，运行远程机器上的命令或shell脚本 通过这个命令可以实现批量操作，管理上千台服务器。需要发挥你的想象力，灵活使用它。 写这个脚本，我是为了替代SSH远程操作，因为SSH不能控制运行命令，操作风险大，也不安全。 程序还不完善，还需要很多后续改进工作，比如通过SSL建立Socket链接，用户认证，ACL访问控制等等." /><meta name="keywords" content="python, os.fork, getopt.getopt, logging, init.d, rc.d, inittab, nodekeeper" /></head><body><div xml:lang="zh-cn" class="article" title="Linux 应用程序开发入门" lang="zh-cn"><div class="titlepage"><div><div><h2 class="title"><a id="idp6512"></a>Linux 应用程序开发入门</h2></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(netkiller)</span>, <span class="lineage">陈景峰(BG7NYT)</span></h3><div class="affiliation"><div class="address"><p><br />
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>Linux 应用程序开发入门</title><link rel="stylesheet" type="text/css" href="article.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.76.1" /><meta name="description" content="我会实现一个守护进程，从这个程序你将了解，Linux 应用程序开发基本流程 我们将实现一个远程shell的功能，可以通过tcp协议，运行远程机器上的命令或shell脚本 通过这个命令可以实现批量操作，管理上千台服务器。需要发挥你的想象力，灵活使用它。 写这个脚本，我是为了替代SSH远程操作，因为SSH不能控制运行命令，操作风险大，也不安全。 程序还不完善，还需要很多后续改进工作，比如通过SSL建立Socket链接，用户认证，ACL访问控制等等." /><meta name="keywords" content="python, os.fork, getopt.getopt, logging, init.d, rc.d, inittab, nodekeeper" /><script xmlns="" type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-11694057-1']);
+  _gaq.push(['_setDomainName', 'netkiller.sourceforge.net']);
+  _gaq.push(['_setAllowHash', 'false']);
+  _gaq.push(['_setAllowLinker', true]);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script></head><body><table xmlns="" width="100%" border="0"><tr><td align="left"><a href="http://netkiller.sourceforge.net/">Home</a> |
+                <a href="http://netkiller.github.com/">Mirror</a> |
+                <a href="/search.html">Search</a></td><td><div id="bdshare" class="bdshare_t bds_tools_32 get-codes-bdshare"><a class="bds_fbook"></a><a class="bds_twi"></a><a class="bds_ms"></a><a class="bds_msn"></a><a class="bds_buzz"></a><a class="bds_linkedin"></a><a class="bds_deli"></a><a class="bds_qzone"></a><a class="bds_qq"></a><a class="bds_tqq"></a><a class="bds_tqf"></a><a class="bds_tsina"></a><a class="bds_baidu"></a><a class="bds_renren"></a><a class="bds_t163"></a><a class="bds_tfh"></a><a class="bds_ty"></a><a class="bds_s51"></a><a class="bds_douban"></a><a class="bds_hi"></a><a class="bds_tieba"></a><a class="bds_tsohu"></a><a class="bds_kaixin001"></a><a class="bds_fx"></a><a class="bds_meilishuo"></a><a class="bds_zx"></a><a class="bds_tuita"></a><span class="bds_more"></span><a class="shareCount"></a></div><script type="text/javascript" id="bdshare_js" data="type=tools"></script><script type="text/javascript" id="bdshell_js"></script><script type="text/javascript">
+	document.getElementById("bdshell_js").src = "http://bdimg.share.baidu.com/static/js/shell_v2.js?cdnversion=" + new Date().getHours();
+</script></td><td><form id="searchbox_008589143145807374698:f5uprauilyy" action="/search.html"><input type="hidden" name="cx" value="008589143145807374698:f5uprauilyy" /><input type="hidden" name="cof" value="FORID:11" /><input name="q" type="text" size="25" style="border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; border-top-style: solid; border-right-style: solid; border-bottom-style: solid; border-left-style: solid; border-top-color: rgb(126, 157, 185); border-right-color: rgb(126, 157, 185); border-bottom-color: rgb(126, 157, 185); border-left-color: rgb(126, 157, 185); padding-top: 2px; padding-right: 2px; padding-bottom: 2px; padding-left: 2px; background-image: url(http://www.google.com/cse/intl/en/images/google_custom_search_watermark.gif); background-attachment: initial; background-origin: initial; background-clip: initial; background-color: rgb(255, 255, 255); background-position: 0% 50%; background-repeat: no-repeat no-repeat; " /><input type="submit" name="sa" value="Search" /><input name="siteurl" type="hidden" value="http://netkiller.sourceforge.net/" /></form><script type="text/javascript" src="http://www.google.com/coop/cse/brand?form=searchbox_008589143145807374698%3Af5uprauilyy"></script></td></tr></table><div xml:lang="zh-cn" class="article" title="Linux 应用程序开发入门" lang="zh-cn"><div class="titlepage"><div><div><h2 class="title"><a id="idp6688"></a>Linux 应用程序开发入门</h2></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(netkiller)</span>, <span class="lineage">陈景峰(BG7NYT)</span></h3><div class="affiliation">
+			<div class="address"><p><br />
 				<code class="email">&lt;<a class="email" href="mailto:openunix@163.com">openunix@163.com</a>&gt;</code><br />
-			</p></div></div></div></div><div><p class="copyright">版权 © 2011, 2012 http://netkiller.github.com</p></div><div><p class="pubdate">$Date: 2012-02-01 14:03:53 +0800 (Wed, 01 Feb 2012) $</p></div><div><div class="abstract" title="摘要"><p class="title"><strong>摘要</strong></p><p>我会实现一个守护进程，从这个程序你将了解，Linux 应用程序开发基本流程</p><p>我们将实现一个远程shell的功能，可以通过tcp协议，运行远程机器上的命令或shell脚本</p><p>通过这个命令可以实现批量操作，管理上千台服务器。需要发挥你的想象力，灵活使用它。</p><p>写这个脚本，我是为了替代SSH远程操作，因为SSH不能控制运行命令，操作风险大，也不安全。</p><p>程序还不完善，还需要很多后续改进工作，比如通过SSL建立Socket链接，用户认证，ACL访问控制等等.</p></div></div><div><div class="abstract" title="下面是我多年积累下来的经验总结，整理成文档供大家参考:"><a id="abstract"></a><p class="title"><strong>下面是我多年积累下来的经验总结，整理成文档供大家参考:</strong></p><p>
+			</p></div>
+		</div></div></div><div><p class="copyright">版权 © 2011, 2012 http://netkiller.github.com</p></div><div><p class="pubdate">$Date: 2012-02-01 14:03:53 +0800 (Wed, 01 Feb 2012) $</p></div><div><div class="abstract" title="摘要"><p class="title"><strong>摘要</strong></p>
+			<p>我会实现一个守护进程，从这个程序你将了解，Linux 应用程序开发基本流程</p>
+			<p>我们将实现一个远程shell的功能，可以通过tcp协议，运行远程机器上的命令或shell脚本</p>
+			<p>通过这个命令可以实现批量操作，管理上千台服务器。需要发挥你的想象力，灵活使用它。</p>
+			<p>写这个脚本，我是为了替代SSH远程操作，因为SSH不能控制运行命令，操作风险大，也不安全。</p>
+			<p>程序还不完善，还需要很多后续改进工作，比如通过SSL建立Socket链接，用户认证，ACL访问控制等等.</p>
+		</div></div><div><div class="abstract" title="下面是我多年积累下来的经验总结，整理成文档供大家参考:"><a id="abstract"></a><p class="title"><strong>下面是我多年积累下来的经验总结，整理成文档供大家参考:</strong></p>
+	
+
+
+	<p>
 		</p><table border="0" summary="Simple list" class="simplelist"><tr><td>
 				<a class="ulink" href="../architect/index.html" target="_top">Netkiller Architect 手札</a>
 			</td><td>
@@ -52,7 +83,17 @@
 			</td><td>
 				<a class="ulink" href="../initenv/index.html" target="_top">Netkiller Installation 手札</a>
 			</td></tr></table><p>
-	</p></div></div></div><hr /></div><div class="toc"><p><strong>目录</strong></p><dl><dt><span class="section"><a href="#idp54304">1. 环境</a></span></dt><dt><span class="section"><a href="#idp57312">2. nodekeeper 主程序</a></span></dt><dd><dl><dt><span class="section"><a href="#idp67088">2.1. 帮助信息</a></span></dt><dt><span class="section"><a href="#idp69344">2.2. 参数处理</a></span></dt><dt><span class="section"><a href="#idp73056">2.3. 后台运行</a></span></dt><dt><span class="section"><a href="#idp76448">2.4. 日志记录</a></span></dt><dt><span class="section"><a href="#idp78896">2.5. 多线程</a></span></dt></dl></dd><dt><span class="section"><a href="#idp82320">3. 配置文件</a></span></dt><dt><span class="section"><a href="#idp85408">4. init.d 脚本</a></span></dt><dd><dl><dt><span class="section"><a href="#idp91856">4.1. start/stop</a></span></dt><dt><span class="section"><a href="#idp93008">4.2. service start/stop</a></span></dt></dl></dd></dl></div><div class="section" title="1. 环境"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54304"></a>1. 环境</h2></div></div></div><p>OS: Ubuntu 11.10</p><p>Python: 3.2.2</p><p>程序目录: /srv/nodekeeper</p><p>目录与相关文件</p><pre class="screen">
+	</p>
+</div></div></div><hr /></div><div class="toc"><p><strong>目录</strong></p><dl><dt><span class="section"><a href="#idp54624">1. 环境</a></span></dt><dt><span class="section"><a href="#idp57632">2. nodekeeper 主程序</a></span></dt><dd><dl><dt><span class="section"><a href="#idp67408">2.1. 帮助信息</a></span></dt><dt><span class="section"><a href="#idp69664">2.2. 参数处理</a></span></dt><dt><span class="section"><a href="#idp73376">2.3. 后台运行</a></span></dt><dt><span class="section"><a href="#idp76768">2.4. 日志记录</a></span></dt><dt><span class="section"><a href="#idp79216">2.5. 多线程</a></span></dt></dl></dd><dt><span class="section"><a href="#idp82640">3. 配置文件</a></span></dt><dt><span class="section"><a href="#idp85728">4. init.d 脚本</a></span></dt><dd><dl><dt><span class="section"><a href="#idp92176">4.1. start/stop</a></span></dt><dt><span class="section"><a href="#idp93328">4.2. service start/stop</a></span></dt></dl></dd></dl></div>
+	
+
+	<div class="section" title="1. 环境"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54624"></a>1. 环境</h2></div></div></div>
+		
+		<p>OS: Ubuntu 11.10</p>
+		<p>Python: 3.2.2</p>
+		<p>程序目录: /srv/nodekeeper</p>
+		<p>目录与相关文件</p>
+		<pre class="screen">
 $ cd /srv
 $ find nodekeeper | grep -v .svn
 nodekeeper
@@ -64,7 +105,11 @@ nodekeeper/etc/protocol.cfg
 nodekeeper/bin
 nodekeeper/bin/nodekeeper
 nodekeeper/bin/console
-		</pre></div><div class="section" title="2. nodekeeper 主程序"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp57312"></a>2. nodekeeper 主程序</h2></div></div></div><pre class="screen">
+		</pre>
+	</div>
+	<div class="section" title="2. nodekeeper 主程序"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp57632"></a>2. nodekeeper 主程序</h2></div></div></div>
+		
+		<pre class="screen">
 		
 $ cat nodekeeper/bin/nodekeeper
 #!/usr/bin/env python3
@@ -319,7 +364,11 @@ if __name__ == '__main__':
         print ("Crtl+C Pressed. Shutting down.")
 
 		
-		</pre><div class="section" title="2.1. 帮助信息"><div class="titlepage"><div><div><h3 class="title"><a id="idp67088"></a>2.1. 帮助信息</h3></div></div></div><p>usage()</p><pre class="screen">
+		</pre>	
+		<div class="section" title="2.1. 帮助信息"><div class="titlepage"><div><div><h3 class="title"><a id="idp67408"></a>2.1. 帮助信息</h3></div></div></div>
+				
+			<p>usage()</p>
+			<pre class="screen">
 			
 Usage: nodekeeper -d -h &lt;ip address&gt; -p &lt;7800&gt;
 Development and deployment administration platform
@@ -342,12 +391,19 @@ Example:
 See http://netkiller.sf.net/ for updates, bug reports, and answers, 
 if you have no web access, by sending email to Neo Chan&lt;openunix@163.com&gt;.
 			
-			</pre></div><div class="section" title="2.2. 参数处理"><div class="titlepage"><div><div><h3 class="title"><a id="idp69344"></a>2.2. 参数处理</h3></div></div></div><p>getopt.getopt 实现Unix风格的命令参数，例如:</p><pre class="screen">
+			</pre>
+		</div>
+		<div class="section" title="2.2. 参数处理"><div class="titlepage"><div><div><h3 class="title"><a id="idp69664"></a>2.2. 参数处理</h3></div></div></div>
+				
+			<p>getopt.getopt 实现Unix风格的命令参数，例如:</p>
+			<pre class="screen">
 nodekeeper --daemon --host localhost --port 7800
 
 --host localhost --port 7800 IP地址与端口参数
 --daemon 参数实现后台运行
-			</pre><p>具体实现代码</p><pre class="screen">
+			</pre>
+			<p>具体实现代码</p>
+			<pre class="screen">
 			
     try:
         opts, args = getopt.getopt(sys.argv[1:], "h:p:d?v", [ "daemon","host=","port=", 'help',"h=","p=", "basedir=", "pidfile=", "config=", "protocol=", "logfile="])
@@ -385,7 +441,14 @@ nodekeeper --daemon --host localhost --port 7800
         usage()
         sys.exit(2)
 			
-			</pre></div><div class="section" title="2.3. 后台运行"><div class="titlepage"><div><div><h3 class="title"><a id="idp73056"></a>2.3. 后台运行</h3></div></div></div><p>--daemon 参数实现后台运行，原理是首先通过os.fork()克隆一个进程，然后退出当前进程，克隆的新进程继续运行</p><p>如果是Shell程序，你可使用“&amp;”符号后台运行，但作为一个应用程序，使用“&amp;”显得不专业。</p><p>具体实现的代码如下</p><pre class="screen">
+			</pre>
+		</div>
+		<div class="section" title="2.3. 后台运行"><div class="titlepage"><div><div><h3 class="title"><a id="idp73376"></a>2.3. 后台运行</h3></div></div></div>
+				
+			<p>--daemon 参数实现后台运行，原理是首先通过os.fork()克隆一个进程，然后退出当前进程，克隆的新进程继续运行</p>
+			<p>如果是Shell程序，你可使用“&amp;”符号后台运行，但作为一个应用程序，使用“&amp;”显得不专业。</p>
+			<p>具体实现的代码如下</p>
+			<pre class="screen">
 			
         if daemon :
             pid = os.fork()
@@ -393,7 +456,14 @@ nodekeeper --daemon --host localhost --port 7800
                 #exit first parent
                 sys.exit(0)
 			
-			</pre><p>程序一旦进入后台，当前进程即将关闭，所以你必须保存PID，为后面的推出程序操作使用，这里我们可以通过 --pidfile 指定一个pid文件</p></div><div class="section" title="2.4. 日志记录"><div class="titlepage"><div><div><h3 class="title"><a id="idp76448"></a>2.4. 日志记录</h3></div></div></div><p>程序一旦进入后台，你只能通过ps，pstree, top 等命令查看状态，运行情况必须通过日志的形式，打印出来</p><p>具体实现代码如下：</p><pre class="screen">
+			</pre>
+			<p>程序一旦进入后台，当前进程即将关闭，所以你必须保存PID，为后面的推出程序操作使用，这里我们可以通过 --pidfile 指定一个pid文件</p>
+		</div>	
+		<div class="section" title="2.4. 日志记录"><div class="titlepage"><div><div><h3 class="title"><a id="idp76768"></a>2.4. 日志记录</h3></div></div></div>
+				
+			<p>程序一旦进入后台，你只能通过ps，pstree, top 等命令查看状态，运行情况必须通过日志的形式，打印出来</p>
+			<p>具体实现代码如下：</p>
+			<pre class="screen">
 			
 			logging.basicConfig(level=logging.NOTSET,
                     format='%(asctime)s %(levelname)-8s %(message)s',
@@ -403,22 +473,37 @@ nodekeeper --daemon --host localhost --port 7800
             self.logging = logging.getLogger()
             self.logging.debug('Test')
 			
-			</pre></div><div class="section" title="2.5. 多线程"><div class="titlepage"><div><div><h3 class="title"><a id="idp78896"></a>2.5. 多线程</h3></div></div></div><p>继承 asynchat.async_chat 实现多线程</p><pre class="screen">
+			</pre>
+		</div>	
+		<div class="section" title="2.5. 多线程"><div class="titlepage"><div><div><h3 class="title"><a id="idp79216"></a>2.5. 多线程</h3></div></div></div>
+			
+			<p>继承 asynchat.async_chat 实现多线程</p>
+			<pre class="screen">
 			
 class request_handler(asynchat.async_chat):
 
     def __init__(self, sock, resource):
         asynchat.async_chat.__init__(self, sock=sock)
 			
-			</pre><p>连接数限制</p><pre class="screen">
+			</pre>
+			<p>连接数限制</p>
+			<pre class="screen">
         self.listen(10)			
-			</pre><p>可以将这个参数提出来，然后通过命令行设置。</p><pre class="screen">
+			</pre>
+			<p>可以将这个参数提出来，然后通过命令行设置。</p>
+			<pre class="screen">
 nodekeeper --daemon --maxconn 100 --host localhost --port 7800
 			
 self.max_connect = maxconn
 
 self.listen(self.max_connect)			
-			</pre></div></div><div class="section" title="3. 配置文件"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp82320"></a>3. 配置文件</h2></div></div></div><pre class="screen">
+			</pre>
+		</div>
+				
+	</div>	
+	<div class="section" title="3. 配置文件"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp82640"></a>3. 配置文件</h2></div></div></div>
+		
+		<pre class="screen">
 		
 $ cat nodekeeper/etc/protocol.cfg 
 [system]
@@ -485,9 +570,17 @@ vsftpd.restart = /etc/init.d/vsftpd restart
 vsftpd.status = /etc/init.d/vsftpd status
 
 		
-		</pre></div><div class="section" title="4. init.d 脚本"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp85408"></a>4. init.d 脚本</h2></div></div></div><p>Linux 所有守护进程都是用init.d下面的脚本来管理</p><p>当人你也可以直接运行命令：</p><pre class="screen">
+		</pre>
+	</div>	
+	<div class="section" title="4. init.d 脚本"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp85728"></a>4. init.d 脚本</h2></div></div></div>
+		
+		<p>Linux 所有守护进程都是用init.d下面的脚本来管理</p>
+		<p>当人你也可以直接运行命令：</p>
+		<pre class="screen">
 nodekeeper --daemon --host localhost --port 7800
-		</pre><p>但这样只能算是一个半成品，也不够专业，我们写的是linux运用程序，必须遵循Linux规范，所有要实现一个init.d脚本</p><pre class="screen">
+		</pre>
+		<p>但这样只能算是一个半成品，也不够专业，我们写的是linux运用程序，必须遵循Linux规范，所有要实现一个init.d脚本</p>
+		<pre class="screen">
 		
 $ cat nodekeeper
 #! /bin/sh
@@ -588,12 +681,40 @@ esac
 
 exit 0
 		
-		</pre><p>我们将使用DAEMON_OPTS变量，提供所有需要的参数</p><pre class="screen">
+		</pre>
+		<p>我们将使用DAEMON_OPTS变量，提供所有需要的参数</p>
+		<pre class="screen">
 DAEMON_OPTS="--daemon --host $HOST --port $PORT --config=$CONFIG --protocol=$PROTOCOL --pidfile=$PIDFILE --logfile=$LOGFILE"
-		</pre><div class="section" title="4.1. start/stop"><div class="titlepage"><div><div><h3 class="title"><a id="idp91856"></a>4.1. start/stop</h3></div></div></div><pre class="screen">
+		</pre>
+		<div class="section" title="4.1. start/stop"><div class="titlepage"><div><div><h3 class="title"><a id="idp92176"></a>4.1. start/stop</h3></div></div></div>
+			
+			<pre class="screen">
 /etc/init.d/nodekeeper start
 /etc/init.d/nodekeeper stop
-			</pre></div><div class="section" title="4.2. service start/stop"><div class="titlepage"><div><div><h3 class="title"><a id="idp93008"></a>4.2. service start/stop</h3></div></div></div><pre class="screen">
+			</pre>
+		</div>
+		<div class="section" title="4.2. service start/stop"><div class="titlepage"><div><div><h3 class="title"><a id="idp93328"></a>4.2. service start/stop</h3></div></div></div>
+			
+			<pre class="screen">
 service nodekeeper start
 service nodekeeper stop
-			</pre></div></div></div></body></html>
+			</pre>
+		</div>
+	</div>
+
+</div><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
+            /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+
+            if(document.domain == 'netkiller.github.com'){
+            var disqus_shortname = 'netkiller'; // required: replace example with your forum shortname
+            }else{
+			var disqus_shortname = 'neochan';
+            }
+
+            /* * * DON'T EDIT BELOW THIS LINE * * */
+            (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+            })();
+        </script><noscript xmlns="">Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><a xmlns="" href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a></body></html>
