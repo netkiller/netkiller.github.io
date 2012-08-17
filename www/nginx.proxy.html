@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>7. Proxy</title><link rel="stylesheet" type="text/css" href="docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.76.1" /><meta name="keywords" content="lamp,lnmp,famp,fnmp, cgi,fastcgi,wsgi, apache,lighttpd,nginx,tomcat, awstatus, webalizer" /><link rel="home" href="index.html" title="Netkiller Linux Web 手札" /><link rel="up" href="nginx.html" title="第 3 章 Nginx" /><link rel="prev" href="nginx.http.html" title="6. http 配置" /><link rel="next" href="tomcat.html" title="第 4 章 Tomcat 安装与配置" /><script xmlns="" type="text/javascript">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>7. Proxy</title><link rel="stylesheet" type="text/css" href="/docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.76.1" /><meta name="keywords" content="lamp,lnmp,famp,fnmp, cgi,fastcgi,wsgi, apache,lighttpd,nginx,tomcat, awstatus, webalizer" /><link rel="home" href="index.html" title="Netkiller Linux Web 手札" /><link rel="up" href="nginx.html" title="第 3 章 Nginx" /><link rel="prev" href="nginx.http.html" title="6. http 配置" /><link rel="next" href="tomcat.html" title="第 4 章 Tomcat 安装与配置" /><script xmlns="" type="text/javascript">
 
   var _gaq = _gaq || [];
   _gaq.push(['_setAccount', 'UA-11694057-1']);
@@ -127,7 +127,7 @@ upstream backend{
     }
 
 }
-		</pre><div class="section" title="7.1. request_filename + proxy_pass"><div class="titlepage"><div><div><h3 class="title"><a id="idp552480"></a>7.1. request_filename + proxy_pass</h3></div></div></div><p>如果文件不存在，那么去指定的节点上寻找</p><pre class="screen">
+		</pre><div class="section" title="7.1. request_filename + proxy_pass"><div class="titlepage"><div><div><h3 class="title"><a id="idp554832"></a>7.1. request_filename + proxy_pass</h3></div></div></div><p>如果文件不存在，那么去指定的节点上寻找</p><pre class="screen">
    location / {
         root  /www;
         proxy_intercept_errors  on;
@@ -144,6 +144,81 @@ upstream backend{
           break;
         }
     }
+			</pre></div><div class="section" title="7.2. proxy_cache"><div class="titlepage"><div><div><h3 class="title"><a id="idp556512"></a>7.2. proxy_cache</h3></div></div></div><pre class="screen">
+http {
+  proxy_cache_path  /var/www/cache levels=1:2 keys_zone=my-cache:8m max_size=1000m inactive=600m;
+  proxy_temp_path /var/www/cache/tmp;
+
+
+  server {
+    location / {
+      proxy_pass http://example.net;
+      proxy_cache mycache;
+      proxy_cache_valid  200 302  60m;
+      proxy_cache_valid  404      1m;
+    }
+  }
+}
+			</pre><pre class="screen">
+location / {
+  proxy_pass http://localhost;
+  proxy_set_header   Host             $host;
+  proxy_set_header   X-Real-IP        $remote_addr;
+  proxy_set_header   X-Forwarded-For  $proxy_add_x_forwarded_for;
+  proxy_ignore_headers Set-Cookie;
+  proxy_ignore_headers Cache-Control;
+  proxy_cache_bypass        $http_secret_header;
+  add_header X-Cache-Status $upstream_cache_status;
+}
+			</pre></div><div class="section" title="7.3. proxy_cache"><div class="titlepage"><div><div><h3 class="title"><a id="proxy_cache"></a>7.3. proxy_cache</h3></div></div></div><pre class="screen">
+server {
+          listen       80;
+          server_name  example.org;
+          root   /var/www;
+          index  index.html index.php;
+
+	location ~* .+.(ico|jpg|gif|jpeg|css|js|flv|png|swf)$ {
+           	expires max;
+	}
+
+	location / {
+		proxy_pass       http://backend;
+		proxy_set_header  X-Real-IP  $remote_addr;
+		proxy_set_header Host $http_host;
+		proxy_cache cache;
+		proxy_cache_key $host$request_uri;
+		proxy_cache_valid 200 304 12h;
+		proxy_cache_valid 302 301 12h;
+		proxy_cache_valid any 1m;
+		proxy_ignore_headers Cache-Control Expires;
+		proxy_pass_header Set-Cookie;
+	}
+
+}
+			</pre></div><div class="section" title="7.4. expires"><div class="titlepage"><div><div><h3 class="title"><a id="idp560560"></a>7.4. expires</h3></div></div></div><pre class="screen">
+location / {
+    root /var/www;
+    proxy_set_header  X-Real-IP  $remote_addr;
+    proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header Host $http_host;
+    proxy_redirect false;
+
+    if ($request_uri ~* "\.(ico|css|js|gif|jpe?g|png)\?[0-9]+$") {
+        expires max;
+        break;
+    }
+    if (-f $request_filename) {
+        break;
+    }
+    if (-f $request_filename/index.html) {
+        rewrite (.*) $1/index.html break;
+    }
+    if (-f $request_filename.html) {
+        rewrite (.*) $1.html break;
+    }
+
+    proxy_pass http://backend;
+}
 			</pre></div></div><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
             /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
 
