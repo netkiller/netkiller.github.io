@@ -63,7 +63,7 @@ if ($http_user_agent ~ (Spider|Robot) ) {
     return 403;
 }
 
-		</pre><div class="section" title="7.1.1. 禁止非浏览器访问"><div class="titlepage"><div><div><h4 class="title"><a id="idp576160"></a>7.1.1. 禁止非浏览器访问</h4></div></div></div><p>禁止非浏览器访问</p><pre class="screen">
+		</pre><div class="section" title="7.1.1. 禁止非浏览器访问"><div class="titlepage"><div><div><h4 class="title"><a id="idp580944"></a>7.1.1. 禁止非浏览器访问</h4></div></div></div><p>禁止非浏览器访问</p><pre class="screen">
 if ($http_user_agent ~ ^$) {
 	return 412;
 }
@@ -96,6 +96,74 @@ Host: www.mydomain.com
           break;
         }
     }
+		</pre></div><div class="section" title="7.3. request_uri"><div class="titlepage"><div><div><h3 class="title"><a id="request_uri"></a>7.3. request_uri</h3></div></div></div><pre class="screen">
+server {
+    listen       80;
+    server_name  quote.mydomain.com;
+
+    charset utf-8;
+    access_log  /var/log/nginx/quote.mydomain.com.access.log  main;
+
+    location / {
+        root   /www/mydomain.com/info.mydomain.com;
+        index  index.html ;
+
+		rewrite ^/$  http://www.mydomain.com/;
+
+		valid_referers none blocked *.mydomain.com;
+		if ($invalid_referer) {
+			#rewrite ^(.*)$  http://www.mydomain.com/cn/$1;
+			return 403;
+		}
+
+        proxy_intercept_errors  on;
+	    proxy_set_header  X-Real-IP  $remote_addr;
+        proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header  Host            $host;
+
+		if ( $request_uri ~ "^/xml/(sge|cgse|futures|stock|bonds)\.xml$") {
+              proxy_pass http://21.16.22.12/$request_uri;
+		break;
+        }
+
+        if (!-f $request_filename) {
+	          proxy_pass http://cms.mydomain.com;
+	          break;
+        }
+
+    }
+
+    location ~ \.xml$ {
+        proxy_pass http://21.16.22.12/public/datas$request_uri;
+        break;
+    }
+
+    location ~* ^/public/datas/\w+\.xml$ {
+        proxy_pass http://21.16.22.12/$request_uri;
+        break;
+    }
+}
+		</pre><pre class="screen">
+#add for yiiframework
+        if (!-e $request_filename){
+                   rewrite (.*) /index.php break;
+        }
+
+        location ~ .*\.php?$
+        {
+                  #fastcgi_pass  unix:/tmp/php-cgi.sock;
+                  include fcgi.conf;
+                  fastcgi_pass  127.0.0.1:10080;
+                  fastcgi_index index.php;
+
+                  set $path_info $request_uri;
+
+                  if ($request_uri ~ "^(.*)(\?.*)$") {
+                        set $path_info $1;
+                  }
+                  fastcgi_param PATH_INFO $path_info;
+        }
+#end for yiiframework
 		</pre></div></div><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
             /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
 
