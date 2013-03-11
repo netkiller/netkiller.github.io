@@ -77,7 +77,7 @@ mysql&gt; select GROUP_CONCAT(CONVERT( username , CHAR (16)) order by username d
 select replace(goods_desc,':8000','') from ecs_goods;
 
 update ecs_goods set goods_desc=replace(goods_desc,':8000','');
-			</pre></div></div><div class="section" title="6.4. Data and Time"><div class="titlepage"><div><div><h4 class="title"><a id="fun.data"></a>6.4. Data and Time</h4></div></div></div><div class="section" title="6.4.1. year/month/day hour:minite:second"><div class="titlepage"><div><div><h5 class="title"><a id="idp657776"></a>6.4.1. year/month/day hour:minite:second</h5></div></div></div><pre class="screen">
+			</pre></div></div><div class="section" title="6.4. Date and Time"><div class="titlepage"><div><div><h4 class="title"><a id="fun.datetime"></a>6.4. Date and Time</h4></div></div></div><div class="section" title="6.4.1. year/month/day hour:minite:second"><div class="titlepage"><div><div><h5 class="title"><a id="idp659616"></a>6.4.1. year/month/day hour:minite:second</h5></div></div></div><pre class="screen">
 			
 mysql&gt; select year('2012-03-20');
 +--------------------+
@@ -128,7 +128,7 @@ mysql&gt; select second('12:30:55');
 1 row in set (0.00 sec)
 
 			
-			</pre></div><div class="section" title="6.4.2. Unix time"><div class="titlepage"><div><div><h5 class="title"><a id="idp659856"></a>6.4.2. Unix time</h5></div></div></div><pre class="screen">
+			</pre></div><div class="section" title="6.4.2. Unix time"><div class="titlepage"><div><div><h5 class="title"><a id="idp661696"></a>6.4.2. Unix time</h5></div></div></div><pre class="screen">
 			
 mysql&gt; SELECT UNIX_TIMESTAMP('2005-03-27 02:00:00');
 +---------------------------------------+
@@ -161,7 +161,55 @@ select FROM_UNIXTIME(createtime, '%m') as month, count(1) as count from members 
 select FROM_UNIXTIME(createtime, '%m-%d') as month, count(1) as count from members where createtime BETWEEN UNIX_TIMESTAMP('2011-01-01 00:00:00') and UNIX_TIMESTAMP('2011-12-31 00:00:00') group by FROM_UNIXTIME(createtime, '%m-%d');
 select FROM_UNIXTIME(createtime, '%m-%d') as month, count(1) as count from members where createtime BETWEEN UNIX_TIMESTAMP('2012-01-01 00:00:00') and UNIX_TIMESTAMP('2012-12-31 00:00:00') group by FROM_UNIXTIME(createtime, '%m-%d');
 			
-			</pre></div><div class="section" title="6.4.3. DATE_SUB"><div class="titlepage"><div><div><h5 class="title"><a id="idp663088"></a>6.4.3. DATE_SUB</h5></div></div></div><p>当前时间向后推10天</p><pre class="programlisting">
+			</pre></div><div class="section" title="6.4.3. DATE_FORMAT"><div class="titlepage"><div><div><h5 class="title"><a id="idp664928"></a>6.4.3. DATE_FORMAT</h5></div></div></div><p>DATE_FORMAT() 函数用于以不同的格式显示日期/时间数据。</p><pre class="screen">
+语法
+DATE_FORMAT(date,format)
+date 参数是合法的日期。format 规定日期/时间的输出格式。
+
+可以使用的格式有：
+格式	描述
+%a	缩写星期名
+%b	缩写月名
+%c	月，数值
+%D	带有英文前缀的月中的天
+%d	月的天，数值(00-31)
+%e	月的天，数值(0-31)
+%f	微秒
+%H	小时 (00-23)
+%h	小时 (01-12)
+%I	小时 (01-12)
+%i	分钟，数值(00-59)
+%j	年的天 (001-366)
+%k	小时 (0-23)
+%l	小时 (1-12)
+%M	月名
+%m	月，数值(00-12)
+%p	AM 或 PM
+%r	时间，12-小时（hh:mm:ss AM 或 PM）
+%S	秒(00-59)
+%s	秒(00-59)
+%T	时间, 24-小时 (hh:mm:ss)
+%U	周 (00-53) 星期日是一周的第一天
+%u	周 (00-53) 星期一是一周的第一天
+%V	周 (01-53) 星期日是一周的第一天，与 %X 使用
+%v	周 (01-53) 星期一是一周的第一天，与 %x 使用
+%W	星期名
+%w	周的天 （0=星期日, 6=星期六）
+%X	年，其中的星期日是周的第一天，4 位，与 %V 使用
+%x	年，其中的星期一是周的第一天，4 位，与 %v 使用
+%Y	年，4 位
+%y	年，2 位
+			</pre><p>实例</p><pre class="screen">
+下面的脚本使用 DATE_FORMAT() 函数来显示不同的格式。我们使用 NOW() 来获得当前的日期/时间：
+DATE_FORMAT(NOW(),'%b %d %Y %h:%i %p')
+DATE_FORMAT(NOW(),'%m-%d-%Y')
+DATE_FORMAT(NOW(),'%d %b %y')
+DATE_FORMAT(NOW(),'%d %b %Y %T:%f')
+
+SELECT DATE_FORMAT(NOW(),'%Y-%m-%d');
+
+select DATE_FORMAT(asctime,'%Y-%m-%d') as Date, count(1) as Count from logging where tag='www' and facility='login' group by DATE_FORMAT(asctime,'%Y-%m-%d') order by asctime desc;
+			</pre></div><div class="section" title="6.4.4. DATE_SUB"><div class="titlepage"><div><div><h5 class="title"><a id="idp668592"></a>6.4.4. DATE_SUB</h5></div></div></div><p>当前时间向后推10天</p><pre class="programlisting">
 			
 mysql&gt; select DATE_SUB(now(), INTERVAL 240 HOUR);
 +------------------------------------+
@@ -183,7 +231,7 @@ mysql&gt; select DATE_SUB(now(), INTERVAL 24 HOUR);
 			
 DELETE from Message where created &lt; DATE_sub(now(), INTERVAL 240 HOUR);
 			
-			</pre></div><div class="section" title="6.4.4. datediff / timediff"><div class="titlepage"><div><div><h5 class="title"><a id="idp642400"></a>6.4.4. datediff / timediff</h5></div></div></div><p>计算时间差，两个时间相减结果</p><pre class="screen">
+			</pre></div><div class="section" title="6.4.5. datediff / timediff"><div class="titlepage"><div><div><h5 class="title"><a id="idp670928"></a>6.4.5. datediff / timediff</h5></div></div></div><p>计算时间差，两个时间相减结果</p><pre class="screen">
 			
 mysql&gt; select timediff('22:20:00','17:30:00');
 +---------------------------------+
