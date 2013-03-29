@@ -127,7 +127,7 @@ upstream backend{
     }
 
 }
-		</pre><div class="section" title="6.1. request_filename + proxy_pass"><div class="titlepage"><div><div><h3 class="title"><a id="idp566096"></a>6.1. request_filename + proxy_pass</h3></div></div></div><p>如果文件不存在，那么去指定的节点上寻找</p><pre class="screen">
+		</pre><div class="section" title="6.1. request_filename + proxy_pass"><div class="titlepage"><div><div><h3 class="title"><a id="idp568160"></a>6.1. request_filename + proxy_pass</h3></div></div></div><p>如果文件不存在，那么去指定的节点上寻找</p><pre class="screen">
    location / {
         root  /www;
         proxy_intercept_errors  on;
@@ -144,7 +144,7 @@ upstream backend{
           break;
         }
     }
-			</pre></div><div class="section" title="6.2. proxy_cache"><div class="titlepage"><div><div><h3 class="title"><a id="idp567776"></a>6.2. proxy_cache</h3></div></div></div><pre class="screen">
+			</pre></div><div class="section" title="6.2. proxy_cache"><div class="titlepage"><div><div><h3 class="title"><a id="proxy_cache"></a>6.2. proxy_cache</h3></div></div></div><pre class="screen">
 http {
   proxy_cache_path  /var/www/cache levels=1:2 keys_zone=my-cache:8m max_size=1000m inactive=600m;
   proxy_temp_path /var/www/cache/tmp;
@@ -170,7 +170,7 @@ location / {
   proxy_cache_bypass        $http_secret_header;
   add_header X-Cache-Status $upstream_cache_status;
 }
-			</pre></div><div class="section" title="6.3. proxy_cache"><div class="titlepage"><div><div><h3 class="title"><a id="proxy_cache"></a>6.3. proxy_cache</h3></div></div></div><pre class="screen">
+			</pre><pre class="screen">
 server {
           listen       80;
           server_name  example.org;
@@ -195,7 +195,7 @@ server {
 	}
 
 }
-			</pre></div><div class="section" title="6.4. expires"><div class="titlepage"><div><div><h3 class="title"><a id="idp571824"></a>6.4. expires</h3></div></div></div><pre class="screen">
+			</pre></div><div class="section" title="6.3. expires"><div class="titlepage"><div><div><h3 class="title"><a id="idp573472"></a>6.3. expires</h3></div></div></div><pre class="screen">
 location / {
     root /var/www;
     proxy_set_header  X-Real-IP  $remote_addr;
@@ -219,9 +219,69 @@ location / {
 
     proxy_pass http://backend;
 }
+			</pre></div><div class="section" title="6.4. $request_uri 与 proxy_pass 联合使用"><div class="titlepage"><div><div><h3 class="title"><a id="request_uri+proxy_pass"></a>6.4. $request_uri 与  proxy_pass 联合使用</h3></div></div></div><pre class="screen">
+server {
+    listen       80;
+    server_name  info.example.com;
+
+    #charset koi8-r;
+    access_log  /var/log/nginx/info.example.com.access.log  main;
+
+    location / {
+        root   /www/example.com/info.example.com;
+        index  index.html index.htm;
+
+	rewrite ^/$  http://www.example.com/;
+
+	valid_referers none blocked *.example.com;
+	if ($invalid_referer) {
+		#rewrite ^(.*)$  http://www.example.com/cn/$1;
+		return 403;
+	}
+
+        proxy_intercept_errors  on;
+#	    proxy_set_header  X-Real-IP  $remote_addr;
+#            proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
+#            proxy_set_header  Host            $host;
+#
+#            proxy_cache one;
+#            proxy_cache_valid  200 302 304 10m;
+#            proxy_cache_valid  301 1h;
+#            proxy_cache_valid  any 1m;
+
+        if ( $request_uri ~ "^/public/datas/(sge|cgse|futures|fx_price|gold_price|stock|bonds)\.xml$") {
+                proxy_pass http://211.176.212.212$request_uri;
+		break;
+        }
+
+        if (!-f $request_filename) {
+
+          proxy_pass http://infoadmin.example.com;
+          #proxy_pass http://backend;
+          break;
+        }
+    }
+
+    location ~ ^/index\.php$ {
+	return 403;
+    }
+    location ~ ^/(config|include|crontab|/systemmanage)/ {
+	deny all;
+	break;
+    }
+    #error_page  404              /404.html;
+
+    # redirect server error pages to the static page /50x.html
+    #
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html;
+    }
+
+}
 			</pre></div><div class="section" title="6.5. X-Sendfile"><div class="titlepage"><div><div><h3 class="title"><a id="xsendfile"></a>6.5. X-Sendfile</h3></div></div></div><p>http://wiki.nginx.org/NginxXSendfile</p><pre class="screen">
 
-			</pre></div><div class="section" title="6.6. FAQ"><div class="titlepage"><div><div><h3 class="title"><a id="idp574880"></a>6.6. FAQ</h3></div></div></div><pre class="screen">
+			</pre></div><div class="section" title="6.6. FAQ"><div class="titlepage"><div><div><h3 class="title"><a id="idp579344"></a>6.6. FAQ</h3></div></div></div><pre class="screen">
 nginx: [emerg] "proxy_pass" cannot have URI part in location given by regular expression, or inside named location, or inside "if" statement, or inside "limit_except" block in /etc/nginx/conf.d/www.mydomain.com.conf:25
 nginx: configuration file /etc/nginx/nginx.conf test failed
 			</pre><p>在location,if中使用证则匹配proxy_pass末尾不能写/</p><pre class="screen">
