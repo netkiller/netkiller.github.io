@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>6. Pure-FTPd + LDAP + MySQL + PGSQL + Virtual-Users + Quota</title><link rel="stylesheet" type="text/css" href="/docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.76.1" /><meta name="keywords" content="openfiler, freenas, proftpd,pureftpd,vsftpd, rsync,wget,samba" /><link rel="home" href="index.html" title="Netkiller Linux Storage 手札" /><link rel="up" href="ftp.html" title="第 3 章 FTP (File Transfer Protocol)" /><link rel="prev" href="ftp.proftpd.html" title="5. ProFTPD + MySQL / OpenLDAP 用户认证" /><link rel="next" href="synchronize.html" title="第 4 章 File Synchronize" /><script xmlns="" type="text/javascript">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>5. ProFTPD + MySQL / OpenLDAP 用户认证</title><link rel="stylesheet" type="text/css" href="/docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.76.1" /><meta name="keywords" content="openfiler, freenas, proftpd,pureftpd,vsftpd, rsync,wget,samba" /><link rel="home" href="index.html" title="Netkiller Linux Storage 手札" /><link rel="up" href="ftp.html" title="第 3 章 FTP (File Transfer Protocol)" /><link rel="prev" href="ftp.vsftpd.html" title="4. vsftpd - The Very Secure FTP Daemon" /><link rel="next" href="ftp.pureftpd.html" title="6. Pure-FTPd + LDAP + MySQL + PGSQL + Virtual-Users + Quota" /><script xmlns="" type="text/javascript">
 
   var _gaq = _gaq || [];
   _gaq.push(['_setAccount', 'UA-11694057-1']);
@@ -15,11 +15,998 @@
     var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
   })();
 
-</script></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">6. Pure-FTPd + LDAP + MySQL + PGSQL + Virtual-Users + Quota</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ftp.proftpd.html">上一页</a> </td><th width="60%" align="center">第 3 章 FTP (File Transfer Protocol)</th><td width="20%" align="right"> <a accesskey="n" href="synchronize.html">下一页</a></td></tr></table><hr /></div><table xmlns="" width="100%" border="0"><tr><td align="left"><a href="http://netkiller.sourceforge.net/">Home</a> |
+</script></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">5. ProFTPD + MySQL / OpenLDAP 用户认证</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ftp.vsftpd.html">上一页</a> </td><th width="60%" align="center">第 3 章 FTP (File Transfer Protocol)</th><td width="20%" align="right"> <a accesskey="n" href="ftp.pureftpd.html">下一页</a></td></tr></table><hr /></div><table xmlns="" width="100%" border="0"><tr><td align="left"><a href="http://netkiller.sourceforge.net/">Home</a> |
                 <a href="http://netkiller.github.com/">Mirror</a> |
                 <a href="/search.html">Search</a></td><td><div id="bdshare" class="bdshare_t bds_tools_32 get-codes-bdshare"><a class="bds_fbook"></a><a class="bds_twi"></a><a class="bds_ms"></a><a class="bds_msn"></a><a class="bds_buzz"></a><a class="bds_linkedin"></a><a class="bds_deli"></a><a class="bds_qzone"></a><a class="bds_qq"></a><a class="bds_tqq"></a><a class="bds_tqf"></a><a class="bds_tsina"></a><a class="bds_baidu"></a><a class="bds_renren"></a><a class="bds_t163"></a><a class="bds_tfh"></a><a class="bds_ty"></a><a class="bds_s51"></a><a class="bds_douban"></a><a class="bds_hi"></a><a class="bds_tieba"></a><a class="bds_tsohu"></a><a class="bds_kaixin001"></a><a class="bds_fx"></a><a class="bds_zx"></a><a class="bds_tuita"></a><span class="bds_more"></span><a class="shareCount"></a></div><script type="text/javascript" id="bdshare_js" data="type=tools"></script><script type="text/javascript" id="bdshell_js"></script><script type="text/javascript">
 	document.getElementById("bdshell_js").src = "http://bdimg.share.baidu.com/static/js/shell_v2.js?cdnversion=" + new Date().getHours();
-</script></td><td></td></tr></table><div class="section" title="6. Pure-FTPd + LDAP + MySQL + PGSQL + Virtual-Users + Quota"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="ftp.proftpd"></a>6. Pure-FTPd + LDAP + MySQL + PGSQL + Virtual-Users + Quota</h2></div></div></div><p>参考 http://netkiller.sourceforge.net/pureftpd/</p></div><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
+</script></td><td></td></tr></table><div class="section" title="5. ProFTPD + MySQL / OpenLDAP 用户认证"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="ftp.proftpd"></a>5. ProFTPD + MySQL / OpenLDAP 用户认证</h2></div></div></div><p>准备工作</p><p>下载ProFTPD : ftp://ftp.proftpd.org/distrib/source/proftpd-1.2.7.tar.gz</p><p>下载 mod_sql : http://www.lastditcheffort.org/~aah/proftpd/mod_sql/</p><p>下载mod_ldap-2.8.10 : http://www.horde.net/~jwm/software/mod_ldap/</p><div class="section" title="5.1. Proftpd + MySQL"><div class="titlepage"><div><div><h3 class="title"><a id="idp227664"></a>5.1. Proftpd + MySQL</h3></div></div></div><pre class="screen">
+tar xvzf proftpd-version.tar.gz
+
+cd proftpd-version
+
+./configure --prefix=/usr/local/proftpd --with-modules=mod_sql:mod_sql_mysql
+
+make
+
+make install
+			</pre><pre class="screen">
+
+安装成功后，测试ProFTPD，启动ProFTPD
+
+/usr/local/proftpd/sbin/in.proftpd
+
+如果没有显示任何信息，ProFTPD启动成功。使用系统用户登录Ftp Server
+
+[root@linux sbin]# ftp localhost
+
+Connected to localhost (127.0.0.1).
+
+220 ProFTPD 1.2.7 Server (ProFTPD Default Installation) [linux.xuser.net]
+
+Name (localhost:root):usera
+
+331 Password required for usera.
+
+Password:
+
+230 User usera logged in.
+
+Remote system type is UNIX.
+
+Using binary mode to transfer files.
+
+ftp&gt;
+
+ProFTPD测试成功，关闭ProFTPD
+
+killall in.proftpd
+
+
+
+编辑proftpd.conf文件
+
+vi /usr/local/proftpd/etc/proftpd.conf
+
+添加下面几行参数
+
+&lt;Global&gt;
+
+SQLConnectInfo ftpusers@localhost:3306 root chen
+
+SQLAuthTypes Plaintext
+
+SQLUserInfo users userid passwd uid gid homedir NULL
+
+RequireValidShell off
+
+SQLAuthenticate users groups usersetfast groupsetfast
+
+&lt;/Global&gt;
+
+
+
+格式说明：
+
+SQLConnectInfo 数据库@主机名:端口 用户 密码
+
+SQLAuthTypes 密码类型（Plaintext明文密码，Crypt DES密码，Backend MySQL password()函数产生的密码）
+
+SQLUserInfo [用户表] [用户名字段] [密码字段] [用户ID] [组ID] [用户目录] NULL
+
+
+
+创建ftpusers.sql文件
+
+[mysql@linux mysql]$ vi ftpusers.sql
+
+-- MySQL dump 8.22
+
+--
+
+-- Host: localhost    Database: proftpd
+
+---------------------------------------------------------
+
+-- Server version       3.23.52-max
+
+
+
+--
+
+-- Table structure for table 'groups'
+
+--
+
+
+
+CREATE TABLE groups (
+
+  groupname varchar(255) binary NOT NULL default '',
+
+  gid int(11) NOT NULL default '0',
+
+  members text NOT NULL,
+
+  PRIMARY KEY  (groupname)
+
+) TYPE=MyISAM;
+
+
+
+--
+
+-- Dumping data for table 'groups'
+
+--
+
+
+
+
+
+INSERT INTO groups VALUES ('nogroup',502,'FTP Group');
+
+
+
+--
+
+-- Table structure for table 'users'
+
+--
+
+
+
+CREATE TABLE users (
+
+  userid varchar(255) binary NOT NULL default '',
+
+  passwd varchar(255) binary NOT NULL default '',
+
+  uid int(11) default NULL,
+
+  gid int(11) default NULL,
+
+  homedir varchar(255) default NULL,
+
+  shell varchar(255) default NULL,
+
+  count int(11) default NULL,
+
+  used double(10,1) default '0.0',
+
+  quota double(10,1) default '10000000.0',
+
+  PRIMARY KEY  (userid)
+
+) TYPE=MyISAM;
+
+
+
+--
+
+-- Dumping data for table 'users'
+
+--
+
+
+
+
+
+INSERT INTO users VALUES ('chen','chen',500,500,'/home/samba','/bin/sh',0,0.0,10000000.0);
+
+INSERT INTO users VALUES ('user2','123456',500,500,'/home/samba','/bin/bash',1,0.0,10000000.0);
+
+INSERT INTO users VALUES ('user1','123456',NULL,NULL,'/u01',NULL,1,0.0,10000000.0);
+
+
+
+创建数据库与表
+
+[mysql@linux mysql]$ echo "create database ftpusers" | mysql -uroot -pchen
+
+[mysql@linux mysql]$ mysql -uroot -pchen ftpusers &lt; ftpusers.sql
+
+[mysql@linux mysql]$
+
+
+
+再次启动ProFTPD
+
+/usr/local/proftpd/sbin/in.proftpd
+
+这次使用MySQL用户登录Ftp Server
+
+显示230 User xxxxx logged in. ＭySQL认证成功
+
+			</pre></div><div class="section" title="5.2. Proftpd + OpenLDAP"><div class="titlepage"><div><div><h3 class="title"><a id="idp228208"></a>5.2. Proftpd + OpenLDAP</h3></div></div></div><pre class="screen">
+
+tar xvzf proftpd-version.tar.gz
+
+cd proftpd-version
+
+./configure --prefix=/usr/local/proftpd --with-modules=mod_ldap
+
+make
+
+make install
+
+
+
+# tar zxvf mod_ldap-2.8.10.tar.gz
+
+
+
+将mod_ldap-2.8.10目录下的posixAccount-objectclass和posixGroup-objectclass
+
+复制到OpenLDAP 的schema目录下：
+
+
+
+# cp mod_ldap-2.8.10/posix* /etc/openldap/schema/
+
+# vi /etc/openldap/slapd.conf
+
+修改OpenLDAP的配置文件slapd.conf，将这两个文件包含到该文件中：
+
+include /etc/openldap/schema/posixAccount-objectclass
+
+include /etc/openldap/schema/posixGroup-objectclass
+
+重新启动OpenLDAP：
+
+# service ldap restart
+
+Stopping slapd:                                            [  OK  ]
+
+Starting slapd:                                            [  OK  ]
+
+
+
+编辑proftpd.conf文件
+
+vi /usr/local/proftpd/etc/proftpd.conf
+
+添加下面几行参数
+
+
+
+&lt;Global&gt;
+
+LDAPServer localhost
+LDAPDNInfo cn=your-dn,dc=horde,dc=net dnpass
+LDAPDoAuth on "dc=users,dc=horde,dc=net"
+
+&lt;/Global&gt;
+
+
+
+格式说明：
+
+LDAPServer OpenLDAP服务器
+LDAPDNInfo cn=你的-dn,dc=区域名,dc=区域名 dn密码
+LDAPDoAuth on "dc=区域名,dc=区域名"
+
+例子：
+
+       &lt;Global&gt;
+
+LDAPServer localhost
+
+LDAPDNInfo cn=manager,dc=xuser,dc=net secret
+
+LDAPDoAuth on dc=xuser,dc=net
+
+&lt;/Global&gt;
+
+
+
+根据自己需要修改mod_ldap-2.8.10目录中的group-ldif和user-ldif文件，并将条目添加到OpenLDAP中：
+
+
+
+# ldapadd -x -D "cn=manager,dc=xuser,dc=net" -w secret -f group-ldif
+
+# ldapadd -x -D "cn=manager,dc=xuser,dc=net" -w secret -f user-ldif
+
+
+
+显示：adding new entry "cn=mygroup, dc=xuser, dc=net" 添加成功
+
+使用ldapsearch查看记录
+
+# ldapsearch -x -b "dc=xuser,dc=net"
+
+
+
+启动ProFTPD：
+
+/usr/local/proftpd/sbin/in.proftpd
+
+使用OpenLDAP用户登录Ftp Server
+
+显示230 User xxxxx logged in. OpenLDAP认证成功
+
+
+
+例：
+
+[root@linux mod_ldap-2.8.10]# cat group-ldif
+
+dn: cn=mygroup, dc=xuser, dc=net
+
+objectclass: posixGroup
+
+cn: mygroup
+
+gidNumber: 100
+
+memberUid: user1
+
+memberUid: user2
+
+memberUid: user3
+
+memberUid: user4
+
+memberUid: ftpusersb
+
+memberUid: usera
+
+memberUid: jwm
+
+memberUid: 100
+
+[root@linux mod_ldap-2.8.10]# cat user-ldif
+
+dn: uid=jwm, dc=xuser, dc=net
+
+objectclass: posixAccount
+
+cn: John Morrissey
+
+uid: jwm
+
+uidNumber: 2000
+
+gidNumber: 100
+
+homeDirectory: /home/chen
+
+userPassword: {crypt}*
+
+loginShell: /bin/bash
+
+
+
+dn: uid=chen, dc=xuser, dc=net
+
+objectclass: posixAccount
+
+cn: chen
+
+uid: chen
+
+uidNumber: 2000
+
+gidNumber: 100
+
+homeDirectory: /home/chen
+
+userPassword: {crypt}sa7XjjlytXZZ2
+
+loginShell: /bin/bash
+
+
+
+dn: cn=ftpuser1, dc=xuser, dc=net
+
+objectclass: posixAccount
+
+cn: ftpuser1
+
+uid: ftpuser1
+
+uidNumber: 2000
+
+gidNumber: 100
+
+homeDirectory: /home/chen
+
+userPassword: {crypt}sa7XjjlytXZZ2
+
+loginShell: /bin/bash
+
+
+
+dn: uid=usera, dc=xuser, dc=net
+
+objectclass: posixAccount
+
+cn: usera
+
+uid: usera
+
+uidNumber: 2000
+
+gidNumber: 100
+
+homeDirectory: /tmp
+
+userPassword:{crypt}sa7XjjlytXZZ2
+
+loginShell: /bin/bash
+
+
+
+dn: uid=ftpuserb, dc=xuser, dc=net
+
+objectclass: posixAccount
+
+cn: ftpuserb
+
+uid: ftpuserb
+
+uidNumber: 2000
+
+gidNumber: 100
+
+homeDirectory: /tmp
+
+userPassword:{crypt}O2BooHEK9JI06
+
+loginShell: /bin/bash
+
+
+
+上面的用户密码是用crypt方式加密的密码，密码产生请看
+
+使用PHP产生：
+
+# cat des.php
+
+&lt;html&gt;
+
+&lt;p&gt;DES 密碼產生器&lt;/p&gt;
+
+&lt;form method=post action=des.php&gt;
+
+&lt;p&gt;password:&lt;input name=passwd type=text size=20&gt;&lt;/p&gt;
+
+&lt;input type=submit value=submit&gt;
+
+&lt;/form&gt;
+
+&lt;?
+
+$enpw=crypt($passwd);
+
+echo "password is: $enpw";
+
+?&gt;
+
+使用perl产生：
+
+perl -e 'print("userPassword: ".crypt("secret","salt")."\n");'
+
+产生的DES密码，同样也可以用于OpenLDAP的管理员密码
+
+# vi /etc/openldap/slapd.conf
+
+rootpw                {crypt}ijFYNcSNctBYg
+
+四、 标准的配置文件
+
+MySQL认证配置实例
+
+[root@linux root]# cat /usr/local/proftpd/etc/proftpd.conf
+
+ServerName                      "ProFTPD Default Installation"
+
+ServerType                      standalone
+
+DefaultServer                   on
+
+
+
+# Port 21 is the standard FTP port.
+
+Port                            21
+
+
+
+# Umask 022 is a good standard umask to prevent new dirs and files
+
+# from being group and world writable.
+
+Umask                           022
+
+
+
+# We put our mod_sql directives in a &lt;Global&gt; block so they'll be
+
+# inherited by the &lt;Anonymous&gt; block below, and any other &lt;VirtualHost&gt;
+
+# blocks we may want to add.  For a simple server these don't need to
+
+# be in a &lt;Global&gt; block but it won't hurt anything.
+
+&lt;Global&gt;
+
+SQLConnectInfo ftpusers@localhost:3306 root chen
+
+SQLAuthTypes Plaintext
+
+SQLUserInfo users userid passwd uid gid homedir NULL
+
+RequireValidShell off
+
+SQLAuthenticate users groups usersetfast groupsetfast
+
+&lt;/Global&gt;
+
+# To prevent DoS attacks, set the maximum number of child processes
+
+# to 30.  If you need to allow more than 30 concurrent connections
+
+# at once, simply increase this value.  Note that this ONLY works
+
+# in standalone mode, in inetd mode you should use an inetd server
+
+# that allows you to limit maximum number of processes per service
+
+# (such as xinetd)
+
+MaxInstances                    30
+
+
+
+# Set the normal user and group permissions for the server.
+
+User                            nobody
+
+Group                           nogroup
+
+
+
+# Normally, we want files to be overwriteable.
+
+&lt;Directory /*&gt;
+
+  AllowOverwrite                on
+
+&lt;/Directory&gt;
+
+
+
+# A basic anonymous configuration, no upload directories.  If you
+
+# don't want to support anonymous access, simply remove this
+
+# &lt;Anonymous ..&gt; ... &lt;/Anonymous&gt; block.
+
+
+
+&lt;Anonymous ~ftp&gt;
+
+  User                          ftp
+
+  Group                         ftp
+
+  # We want clients to be able to login with "anonymous" as well as "ftp"
+
+  UserAlias                     anonymous ftp
+
+
+
+  # Limit the maximum number of anonymous logins
+
+  MaxClients                    10
+
+
+
+  # We want 'welcome.msg' displayed at login, and '.message' displayed
+
+  # in each newly chdired directory.
+
+  DisplayLogin                  welcome.msg
+
+  DisplayFirstChdir             .message
+
+
+
+  # Limit WRITE everywhere in the anonymous chroot
+
+  &lt;Limit WRITE&gt;
+
+    DenyAll
+
+  &lt;/Limit&gt;
+
+
+
+&lt;/Anonymous&gt;
+
+
+
+OpenLDAP认证配置实例
+
+[root@linux root]# cat /usr/local/proftpd/etc/proftpd.conf
+
+
+
+# This is a basic ProFTPD configuration file (rename it to
+
+# 'proftpd.conf' for actual use.  It establishes a single server
+
+# and a single anonymous login.  It assumes that you have a user/group
+
+# "nobody" and "ftp" for normal operation and anon.
+
+
+
+ServerName                      "ProFTPD Default Installation"
+
+ServerType                      standalone
+
+DefaultServer                   on
+
+
+
+# Port 21 is the standard FTP port.
+
+Port                            21
+
+
+
+# Umask 022 is a good standard umask to prevent new dirs and files
+
+# from being group and world writable.
+
+Umask                           022
+
+
+
+&lt;Global&gt;
+
+
+
+LDAPDoAuth on dc=xuser,dc=net
+
+LDAPServer localhost
+
+LDAPDNInfo cn=manager,dc=xuser,dc=net secret
+
+
+
+&lt;/Global&gt;
+
+
+
+# To prevent DoS attacks, set the maximum number of child processes
+
+# to 30.  If you need to allow more than 30 concurrent connections
+
+# at once, simply increase this value.  Note that this ONLY works
+
+# in standalone mode, in inetd mode you should use an inetd server
+
+# that allows you to limit maximum number of processes per service
+
+# (such as xinetd).
+
+MaxInstances                    30
+
+
+
+# Set the user and group under which the server will run.
+
+User                            nobody
+
+Group                           nogroup
+
+
+
+
+
+
+
+# Normally, we want files to be overwriteable.
+
+&lt;Directory /&gt;
+
+  AllowOverwrite                on
+
+&lt;/Directory&gt;
+
+
+
+# A basic anonymous configuration, no upload directories.
+
+&lt;Anonymous ~ftp&gt;
+
+  User                          ftp
+
+  Group                         ftp
+
+
+
+  # We want clients to be able to login with "anonymous" as well as "ftp"
+
+  UserAlias                     anonymous ftp
+
+
+
+  # Limit the maximum number of anonymous logins
+
+  MaxClients                    10
+
+
+
+  # We want 'welcome.msg' displayed at login, and '.message' displayed
+
+  # in each newly chdired directory.
+
+  DisplayLogin                  welcome.msg
+
+  DisplayFirstChdir             .message
+
+
+
+  # Limit WRITE everywhere in the anonymous chroot
+
+  &lt;Limit WRITE&gt;
+
+    DenyAll
+
+  &lt;/Limit&gt;
+
+
+
+&lt;/Anonymous&gt;
+
+# Include /usr/local/etc/mod_ldap.conf
+
+
+
+OpenLDAP 配置文件
+
+[root@linux root]# cat /etc/openldap/slapd.conf
+
+# $OpenLDAP: pkg/ldap/servers/slapd/slapd.conf,v 1.8.8.6 2001/04/20 23:32:43 kurt Exp $
+
+#
+
+# See slapd.conf(5) for details on configuration options.
+
+# This file should NOT be world readable.
+
+#
+
+include         /etc/openldap/schema/core.schema
+
+include         /etc/openldap/schema/cosine.schema
+
+include         /etc/openldap/schema/inetorgperson.schema
+
+include         /etc/openldap/schema/nis.schema
+
+include         /etc/openldap/schema/redhat/rfc822-MailMember.schema
+
+include         /etc/openldap/schema/redhat/autofs.schema
+
+include         /etc/openldap/schema/redhat/kerberosobject.schema
+
+include         /etc/openldap/schema/chen
+
+include         /etc/openldap/schema/posixAccount-objectclass
+
+include         /etc/openldap/schema/posixGroup-objectclass
+
+#include                /etc/openldap/schema/qmail_schema
+
+#include        /etc/openldap/slapd.info.oc.conf
+
+#include        /etc/openldap/slapd.account.oc.conf
+
+
+
+# Define global ACLs to disable default read access.
+
+
+
+# Do not enable referrals until AFTER you have a working directory
+
+# service AND an understanding of referrals.
+
+#referral       ldap://root.openldap.org
+
+
+
+#pidfile        //var/run/slapd.pid
+
+#argsfile       //var/run/slapd.args
+
+
+
+# Create a replication log in /var/lib/ldap for use by slurpd.
+
+#replogfile     /var/lib/ldap/master-slapd.replog
+
+
+
+# Load dynamic backend modules:
+
+# modulepath    /usr/sbin/openldap
+
+# moduleload    back_ldap.la
+
+# moduleload    back_ldbm.la
+
+# moduleload    back_passwd.la
+
+# moduleload    back_shell.la
+
+
+
+# The next two lines allow use of TLS for connections using a dummy test
+
+# certificate, but you should generate a proper certificate by changing to
+
+# /usr/share/ssl/certs, running "make slapd.pem", and fixing permissions on
+
+# slapd.pem so that the ldap user or group can read it.
+
+#TLSCertificateFile /usr/share/ssl/certs/slapd.pem
+
+#TLSCertificateKeyFile /usr/share/ssl/certs/slapd.pem
+
+
+
+#######################################################################
+
+# ldbm database definitions
+
+#######################################################################
+
+
+
+database        ldbm
+
+suffix          "dc=xuser,dc=net"
+
+rootdn          "cn=Manager,dc=xuser,dc=net"
+
+#rootdn         "cn=Manager,dc=my-domain,dc=com"
+
+#rootdn         "cn=Manager,o=My Organization Name,c=US"
+
+# Cleartext passwords, especially for the rootdn, should
+
+# be avoided.  See slappasswd(8) and slapd.conf(5) for details.
+
+# Use of strong authentication encouraged.
+
+rootpw          secret
+
+# rootpw                secret
+
+# rootpw                {crypt}ijFYNcSNctBYg
+
+# The database directory MUST exist prior to running slapd AND
+
+# should only be accessible by the slapd/tools. Mode 700 recommended.
+
+directory       /var/lib/ldap
+
+# Indices to maintain
+
+index   objectClass,uid,uidNumber,gidNumber,memberUid   eq
+
+index   cn,mail,surname,givenname                       eq,subinitial
+
+# Replicas to which we should propagate changes
+
+#replica ldap-1.example.com:389 tls=yes
+
+#       bindmethod=sasl saslmech=GSSAPI
+
+#       authcId=host/ldap-master.example.com@EXAMPLE.COM
+
+
+
+五、 FAQ
+Q：在本地ftp localhost输入用户名、密码回车后。等很久才进入FTP Server
+
+A：ftp 127.0.0.1
+
+
+
+Q：在远程服务器上ftp ip输入用户名、密码回车后。等很久才进入FTP Server
+
+A：LDAPServer localhost 改为 LDAPServer 127.0.0.1
+
+
+
+Q：[root@linux mod_ldap-2.8.10]# ftp 127.0.0.1
+
+Connected to 127.0.0.1 (127.0.0.1).
+
+500 FTP server shut down (going down at Tue Dec 17 19:00:00 2002) -- please try again later.
+
+ftp&gt;
+
+A：rm –rf /etc/shutmsg
+
+Q：登录Ftp Server 提示
+
+530 Login incorrect.
+
+Login failed.
+我确认输入的用户、密码决对正确
+
+A：在登录ProFTPD时加参数proftpd –d5 –n会输出调试信息。你可以在其中
+
+找到答案。如果在调试信息中找到这一行no such user 'xxxx'
+可能是与MySQL/OpenLDAP连接有问题。
+
+Q：我在网上看见很多介绍如何安装ProFTPD文章,阅读大量的How to，按How to一步一步做，从来没有安装成功过。
+
+A：网上很多文章，比较老，很多定义现以不在使用如：
+
+SQLConnectInfo laftp@localhost 用户名 口令
+
+SQLAuthTypes Plaintext Backend
+
+SQLAuthoritative ON
+
+SQLDefaultGID 1001
+
+SQLDefaultUID 1001
+
+SQLDoAuth ON
+
+SQLDoGroupAuth ON
+
+SQLGidField gid
+
+SQLGroupGIDField gid
+
+SQLGroupMembersField members
+
+SQLGroupTable ftpgroup
+
+SQLGroupnameField groupname
+
+SQLHomedirField homedir
+
+SQLMinUserUID 400
+
+SQLMinUserGID 400
+
+SQLPasswordField passwd
+
+SQLUidField uid
+
+SQLUserTable ftpuser
+
+SQLUsernameField userid
+
+SQLLoginCountField count
+
+########################################################
+
+LDAPServer                      "localhost"
+
+LDAPPrefix                      "dc=horde,dc=net"
+
+LDAPDN                          "cn=thedn,dc=horde,dc=net"
+
+LDAPDNPass                      "ldap_dnpass"
+
+LDAPNegativeCache       on
+
+
+
+			</pre></div></div><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
             /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
 
             if(document.domain == 'netkiller.github.com'){
@@ -34,4 +1021,7 @@
                 dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
                 (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
             })();
-        </script><noscript xmlns="">Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><a xmlns="" href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ftp.proftpd.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="ftp.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="synchronize.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">5. ProFTPD + MySQL / OpenLDAP 用户认证 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 4 章 File Synchronize</td></tr></table></div></body></html>
+        </script><noscript xmlns="">Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><a xmlns="" href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ftp.vsftpd.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="ftp.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ftp.pureftpd.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">4. vsftpd - The Very Secure FTP Daemon </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 6. Pure-FTPd + LDAP + MySQL + PGSQL + Virtual-Users + Quota</td></tr></table></div><script xmlns="" type="text/javascript">
+var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F4e2c9e3efb5080a9a4ccbf63573ae106' type='text/javascript'%3E%3C/script%3E"));
+</script></body></html>
