@@ -21,8 +21,8 @@
 	document.getElementById("bdshell_js").src = "http://bdimg.share.baidu.com/static/js/shell_v2.js?cdnversion=" + new Date().getHours();
 </script></td><td></td></tr></table><div class="section" title="6. Ceph"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="ceph"></a>6. Ceph</h2></div></div></div>
 	
-	<p>http://ceph.newdream.net/</p>
-	<div class="section" title="6.1. Installation on Ubuntu"><div class="titlepage"><div><div><h3 class="title"><a id="idp620016"></a>6.1. Installation on Ubuntu</h3></div></div></div>
+	<p><a class="ulink" href="http://ceph.com/" target="_top">http://ceph.com/</a></p>
+	<div class="section" title="6.1. Installation on Ubuntu"><div class="titlepage"><div><div><h3 class="title"><a id="idp626512"></a>6.1. Installation on Ubuntu</h3></div></div></div>
 		
 		<pre class="screen">
 $ apt-cache search ceph
@@ -51,6 +51,73 @@ python-ceph - Python libraries for the Ceph distributed filesystem
 
 $ sudo apt-get install ceph
 $ sudo apt-get install ceph-mds
+		</pre>
+		<p>创建配置文件 /etc/ceph/ceph.conf</p>
+		<pre class="screen">
+		
+$ vim /etc/ceph/ceph.conf
+[global]
+
+	# For version 0.55 and beyond, you must explicitly enable
+	# or disable authentication with "auth" entries in [global].
+
+	auth cluster required = cephx
+	auth service required = cephx
+	auth client required = cephx
+
+[osd]
+	osd journal size = 1000
+
+	#The following assumes ext4 filesystem.
+	filestore xattr use omap = true
+
+
+	# For Bobtail (v 0.56) and subsequent versions, you may
+	# add settings for mkcephfs so that it will create and mount
+	# the file system on a particular OSD for you. Remove the comment `#`
+	# character for the following settings and replace the values
+	# in braces with appropriate values, or leave the following settings
+	# commented out to accept the default values. You must specify the
+	# --mkfs option with mkcephfs in order for the deployment script to
+	# utilize the following settings, and you must define the 'devs'
+	# option for each osd instance; see below.
+
+	#osd mkfs type = {fs-type}
+	#osd mkfs options {fs-type} = {mkfs options}   # default for xfs is "-f"
+	#osd mount options {fs-type} = {mount options} # default mount option is "rw,noatime"
+
+	# For example, for ext4, the mount option might look like this:
+
+	#osd mkfs options ext4 = user_xattr,rw,noatime
+
+	# Execute $ hostname to retrieve the name of your host,
+	# and replace ubuntu with the name of your host.
+	# For the monitor, replace 192.168.6.2 with the IP
+	# address of your host.
+
+[mon.a]
+
+	host = ubuntu
+	mon addr = 192.168.6.2:6789
+
+[osd.0]
+	host = ubuntu
+
+	# For Bobtail (v 0.56) and subsequent versions, you may
+	# add settings for mkcephfs so that it will create and mount
+	# the file system on a particular OSD for you. Remove the comment `#`
+	# character for the following setting for each OSD and specify
+	# a path to the device if you use mkcephfs with the --mkfs option.
+
+	#devs = {path-to-device}
+
+[osd.1]
+	host = ubuntu
+	#devs = {path-to-device}
+
+[mds.a]
+	host = ubuntu
+		
 		</pre>
 		<p>创建目录</p>
 		<pre class="screen">
@@ -156,11 +223,11 @@ none                    tmpfs       102400        0    102400   0% /run/user
 $ sudo touch /mnt/ceph/hello
 		</pre>
 	</div>
-	<div class="section" title="6.2. Installation on CentOS"><div class="titlepage"><div><div><h3 class="title"><a id="idp620336"></a>6.2. Installation on CentOS</h3></div></div></div>
+	<div class="section" title="6.2. Installation on CentOS"><div class="titlepage"><div><div><h3 class="title"><a id="idp626768"></a>6.2. Installation on CentOS</h3></div></div></div>
 		
 		<p>CentOS 6.4</p>
 
-		<div class="section" title="6.2.1. mon"><div class="titlepage"><div><div><h4 class="title"><a id="idp634640"></a>6.2.1. mon</h4></div></div></div>
+		<div class="section" title="6.2.1. mon"><div class="titlepage"><div><div><h4 class="title"><a id="idp644768"></a>6.2.1. mon</h4></div></div></div>
 			
 			<pre class="screen">
 rpm --import 'https://ceph.com/git/?p=ceph.git;a=blob_plain;f=keys/release.asc'
@@ -237,7 +304,7 @@ yum install ceph
 # mkcephfs -a -c /etc/ceph/ceph.conf -k ceph.keyring
 			</pre>
 		</div>
-		<div class="section" title="6.2.2. mds"><div class="titlepage"><div><div><h4 class="title"><a id="idp639360"></a>6.2.2. mds</h4></div></div></div>
+		<div class="section" title="6.2.2. mds"><div class="titlepage"><div><div><h4 class="title"><a id="idp649792"></a>6.2.2. mds</h4></div></div></div>
 			
 			<pre class="screen">
 rpm --import 'https://ceph.com/git/?p=ceph.git;a=blob_plain;f=keys/release.asc'
@@ -245,7 +312,7 @@ rpm -Uvh http://ceph.com/rpm-bobtail/el6/x86_64/ceph-release-1-0.el6.noarch.rpm
 yum install ceph
 			</pre>
 		</div>
-		<div class="section" title="6.2.3. osd"><div class="titlepage"><div><div><h4 class="title"><a id="idp639616"></a>6.2.3. osd</h4></div></div></div>
+		<div class="section" title="6.2.3. osd"><div class="titlepage"><div><div><h4 class="title"><a id="idp651504"></a>6.2.3. osd</h4></div></div></div>
 			
 			<pre class="screen">
 rpm --import 'https://ceph.com/git/?p=ceph.git;a=blob_plain;f=keys/release.asc'
@@ -253,12 +320,23 @@ rpm -Uvh http://ceph.com/rpm-bobtail/el6/x86_64/ceph-release-1-0.el6.noarch.rpm
 yum install ceph
 			</pre>
 		</div>
-		<div class="section" title="6.2.4. client"><div class="titlepage"><div><div><h4 class="title"><a id="idp642448"></a>6.2.4. client</h4></div></div></div>
+		<div class="section" title="6.2.4. client"><div class="titlepage"><div><div><h4 class="title"><a id="idp653088"></a>6.2.4. client</h4></div></div></div>
 			
 			<pre class="screen">
 rpm --import 'https://ceph.com/git/?p=ceph.git;a=blob_plain;f=keys/release.asc'
 rpm -Uvh http://ceph.com/rpm-bobtail/el6/x86_64/ceph-release-1-0.el6.noarch.rpm
-yum install ceph
+yum install ceph-fuse
+			</pre>
+			<p>从服务器复制ceph.keyring到客户端</p>
+			<pre class="screen">
+scp -a root@ceph-server:/etc/ceph/ceph.keyring /etc/ceph/
+			</pre>
+			<pre class="screen">
+mkdir /mnt/cephfs/
+ceph-fuse -m 192.168.6.2:6789 /mnt/cephfs/
+			</pre>
+			<pre class="screen">
+mount -t ceph 192.168.6.2:6789:/ /mnt/cephfs
 			</pre>
 		</div>
 		<div class="section" title="6.2.5. RADOS Gateway"><div class="titlepage"><div><div><h4 class="title"><a id="radosgw"></a>6.2.5. RADOS Gateway</h4></div></div></div>
