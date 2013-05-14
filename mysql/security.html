@@ -5,10 +5,30 @@
 	document.getElementById("bdshell_js").src = "http://bdimg.share.baidu.com/static/js/shell_v2.js?cdnversion=" + new Date().getHours();
 </script></td><td></td></tr></table><div class="section" title="6. Security"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="security"></a>6. Security</h2></div></div></div>
 	
-	<p>Firewall</p>
-	<pre class="screen">
-iptables -A INPUT -i eth0 -p tcp -s xxx.xxx.xxx.xxx --dport 3306 -j ACCEPT	
-	</pre>
+	<div class="section" title="6.1. Firewall"><div class="titlepage"><div><div><h3 class="title"><a id="firewall"></a>6.1. Firewall</h3></div></div></div>
+		
+		<p>iptables</p>
+		<pre class="screen">
+iptables -A INPUT -i eth0 -p tcp -s xxx.xxx.xxx.xxx --dport 3306 -j ACCEPT
+		</pre>
+	</div>
+	<div class="section" title="6.2. 保护表字段"><div class="titlepage"><div><div><h3 class="title"><a id="idp429712"></a>6.2. 保护表字段</h3></div></div></div>
+		
+		<p>通过触发器，使之无法修改某些字段的数据，同时不影响修改其他字段。</p>
+		<pre class="screen">
+DROP TRIGGER IF EXISTS `members`;
+SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='';
+DELIMITER //
+CREATE TRIGGER `members` BEFORE UPDATE ON `members` FOR EACH ROW BEGIN
+	set new.name 		= old.name;
+	set new.cellphone 	= old.cellphone;
+	set new.email 		= old.email;
+    set new.password 	= old.password;
+END//
+DELIMITER ;
+SET SQL_MODE=@OLD_SQL_MODE;
+		</pre>
+	</div>
 </div><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
             /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
 
