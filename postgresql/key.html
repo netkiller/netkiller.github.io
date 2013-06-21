@@ -1,0 +1,421 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>5.5. 主键/外键</title><link rel="stylesheet" type="text/css" href="/docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.76.1" /><link rel="home" href="index.html" title="Netkiller PostgreSQL 手札" /><link rel="up" href="ddl.html" title="第 5 章 数据定义（DDL）" /><link rel="prev" href="constraints.html" title="5.4. 约束" /><link rel="next" href="sql.html" title="第 6 章 SQL" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">5.5. 主键/外键</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="constraints.html">上一页</a> </td><th width="60%" align="center">第 5 章 数据定义（DDL）</th><td width="20%" align="right"> <a accesskey="n" href="sql.html">下一页</a></td></tr></table><hr /></div><table xmlns="" width="100%" border="0"><tr><td align="left"><a href="http://netkiller.github.io/">Home</a> |
+        <a href="http://netkiller.sourceforge.net/">Mirror</a> |
+        <a href="/search.html">Search</a> |
+        <a href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
+        <a href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+        <a href="http://rline.blog.51cto.com/">51CTO 博客</a></td><td><div id="bdshare" class="bdshare_t bds_tools_32 get-codes-bdshare"><a class="bds_fbook"></a><a class="bds_twi"></a><a class="bds_ms"></a><a class="bds_msn"></a><a class="bds_buzz"></a><a class="bds_linkedin"></a><a class="bds_deli"></a><a class="bds_qzone"></a><a class="bds_qq"></a><a class="bds_tqq"></a><a class="bds_tqf"></a><a class="bds_tsina"></a><a class="bds_baidu"></a><a class="bds_renren"></a><a class="bds_t163"></a><a class="bds_tfh"></a><a class="bds_douban"></a><a class="bds_hi"></a><a class="bds_tieba"></a><a class="bds_tsohu"></a><span class="bds_more"></span><a class="shareCount"></a></div><script type="text/javascript" id="bdshare_js" data="type=tools"></script><script type="text/javascript" id="bdshell_js"></script><script type="text/javascript">
+	document.getElementById("bdshell_js").src = "http://bdimg.share.baidu.com/static/js/shell_v2.js?cdnversion=" + new Date().getHours();
+</script></td><td><form id="searchbox_008589143145807374698:f5uprauilyy" action="/search.html"><input type="hidden" name="cx" value="008589143145807374698:f5uprauilyy" /><input type="hidden" name="cof" value="FORID:11" /><input name="q" type="text" size="25" style="border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; border-top-style: solid; border-right-style: solid; border-bottom-style: solid; border-left-style: solid; border-top-color: rgb(126, 157, 185); border-right-color: rgb(126, 157, 185); border-bottom-color: rgb(126, 157, 185); border-left-color: rgb(126, 157, 185); padding-top: 2px; padding-right: 2px; padding-bottom: 2px; padding-left: 2px; background-image: url(http://www.google.com/cse/intl/en/images/google_custom_search_watermark.gif); background-attachment: initial; background-origin: initial; background-clip: initial; background-color: rgb(255, 255, 255); background-position: 0% 50%; background-repeat: no-repeat no-repeat; " /><input type="submit" name="sa" value="Search" /><input name="siteurl" type="hidden" value="http://netkiller.sourceforge.net/" /></form><script type="text/javascript" src="http://www.google.com/coop/cse/brand?form=searchbox_008589143145807374698%3Af5uprauilyy"></script></td></tr></table><div class="section" title="5.5. 主键/外键"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="key"></a>5.5. 主键/外键</h2></div></div></div>
+		
+		<pre class="screen">
+		
+3.9    主键/外键
+
+3.9.1   主键
+
+下面书写方式，推荐第二种，比较清晰。
+CREATE TABLE products (
+    product_no integer PRIMARY KEY,
+    name text,
+    price numeric
+);
+
+CREATE TABLE example (
+    a integer,
+    b integer,
+    c integer,
+    PRIMARY KEY (a, c)
+);
+3.9.2   外键约束
+
+下面第前两种写法不推荐。第三、四种写法较清晰。
+1.      第一种书写方式
+CREATE TABLE orders (
+    order_id integer PRIMARY KEY,
+    product_no integer REFERENCES products,
+    quantity integer
+);
+2.      第二种书写方式
+CREATE TABLE orders (
+    order_id integer PRIMARY KEY,
+    product_no integer REFERENCES products (product_no),
+    quantity integer
+);
+3.      第三种书写方式
+CREATE TABLE table1 (
+  a integer PRIMARY KEY,
+  b integer,
+  c integer,
+  FOREIGN KEY (b, c) REFERENCES other_table (c1, c2)
+);
+4.      第四种书写方式，在SQL脚本最后面添加外键约束
+Alter table "groupmember" add  foreign key ("uid") references "user" ("id") on update restrict on delete restrict;
+Alter table "groupmember" add  foreign key ("gid") references "group" ("id") on update restrict on delete restrict;
+Alter table "rolemember" add  foreign key ("uid") references "user" ("id") on update restrict on delete restrict;
+Alter table "rolemember" add  foreign key ("rid") references "role" ("id") on update restrict on delete restrict;
+3.9.3   PostgreSQL 7.3.x 新增功能
+
+CREATE TABLE order_items (
+    product_no integer REFERENCES products ON DELETE RESTRICT,
+    order_id integer REFERENCES orders ON DELETE CASCADE,
+    quantity integer,
+    PRIMARY KEY (product_no, order_id)
+);
+类似 ON DELETE，还有 ON UPDATE 选项，它是在主键被修改（更新）的时候调用的。
+以前我们删除其它表中受外键约束的记录，使用规则或触发器来完成。现可以用CASCADE
+3.9.4   层次递归-分类目录
+
+实现一个无限向下分类的目录，例如：
+计算机与互联网
+       免费资源
+              软件下载(3431)
+壁纸/屏保/桌面(109)
+免费电子贺卡(197)
+代理服务器(33)
+免费电子邮箱(73)
+免费主页空间(75)
+免费聊天室(11)
+免费论坛(36)
+软件
+       XXXXXXXX
+       XXXXXXXX
+       XXXXXXXX
+       XXXXXXXX
+硬件
+互联网
+编程
+
+数据结构定义：
+Drop table "directory" CASCADE;
+
+Create table "directory"
+(
+    "id" Serial NOT NULL,
+    "root_id" Integer NOT NULL Default 0,
+    "name"    Varchar(20)NOT NULL ,
+    "status"   boolean Default 'true',
+    "created" Timestamp Default current_timestamp,
+    "modified" Timestamp Default current_timestamp,
+    UNIQUE (id,root_id),
+    PRIMARY KEY ("id")
+--    FOREIGN KEY (root_id) REFERENCES directory (id) ON DELETE CASCADE
+);
+INSERT INTO directory (id,root_id,name) VALUES (0,0,'/');
+Alter table "directory" add  FOREIGN KEY (root_id) REFERENCES directory (id) ON DELETE CASCADE;
+Create index "directory_index" on "directory" using btree ("id","root_id","name");
+
+数据存储状态：
+Id
+Root_id
+Name
+0
+0
+/
+1
+0
+计算机
+2
+1
+显示器
+3
+1
+鼠标
+4
+1
+主板
+5
+2
+Samsung 显示器
+6
+2
+LG显示器
+7
+2
+SONY显示器
+
+
+上图是一个分类目录，当删除子目录时如果子目录中有目录或数据，将删除这些数据和目录
+
+说明：
+       id            目录根
+       root_id    REFERENCES id ON DELETE CASCADE当pk删除时关联的fk自动删除
+       name       目录名
+       status      状态true可用，false不可用
+       created    创建时间
+       modified  修改时间
+
+注意：
+       因为使用了关联字段，所以不能在create table 中使用
+       FOREIGN KEY (root_id) REFERENCES directory (id) ON DELETE CASCADE
+       因为插入记录做参考表中的“id”字段，创建表的中没有数据，所以无法插入数据。
+       先创建表，不定义FOREIGN KEY，然后初始化插入第一条数据：
+INSERT INTO directory (id,root_id,name) VALUES (0,0,'/');
+       再定义外建：
+       Alter table "directory" add  FOREIGN KEY (root_id) REFERENCES directory (id) ON DELETE CASCADE;
+
+postgres=# Create table "directory"
+postgres-# (
+postgres(#     "id" Serial NOT NULL,
+postgres(#     "root_id" Integer NOT NULL Default 0,
+postgres(#     "name" Varchar(20)NOT NULL ,
+postgres(#     "status"boolean Default 'true',
+postgres(#     "created" Timestamp Default current_timestamp,
+postgres(#     "modified" Timestamp Default current_timestamp,
+postgres(#     UNIQUE (id,root_id),
+postgres(#     PRIMARY KEY ("id")
+postgres(# --    FOREIGN KEY (root_id) REFERENCES directory (id) ON DELETE CASCADE
+postgres(# );
+NOTICE:  CREATE TABLE will create implicit sequence 'directory_id_seq' for SERIAL column 'directory.id'
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'directory_pkey' for table 'directory'
+NOTICE:  CREATE TABLE / UNIQUE will create implicit index 'directory_id_key' for table 'directory'
+CREATE TABLE
+postgres=# INSERT INTO directory (id,root_id,name) VALUES (0,0,'/');
+INSERT 17110 1
+postgres=# Alter table "directory" add  FOREIGN KEY (root_id) REFERENCES directory (id) ON DELETE CASCADE;
+NOTICE:  ALTER TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+ALTER TABLE
+postgres=# Create index "directory_index" on "directory" using btree ("id","root_id","name");
+CREATE INDEX
+postgres=# INSERT INTO directory (root_id,name) VALUES (0,'计算机');
+INSERT 17116 1
+postgres=# SELECT * from directory ;
+ id | root_id |   name    | status |          created           |          modified
+----+---------+-----------+--------+----------------------------+----------------------------
+  0 |       0 | /         | t      | 2003-11-12 16:55:39.727365 | 2003-11-12 16:55:39.727365
+  1 |       0 | 计算机 | t      | 2003-11-12 16:56:39.663584 | 2003-11-12 16:56:39.663584
+(2 rows)
+
+postgres=# INSERT INTO directory (root_id,name) VALUES (0,'金融');
+INSERT 17117 1
+postgres=# SELECT * from directory ;
+ id | root_id |   name    | status |          created           |          modified
+----+---------+-----------+--------+----------------------------+----------------------------
+  0 |       0 | /         | t      | 2003-11-12 16:55:39.727365 | 2003-11-12 16:55:39.727365
+  1 |       0 | 计算机 | t      | 2003-11-12 16:56:39.663584 | 2003-11-12 16:56:39.663584
+  2 |       0 | 金融    | t      | 2003-11-12 16:57:50.509436 | 2003-11-12 16:57:50.509436
+(3 rows)
+
+postgres=# INSERT INTO directory (root_id,name) VALUES (1,'显示器');
+INSERT 17118 1
+postgres=# INSERT INTO directory (root_id,name) VALUES (1,'鼠标');
+INSERT 17119 1
+postgres=# INSERT INTO directory (root_id,name) VALUES (1,'主板');
+INSERT 17120 1
+postgres=# SELECT * from directory ;
+ id | root_id |   name    | status |          created           |          modified
+----+---------+-----------+--------+----------------------------+----------------------------
+  0 |       0 | /         | t      | 2003-11-12 16:55:39.727365 | 2003-11-12 16:55:39.727365
+  1 |       0 | 计算机 | t      | 2003-11-12 16:56:39.663584 | 2003-11-12 16:56:39.663584
+  2 |       0 | 金融    | t      | 2003-11-12 16:57:50.509436 | 2003-11-12 16:57:50.509436
+  3 |       1 | 显示器 | t      | 2003-11-12 16:59:15.911196 | 2003-11-12 16:59:15.911196
+  4 |       1 | 鼠标    | t      | 2003-11-12 16:59:30.646916 | 2003-11-12 16:59:30.646916
+  5 |       1 | 主板    | t      | 2003-11-12 16:59:44.400317 | 2003-11-12 16:59:44.400317
+(6 rows)
+
+postgres=# INSERT INTO directory (root_id,name) VALUES (3,'Samsung 显示器');
+INSERT 17121 1
+postgres=# INSERT INTO directory (root_id,name) VALUES (3,'LG显示器');
+INSERT 17122 1
+postgres=# INSERT INTO directory (root_id,name) VALUES (3,'SONY显示器');
+INSERT 17123 1
+postgres=# SELECT * from directory ;
+ id | root_id |       name        | status |          created           |          modified
+----+---------+-------------------+--------+----------------------------+----------------------------
+  0 |       0 | /                 | t      | 2003-11-12 16:55:39.727365 | 2003-11-12 16:55:39.727365
+  1 |       0 | 计算机         | t      | 2003-11-12 16:56:39.663584 | 2003-11-12 16:56:39.663584
+  2 |       0 | 金融            | t      | 2003-11-12 16:57:50.509436 | 2003-11-12 16:57:50.509436
+  3 |       1 | 显示器         | t      | 2003-11-12 16:59:15.911196 | 2003-11-12 16:59:15.911196
+  4 |       1 | 鼠标            | t      | 2003-11-12 16:59:30.646916 | 2003-11-12 16:59:30.646916
+  5 |       1 | 主板            | t      | 2003-11-12 16:59:44.400317 | 2003-11-12 16:59:44.400317
+  6 |       3 | Samsung 显示器 | t      | 2003-11-12 17:00:45.964053 | 2003-11-12 17:00:45.964053
+  7 |       3 | LG显示器       | t      | 2003-11-12 17:01:03.736121 | 2003-11-12 17:01:03.736121
+  8|       3 | SONY显示器     | t      | 2003-11-12 17:01:18.257337 | 2003-11-12 17:01:18.257337
+(9 rows)
+
+postgres=# INSERT INTO directory (root_id,name) VALUES (7,'CRT显示器');
+INSERT 17124 1
+postgres=# INSERT INTO directory (root_id,name) VALUES (7,'液晶显示器');
+INSERT 17125 1
+postgres=# INSERT INTO directory (root_id,name) VALUES (8,'液晶显示器');
+INSERT 17126 1
+postgres=# INSERT INTO directory (root_id,name) VALUES (8,'特利隆显示器');
+INSERT 17127 1
+postgres=# INSERT INTO directory (root_id,name) VALUES (7,'钻石隆显示器');
+INSERT 17128 1
+postgres=# SELECT * from directory ;
+ id | root_id |        name        | status |          created           |          modified
+----+---------+--------------------+--------+----------------------------+----------------------------
+  0 |       0 | /                  | t      | 2003-11-12 16:55:39.727365 | 2003-11-12 16:55:39.727365
+  1 |       0 | 计算机          | t      | 2003-11-12 16:56:39.663584 | 2003-11-12 16:56:39.663584
+  2 |       0 | 金融             | t      | 2003-11-12 16:57:50.509436 | 2003-11-12 16:57:50.509436
+  3 |       1 | 显示器          | t      | 2003-11-12 16:59:15.911196 | 2003-11-12 16:59:15.911196
+  4 |       1 | 鼠标             | t      | 2003-11-12 16:59:30.646916 | 2003-11-12 16:59:30.646916
+  5 |       1 | 主板             | t      | 2003-11-12 16:59:44.400317 | 2003-11-12 16:59:44.400317
+  6 |       3 | Samsung 显示器  | t      | 2003-11-12 17:00:45.964053 | 2003-11-12 17:00:45.964053
+  7 |       3 | LG显示器        | t      | 2003-11-12 17:01:03.736121 | 2003-11-12 17:01:03.736121
+  8 |       3 | SONY显示器      | t      | 2003-11-12 17:01:18.257337 | 2003-11-12 17:01:18.257337
+  9 |       7 | CRT显示器       | t      | 2003-11-12 17:03:05.594891 | 2003-11-12 17:03:05.594891
+ 10 |       7 | 液晶显示器    | t      | 2003-11-12 17:03:21.793674 | 2003-11-12 17:03:21.793674
+ 11 |       8 | 液晶显示器    | t      | 2003-11-12 17:03:30.688531 | 2003-11-12 17:03:30.688531
+ 12 |       8 | 特利隆显示器 | t      | 2003-11-12 17:03:57.697321 | 2003-11-12 17:03:57.697321
+ 13 |       7 | 钻石隆显示器 | t      | 2003-11-12 17:04:28.61153  | 2003-11-12 17:04:28.61153
+(14 rows)
+
+测试：
+1.         删除子目录：计算机/显示器/ LG显示器/ CRT显示器
+CRT显示器的id是9
+SQL：DELETE FROM directory WHERE id=9;
+postgres=# DELETE FROM directory WHERE id=9;
+DELETE 1
+postgres=# SELECT * from directory ;
+ id | root_id |        name        | status |          created           |          modified
+----+---------+--------------------+--------+----------------------------+----------------------------
+  0 |       0 | /                  | t      | 2003-11-12 16:55:39.727365 | 2003-11-12 16:55:39.727365
+  1 |       0 | 计算机          | t      | 2003-11-12 16:56:39.663584 | 2003-11-12 16:56:39.663584
+  2 |       0 | 金融             | t      | 2003-11-12 16:57:50.509436 | 2003-11-12 16:57:50.509436
+  3 |       1 | 显示器          | t      | 2003-11-12 16:59:15.911196 | 2003-11-12 16:59:15.911196
+  4 |       1 | 鼠标             | t      | 2003-11-12 16:59:30.646916 | 2003-11-12 16:59:30.646916
+  5 |       1 | 主板             | t      | 2003-11-12 16:59:44.400317 | 2003-11-12 16:59:44.400317
+  6 |       3 | Samsung 显示器  | t      | 2003-11-12 17:00:45.964053 | 2003-11-12 17:00:45.964053
+  7 |       3 | LG显示器        | t      | 2003-11-12 17:01:03.736121 | 2003-11-12 17:01:03.736121
+  8 |       3 | SONY显示器      | t      | 2003-11-12 17:01:18.257337 | 2003-11-12 17:01:18.257337
+ 10 |       7 | 液晶显示器    | t      | 2003-11-12 17:03:21.793674 | 2003-11-12 17:03:21.793674
+ 11 |       8 | 液晶显示器    | t      | 2003-11-12 17:03:30.688531 | 2003-11-12 17:03:30.688531
+ 12 |       8 | 特利隆显示器 | t      | 2003-11-12 17:03:57.697321 | 2003-11-12 17:03:57.697321
+ 13 |       7 | 钻石隆显示器 | t      | 2003-11-12 17:04:28.61153  | 2003-11-12 17:04:28.61153
+(13 rows)
+
+postgres=#
+2.         删除子目录：计算机/显示器/ LG显示器
+LG显示器目录下的子目录：液晶显示器、钻石隆显示器也将被删除
+postgres=# DELETE FROM directory WHERE id=7;
+DELETE 1
+postgres=# SELECT * from directory ;
+ id | root_id |        name        | status |          created           |          modified
+----+---------+--------------------+--------+----------------------------+----------------------------
+  0 |       0 | /                  | t      | 2003-11-12 16:55:39.727365 | 2003-11-12 16:55:39.727365
+  1 |       0 | 计算机          | t      | 2003-11-12 16:56:39.663584 | 2003-11-12 16:56:39.663584
+  2 |       0 | 金融             | t      | 2003-11-12 16:57:50.509436 | 2003-11-12 16:57:50.509436
+  3 |       1 | 显示器          | t      | 2003-11-12 16:59:15.911196 | 2003-11-12 16:59:15.911196
+  4 |       1 | 鼠标             | t      | 2003-11-12 16:59:30.646916 | 2003-11-12 16:59:30.646916
+  5 |       1 | 主板             | t      | 2003-11-12 16:59:44.400317 | 2003-11-12 16:59:44.400317
+  6 |       3 | Samsung 显示器  | t      | 2003-11-12 17:00:45.964053 | 2003-11-12 17:00:45.964053
+  8 |       3 | SONY显示器      | t      | 2003-11-12 17:01:18.257337 | 2003-11-12 17:01:18.257337
+ 11 |       8 | 液晶显示器    | t      | 2003-11-12 17:03:30.688531 | 2003-11-12 17:03:30.688531
+ 12 |       8 | 特利隆显示器 | t      | 2003-11-12 17:03:57.697321 | 2003-11-12 17:03:57.697321
+(10 rows)
+
+3.         再删除：计算机/显示器/ SONY显示器
+postgres=# DELETE FROM directory WHERE id=8;
+DELETE 1
+postgres=# SELECT * from directory ;
+ id | root_id |       name        | status |          created           |          modified
+----+---------+-------------------+--------+----------------------------+----------------------------
+  0 |       0 | /                 | t      | 2003-11-12 16:55:39.727365 | 2003-11-12 16:55:39.727365
+  1 |       0 | 计算机         | t      | 2003-11-12 16:56:39.663584 | 2003-11-12 16:56:39.663584
+  2 |       0 | 金融            | t      | 2003-11-12 16:57:50.509436 | 2003-11-12 16:57:50.509436
+  3 |       1 | 显示器         | t      | 2003-11-12 16:59:15.911196 | 2003-11-12 16:59:15.911196
+  4 |       1 | 鼠标            | t      | 2003-11-12 16:59:30.646916 | 2003-11-12 16:59:30.646916
+  5 |       1 | 主板            | t      | 2003-11-12 16:59:44.400317 | 2003-11-12 16:59:44.400317
+  6 |       3 | Samsung 显示器 | t      | 2003-11-12 17:00:45.964053 | 2003-11-12 17:00:45.964053
+(7 rows)
+
+
+4.         删除子目录：计算机/显示器
+显示器目录下的子目录：
+下有目录LG显示器/ CRT显示器、SONY显示器/……、LG显示器/……
+删除显示器目录后，下的所有子目录将被删除。
+postgres=# INSERT INTO directory (root_id,name) VALUES (3,'LG显示器');
+INSERT 17129 1
+postgres=# INSERT INTO directory (root_id,name) VALUES (3,'SONY显示器');
+INSERT 17130 1
+postgres=# INSERT INTO directory (root_id,name) VALUES (6,'CRT显示器');
+INSERT 17131 1
+postgres=# INSERT INTO directory (root_id,name) VALUES (14,'CRT显示器');
+INSERT 17132 1
+postgres=# INSERT INTO directory (root_id,name) VALUES (15,'CRT显示器');
+INSERT 17133 1
+postgres=# INSERT INTO directory (root_id,name) VALUES (15,'特利隆显示器');
+INSERT 17134 1
+postgres=# INSERT INTO directory (root_id,name) VALUES (15,'钻石隆显示器');
+INSERT 17135 1
+postgres=# INSERT INTO directory (root_id,name) VALUES (6,'液晶显示器');
+INSERT 17136 1
+postgres=# INSERT INTO directory (root_id,name) VALUES (14,'液晶显示器');
+INSERT 17137 1
+postgres=# INSERT INTO directory (root_id,name) VALUES (15,'液晶显示器');
+INSERT 17138 1
+postgres=# SELECT * from directory ;
+ id | root_id |        name        | status |          created           |          modified
+----+---------+--------------------+--------+----------------------------+----------------------------
+  0 |       0 | /                  | t      | 2003-11-12 16:55:39.727365 | 2003-11-12 16:55:39.727365
+  1 |       0 | 计算机          | t      | 2003-11-12 16:56:39.663584 | 2003-11-12 16:56:39.663584
+  2 |       0 | 金融             | t      | 2003-11-12 16:57:50.509436 | 2003-11-12 16:57:50.509436
+  3 |       1 | 显示器          | t      | 2003-11-12 16:59:15.911196 | 2003-11-12 16:59:15.911196
+  4 |       1 | 鼠标             | t      | 2003-11-12 16:59:30.646916 | 2003-11-12 16:59:30.646916
+  5 |       1 | 主板             | t      | 2003-11-12 16:59:44.400317 | 2003-11-12 16:59:44.400317
+  6 |       3 | Samsung 显示器  | t      | 2003-11-12 17:00:45.964053 | 2003-11-12 17:00:45.964053
+ 14 |       3 | LG显示器        | t      | 2003-11-12 17:28:03.927651 | 2003-11-12 17:28:03.927651
+ 15 |       3 | SONY显示器      | t      | 2003-11-12 17:28:15.235316 | 2003-11-12 17:28:15.235316
+ 16 |       6 | CRT显示器       | t      | 2003-11-12 17:28:49.586084 | 2003-11-12 17:28:49.586084
+ 17 |      14 | CRT显示器       | t      | 2003-11-12 17:28:55.290861 | 2003-11-12 17:28:55.290861
+ 18 |      15 | CRT显示器       | t      | 2003-11-12 17:28:59.731191 | 2003-11-12 17:28:59.731191
+ 19 |      15 | 特利隆显示器 | t      | 2003-11-12 17:29:10.747115 | 2003-11-12 17:29:10.747115
+ 20 |      15 | 钻石隆显示器 | t      | 2003-11-12 17:29:30.770079 | 2003-11-12 17:29:30.770079
+ 21 |       6 | 液晶显示器    | t      | 2003-11-12 17:29:47.006177 | 2003-11-12 17:29:47.006177
+ 22 |      14 | 液晶显示器    | t      | 2003-11-12 17:29:51.904914 | 2003-11-12 17:29:51.904914
+ 23 |      15 | 液晶显示器    | t      | 2003-11-12 17:29:57.355213 | 2003-11-12 17:29:57.355213
+(17 rows)
+
+postgres=# DELETE FROM directory WHERE id=3;
+DELETE 1
+postgres=# SELECT * from directory ;
+ id | root_id |   name    | status |          created           |          modified
+----+---------+-----------+--------+----------------------------+----------------------------
+  0 |       0 | /         | t      | 2003-11-12 16:55:39.727365 | 2003-11-12 16:55:39.727365
+  1 |       0 | 计算机 | t      | 2003-11-12 16:56:39.663584 | 2003-11-12 16:56:39.663584
+  2 |       0 | 金融    | t      | 2003-11-12 16:57:50.509436 | 2003-11-12 16:57:50.509436
+  4 |       1 | 鼠标    | t      | 2003-11-12 16:59:30.646916 | 2003-11-12 16:59:30.646916
+  5 |       1 | 主板    | t      | 2003-11-12 16:59:44.400317 | 2003-11-12 16:59:44.400317
+(5 rows)
+不再举例了，删除id=0将删除计算机包括下面的所有目录被删除。
+注意，千万不要删除id=0。
+3.9.5   总结
+
+分类目录的例子中使用了ON DELETE CASCADE，方便了操作，但也有危险。如果不用ON DELETE CASCADE而用程序来实现，需要使用递归算法，非常麻烦。
+		
+		</pre>
+	</div><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
+            /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+
+            if(document.domain == 'netkiller.github.com'){
+            var disqus_shortname = 'netkiller'; // required: replace example with your forum shortname
+            }else{
+			var disqus_shortname = 'neochan';
+            }
+
+            /* * * DON'T EDIT BELOW THIS LINE * * */
+            (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+            })();
+        </script><noscript xmlns="">Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><a xmlns="" href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="constraints.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="ddl.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">5.4. 约束 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 6 章 SQL</td></tr></table></div><script xmlns="" type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-11694057-1']);
+  _gaq.push(['_setDomainName', 'netkiller.github.io']);
+  _gaq.push(['_setAllowLinker', true]);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script><script xmlns="" type="text/javascript">
+var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F997cd4a7320a82d72cb74d179118f697' type='text/javascript'%3E%3C/script%3E"));
+</script></body></html>
