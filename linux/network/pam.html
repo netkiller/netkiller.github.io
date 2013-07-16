@@ -13,7 +13,7 @@ chsh         fingerprint-auth     newrole  password-auth     run_init  smartcard
 config-util  fingerprint-auth-ac  other    password-auth-ac  runuser   smartcard-auth-ac  sshd          sudo        system-auth
 		</pre><p>认证插件</p><pre class="screen">
 ls /lib64/security/
-		</pre><div class="section" title="55.2.1. pam_tally2.so"><div class="titlepage"><div><div><h3 class="title"><a id="idp8753424"></a>55.2.1. pam_tally2.so</h3></div></div></div><p>此模块的功能是，登陆错误输入密码3次，5分钟后自动解禁，在未解禁期间输入正确密码也无法登陆。</p><p>在配置文件 /etc/pam.d/sshd 顶端加入</p><pre class="screen">
+		</pre><div class="section" title="55.2.1. pam_tally2.so"><div class="titlepage"><div><div><h3 class="title"><a id="idp23249008"></a>55.2.1. pam_tally2.so</h3></div></div></div><p>此模块的功能是，登陆错误输入密码3次，5分钟后自动解禁，在未解禁期间输入正确密码也无法登陆。</p><p>在配置文件 /etc/pam.d/sshd 顶端加入</p><pre class="screen">
 auth required pam_tally2.so deny=3 onerr=fail unlock_time=300
 			</pre><p>查看失败次数</p><pre class="screen">
 # pam_tally2
@@ -28,7 +28,7 @@ root               14    07/12/13 15:44:37  192.168.6.2
 # pam_tally2 -r -u neo
 Login           Failures Latest failure     From
 neo                 8    07/12/13 15:45:36  192.168.6.2
-			</pre><p>pam_tally2 计数器日志保存在 /var/log/tallylog 注意，这是二进制格式的文件</p><div class="example"><a id="idp8757872"></a><p class="title"><strong>例 55.1. /etc/pam.d/sshd - pam_tally2.so</strong></p><div class="example-contents"><pre class="screen">
+			</pre><p>pam_tally2 计数器日志保存在 /var/log/tallylog 注意，这是二进制格式的文件</p><div class="example"><a id="idp23253456"></a><p class="title"><strong>例 55.1. /etc/pam.d/sshd - pam_tally2.so</strong></p><div class="example-contents"><pre class="screen">
 # cat  /etc/pam.d/sshd
 #%PAM-1.0
 auth required pam_tally2.so deny=3 onerr=fail unlock_time=300
@@ -47,13 +47,13 @@ session    optional     pam_keyinit.so force revoke
 session    include      password-auth
 				</pre></div></div><br class="example-break" /><p>以上配置root用户不受限制, 如果需要限制root用户，参考下面</p><pre class="screen">
 auth required pam_tally2.so deny=3 unlock_time=5 even_deny_root root_unlock_time=1800
-			</pre></div><div class="section" title="55.2.2. pam_listfile.so"><div class="titlepage"><div><div><h3 class="title"><a id="idp8753552"></a>55.2.2. pam_listfile.so</h3></div><div><h4 class="subtitle">用户登陆限制</h4></div></div></div><p>将下面一行添加到 /etc/pam.d/sshd 中，这里采用白名单方式，你也可以采用黑名单方式</p><pre class="screen">
+			</pre></div><div class="section" title="55.2.2. pam_listfile.so"><div class="titlepage"><div><div><h3 class="title"><a id="idp23249136"></a>55.2.2. pam_listfile.so</h3></div><div><h4 class="subtitle">用户登陆限制</h4></div></div></div><p>将下面一行添加到 /etc/pam.d/sshd 中，这里采用白名单方式，你也可以采用黑名单方式</p><pre class="screen">
 auth       required     pam_listfile.so item=user sense=allow file=/etc/ssh/whitelist onerr=fail
 			</pre><p>将允许登陆的用户添加到 /etc/ssh/whitelist，除此之外的用户将不能通过ssh登陆到你的系统</p><pre class="screen">
 # cat /etc/ssh/whitelist
 neo
 www
-			</pre><div class="example"><a id="idp8763136"></a><p class="title"><strong>例 55.2. /etc/pam.d/sshd - pam_listfile.so</strong></p><div class="example-contents"><pre class="screen">
+			</pre><div class="example"><a id="idp23258720"></a><p class="title"><strong>例 55.2. /etc/pam.d/sshd - pam_listfile.so</strong></p><div class="example-contents"><pre class="screen">
 # cat /etc/pam.d/sshd
 #%PAM-1.0
 auth       required     pam_listfile.so item=user sense=allow file=/etc/ssh/whitelist onerr=fail
@@ -73,7 +73,18 @@ session    optional     pam_keyinit.so force revoke
 session    include      password-auth
 				</pre></div></div><br class="example-break" /><p>sense=allow	白名单方式, sense=deny	黑名单方式</p><pre class="screen">
 auth       required     pam_listfile.so item=user sense=deny file=/etc/ssh/blacklist onerr=fail
-			</pre></div></div><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
+			</pre><p>更多细节请查看手册 $ man pam_listfile</p></div><div class="section" title="55.2.3. pam_access.so"><div class="titlepage"><div><div><h3 class="title"><a id="pam_access.so"></a>55.2.3. pam_access.so</h3></div></div></div><p>编辑 /etc/pam.d/sshd 文件，加入下面一行</p><pre class="screen">
+account required pam_access.so
+			</pre><p>保存后重启sshd进程</p><p>编辑 /etc/security/access.conf 文件</p><pre class="screen">
+			
+cat &gt;&gt;  /etc/security/access.conf &lt;&lt; EOF
+
+- : root : ALL EXCEPT 192.168.6.1
+EOF
+			
+			</pre><p>只能通过 192.168.6.1 登陆, 添加多个IP地址</p><pre class="screen">
+- : root : ALL EXCEPT 192.168.6.1 192.168.6.2
+			</pre><p>测试是否生效</p></div></div><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
             /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
 
             if(document.domain == 'netkiller.github.com'){
