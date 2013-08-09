@@ -12,14 +12,10 @@
 		
 		<p>操作系统环境：Ubuntu 13.04 KVM虚拟机</p>
 		<p>安装 storm 涉及到安装以下包：python、zookeeper、zeromq、jzmq、storm</p>
-		<div class="procedure" title="过程 121.1. Ubuntu + Storm 单机环境安装"><a id="idp6203152"></a><p class="title"><strong>过程 121.1. Ubuntu + Storm 单机环境安装</strong></p><ol class="procedure" type="1"><li class="step" title="步骤 1">
+		<div class="procedure" title="过程 121.1. Ubuntu + Storm 单机环境安装"><a id="idp6201024"></a><p class="title"><strong>过程 121.1. Ubuntu + Storm 单机环境安装</strong></p><ol class="procedure" type="1"><li class="step" title="步骤 1">
 				<p>安装 zookeeper</p>
 				<pre class="screen">
 $ sudo apt-get install zookeeper zookeeper-bin zookeeperd
-				</pre>
-				<p>启动 zookeeper</p>
-				<pre class="screen">
-$ sudo service zookeeper start
 				</pre>
 			</li><li class="step" title="步骤 2">
 				<p>安装 zeromq 与 jzmq</p>
@@ -62,16 +58,44 @@ $ sudo ln -s /srv/storm-0.8.1 /srv/storm
 				<p></p>
 				<pre class="screen">
 				
-cat &gt;&gt; ~/.bashrc &lt;&lt;EOF
+cat &gt;&gt; ~/.bashrc &lt;&lt;'EOF'
 
 export JAVA_HOME="/usr/lib/jvm/java-7-openjdk-amd64"
-export ZOOKEEPER_HOME="/path/to/zookeeper"
+export ZOOKEEPER_HOME="/usr/lib/zookeeper"
 export STORM_HOME=/srv/storm
 export PATH=$PATH:$PATH:$ZOOKEEPER_HOME/bin:$STORM_HOME/bin
 EOF
 				
 				</pre>
+				<p>修改 Storm CONF_DIR 目录位置</p>
+				<pre class="screen">
+$ sed -i 's:CONF_DIR = os.path.expanduser("~/.storm"):CONF_DIR = "/srv/storm-0.8.1/conf":' /srv/storm/bin/storm
+				</pre>
 			</li><li class="step" title="步骤 4">
+				<p>启动服务</p>
+				<p>启动 zookeeper 服务</p>
+				<pre class="screen">
+$ sudo service zookeeper start
+				</pre>
+				<p>启动 storm 服务</p>
+				<pre class="screen">
+				
+/srv/storm/bin/storm nimbus &amp;
+/srv/storm/bin/storm supervisor &amp;
+/srv/storm/bin/storm ui &amp;
+				
+				</pre>
+				<p>Storm UI</p>
+				<p>http://192.168.6.2:8080/</p>
+				<p>查看 Java 进程</p>
+				<pre class="screen">
+$ jps
+10382 Jps
+10228 supervisor
+10294 core
+10173 nimbus
+				</pre>
+			</li><li class="step" title="步骤 5">
 				<p>测试 Storm</p>
 				<pre class="screen">
 $ sudo apt-get install maven2
@@ -80,6 +104,11 @@ $ git clone git://github.com/nathanmarz/storm-starter
 $ cd storm-starter
 $ mvn -f m2-pom.xml package
 				</pre>
+				<p>先进入Storm UI http://192.168.6.2:8080/, 然后运行下面与命令</p>
+				<pre class="screen">
+$ storm jar target/storm-starter-0.0.1-SNAPSHOT-jar-with-dependencies.jar storm.starter.WordCountTopology wordcountTop
+				</pre>
+				<p>在次进入 Storm UI 你会看到 wordcountTop</p>
 			</li></ol></div>
 	</div>
 	
