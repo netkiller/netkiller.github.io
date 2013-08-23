@@ -1,0 +1,1 @@
+%XML%\bin\xsltproc docbook-book.xsl ..\book.xml > book.html
