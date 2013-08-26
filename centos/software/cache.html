@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>14.21. Cache</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.76.1" /><link rel="home" href="../index.html" title="Netkiller Architect 手札" /><link rel="up" href="framework.html" title="第 14 章 Framework Design" /><link rel="prev" href="app.logs.html" title="14.20. 日志系统" /><link rel="next" href="ch14s22.html" title="14.22. i18n 国际化" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">14.21. Cache</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="app.logs.html">上一页</a> </td><th width="60%" align="center">第 14 章 Framework Design</th><td width="20%" align="right"> <a accesskey="n" href="ch14s22.html">下一页</a></td></tr></table><hr /></div><table xmlns="" width="100%" border="0"><tr><td align="left"><a href="http://netkiller.github.io/">Home</a> |
+        <a href="http://netkiller.sourceforge.net/">Mirror</a> |
+        <a href="/search.html">Search</a> |
+        <a href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
+        <a href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+        <a href="http://rline.blog.51cto.com/">51CTO 博客</a></td><td><div id="bdshare" class="bdshare_t bds_tools_32 get-codes-bdshare"><a class="bds_fbook"></a><a class="bds_twi"></a><a class="bds_ms"></a><a class="bds_msn"></a><a class="bds_buzz"></a><a class="bds_linkedin"></a><a class="bds_deli"></a><a class="bds_qzone"></a><a class="bds_qq"></a><a class="bds_tqq"></a><a class="bds_tqf"></a><a class="bds_tsina"></a><a class="bds_baidu"></a><a class="bds_renren"></a><a class="bds_t163"></a><a class="bds_tfh"></a><a class="bds_douban"></a><a class="bds_hi"></a><a class="bds_tieba"></a><a class="bds_tsohu"></a><span class="bds_more"></span><a class="shareCount"></a></div><script type="text/javascript" id="bdshare_js" data="type=tools"></script><script type="text/javascript" id="bdshell_js"></script><script type="text/javascript">
+	document.getElementById("bdshell_js").src = "http://bdimg.share.baidu.com/static/js/shell_v2.js?cdnversion=" + new Date().getHours();
+</script></td><td><form id="searchbox_008589143145807374698:f5uprauilyy" action="/search.html"><input type="hidden" name="cx" value="008589143145807374698:f5uprauilyy" /><input type="hidden" name="cof" value="FORID:11" /><input name="q" type="text" size="25" style="border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; border-top-style: solid; border-right-style: solid; border-bottom-style: solid; border-left-style: solid; border-top-color: rgb(126, 157, 185); border-right-color: rgb(126, 157, 185); border-bottom-color: rgb(126, 157, 185); border-left-color: rgb(126, 157, 185); padding-top: 2px; padding-right: 2px; padding-bottom: 2px; padding-left: 2px; background-image: url(http://www.google.com/cse/intl/en/images/google_custom_search_watermark.gif); background-attachment: initial; background-origin: initial; background-clip: initial; background-color: rgb(255, 255, 255); background-position: 0% 50%; background-repeat: no-repeat no-repeat; " /><input type="submit" name="sa" value="Search" /><input name="siteurl" type="hidden" value="http://netkiller.sourceforge.net/" /></form><script type="text/javascript" src="http://www.google.com/coop/cse/brand?form=searchbox_008589143145807374698%3Af5uprauilyy"></script></td></tr></table><div class="section" title="14.21. Cache"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="cache"></a>14.21. Cache</h2></div></div></div>
+		
+		<div class="section" title="14.21.1. CDN (Content Delivery Network) 与反向代理"><div class="titlepage"><div><div><h3 class="title"><a id="idp1001840"></a>14.21.1. CDN (Content Delivery Network) 与反向代理</h3></div></div></div>
+			
+			<div><img src="../images/workflow/user-browser-server.png" /></div>
+			<p>与CDN有关的开发工作</p>
+			<div class="section" title="14.21.1.1. CDN接口API"><div class="titlepage"><div><div><h4 class="title"><a id="idp1003152"></a>14.21.1.1. CDN接口API</h4></div></div></div>
+				
+				<p>CDN 内容更新，一般厂商会提供一个SOAP接口，你可以通过接口刷新你的内容。但接口有限制，不能随意使用，一般是多少秒可以刷新一次，或者一天可以刷新几次</p>
+			</div>
+			<div class="section" title="14.21.1.2. 方向代理页面过期处理"><div class="titlepage"><div><div><h4 class="title"><a id="idp1006224"></a>14.21.1.2. 方向代理页面过期处理</h4></div></div></div>
+				
+				<p>方向代理一般都支持PURGE协议，Squid,Varnish等等向管理端口发送 PURGE 即可是使用页面刷新</p>
+				<pre class="screen">
+PURGE http://netkiller.github.net/index.html
+				</pre>
+				<p>有些方向代理如：Varnish 可以使用正则表达式</p>
+				<p>同时这些代理服务器都承受管理命令</p>
+				<p>squid: 	squidclient </p>
+				<p>varnish: 	varnishadm</p>
+			</div>
+			<div class="section" title="14.21.1.3. 内容版本化"><div class="titlepage"><div><div><h4 class="title"><a id="idp1009824"></a>14.21.1.3. 内容版本化</h4></div></div></div>
+				
+				<p>例如这样的URL</p>
+				<pre class="screen">
+http://images.example.com/logo.gif
+http://images.example.com/product.jpg
+				</pre>
+				<p>我们可以通过Rewrite或PATHINFO等技术做为静态化。例如首次版本</p>
+				<pre class="screen">
+http://images.example.com/logo.1.gif		=&gt; logo.gif
+http://images.example.com/product.1.jpg		=&gt; product.jpg
+				</pre>
+				<p>原图发生变化后，版本递增</p>
+				<pre class="screen">
+http://images.example.com/logo.2.gif		=&gt; logo.gif
+http://images.example.com/product.2.jpg		=&gt; product.jpg
+				</pre>
+				<p>就的URL将丢弃</p>
+				<pre class="screen">
+http://images.example.com/logo.1.gif
+http://images.example.com/product.1.jpg
+				</pre>
+				<p>CDN 就回源去下面的URL，并且取到的是新图</p>
+				<pre class="screen">
+http://images.example.com/logo.2.gif
+http://images.example.com/product.2.jpg
+				</pre>
+			</div>
+		</div>
+		<div class="section" title="14.21.2. HTTP Cache"><div class="titlepage"><div><div><h3 class="title"><a id="idp1010080"></a>14.21.2. HTTP Cache</h3></div></div></div>
+			
+			<p>Cache-Control</p>
+			<pre class="screen">
+max-age
+max-age 格式写为：max-age=n，n是以秒为单位, 这个值是告知客户端GMT + N 后页面过期，缓存服务器在s-maxage值为空的时候也会使用这个参数的值。
+
+s-maxage
+s-maxage的格式跟max-age一样，只不过他是给缓存服务器使用的。
+
+must-revalidate
+这个参数用来告知客户端和缓存服务器，在GET请求的时候必须与源服务器验证实体是否为最新版本。
+
+Cache-Control:max-age=1200,s-maxage=3600
+			</pre>
+			<pre class="screen">
+Last-Modified
+这个参数提供了实体最近一次被修改的时间。这个名字起得不错，当实体被修改了之后，这个参数也就会被修改.
+			</pre>
+			<p>ETag</p>
+			<pre class="screen">
+ETag
+ETag是根据内容生成的一段hash字符串，采用信息摘要算法，保证每一个页面有一个唯一字串。
+			</pre>
+			<p>expires</p>
+			<p>expires 是HTTP 1.0 中定义的，已经不能满足用户的需要在 HTTP 1.1 加入了max-age，建议使用 max-age替代expires</p>
+			<pre class="screen">
+指令					含义
+public				可以在任何地方缓存
+private				只能被浏览器缓存
+no-cache			不能在任何地方缓存
+must-revalidate		缓存必须检查更新版本
+proxy-revalidate	代理缓存必须检查更新版本
+max-age				内容能够被缓存的时期，以秒表示
+s-maxage			覆盖共享缓存的max-age设置
+			</pre>
+			<p>在Squid, Varnish, Apache, Lighttpd, Nginx 中都可是实现HTTP Cache-Control推送，每次修改都需要重新加载，不太灵活。</p>
+			<pre class="screen">
+ExpiresActive On
+ExpiresByType image/gif "access plus 1 month"
+ExpiresByType image/png "access plus 1 month"
+ExpiresByType image/jpeg "access plus 1 month"
+ExpiresByType text/css "access plus 1 month"
+ExpiresByType text/javascript "access plus 1 month"
+ExpiresByType application/x-javascript "access plus 1 month"
+ExpiresByType application/x-shockwave-flash "access plus 1 month"
+
+
+server.modules = (
+...
+"mod_expire",
+...
+)
+
+$HTTP["url"] =~ "^/images/" {
+expire.url = ( "" =&gt; "access 30 days" )
+}
+			</pre>
+			<p>我喜欢自己控制TTL时间，且每个页面单独设置，可以随时调整设置。</p>
+
+			<div class="section" title="14.21.2.1. 在程序中灵活操作 Cache-Control"><div class="titlepage"><div><div><h4 class="title"><a id="idp1023568"></a>14.21.2.1. 在程序中灵活操作 Cache-Control</h4></div></div></div>
+				
+
+				<p>在MVC框架中每个控制器下的方法都可以单独操作Cache</p>
+				<pre class="screen">
+Class blog extend Controller{
+	blog(){
+		header('Cache-Control: max-age=28800');
+	}
+	list(){
+		header('Cache-Control: max-age=3600');
+	}
+	details(){
+		header('Cache-Control: max-age=160');
+	}
+}
+				</pre>
+				<p>你还可以封装到Controller中</p>
+				<pre class="screen">
+Class blog extend Controller{
+	blog(){
+		this-&gt;cache('28800');
+	}
+	list(){
+		this-&gt;cache('3600');
+	}
+	details(){
+		this-&gt;cache('160');
+	}
+}
+				</pre>
+			</div>
+			<div class="section" title="14.21.2.2. 非程序文件缓存处理"><div class="titlepage"><div><div><h4 class="title"><a id="idp1026576"></a>14.21.2.2. 非程序文件缓存处理</h4></div></div></div>
+				
+				<p>首先做一个Rewrite让程序接管所有图片请求</p>
+				<pre class="screen">
+url.rewrite = ( "^/(.+)" =&gt; "/index.php/$1" )
+				</pre>
+				<p>然后程序通过PATHINFO取出图片URL</p>
+				<pre class="screen">
+http://images.example.com/your/dir/test.jpg =&gt; http://images.example.com/index.php/your/dir/test.jpg
+				</pre>
+				<p>程序取出 /your/dir/test.jpg 设置 Content-type 并输出二进制流</p>
+				<p>详细参考</p>
+				<pre class="screen">
+				
+&lt;?php
+    // Test image.
+    $images = '/test/foo.png';
+
+    $headers = apache_request_headers();
+
+    if (isset($headers['If-Modified-Since']) &amp;&amp; (strtotime($headers['If-Modified-Since']) == filemtime($images))) {
+        header('Last-Modified: '.gmdate('D, d M Y H:i:s', filemtime($images)).' GMT', true, 304);
+    } else {
+        header('Content-Type: image/png');
+        print file_get_contents($fn);
+		if (file_exists($images)) {
+			header('Last-Modified: '.gmdate('D, d M Y H:i:s', filemtime($images)).' GMT', true, 200);
+			header("Cache-Control: max-age=3600, must-revalidate");
+			header('Content-Length: '.filesize($images));
+			header('Content-type: ' .mime_content_type($images));
+			flush();
+			readfile($images);
+			exit;
+		}
+    }
+				
+				</pre>
+				<p>javascript 文件也可以使用类似方法处理</p>
+				<pre class="screen">
+				
+	private function js($file){
+		if (file_exists($file)) {
+			header("Cache-Control: max-age=3600, must-revalidate");
+			header('Content-type: text/javascript');
+			flush();
+			readfile($file);
+			exit;
+		}
+	}
+				
+				</pre>
+			</div>
+		</div>
+		<div class="section" title="14.21.3. Cache 生存时间"><div class="titlepage"><div><div><h3 class="title"><a id="idp1026960"></a>14.21.3. Cache 生存时间</h3></div></div></div>
+			
+			<p>你不必一开始加费劲心机去考虑这个值，当网站运行一段时间后，利用玩站流量数据作为参考，一步一地尝试调整。</p>
+		</div>
+	</div><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
+            /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+
+            if(document.domain == 'netkiller.github.com'){
+            var disqus_shortname = 'netkiller'; // required: replace example with your forum shortname
+            }else{
+			var disqus_shortname = 'neochan';
+            }
+
+            /* * * DON'T EDIT BELOW THIS LINE * * */
+            (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+            })();
+        </script><noscript xmlns="">Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><a xmlns="" href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a><br xmlns="" /><div xmlns="" id="clustrmaps-widget"></div><script xmlns="" type="text/javascript">var _clustrmaps = {'url' : 'http://netkiller.github.io', 'user' : 1107643, 'server' : '2', 'id' : 'clustrmaps-widget', 'version' : 1, 'date' : '2013-08-14', 'lang' : 'en', 'corners' : 'square' };(function (){ var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = 'http://www2.clustrmaps.com/counter/map.js'; var x = document.getElementsByTagName('script')[0]; x.parentNode.insertBefore(s, x);})();</script><noscript xmlns=""><a href="http://www2.clustrmaps.com/user/87410e6bb"><img src="http://www2.clustrmaps.com/stats/maps-no_clusters/netkiller.github.io-thumb.jpg" alt="Locations of visitors to this page" /></a></noscript><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="app.logs.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="framework.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ch14s22.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">14.20. 日志系统 </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 14.22. i18n 国际化</td></tr></table></div><script xmlns="" type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-11694057-1']);
+  _gaq.push(['_setDomainName', 'netkiller.github.io']);
+  _gaq.push(['_setAllowLinker', true]);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script><script xmlns="" type="text/javascript">
+var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F997cd4a7320a82d72cb74d179118f697' type='text/javascript'%3E%3C/script%3E"));
+</script></body></html>
