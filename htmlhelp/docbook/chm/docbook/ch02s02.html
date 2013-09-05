@@ -1,0 +1,81 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>2.2. XML 转换</title><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"><meta name="keywords" content="docbook, latex, epub"><link rel="home" href="../index.html" title="Netkiller Docbook 手札"><link rel="up" href="ch02.html" title="第 2 章 Document Tools"><link rel="prev" href="ch02.html" title="第 2 章 Document Tools"><link rel="next" href="ch02s03.html" title="2.3. XML 校验"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="section" title="2.2. XML 转换"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="docbook-xml"></a>2.2. XML 转换</h2></div></div></div>
+		
+		<p>docbook-xsl-1.73.2.tar.gz</p>
+		<p>docbook-dsssl-1.79.tar.gz</p>
+		<p>rxp - A validating XML parser</p>
+		<p>rxp -s file.xml</p>
+		<p>To validate file.xml, use the command:</p>
+		<p>$ rxp -s -V file.xml</p>
+		<div class="section" title="2.2.1. xsltproc - XSLT command line processor"><div class="titlepage"><div><div><h3 class="title"><a name="xsltproc"></a>2.2.1. xsltproc - XSLT command line processor</h3></div></div></div>
+			
+			<p>xsltproc --stringparam html.stylesheet docbook.css ../../docbook-xsl-1.73.2/xhtml/chunk.xsl ../book.xml</p>
+			<pre class="screen">
+$ sudo apt-get install docbook-xsl
+$ export DSSSL=/usr/share/xml/docbook/stylesheet/nwalsh/xhtml/chunk.xsl
+$ /usr/bin/xsltproc --stringparam html.stylesheet docbook.css ${DSSSL} ../book.xml
+
+			</pre>
+		</div>
+		<div class="section" title="2.2.2. docbook-ebnf - EBNF module for the XML version of the DocBook DTD"><div class="titlepage"><div><div><h3 class="title"><a name="docbook-ebnf"></a>2.2.2. docbook-ebnf - EBNF module for the XML version of the DocBook DTD</h3></div></div></div>
+			
+			<p>docbook-ebnf - EBNF module for the XML version of the DocBook DTD</p>
+			<pre class="screen">
+$ sudo apt-get install docbook-ebnf
+			</pre>
+		</div>
+		<div class="section" title="2.2.3. docbook-xsl-saxon"><div class="titlepage"><div><div><h3 class="title"><a name="docbook-xsl-saxon"></a>2.2.3. docbook-xsl-saxon</h3></div></div></div>
+			
+			<pre class="screen">
+$ sudo apt-get install docbook-xsl-saxon
+			</pre>
+			<p>创建一个test.xml的测试文件</p>
+			<pre class="screen">
+			
+SRCS = test.xml
+
+DESTDIR = .
+
+all: html
+
+html: $(SRCS:.xml=.noext.html) $(SRCS:.xml=.html)
+
+%.png : %.png.uu
+	[ -d ${DESTDIR} ] || mkdir -p ${DESTDIR}
+	uudecode -o /dev/stdout &lt; $&lt; &gt; ${DESTDIR}/$@
+
+%.html : %.xml
+	[ -d ${DESTDIR} ] || mkdir -p ${DESTDIR}
+	java -cp "/usr/share/java/saxon.jar:/usr/share/java/xslthl.jar:/usr/share/java/docbook-xsl-saxon.jar" \
+	  -Dhighlight.xslthl.config="/usr/share/xml/docbook/stylesheet/docbook-xsl/highlighting/xslthl-config.xml" \
+	  com.icl.saxon.StyleSheet \
+	  -u -o ${DESTDIR}/$@ $&lt; db2html.xsl \
+	  highlight.source=1
+
+%.noext.html : %.xml
+	[ -d ${DESTDIR} ] || mkdir -p ${DESTDIR}
+	xsltproc --xinclude --nonet -o ${DESTDIR}/$@ \
+			--stringparam highlight.source 1 \
+			--stringparam xslthl.config /usr/share/xml/docbook/stylesheet/docbook-xsl/highlighting/xslthl-config.xml \
+			--param use.extensions 0 \
+			--stringparam  paper.type A4 \
+			db2html.xsl $&lt;
+
+validate: check
+
+check:
+	xmllint --xinclude --nonet --noout --postvalid $(SRCS)
+
+clean:
+	rm -f ${DESTDIR}/*.html ${DESTDIR}/*.png
+
+.PHONY: all check clean html validate
+			
+			</pre>
+			<p>生成html</p>
+			<pre class="screen">
+cp  /usr/share/doc/docbook-xsl-saxon/examples/db2html.xsl 。
+
+make html
+			</pre>
+		</div>
+	</div></body></html>

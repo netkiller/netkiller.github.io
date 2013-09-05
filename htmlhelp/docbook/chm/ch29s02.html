@@ -1,0 +1,79 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>29.2. Subversion 版本控制</title><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"><meta name="keywords" content="docbook, latex, epub"><link rel="home" href="index.html" title="Netkiller Docbook 手札"><link rel="up" href="ch29.html" title="第 29 章 写作团队的运作"><link rel="prev" href="ch29.html" title="第 29 章 写作团队的运作"><link rel="next" href="ch29s03.html" title="29.3. GIT"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="section" title="29.2. Subversion 版本控制"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp584192"></a>29.2. Subversion 版本控制</h2></div></div></div>
+		
+
+		<div class="procedure"><ol class="procedure" type="1"><li class="step" title="步骤 1">
+		    	<p>subversion 初始化</p>
+		    	<div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>trunk</p></li><li class="listitem"><p>branches</p></li><li class="listitem"><p>releases</p></li><li class="listitem"><p>tags</p></li></ol></div>
+				<pre class="screen">
+svn co svn://127.0.0.1/document
+cd project
+mkdir trunk
+mkdir tags
+mkdir branches
+mkdir releases
+svn ci -m "Initialized empty subversion repository in your_project"
+				</pre>
+			</li><li class="step" title="步骤 2">
+		    	<p>创建docbook文档，安排章节</p>
+		    	<p>将章节拆分成独立文件，并在主文档头部声明</p>
+		    	<pre class="programlisting">
+		    	
+	&lt;!ENTITY chapter.system SYSTEM "chapter.system.xml"&gt;
+	&lt;!ENTITY chapter.system.harddisk SYSTEM "chapter.system.harddisk.xml"&gt;
+	&lt;!ENTITY chapter.network SYSTEM "chapter.network.xml"&gt;
+		    	
+		    	</pre>
+		    	<p>完成后导入subversion的trunk中</p>
+			</li><li class="step" title="步骤 3">
+				<p>创建版本分支</p>
+				<pre class="screen">
+$ svn copy svn://netkiller.8800.org/document/trunk svn://netkiller.8800.org/document/branches/system
+$ svn copy svn://netkiller.8800.org/document/trunk svn://netkiller.8800.org/document/branches/network
+				</pre>
+			</li><li class="step" title="步骤 4">
+				<p>开始写作</p>
+				<p>我们假设jam负责system章节</p>
+				<div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>checkout</p>
+						<pre class="screen">
+$ svn checkout svn://netkiller.8800.org/document/branches/system
+						</pre>
+					</li><li class="listitem"><p>编辑文件</p>
+						<pre class="screen">
+vim chapter.system.xml
+						</pre>
+					</li><li class="listitem"><p>校验XML</p>
+						<pre class="screen">
+$ export DSSSL=/usr/share/xml/docbook/stylesheet/nwalsh/xhtml/chunk.xsl
+$ xsltproc --stringparam html.stylesheet docbook.css ${DSSSL} book.xml
+						</pre>
+					</li><li class="listitem"><p>提交文件</p>
+						<pre class="screen">
+$ svn ci -m "I have finished this chapter."
+						</pre>
+					</li></ol></div>
+				<p>其他编辑人员操作类似checkout自己branche上的network章节等等</p>
+			</li><li class="step" title="步骤 5">
+				<p>tags运作</p>
+				<p>当jam完成了指派的任务的第一个阶段后，可以创建一个tags</p>
+				<pre class="screen">
+svn copy svn://netkiller.8800.org/document/branches/system svn://netkiller.8800.org/document/tags/system_phase_I
+				</pre>
+				<p>tags 一旦建立，以后不会在更改</p>
+				<p>然后jam可以在/document/branches/system继续写作</p>
+			</li><li class="step" title="步骤 6">
+				<p>合并tags到主干</p>
+				<p>当tags完成后主编将其合并到trunk</p>
+				<pre class="screen">
+svn merge svn://netkiller.8800.org/document/tags/system_phase_I
+				</pre>
+				<p>然后发行unstable版本，你也可以每天产生一个快照。等待用户反馈。</p>
+				<p>反馈结果由负责人在/document/branches/system上修改，等待下一次发布在下一个阶段。</p>
+			</li><li class="step" title="步骤 7">
+				<p>发行文档</p>
+				<p>当一切OK时,我就可以把trunk 复制到 releases 中，随你怎命名。</p>
+				<pre class="screen">
+$ svn copy svn://netkiller.8800.org/document/trunk svn://netkiller.8800.org/document/release/document_v1.0
+				</pre>
+				<p>这个版本/document/release/document_v1.0就可以提供给读者了。</p>
+			</li></ol></div>
+	</div></body></html>
