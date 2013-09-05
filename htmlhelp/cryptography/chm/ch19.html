@@ -1,0 +1,76 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>Chapter 19. SSL Socket</title><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"><meta name="keywords" content="md5sum, openssl, openpgp, opengpg, md5, sha1, des, rsa, uuid, base64, quoted-printable, uuencode, x509,smime"><link rel="home" href="index.html" title="Netkiller Cryptography 手札"><link rel="up" href="pt04.html" title="Part IV. 数字证书开发"><link rel="prev" href="ch18s02.html" title="18.2. 创建证书"><link rel="next" href="ch19s02.html" title="19.2. Java SSL Socket Client"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="chapter" title="Chapter 19. SSL Socket"><div class="titlepage"><div><div><h2 class="title"><a name="socket"></a>Chapter 19. SSL Socket</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="ch19.html#socket.https">19.1. Java Socket HTTPS</a></span></dt><dt><span class="section"><a href="ch19s02.html">19.2. Java SSL Socket Client</a></span></dt><dt><span class="section"><a href="ch19s03.html">19.3. Java SSL Socket Server</a></span></dt></dl></div>
+	
+	<p> </p>
+	<div class="section" title="19.1. Java Socket HTTPS"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="socket.https"></a>19.1. Java Socket HTTPS</h2></div></div></div>
+		
+		<pre class="screen">
+		
+package netkiller;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
+
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+
+public class HTTPS {
+
+	public static void main(String[] args) {
+	    // Create a trust manager that does not validate certificate chains
+	    TrustManager[] trustAllCerts = new TrustManager[]{
+	        new X509TrustManager() {
+	            public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+	                return null;
+	            }
+	            public void checkClientTrusted(
+	                java.security.cert.X509Certificate[] certs, String authType) {
+	            }
+	            public void checkServerTrusted(
+	                java.security.cert.X509Certificate[] certs, String authType) {
+	            }
+	        }
+	    };
+
+	    // Install the all-trusting trust manager
+	    try {
+	        SSLContext sc = SSLContext.getInstance("SSL");
+	        sc.init(null, trustAllCerts, new java.security.SecureRandom());
+	        HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+	    } catch (Exception e) {
+	    }
+
+	    // Now you can access an https URL without having the certificate in the truststore
+	    try {
+	    	//Create a URL for the desired page
+	        URL url = new URL("https://java.sun.com/");
+
+	        // Read all the text returned by the server
+	        BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
+	        String html;
+	        while ((html = in.readLine()) != null) {
+	            // str is one line of text; readLine() strips the newline character(s)
+	        	System.out.println(html);
+	        }
+	        in.close();
+
+	    } catch (MalformedURLException mue) {
+	    } catch (IOException ioe) {
+	    }
+
+	}
+
+}
+
+		
+		</pre>
+	</div>
+
+	
+
+	
+</div></body></html>
