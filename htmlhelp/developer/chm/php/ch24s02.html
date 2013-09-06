@@ -1,0 +1,293 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>24.2. PHP_FUNCTION</title><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"><meta name="keywords" content="PHP, Python, Perl, Ruby, Java, HTML, XHTML, HTML5, CSS, Javascript, JQuery, C, C++, D"><link rel="home" href="../index.html" title="Netkiller Developer 手札"><link rel="up" href="ch24.html" title="第 24 章 PHP Extension 扩展开发"><link rel="prev" href="ch24.html" title="第 24 章 PHP Extension 扩展开发"><link rel="next" href="ch24s03.html" title="24.3. PHP_INI"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="section" title="24.2. PHP_FUNCTION"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="PHP_FUNCTION"></a>24.2. PHP_FUNCTION</h2></div></div></div>
+		
+		<p>编辑 php_&lt;extname&gt;.h 文件，在 PHP_FUNCTION(confirm_netkiller_compiled); 下面增加一个新函数</p>
+		<pre class="programlisting">
+		
+# cat php_netkiller.h
+/*
+  +----------------------------------------------------------------------+
+  | PHP Version 5                                                        |
+  +----------------------------------------------------------------------+
+  | Copyright (c) 1997-2010 The PHP Group                                |
+  +----------------------------------------------------------------------+
+  | This source file is subject to version 3.01 of the PHP license,      |
+  | that is bundled with this package in the file LICENSE, and is        |
+  | available through the world-wide-web at the following url:           |
+  | http://www.php.net/license/3_01.txt                                  |
+  | If you did not receive a copy of the PHP license and are unable to   |
+  | obtain it through the world-wide-web, please send a note to          |
+  | license@php.net so we can mail you a copy immediately.               |
+  +----------------------------------------------------------------------+
+  | Author:                                                              |
+  +----------------------------------------------------------------------+
+*/
+
+/* $Id: chapter.ext.xml 579 2013-05-03 03:39:33Z netkiller $ */
+
+#ifndef PHP_NETKILLER_H
+#define PHP_NETKILLER_H
+
+extern zend_module_entry netkiller_module_entry;
+#define phpext_netkiller_ptr &amp;netkiller_module_entry
+
+#ifdef PHP_WIN32
+#define PHP_NETKILLER_API __declspec(dllexport)
+#else
+#define PHP_NETKILLER_API
+#endif
+
+#ifdef ZTS
+#include "TSRM.h"
+#endif
+
+PHP_MINIT_FUNCTION(netkiller);
+PHP_MSHUTDOWN_FUNCTION(netkiller);
+PHP_RINIT_FUNCTION(netkiller);
+PHP_RSHUTDOWN_FUNCTION(netkiller);
+PHP_MINFO_FUNCTION(netkiller);
+
+PHP_FUNCTION(confirm_netkiller_compiled);	/* For testing, remove later. */
+PHP_FUNCTION(netkiller_test);	/* For testing, remove later. */
+
+/*
+  	Declare any global variables you may need between the BEGIN
+	and END macros here:
+
+ZEND_BEGIN_MODULE_GLOBALS(netkiller)
+	long  global_value;
+	char *global_string;
+ZEND_END_MODULE_GLOBALS(netkiller)
+*/
+
+/* In every utility function you add that needs to use variables
+   in php_netkiller_globals, call TSRMLS_FETCH(); after declaring other
+   variables used by that function, or better yet, pass in TSRMLS_CC
+   after the last function argument and declare your utility function
+   with TSRMLS_DC after the last declared argument.  Always refer to
+   the globals in your function as NETKILLER_G(variable).  You are
+   encouraged to rename these macros something shorter, see
+   examples in any other php module directory.
+*/
+
+#ifdef ZTS
+#define NETKILLER_G(v) TSRMG(netkiller_globals_id, zend_netkiller_globals *, v)
+#else
+#define NETKILLER_G(v) (netkiller_globals.v)
+#endif
+
+#endif	/* PHP_NETKILLER_H */
+
+
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: noet sw=4 ts=4 fdm=marker
+ * vim&lt;600: noet sw=4 ts=4
+ */
+		
+		</pre>
+		<p></p>
+		<pre class="programlisting">
+		
+# cat netkiller.c
+/*
+  +----------------------------------------------------------------------+
+  | PHP Version 5                                                        |
+  +----------------------------------------------------------------------+
+  | Copyright (c) 1997-2010 The PHP Group                                |
+  +----------------------------------------------------------------------+
+  | This source file is subject to version 3.01 of the PHP license,      |
+  | that is bundled with this package in the file LICENSE, and is        |
+  | available through the world-wide-web at the following url:           |
+  | http://www.php.net/license/3_01.txt                                  |
+  | If you did not receive a copy of the PHP license and are unable to   |
+  | obtain it through the world-wide-web, please send a note to          |
+  | license@php.net so we can mail you a copy immediately.               |
+  +----------------------------------------------------------------------+
+  | Author:                                                              |
+  +----------------------------------------------------------------------+
+*/
+
+/* $Id: chapter.ext.xml 579 2013-05-03 03:39:33Z netkiller $ */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include "php.h"
+#include "php_ini.h"
+#include "ext/standard/info.h"
+#include "php_netkiller.h"
+
+/* If you declare any globals in php_netkiller.h uncomment this:
+ZEND_DECLARE_MODULE_GLOBALS(netkiller)
+*/
+
+/* True global resources - no need for thread safety here */
+static int le_netkiller;
+
+/* {{{ netkiller_functions[]
+ *
+ * Every user visible function must have an entry in netkiller_functions[].
+ */
+zend_function_entry netkiller_functions[] = {
+	PHP_FE(confirm_netkiller_compiled,	NULL)		/* For testing, remove later. */
+	PHP_FE(netkiller_test,	NULL)		/* For testing, remove later. */
+	{NULL, NULL, NULL}	/* Must be the last line in netkiller_functions[] */
+};
+/* }}} */
+
+/* {{{ netkiller_module_entry
+ */
+zend_module_entry netkiller_module_entry = {
+#if ZEND_MODULE_API_NO &gt;= 20010901
+	STANDARD_MODULE_HEADER,
+#endif
+	"netkiller",
+	netkiller_functions,
+	PHP_MINIT(netkiller),
+	PHP_MSHUTDOWN(netkiller),
+	PHP_RINIT(netkiller),		/* Replace with NULL if there's nothing to do at request start */
+	PHP_RSHUTDOWN(netkiller),	/* Replace with NULL if there's nothing to do at request end */
+	PHP_MINFO(netkiller),
+#if ZEND_MODULE_API_NO &gt;= 20010901
+	"0.1", /* Replace with version number for your extension */
+#endif
+	STANDARD_MODULE_PROPERTIES
+};
+/* }}} */
+
+#ifdef COMPILE_DL_NETKILLER
+ZEND_GET_MODULE(netkiller)
+#endif
+
+/* {{{ PHP_INI
+ */
+/* Remove comments and fill if you need to have entries in php.ini
+PHP_INI_BEGIN()
+    STD_PHP_INI_ENTRY("netkiller.global_value",      "42", PHP_INI_ALL, OnUpdateLong, global_value, zend_netkiller_globals, netkiller_globals)
+    STD_PHP_INI_ENTRY("netkiller.global_string", "foobar", PHP_INI_ALL, OnUpdateString, global_string, zend_netkiller_globals, netkiller_globals)
+PHP_INI_END()
+*/
+/* }}} */
+
+/* {{{ php_netkiller_init_globals
+ */
+/* Uncomment this function if you have INI entries
+static void php_netkiller_init_globals(zend_netkiller_globals *netkiller_globals)
+{
+	netkiller_globals-&gt;global_value = 0;
+	netkiller_globals-&gt;global_string = NULL;
+}
+*/
+/* }}} */
+
+/* {{{ PHP_MINIT_FUNCTION
+ */
+PHP_MINIT_FUNCTION(netkiller)
+{
+	/* If you have INI entries, uncomment these lines
+	REGISTER_INI_ENTRIES();
+	*/
+	return SUCCESS;
+}
+/* }}} */
+
+/* {{{ PHP_MSHUTDOWN_FUNCTION
+ */
+PHP_MSHUTDOWN_FUNCTION(netkiller)
+{
+	/* uncomment this line if you have INI entries
+	UNREGISTER_INI_ENTRIES();
+	*/
+	return SUCCESS;
+}
+/* }}} */
+
+/* Remove if there's nothing to do at request start */
+/* {{{ PHP_RINIT_FUNCTION
+ */
+PHP_RINIT_FUNCTION(netkiller)
+{
+	return SUCCESS;
+}
+/* }}} */
+
+/* Remove if there's nothing to do at request end */
+/* {{{ PHP_RSHUTDOWN_FUNCTION
+ */
+PHP_RSHUTDOWN_FUNCTION(netkiller)
+{
+	return SUCCESS;
+}
+/* }}} */
+
+/* {{{ PHP_MINFO_FUNCTION
+ */
+PHP_MINFO_FUNCTION(netkiller)
+{
+	php_info_print_table_start();
+	php_info_print_table_header(2, "netkiller support", "enabled");
+	php_info_print_table_end();
+
+	/* Remove comments if you have entries in php.ini
+	DISPLAY_INI_ENTRIES();
+	*/
+}
+/* }}} */
+
+
+/* Remove the following function when you have succesfully modified config.m4
+   so that your module can be compiled into PHP, it exists only for testing
+   purposes. */
+
+/* Every user-visible function in PHP should document itself in the source */
+/* {{{ proto string confirm_netkiller_compiled(string arg)
+   Return a string to confirm that the module is compiled in */
+PHP_FUNCTION(confirm_netkiller_compiled)
+{
+	char *arg = NULL;
+	int arg_len, len;
+	char *strg;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &amp;arg, &amp;arg_len) == FAILURE) {
+		return;
+	}
+
+	len = spprintf(&amp;strg, 0, "Congratulations! You have successfully modified ext/%.78s/config.m4. Module %.78s is now compiled into PHP.", "netkiller", arg);
+	RETURN_STRINGL(strg, len, 0);
+}
+/* }}} */
+/* The previous line is meant for vim and emacs, so it can correctly fold and
+   unfold functions in source code. See the corresponding marks just before
+   function definition, where the functions purpose is also documented. Please
+   follow this convention for the convenience of others editing your code.
+*/
+
+PHP_FUNCTION(netkiller_test)
+{
+char *arg = NULL;
+int arg_len, len;
+char *strg;
+
+if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &amp;arg, &amp;arg_len) == FAILURE) {
+return;
+}
+
+len = spprintf(&amp;strg, 0, "Your input string: %s\n", arg);
+RETURN_STRINGL(strg, len, 0);
+}
+
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: noet sw=4 ts=4 fdm=marker
+ * vim&lt;600: noet sw=4 ts=4
+ */
+		
+		</pre>
+	</div></body></html>

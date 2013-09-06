@@ -1,0 +1,81 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>7.5. SQL 92</title><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"><link rel="home" href="index.html" title="Netkiller MySQL 手札"><link rel="up" href="ch07.html" title="第 7 章 SQL Statement Syntax"><link rel="prev" href="ch07s04.html" title="7.4. OUTFILE/LOAD DATA INFILE"><link rel="next" href="ch07s06.html" title="7.6. Functions and Operators"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="section" title="7.5. SQL 92"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="sql.92"></a>7.5. SQL 92</h2></div></div></div>
+		
+
+			<p>insert + select</p>
+			<pre class="screen">
+insert into product_type_commission select id,5,1,1,0,0,0,0,0,0 from product_type where title='notebook' and is_physical=0;
+			</pre>
+
+			<p>update table1,table2</p>
+			<pre class="screen">
+begin;
+ALTER TABLE `customer` ADD COLUMN `cutoff_time` TIMESTAMP NOT NULL default '0000-00-00 00:00:00';
+update customer,agent set customer.cutoff_time = agent.cutoff_time where customer.id = agent.id;
+ALTER TABLE `agent` DROP COLUMN `cutoff_time`;
+commit;
+			</pre>
+
+			<p>update table1 set field1 = (select value from table2)</p>
+			<pre class="screen">
+UPDATE
+	transaction
+SET
+	transaction.total_sold_price = (
+		SELECT
+			SUM(transaction_item.price)
+	FROM
+			transaction_item
+		WHERE transaction_item.transaction_id = 100
+	)
+WHERE
+	transaction.id = 100
+			</pre>
+			<p>update table1, (select * from other) as table2 set table1.field1 = table2.field1</p>
+			<pre class="screen">
+UPDATE
+	transaction,(	SELECT
+						SUM(product_item.bought_price) AS total_bought_price, transaction_item.transaction_id
+					FROM
+						transaction_item
+			    	WHERE
+						transaction_item.transaction_id IN ( '123','456' )
+			     ) as total
+SET
+	transaction.total_bought_price = total.total_bought_price
+WHERE
+	transaction.id = total.transaction_id
+
+			</pre>
+
+		<p>join + subquery</p>
+		<pre class="screen">
+select u.*,t.category,t.items,t.[property] from tb_sysregchkusers as u left join (select a.items as category, b.* from (select id, items from tb_sysregchktask where categoryid=0) as a left join tb_sysregchktask as b on b.categoryid=a.id ) as t on u.taskID=t.id
+
+select * from tb_sysregchklog where CONVERT(datetime,CONVERT(varchar(10),checkTime,120)) between convert(datetime,'2007-12-12') and convert(datetime,'2007-12-12')
+		</pre>
+
+		<pre class="screen">
+select DISTINCT user_point_history.user_id,user.username,
+(select count(id) from transaction where id = user_point_history.transaction_id) as transactions,
+(SELECT SUM(u_p_h.points) FROM user_point_history as u_p_h WHERE u_p_h.type != 'RDMP' AND u_p_h.status IN('pr','ac') AND u_p_h.user_id = user_point_history.user_id) as total_points_earned,
+(SELECT SUM(u_p_h.points) FROM user_point_history as u_p_h WHERE u_p_h.type = 'RDMP' AND u_p_h.status IN('pr','ac') AND u_p_h.user_id = user_point_history.user_id) as total_points_redeemed
+from user_point_history,user where user_point_history.user_id = user.id;
+		</pre>
+
+		<p>(total_points_earned - total_points_redeemed) as current_balance_points </p>
+		<pre class="screen">
+select user_id, username, transactions, total_points_earned, total_points_redeemed, (total_points_earned - total_points_redeemed) as current_balance_points
+from (select DISTINCT user_point_history.user_id,user.username,
+(select count(id) from transaction where id = user_point_history.transaction_id) as transactions,
+(SELECT SUM(u_p_h.points) FROM user_point_history as u_p_h WHERE u_p_h.type != 'RDMP' AND u_p_h.status IN('pr','ac') AND u_p_h.user_id = user_point_history.user_id) as total_points_earned,
+(SELECT SUM(u_p_h.points) FROM user_point_history as u_p_h WHERE u_p_h.type = 'RDMP' AND u_p_h.status IN('pr','ac') AND u_p_h.user_id = user_point_history.user_id) as total_points_redeemed
+from user_point_history,user where user_point_history.user_id = user.id) as user_performance;
+		</pre>
+
+		<p>subquery作为一个字段使用 </p>
+		<pre class="screen">
+select product_type_attribute.*,(select 'selected' from product_type_attribute_set where product_type_attribute_set.product_type_attribute_id = product_type_attribute.id and product_type_attribute_set.product_type_id = 26) as selected
+from product_type_attribute;
+		</pre>
+
+	</div></body></html>

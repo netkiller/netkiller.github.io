@@ -1,0 +1,84 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>5.6. Trigger</title><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"><link rel="home" href="index.html" title="Netkiller MySQL 手札"><link rel="up" href="ch05.html" title="第 5 章 DDL - Data Definition Language"><link rel="prev" href="ch05s05.html" title="5.5. View"><link rel="next" href="ch05s07.html" title="5.7. EVENT"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="section" title="5.6. Trigger"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="ddl.trigger"></a>5.6. Trigger</h2></div></div></div>
+		
+		<div class="section" title="5.6.1. create trigger"><div class="titlepage"><div><div><h3 class="title"><a name="idp676336"></a>5.6.1. create trigger</h3></div></div></div>
+			
+
+			<p>history</p>
+			<pre class="programlisting">
+			
+CREATE TABLE user_history SELECT * FROM user WHERE 1 &lt;&gt; 1
+
+DELIMITER //
+CREATE TRIGGER user_history BEFORE update ON user FOR EACH ROW
+BEGIN
+insert into user_history SELECT * FROM user WHERE id = OLD.id;
+END; //
+DELIMITER ;
+			
+			</pre>
+		</div>
+		<div class="section" title="5.6.2. drop trigger"><div class="titlepage"><div><div><h3 class="title"><a name="idp678752"></a>5.6.2. drop trigger</h3></div></div></div>
+			
+			<pre class="programlisting">
+DROP TRIGGER admin_user_history;
+
+DELIMITER //
+CREATE TRIGGER admin_user_history BEFORE update ON admin_user FOR EACH ROW
+BEGIN
+insert into admin_user_history SELECT * FROM admin_user WHERE user_id = OLD.user_id;
+END; //
+DELIMITER;
+			</pre>
+		</div>
+		<div class="section" title="5.6.3. show triggers"><div class="titlepage"><div><div><h3 class="title"><a name="idp680320"></a>5.6.3. show triggers</h3></div></div></div>
+			
+			<pre class="programlisting">
+show triggers;
+			</pre>
+		</div>
+		<div class="section" title="5.6.4. EXAMPLE"><div class="titlepage"><div><div><h3 class="title"><a name="idp681600"></a>5.6.4. EXAMPLE</h3></div></div></div>
+			
+			<div class="example"><a name="idp682336"></a><p class="title"><b>例 5.1. BEFORE/AFTER</b></p><div class="example-contents">
+				
+				<pre class="programlisting">
+DROP TRIGGER MY_TEST_MONITOR;
+DELIMITER //
+CREATE TRIGGER MY_TEST_MONITOR BEFORE insert ON MY_TEST FOR EACH ROW
+BEGIN
+	INSERT INTO MY_TEST_MONITOR SELECT * FROM MY_TEST WHERE TICKET = NEW.TICKET;
+END; //
+DELIMITER;
+				</pre>
+				<pre class="programlisting">
+DROP TRIGGER MY_TEST_MONITOR;
+DELIMITER //
+CREATE TRIGGER MY_TEST_MONITOR AFTER insert ON MY_TEST FOR EACH ROW
+BEGIN
+	INSERT INTO MY_TEST_MONITOR SELECT * FROM MY_TEST WHERE TICKET = NEW.TICKET;
+END; //
+DELIMITER;
+				</pre>
+			</div></div><br class="example-break">
+			<div class="example"><a name="idp684672"></a><p class="title"><b>例 5.2. uuid()</b></p><div class="example-contents">
+				
+				<pre class="programlisting">
+delimiter $$
+
+CREATE TABLE `member` (
+  `uuid` char(36) NOT NULL,
+  `username` varchar(20) DEFAULT NULL,
+  `password` varchar(32) DEFAULT NULL,
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8$$
+
+CREATE
+DEFINER=`root`@`%`
+TRIGGER `test`.`member_before_insert`
+BEFORE INSERT ON `test`.`member`
+FOR EACH ROW
+SET new.uuid = uuid()
+$$
+				</pre>
+			</div></div><br class="example-break">
+		</div>
+	</div></body></html>

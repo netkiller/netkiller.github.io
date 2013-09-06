@@ -1,0 +1,121 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>第 6 章 SQL</title><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"><link rel="home" href="index.html" title="Netkiller PostgreSQL 手札"><link rel="up" href="index.html" title="Netkiller PostgreSQL 手札"><link rel="prev" href="ch05.html" title="第 5 章 DML"><link rel="next" href="ch06s02.html" title="6.2. 递归查询"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="chapter" title="第 6 章 SQL"><div class="titlepage"><div><div><h2 class="title"><a name="sql"></a>第 6 章 SQL</h2></div></div></div><div class="toc"><p><b>目录</b></p><dl><dt><span class="section"><a href="ch06.html#idp343424">6.1. "::"数据转换</a></span></dt><dt><span class="section"><a href="ch06s02.html">6.2. 递归查询</a></span></dt><dt><span class="section"><a href="ch06s03.html">6.3. returning</a></span></dt><dt><span class="section"><a href="ch06s04.html">6.4. Function</a></span></dt><dd><dl><dt><span class="section"><a href="ch06s04.html#generate_series">6.4.1. generate_series</a></span></dt><dt><span class="section"><a href="ch06s04.html#datetime">6.4.2. 日期/时间</a></span></dt><dd><dl><dt><span class="section"><a href="ch06s04.html#idp379568">6.4.2.1. Date/Time Operators</a></span></dt><dt><span class="section"><a href="ch06s04.html#idp381696">6.4.2.2. 当前日期/时间</a></span></dt><dt><span class="section"><a href="ch06s04.html#idp384592">6.4.2.3. 时间计算</a></span></dt><dt><span class="section"><a href="ch06s04.html#idp386416">6.4.2.4. to_char() / to_date()</a></span></dt><dt><span class="section"><a href="ch06s04.html#idp388576">6.4.2.5. EXTRACT, date_part</a></span></dt><dt><span class="section"><a href="ch06s04.html#idp391216">6.4.2.6. date_trunc</a></span></dt><dt><span class="section"><a href="ch06s04.html#idp392848">6.4.2.7. 延迟执行</a></span></dt><dt><span class="section"><a href="ch06s04.html#idp394704">6.4.2.8. 时区</a></span></dt></dl></dd><dt><span class="section"><a href="ch06s04.html#idp395984">6.4.3. uuid</a></span></dt></dl></dd></dl></div>
+    
+    <div class="section" title='6.1. "::"数据转换'><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp343424"></a>6.1. "::"数据转换</h2></div></div></div>
+    	
+    	<pre class="screen">
+    	
+3.3    “：：”数据转换
+
+PostgreSQL 数据之间的转换可以使用“：：”操作符。
+3.3.1   text to varchar
+
+vperson 表gender字段为布尔型（boolean）在视图中要显示为true显示为“先生”，false显示为“女士”CASE WHEN 表达式应该是：
+CASE WHEN p.gender = true THEN '先生' ELSE '女士' END as gender,
+直接使用'先生', '女士' PostgreSQL认为' '中间的字符为text类型，请看下面：
+
+postgres=# CREATE OR REPLACE VIEW vperson AS
+postgres-#     SELECT p.uid,p.name,
+postgres-#     CASE WHEN p.gender = true THEN '先生' ELSE '女士' END as gender,
+postgres-#     p.nickname,p.mobile,p.tel,p.fax,p.email,p.province,p.city,p.addre
+ss,p.postalcode
+postgres-#     FROM "person" p
+postgres-#     Order By p.uid;
+CREATE VIEW
+postgres=# \dv vperson
+         List of relations
+ Schema |  Name   | Type |  Owner
+--------+---------+------+----------
+ public | vperson | view | postgres
+(1 row)
+
+postgres=# \d person
+                    Table "public.person"
+   Column    |          Type          |      Modifiers
+-------------+------------------------+----------------------
+ uid         | integer                | not null default 0
+ name        | character varying(20)  | not null
+ gender      | boolean                | not null default 'F'
+ nickname    | character varying(20)  |
+ mobile      | character varying(13)  |
+ tel         | character varying(20)  | not null
+ fax         | character varying(20)  |
+ email       | character varying(60)  |
+ province    | character varying(10)  | not null
+ city        | character varying(10)  | not null
+ address     | character varying(255) | not null
+ postalcode  | character varying(6)   | not null
+ rate        | character varying(20)  | default '0'
+ bank        | character varying(20)  | not null default ''
+ bankaccount | character varying(20)  | not null default ''
+Indexes: person_pkey primary key btree (uid)
+Check constraints: "person_rate" ((((((rate = '0'::character varying) OR (rate = '1'::character varying)) OR (rate = '2'::character varying)) OR (rate = '3'::character varying)) OR (rate = '4'::character varying)) OR (rate = '5'::character varying))
+
+postgres=#
+postgres=# \d vperson
+              View "public.vperson"
+   Column   |          Type          | Modifiers
+------------+------------------------+-----------
+ uid        | integer                |
+ name       | character varying(20)  |
+ gender     | text                   |
+ nickname   | character varying(20)  |
+ mobile     | character varying(13)  |
+ tel        | character varying(20)  |
+ fax        | character varying(20)  |
+ email      | character varying(60)  |
+ province   | character varying(10)  |
+ city       | character varying(10)  |
+ address    | character varying(255) |
+ postalcode | character varying(6)   |
+View definition: SELECT p.uid, p.name, CASE WHEN (p.gender = true) THEN '先生'::
+text ELSE '女士'::text END AS gender, p.nickname, p.mobile, p.tel, p.fax, p.emai
+l, p.province, p.city, p.address, p.postalcode FROM person p ORDER BY p.uid;
+
+
+使用“：：”将test 转为varchar：
+CASE WHEN p.gender = true THEN '先生'::varchar(2) ELSE '女士'::varchar(2) END as gender,
+例：
+CREATE OR REPLACE VIEW vperson AS
+    SELECT p.uid,p.name,
+           CASE WHEN p.gender = true THEN '先生'::varchar(2) ELSE '女士'::varchar(2) END as gender,
+           p.nickname,p.mobile,p.tel,p.fax,p.email,p.province,p.city,p.address,p.postalcode
+    FROM "person" p
+    Order By p.uid;
+postgres=# drop view vperson ;
+DROP VIEW
+postgres=# CREATE OR REPLACE VIEW vperson AS
+postgres-#     SELECT p.uid,p.name,
+postgres-#     CASE WHEN p.gender = true THEN '先生'::varchar(2) ELSE '女士'::varchar(2) END as gender,
+postgres-#     p.nickname,p.mobile,p.tel,p.fax,p.email,p.province,p.city,p.address,p.postalcode
+postgres-#     FROM "person" p
+postgres-#     Order By p.uid;
+CREATE VIEW
+postgres=# \d vperson
+              View "public.vperson"
+   Column   |          Type          | Modifiers
+------------+------------------------+-----------
+ uid        | integer                |
+ name       | character varying(20)  |
+ gender     | character varying(2)   |
+ nickname   | character varying(20)  |
+ mobile     | character varying(13)  |
+ tel        | character varying(20)  |
+ fax        | character varying(20)  |
+ email      | character varying(60)  |
+ province   | character varying(10)  |
+ city       | character varying(10)  |
+ address    | character varying(255) |
+ postalcode | character varying(6)   |
+View definition: SELECT p.uid, p.name, CASE WHEN (p.gender = true) THEN ('先生'::character varying)::character varying(2) ELSE ('女士'::character varying)::character varying(2) END AS gender, p.nickname, p.mobile, p.tel, p.fax, p.email, p.province, p.city, p.address, p.postalcode FROM person p ORDER BY p.uid;
+
+postgres=#
+
+    	
+    	</pre>
+    </div>
+	
+	
+
+	
+
+</div></body></html>

@@ -1,0 +1,172 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>6.2. 递归查询</title><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"><link rel="home" href="index.html" title="Netkiller PostgreSQL 手札"><link rel="up" href="ch06.html" title="第 6 章 SQL"><link rel="prev" href="ch06.html" title="第 6 章 SQL"><link rel="next" href="ch06s03.html" title="6.3. returning"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="section" title="6.2. 递归查询"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="sql.recursive"></a>6.2. 递归查询</h2></div></div></div>
+		
+    	<p>http://old.storytotell.org/blog/2009/08/11/postgresql84-recursive-queries.html</p>
+	    <div class="example"><a name="idp351184"></a><p class="title"><b>例 6.1. 递归查询实例</b></p><div class="example-contents">
+	        
+	        <p>http://justcramer.com/2010/05/30/scaling-threaded-comments-on-django-at-disqus/</p>
+	        <pre class="screen">
+	        
+create table comments (
+    id SERIAL PRIMARY KEY,
+    message VARCHAR,
+    author VARCHAR,
+    parent_id INTEGER REFERENCES comments(id)
+);
+insert into comments (message, author, parent_id)
+    values ('This thread is really cool!', 'David', NULL), ('Ya David, we love it!', 'Jason', 1), ('I agree David!', 'Daniel', 1), ('gift Jason', 'Anton', 2),
+    ('Very interesting post!', 'thedz', NULL), ('You sir, are wrong', 'Chris', 5), ('Agreed', 'G', 5), ('Fo sho, Yall', 'Mac', 5);
+			
+	        </pre>
+
+			<pre class="screen">
+			
+WITH RECURSIVE cte (id, message, author, path, parent_id, depth)  AS (
+    SELECT  id,
+        message,
+        author,
+        array[id] AS path,
+        parent_id,
+        1 AS depth
+    FROM    comments
+    WHERE   parent_id IS NULL
+
+    UNION ALL
+
+    SELECT  comments.id,
+        comments.message,
+        comments.author,
+        cte.path || comments.id,
+        comments.parent_id,
+        cte.depth + 1 AS depth
+    FROM    comments
+    JOIN cte ON comments.parent_id = cte.id
+    )
+    SELECT id, message, author, path, depth FROM cte ORDER BY path;
+	    	
+			</pre>
+			<p>输出结果</p>
+			<pre class="screen">
+ id |           message           | author |  path   | depth
+----+-----------------------------+--------+---------+-------
+  1 | This thread is really cool! | David  | {1}     |     1
+  2 | Ya David, we love it!       | Jason  | {1,2}   |     2
+  4 | gift Jason                  | Anton  | {1,2,4} |     3
+  3 | I agree David!              | Daniel | {1,3}   |     2
+  5 | Very interesting post!      | thedz  | {5}     |     1
+  6 | You sir, are wrong          | Chris  | {5,6}   |     2
+  7 | Agreed                      | G      | {5,7}   |     2
+  8 | Fo sho, Yall                | Mac    | {5,8}   |     2
+(8 rows)
+		    </pre>
+	    </div></div><br class="example-break">
+	    <div class="example"><a name="idp356000"></a><p class="title"><b>例 6.2. 递归查询实例 city 表</b></p><div class="example-contents">
+	    	
+	    	<p>定义结构</p>
+			<pre class="screen">
+	    	
+CREATE TABLE city
+(
+  id serial NOT NULL,
+  name character varying,
+  parent_id integer,
+  status boolean,
+  CONSTRAINT city_pkey PRIMARY KEY (id),
+  CONSTRAINT city_parent_id_fkey FOREIGN KEY (parent_id)
+      REFERENCES city (id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+)
+WITH (
+  OIDS=FALSE
+);
+ALTER TABLE city
+  OWNER TO sys;
+	    	
+	    	</pre>
+	    	<p>插入数据</p>
+	    	<pre class="screen">
+	    	
+INSERT INTO city (id, name, parent_id, status) VALUES (1, '广东', NULL, NULL);
+INSERT INTO city (id, name, parent_id, status) VALUES (2, '湖南', NULL, NULL);
+INSERT INTO city (id, name, parent_id, status) VALUES (3, '深圳', 1, NULL);
+INSERT INTO city (id, name, parent_id, status) VALUES (4, '东莞', 1, NULL);
+INSERT INTO city (id, name, parent_id, status) VALUES (5, '福田', 3, NULL);
+INSERT INTO city (id, name, parent_id, status) VALUES (6, '南山', 3, NULL);
+INSERT INTO city (id, name, parent_id, status) VALUES (7, '宝安', 3, NULL);
+INSERT INTO city (id, name, parent_id, status) VALUES (8, '西乡', 7, NULL);
+INSERT INTO city (id, name, parent_id, status) VALUES (9, '福永', 7, NULL);
+INSERT INTO city (id, name, parent_id, status) VALUES (10, '龙华', 7, NULL);
+INSERT INTO city (id, name, parent_id, status) VALUES (11, '长沙', 2, NULL);
+INSERT INTO city (id, name, parent_id, status) VALUES (12, '湘潭', 2, NULL);
+INSERT INTO city (id, name, parent_id, status) VALUES (13, '常德', 2, NULL);
+INSERT INTO city (id, name, parent_id, status) VALUES (14, '桃源', 13, NULL);
+INSERT INTO city (id, name, parent_id, status) VALUES (15, '汉寿', 13, NULL);
+INSERT INTO city (id, name, parent_id, status) VALUES (16, '黑龙江', NULL, NULL);
+INSERT INTO city (id, name, parent_id, status) VALUES (17, '伊春', 16, NULL);
+INSERT INTO city (id, name, parent_id, status) VALUES (18, '哈尔滨', 16, NULL);
+INSERT INTO city (id, name, parent_id, status) VALUES (19, '齐齐哈尔', 16, NULL);
+INSERT INTO city (id, name, parent_id, status) VALUES (20, '牡丹江', 16, NULL);
+INSERT INTO city (id, name, parent_id, status) VALUES (21, '佳木斯', 16, NULL);
+INSERT INTO city (id, name, parent_id, status) VALUES (22, '民治', 10, NULL);
+INSERT INTO city (id, name, parent_id, status) VALUES (23, '上塘', 10, NULL);
+	    	
+	    	</pre>
+			<p>查询</p>
+	    	<pre class="screen">
+	    	
+WITH RECURSIVE path(id, name, path, idpath, parent_id, status) AS (
+  SELECT id, name, '/' || name , '/' || id , parent_id, status FROM city WHERE parent_id is null
+  UNION
+  SELECT
+    city.id,
+    city.name,
+    parentpath.path ||
+      CASE parentpath.path
+	WHEN '/' THEN ''
+	ELSE '/'
+      END || city.name,
+    parentpath.idpath ||
+     CASE parentpath.idpath
+	WHEN '/' THEN ''
+	ELSE '/'
+      END || city.id,
+    city.parent_id, city.status
+  FROM city, path as parentpath
+  WHERE city.parent_id = parentpath.id
+)
+
+SELECT * FROM path;
+	    	
+	    	</pre>
+	    	<p>结果输出</p>
+	    	<pre class="screen">
+	    	
+ id |   name   |           path            |    idpath    | parent_id | status
+----+----------+---------------------------+--------------+-----------+--------
+  1 | 广东     | /广东                     | /1           |           |
+  2 | 湖南     | /湖南                     | /2           |           |
+ 16 | 黑龙江   | /黑龙江                   | /16          |           |
+  3 | 深圳     | /广东/深圳                | /1/3         |         1 |
+  4 | 东莞     | /广东/东莞                | /1/4         |         1 |
+ 11 | 长沙     | /湖南/长沙                | /2/11        |         2 |
+ 12 | 湘潭     | /湖南/湘潭                | /2/12        |         2 |
+ 13 | 常德     | /湖南/常德                | /2/13        |         2 |
+ 17 | 伊春     | /黑龙江/伊春              | /16/17       |        16 |
+ 18 | 哈尔滨   | /黑龙江/哈尔滨            | /16/18       |        16 |
+ 19 | 齐齐哈尔 | /黑龙江/齐齐哈尔          | /16/19       |        16 |
+ 20 | 牡丹江   | /黑龙江/牡丹江            | /16/20       |        16 |
+ 21 | 佳木斯   | /黑龙江/佳木斯            | /16/21       |        16 |
+  5 | 福田     | /广东/深圳/福田           | /1/3/5       |         3 |
+  6 | 南山     | /广东/深圳/南山           | /1/3/6       |         3 |
+  7 | 宝安     | /广东/深圳/宝安           | /1/3/7       |         3 |
+ 14 | 桃源     | /湖南/常德/桃源           | /2/13/14     |        13 |
+ 15 | 汉寿     | /湖南/常德/汉寿           | /2/13/15     |        13 |
+  8 | 西乡     | /广东/深圳/宝安/西乡      | /1/3/7/8     |         7 |
+  9 | 福永     | /广东/深圳/宝安/福永      | /1/3/7/9     |         7 |
+ 10 | 龙华     | /广东/深圳/宝安/龙华      | /1/3/7/10    |         7 |
+ 22 | 民治     | /广东/深圳/宝安/龙华/民治 | /1/3/7/10/22 |        10 |
+ 23 | 上塘     | /广东/深圳/宝安/龙华/上塘 | /1/3/7/10/23 |        10 |
+(23 rows)
+	    	
+	    	</pre>
+	    </div></div><br class="example-break">
+	</div></body></html>

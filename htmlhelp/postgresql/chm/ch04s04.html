@@ -1,0 +1,181 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>4.4. 序列</title><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"><link rel="home" href="index.html" title="Netkiller PostgreSQL 手札"><link rel="up" href="ch04.html" title="第 4 章 数据定义（DDL）"><link rel="prev" href="ch04s03.html" title="4.3. 表"><link rel="next" href="ch04s05.html" title="4.5. 约束"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="section" title="4.4. 序列"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="serial"></a>4.4. 序列</h2></div></div></div>
+		
+		<pre class="screen">
+		
+
+-- ------------------------------------------------------
+--  'Region'
+-- ------------------------------------------------------
+DROP TABLE region;
+DROP SEQUENCE       region_id_seq;
+DROP INDEX              region_id_index;
+DROP VIEW vregion;
+
+CREATE TABLE region (
+    id                   integer DEFAULT nextval('region_id_seq') NOT NULL,
+    region      varchar(20) DEFAULT '' NOT NULL,
+    description  text ,
+    note        text ,
+    remark           text ,
+     create_date  timestamp DEFAULT now() ,
+     modify_date  timestamp DEFAULT now() ,
+    PRIMARY KEY (id),
+    UNIQUE (id,region)
+);
+CREATE SEQUENCE   region_id_seq;
+CREATE INDEX          region_id_index ON region (id);
+
+CREATE VIEW vregion AS
+    SELECT pv.id,pv.region,pv.description,pv.note,pv.remark,to_char(pv.create_date,'YYYY-MM-DD HH:MI:SS') as date
+        FROM region pv
+        ORDER BY pv.id;
+		
+		</pre>
+
+		<div class="section" title="4.4.1. 等差列 “1，2，3，4，5，6，7，8，9…”"><div class="titlepage"><div><div><h3 class="title"><a name="idp279040"></a>4.4.1. 等差列 “1，2，3，4，5，6，7，8，9…”</h3></div></div></div>
+			
+			<pre class="screen">
+			
+DROP SEQUENCE       region_id_seq;
+CREATE SEQUENCE   region_id_seq;
+
+member=&gt; insert into region(region) values('广西');
+INSERT 111264 1
+member=&gt;
+member=&gt; insert into region(region) values('贵州');
+INSERT 111265 1
+member=&gt;
+member=&gt; insert into region(region) values('海南');
+INSERT 111266 1
+member=&gt;
+member=&gt; insert into region(region) values('河北');
+INSERT 111267 1
+member=&gt;
+member=&gt; insert into region(region) values('河南');
+INSERT 111268 1
+member=&gt;
+member=&gt; insert into region(region) values('黑龙江');
+INSERT 111269 1
+member=&gt; select * from vregion ;
+ id | region | description | note | remark |        date
+----+--------+-------------+------+--------+---------------------
+  1 | 安徽   |             |      |        | 2003-11-01 10:44:26
+  2 | 北京   |             |      |        | 2003-11-01 10:44:26
+  3 | 重庆   |             |      |        | 2003-11-01 10:44:26
+  4 | 福建   |             |      |        | 2003-11-01 10:44:26
+  5 | 甘肃   |             |      |        | 2003-11-01 10:44:26
+  6 | 广东   |             |      |        | 2003-11-01 10:44:26
+  7 | 广西   |             |      |        | 2003-11-01 10:44:26
+  8 | 贵州   |             |      |        | 2003-11-01 10:44:26
+  9 | 海南   |             |      |        | 2003-11-01 10:44:26
+ 10 | 河北   |             |      |        | 2003-11-01 10:44:26
+ 11 | 河南   |             |      |        | 2003-11-01 10:44:26
+ 12 | 黑龙江 |             |      |        | 2003-11-01 10:44:26
+(12 rows)
+
+			
+			</pre>
+		</div>
+		<div class="section" title="4.4.2. 等差列 “1，3，5，7，9…”"><div class="titlepage"><div><div><h3 class="title"><a name="idp281728"></a>4.4.2. 等差列 “1，3，5，7，9…”</h3></div></div></div>
+			
+			<pre class="screen">
+			
+DROP SEQUENCE       region_id_seq;
+Delete from region;
+CREATE SEQUENCE region_id_seq INCREMENT 2 START 1;
+
+member=&gt; DROP SEQUENCE region_id_seq;
+DROP SEQUENCE
+member=&gt; Delete from region;
+DELETE 15
+member=&gt;
+member=&gt; CREATE SEQUENCE region_id_seq INCREMENT 2 START 1;
+CREATE SEQUENCE
+member=&gt; insert into region(region) values('广东');
+INSERT 111282 1
+member=&gt;
+member=&gt; insert into region(region) values('广西');
+INSERT 111283 1
+member=&gt;
+member=&gt; insert into region(region) values('贵州');
+INSERT 111284 1
+member=&gt;
+member=&gt; insert into region(region) values('海南');
+INSERT 111285 1
+member=&gt;
+member=&gt; insert into region(region) values('河北');
+INSERT 111286 1
+member=&gt;
+member=&gt; insert into region(region) values('河南');
+INSERT 111287 1
+member=&gt;
+member=&gt; insert into region(region) values('黑龙江');
+INSERT 111288 1
+member=&gt; select * from region ;
+ id | region | description | note | remark |        create_date         |        modify_date
+----+--------+-------------+------+--------+----------------------------+----------------------------
+  1 | 安徽   |             |      |        | 2003-11-01 11:49:58.004475 | 2003-11-01 11:49:58.004475
+  3 | 北京   |             |      |        | 2003-11-01 11:49:58.093188 | 2003-11-01 11:49:58.093188
+  5 | 重庆   |             |      |        | 2003-11-01 11:49:58.138582 | 2003-11-01 11:49:58.138582
+  7 | 福建   |             |      |        | 2003-11-01 11:49:58.166903 | 2003-11-01 11:49:58.166903
+  9 | 甘肃   |             |      |        | 2003-11-01 11:49:58.195132 | 2003-11-01 11:49:58.195132
+ 11 | 广东   |             |      |        | 2003-11-01 11:49:58.239133 | 2003-11-01 11:49:58.239133
+ 13 | 广西   |             |      |        | 2003-11-01 11:49:58.267372 | 2003-11-01 11:49:58.267372
+ 15 | 贵州   |             |      |        | 2003-11-01 11:49:58.295643 | 2003-11-01 11:49:58.295643
+ 17 | 海南   |             |      |        | 2003-11-01 11:49:58.324202 | 2003-11-01 11:49:58.324202
+ 19 | 河北   |             |      |        | 2003-11-01 11:49:58.352543 | 2003-11-01 11:49:58.352543
+ 21 | 河南   |             |      |        | 2003-11-01 11:49:58.381273 | 2003-11-01 11:49:58.381273
+ 23 | 黑龙江 |             |      |        | 2003-11-01 11:49:58.415112 | 2003-11-01 11:49:58.415112
+(12 rows)
+			
+			</pre>
+		</div>
+		<div class="section" title="4.4.3. 等差列 “2，4，6，8，10…”"><div class="titlepage"><div><div><h3 class="title"><a name="idp285312"></a>4.4.3. 等差列 “2，4，6，8，10…”</h3></div></div></div>
+			
+			<pre class="screen">
+			
+DROP SEQUENCE       region_id_seq;
+Delete from region;
+CREATE SEQUENCE region_id_seq INCREMENT 2 START 2;
+member=&gt; DROP SEQUENCE region_id_seq;
+ERROR:  sequence "region_id_seq" does not exist
+member=&gt; Delete from region;
+DELETE 0
+member=&gt; CREATE SEQUENCE region_id_seq INCREMENT 2 START 2;
+CREATE SEQUENCE
+member=&gt; insert into region(region) values('安徽');
+INSERT 111303 1
+member=&gt; insert into region(region) values('北京');
+INSERT 111304 1
+……
+……
+member=&gt; insert into region(region) values('海南');
+INSERT 111311 1
+member=&gt; insert into region(region) values('河北');
+INSERT 111312 1
+member=&gt; select * from vregion;
+ id | region | description | note | remark |        date
+----+--------+-------------+------+--------+---------------------
+  2 | 安徽   |             |      |        | 2003-11-01 12:00:28
+  4 | 北京   |             |      |        | 2003-11-01 12:00:28
+  6 | 重庆   |             |      |        | 2003-11-01 12:00:28
+  8 | 福建   |             |      |        | 2003-11-01 12:00:28
+ 10 | 甘肃   |             |      |        | 2003-11-01 12:00:28
+ 12 | 广东   |             |      |        | 2003-11-01 12:00:28
+ 14 | 广西   |             |      |        | 2003-11-01 12:00:28
+ 16 | 贵州   |             |      |        | 2003-11-01 12:00:28
+ 18 | 海南   |             |      |        | 2003-11-01 12:00:28
+ 20 | 河北   |             |      |        | 2003-11-01 12:00:28
+(10 rows)
+			
+			</pre>
+		</div>
+		<div class="section" title="4.4.4. n1+n2"><div class="titlepage"><div><div><h3 class="title"><a name="idp288048"></a>4.4.4. n1+n2</h3></div></div></div>
+			
+			<pre class="screen">
+			
+CREATE SEQUENCE region_id_seq INCREMENT n2 START n1;
+			
+			</pre>
+		</div>
+	</div></body></html>

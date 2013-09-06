@@ -1,0 +1,36 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>65.4. start / end</title><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"><meta name="keywords" content="PHP, Python, Perl, Ruby, Java, HTML, XHTML, HTML5, CSS, Javascript, JQuery, C, C++, D"><link rel="home" href="../index.html" title="Netkiller Developer 手札"><link rel="up" href="ch65.html" title="第 65 章 RRDTool"><link rel="prev" href="ch65s03.html" title="65.3. title"><link rel="next" href="ch65s05.html" title="65.5. height / width"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="section" title="65.4. start / end"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="rrdtool.start-end"></a>65.4. start / end</h2></div></div></div>
+		
+		<pre class="screen">
+--start -1d gives a graph of the last day;
+--start -1w gives a graph of the last week;
+--start -1m gives a graph of the last month;
+--start -1y gives a graph of the last year;
+
+#! /bin/sh
+
+cd /var/log/rrd
+rrds=`find . -type f -name '*.rrd' | cut -c3-`
+
+for i in $rrds;
+  do
+  j=`echo $i | sed 's/.rrd//'`
+  rrdtool graph /var/www/rrd/$j-day.png --start -1d DEF:pkt=$i:packet:AVERAGE LINE1:pkt#ff0000:Packets/sec
+  rrdtool graph /var/www/rrd/$j-week.png --start -1w DEF:pkt=$i:packet:AVERAGE LINE1:pkt#ff0000:Packets/sec
+  rrdtool graph /var/www/rrd/$j-month.png --start -1m DEF:pkt=$i:packet:AVERAGE LINE1:pkt#ff0000:Packets/sec
+  rrdtool graph /var/www/rrd/$j-year.png --start -1y DEF:pkt=$i:packet:AVERAGE LINE1:pkt#ff0000:Packets/sec
+done
+cd -
+		</pre>
+		<pre class="screen">
+--start "yesterday"
+--start "-1month"
+--start "-2weeks"
+--start "-1year"
+--start -86400 (24*60*60=86400)
+		</pre>
+		<p>end</p>
+		<pre class="screen">
+rrdtool graph graph.png --title="Test Graph" --start=0 --end=start+86400 --width=800 DEF:pkt=datafile.rrd:packets:AVERAGE \
+  LINE1:pkt#ff0000:Packets
+		</pre>
+	</div></body></html>

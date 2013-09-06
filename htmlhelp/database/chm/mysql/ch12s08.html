@@ -1,0 +1,566 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>12.8. Partitioning</title><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"><meta name="keywords" content="MySQL, PostgreSQL, Oracle, NoSQL, ER, TokyoCabinet/Tyrant, Memcache, Membase, Redis, Flare, Voldemort, LevelDB, MongoDB, GreenSQL, RDBMS, ORDBMS"><link rel="home" href="../index.html" title="Netkiller Database 手札"><link rel="up" href="ch12.html" title="第 12 章 DDL - Data Definition Language"><link rel="prev" href="ch12s07.html" title="12.7. EVENT"><link rel="next" href="ch12s09.html" title="12.9. Engine"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="section" title="12.8. Partitioning"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="partition"></a>12.8. Partitioning</h2></div></div></div>
+	
+	<pre class="screen">
+	
+mysql&gt; SHOW VARIABLES LIKE '%partition%';
+
++-------------------+-------+
+| Variable_name     | Value |
++-------------------+-------+
+| have_partitioning | YES   |
++-------------------+-------+
+1 row in set (0.00 sec)
+	
+	</pre>
+
+	<div class="section" title="12.8.1. RANGE"><div class="titlepage"><div><div><h3 class="title"><a name="range"></a>12.8.1. RANGE</h3></div></div></div>
+		
+		<pre class="screen">
+18.5.1. Partitioning Keys, Primary Keys, and Unique Keys
+This section discusses the relationship of partitioning keys with primary keys and unique keys. The rule governing this relationship can be expressed as follows: All columns used in the partitioning expression for a partitioned table must be part of every unique key that the table may have.
+
+In other words, every unique key on the table must use every column in the table's partitioning expression. (This also includes the table's primary key, since it is by definition a unique key. This particular case is discussed later in this section.) For example, each of the following table creation statements is invalid:
+
+
+SQL code:
+mysql&gt; create table tx (
+    -&gt;     id int not null ,
+    -&gt;     info_time date,
+    -&gt;     primary key(id,info_time)
+    -&gt; )
+    -&gt; PARTITION BY RANGE(info_time div 100)
+    -&gt; (
+    -&gt;     PARTITION p_2008_11 VALUES LESS THAN (200812),
+    -&gt;     PARTITION p_2008_12 VALUES LESS THAN (200901),
+    -&gt;     PARTITION p_2009_01 VALUES LESS THAN (200902),
+    -&gt;     PARTITION p_2009_02 VALUES LESS THAN (200903),
+    -&gt;     PARTITION p_2009_03 VALUES LESS THAN (200904),
+    -&gt;     PARTITION p_2009_04 VALUES LESS THAN (200905),
+    -&gt;     PARTITION p_catch_all VALUES LESS THAN MAXVALUE
+    -&gt; );
+Query OK, 0 rows affected (0.17 sec)
+
+mysql&gt;
+		</pre>
+		<pre class="programlisting">
+		
+CREATE TABLE t1 (
+    year_col  INT,
+    some_data INT
+)
+PARTITION BY RANGE (year_col) (
+    PARTITION p0 VALUES LESS THAN (1991),
+    PARTITION p1 VALUES LESS THAN (1995),
+    PARTITION p2 VALUES LESS THAN (1999),
+    PARTITION p3 VALUES LESS THAN (2002),
+    PARTITION p4 VALUES LESS THAN (2006),
+    PARTITION p5 VALUES LESS THAN MAXVALUE
+);
+		
+		</pre>
+		<p>e.g.2</p>
+		<pre class="programlisting">
+				
+CREATE TABLE rc (
+    a INT NOT NULL,
+    b INT NOT NULL
+)
+PARTITION BY RANGE COLUMNS(a,b) (
+    PARTITION p0 VALUES LESS THAN (10,5),
+    PARTITION p1 VALUES LESS THAN (20,10),
+    PARTITION p2 VALUES LESS THAN (MAXVALUE,15),
+    PARTITION p3 VALUES LESS THAN (MAXVALUE,MAXVALUE)
+);
+				
+		</pre>
+		<pre class="programlisting">
+		
+CREATE TABLE part_tab
+(
+	c1 int default NULL,
+	c2 varchar(30) default NULL,
+	c3 date default NULL
+
+) engine=myisam
+PARTITION BY RANGE (year(c3)) (
+      PARTITION p0 VALUES LESS THAN (2000) ,
+      PARTITION p1 VALUES LESS THAN (2001) ,
+      PARTITION p2 VALUES LESS THAN (2002) ,
+      PARTITION p3 VALUES LESS THAN (2003) ,
+      PARTITION p4 VALUES LESS THAN (2004) ,
+      PARTITION p12 VALUES LESS THAN (2012),
+      PARTITION p13 VALUES LESS THAN MAXVALUE
+);
+		
+		</pre>
+	</div>
+	<div class="section" title="12.8.2. LIST"><div class="titlepage"><div><div><h3 class="title"><a name="list"></a>12.8.2. LIST</h3></div></div></div>
+		
+		<p></p>
+		<pre class="programlisting">
+				
+CREATE TABLE client_firms (
+    id   INT,
+    name VARCHAR(35)
+)
+PARTITION BY LIST (id) (
+    PARTITION r0 VALUES IN (1, 5, 9, 13, 17, 21),
+    PARTITION r1 VALUES IN (2, 6, 10, 14, 18, 22),
+    PARTITION r2 VALUES IN (3, 7, 11, 15, 19, 23),
+    PARTITION r3 VALUES IN (4, 8, 12, 16, 20, 24)
+);
+				
+		</pre>
+		<p></p>
+		<pre class="programlisting">
+				
+CREATE TABLE lc (
+    a INT NULL,
+    b INT NULL
+)
+PARTITION BY LIST COLUMNS(a,b) (
+    PARTITION p0 VALUES IN( (0,0), (NULL,NULL) ),
+    PARTITION p1 VALUES IN( (0,1), (0,2), (0,3), (1,1), (1,2) ),
+    PARTITION p2 VALUES IN( (1,0), (2,0), (2,1), (3,0), (3,1) ),
+    PARTITION p3 VALUES IN( (1,3), (2,2), (2,3), (3,2), (3,3) )
+);
+				
+		</pre>
+		<p></p>
+		<pre class="programlisting">
+				
+CREATE TABLE th (id INT, name VARCHAR(30), adate DATE)
+PARTITION BY LIST(YEAR(adate))
+(
+  PARTITION p1999 VALUES IN (1995, 1999, 2003)
+    DATA DIRECTORY = '/var/appdata/95/data'
+    INDEX DIRECTORY = '/var/appdata/95/idx',
+  PARTITION p2000 VALUES IN (1996, 2000, 2004)
+    DATA DIRECTORY = '/var/appdata/96/data'
+    INDEX DIRECTORY = '/var/appdata/96/idx',
+  PARTITION p2001 VALUES IN (1997, 2001, 2005)
+    DATA DIRECTORY = '/var/appdata/97/data'
+    INDEX DIRECTORY = '/var/appdata/97/idx',
+  PARTITION p2000 VALUES IN (1998, 2002, 2006)
+    DATA DIRECTORY = '/var/appdata/98/data'
+    INDEX DIRECTORY = '/var/appdata/98/idx'
+);
+				
+		</pre>
+	</div>
+	<div class="section" title="12.8.3. HASH"><div class="titlepage"><div><div><h3 class="title"><a name="hash"></a>12.8.3. HASH</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+CREATE TABLE `test` (
+  `userid` int(10) unsigned NOT NULL auto_increment,
+  `username` int(10) unsigned NOT NULL DEFAULT '0',
+  `password` int(10) unsigned NOT NULL DEFAULT '0',
+
+  primary key (`userid`),
+  KEY `userid` (`username`)
+) ENGINE=InnoDB
+PARTITION BY HASH(userid)
+PARTITIONS 8;
+		
+		</pre>
+
+		<pre class="programlisting">
+		
+CREATE TABLE stuff (
+	id INT AUTO_INCREMENT,
+	name varchar(50),
+	password varchar(50),
+	created DATE,
+	PRIMARY KEY (id, created)
+)
+PARTITION BY RANGE(year(created)) (
+	PARTITION p0 VALUES LESS THAN (2010),
+	PARTITION p1 VALUES LESS THAN (2012),
+	PARTITION p2 VALUES LESS THAN MAXVALUE
+);
+
+更好的方法
+
+CREATE TABLE stuff (
+	id INT AUTO_INCREMENT,
+	name varchar(50),
+	password varchar(50),
+	created DATE,
+	PRIMARY KEY (id, created)
+)
+PARTITION BY HASH (year(created)) PARTITIONS 10;
+
+我们演示一下
+
+mysql&gt; CREATE TABLE stuff (
+    -&gt; id INT AUTO_INCREMENT,
+    -&gt; name varchar(50),
+    -&gt; password varchar(50),
+    -&gt; created DATE,
+    -&gt; PRIMARY KEY (id, created)
+    -&gt; )
+    -&gt; PARTITION BY HASH (year(created)) PARTITIONS 10;
+Query OK, 0 rows affected (0.08 sec)
+
+
+mysql&gt; insert into stuff (name,password,created) values('neo','test','2010-10-1');
+Query OK, 1 row affected (0.06 sec)
+
+mysql&gt; insert into stuff (name,password,created) values('neo1','test','2012-2-1');
+Query OK, 1 row affected (0.00 sec)
+
+mysql&gt; insert into stuff (name,password,created) values('neo2','test','2012-3-5');
+Query OK, 1 row affected (0.00 sec)
+
+mysql&gt; insert into stuff (name,password,created) values('neo4','test','2011-1-5');
+Query OK, 1 row affected (0.00 sec)
+
+mysql&gt; SELECT
+    -&gt;   partition_name part,
+    -&gt;   partition_expression expr,
+    -&gt;   partition_description descr,
+    -&gt;   table_rows
+    -&gt; FROM
+    -&gt;   INFORMATION_SCHEMA.partitions
+    -&gt; WHERE
+    -&gt;   TABLE_SCHEMA = schema()
+    -&gt;   AND TABLE_NAME='stuff';
++------+---------------+-------+------------+
+| part | expr          | descr | table_rows |
++------+---------------+-------+------------+
+| p0   | year(created) | NULL  |          1 |
+| p1   | year(created) | NULL  |          1 |
+| p2   | year(created) | NULL  |          2 |
+| p3   | year(created) | NULL  |          0 |
+| p4   | year(created) | NULL  |          0 |
+| p5   | year(created) | NULL  |          0 |
+| p6   | year(created) | NULL  |          0 |
+| p7   | year(created) | NULL  |          0 |
+| p8   | year(created) | NULL  |          0 |
+| p9   | year(created) | NULL  |          0 |
++------+---------------+-------+------------+
+10 rows in set (0.02 sec)
+
+mysql&gt; EXPLAIN PARTITIONS SELECT * FROM stuff WHERE created='2011-01-05'\G
+*************************** 1. row ***************************
+           id: 1
+  select_type: SIMPLE
+        table: stuff
+   partitions: p1
+         type: system
+possible_keys: NULL
+          key: NULL
+      key_len: NULL
+          ref: NULL
+         rows: 1
+        Extra:
+1 row in set (0.08 sec)
+
+mysql&gt; EXPLAIN PARTITIONS SELECT * FROM stuff WHERE created='2012-03-05'\G
+*************************** 1. row ***************************
+           id: 1
+  select_type: SIMPLE
+        table: stuff
+   partitions: p2
+         type: ALL
+possible_keys: NULL
+          key: NULL
+      key_len: NULL
+          ref: NULL
+         rows: 2
+        Extra: Using where
+1 row in set (0.00 sec)
+
+		
+		</pre>
+		<div class="section" title="12.8.3.1. LINEAR HASH"><div class="titlepage"><div><div><h4 class="title"><a name="idp737568"></a>12.8.3.1. LINEAR HASH</h4></div></div></div>
+			
+			<pre class="programlisting">
+CREATE TABLE employees (
+    id INT NOT NULL,
+    fname VARCHAR(30),
+    lname VARCHAR(30),
+    hired DATE NOT NULL DEFAULT '1970-01-01',
+    separated DATE NOT NULL DEFAULT '9999-12-31',
+    job_code INT,
+    store_id INT
+)
+PARTITION BY LINEAR HASH( YEAR(hired) )
+PARTITIONS 4;
+			</pre>
+		</div>
+	</div>
+	<div class="section" title="12.8.4. KEY分区"><div class="titlepage"><div><div><h3 class="title"><a name="key"></a>12.8.4. KEY分区</h3></div></div></div>
+		
+		<p>按照KEY进行分区类似于按照HASH分区，除了HASH分区使用的用户定义的表达式，而KEY分区的 哈希函数是由MySQL 服务器提供。MySQL 簇（Cluster）使用函数MD5()来实现KEY分区；</p>
+		<pre class="programlisting">
+CREATE TABLE tk (
+    col1 INT NOT NULL,
+    col2 CHAR(5),
+    col3 DATE
+)
+PARTITION BY LINEAR KEY (col1)
+PARTITIONS 3;
+		</pre>
+	</div>
+	<div class="section" title="12.8.5. 分区管理"><div class="titlepage"><div><div><h3 class="title"><a name="idp746816"></a>12.8.5. 分区管理</h3></div></div></div>
+		
+		<div class="section" title="12.8.5.1. 新增分区"><div class="titlepage"><div><div><h4 class="title"><a name="idp747632"></a>12.8.5.1. 新增分区</h4></div></div></div>
+			
+			<p>mysql 5.5+</p>
+			<p>为已经存在表添加分区</p>
+			<pre class="programlisting">
+ALTER TABLE tbl_name  ADD PARTITION PARTITIONS 6;
+			</pre>
+			<p>新增 RANGE分区</p>
+			<pre class="programlisting">
+ALTER TABLE category ADD PARTITION (PARTITION p4 VALUES IN (100,200,300,400)
+                    DATA DIRECTORY = '/data/category'
+                    INDEX DIRECTORY = '/data/category');
+			</pre>
+			<p>新增 LIST分区</p>
+			<pre class="programlisting">
+			
+CREATE TABLE expenses (
+  expense_date DATE NOT NULL,
+  category VARCHAR(30),
+  amount DECIMAL (10,3)
+);
+
+ALTER TABLE expenses
+PARTITION BY LIST COLUMNS (category)
+(
+  PARTITION p01 VALUES IN ( 'lodging', 'food'),
+  PARTITION p02 VALUES IN ( 'flights', 'ground transportation'),
+  PARTITION p03 VALUES IN ( 'leisure', 'customer entertainment'),
+  PARTITION p04 VALUES IN ( 'communications'),
+  PARTITION p05 VALUES IN ( 'fees')
+);
+			
+			</pre>
+			<p>新增 HASH分区</p>
+			<pre class="programlisting">
+CREATE TABLE t1 (
+    id INT,
+    year_col INT
+);
+
+ALTER TABLE t1
+    PARTITION BY HASH(id)
+    PARTITIONS 8;
+			</pre>
+
+			<pre class="programlisting">
+			
+/* 在MySQL 5.1中*/
+CREATE TABLE t2
+(
+  dt DATE
+)
+PARTITION BY RANGE (TO_DAYS(dt))
+(
+  PARTITION p01 VALUES LESS THAN (TO_DAYS('2007-01-01')),
+  PARTITION p02 VALUES LESS THAN (TO_DAYS('2008-01-01')),
+  PARTITION p03 VALUES LESS THAN (TO_DAYS('2009-01-01')),
+  PARTITION p04 VALUES LESS THAN (MAXVALUE));
+
+SHOW CREATE TABLE t2 \G
+*************************** 1. row ***************************
+       Table: t2
+Create Table: CREATE TABLE `t2` (
+  `dt` date DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+/*!50100 PARTITION BY RANGE (TO_DAYS(dt))
+(PARTITION p01 VALUES LESS THAN (733042) ENGINE = MyISAM,
+ PARTITION p02 VALUES LESS THAN (733407) ENGINE = MyISAM,
+ PARTITION p03 VALUES LESS THAN (733773) ENGINE = MyISAM,
+ PARTITION p04 VALUES LESS THAN MAXVALUE ENGINE = MyISAM) */
+
+
+
+ /*在MySQL 5.5中*/
+CREATE TABLE t2
+(
+  dt DATE
+)
+PARTITION BY RANGE COLUMNS (dt)
+(
+  PARTITION p01 VALUES LESS THAN ('2007-01-01'),
+  PARTITION p02 VALUES LESS THAN ('2008-01-01'),
+  PARTITION p03 VALUES LESS THAN ('2009-01-01'),
+  PARTITION p04 VALUES LESS THAN (MAXVALUE));
+
+SHOW CREATE TABLE t2 \G
+*************************** 1. row ***************************
+       Table: t2
+Create Table: CREATE TABLE `t2` (
+  `dt` date DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+/*!50500 PARTITION BY RANGE  COLUMNS(dt)
+(PARTITION p01 VALUES LESS THAN ('2007-01-01') ENGINE = MyISAM,
+ PARTITION p02 VALUES LESS THAN ('2008-01-01') ENGINE = MyISAM,
+ PARTITION p03 VALUES LESS THAN ('2009-01-01') ENGINE = MyISAM,
+ PARTITION p04 VALUES LESS THAN (MAXVALUE) ENGINE = MyISAM) */
+			
+			</pre>
+		</div>
+
+		<div class="section" title="12.8.5.2. 删除分区"><div class="titlepage"><div><div><h4 class="title"><a name="idp747920"></a>12.8.5.2. 删除分区</h4></div></div></div>
+			
+			<p>删除分区 p0</p>
+			<pre class="programlisting">
+ALERT TABLE users DROP PARTITION p0;
+			</pre>
+		</div>
+		<div class="section" title="12.8.5.3. 重建分区"><div class="titlepage"><div><div><h4 class="title"><a name="idp757184"></a>12.8.5.3. 重建分区</h4></div></div></div>
+			
+			<p>使用  REORGANIZE 重建分区。</p>
+			<pre class="programlisting">
+RANGE 分区重建
+ALTER TABLE users REORGANIZE PARTITION p0,p1 INTO (PARTITION p0 VALUES LESS THAN (6000000));
+
+将原来的 p0,p1 分区合并起来，放到新的 p0 分区中。
+
+LIST 分区重建
+ALTER TABLE users REORGANIZE PARTITION p0,p1 INTO (PARTITION p0 VALUES IN(0,1,4,5,8,9,12,13));
+将原来的 p0,p1 分区合并起来，放到新的 p0 分区中。
+
+HASH/KEY 分区重建
+ALTER TABLE users REORGANIZE PARTITION COALESCE PARTITION 2;
+分区的数量改为2，
+注意：在这里数量只能减少不能增加。想要增加可以用 ADD PARTITION 方法
+			</pre>
+			<p>调整HASH/KEY分区数量，将分区总数扩展到8个。</p>
+			<pre class="programlisting">
+ALTER TABLE users ADD PARTITION PARTITIONS 8;
+			</pre>
+		</div>
+		<div class="section" title="12.8.5.4. 分区维护"><div class="titlepage"><div><div><h4 class="title"><a name="idp760480"></a>12.8.5.4. 分区维护</h4></div></div></div>
+			
+			<pre class="programlisting">
+重建分区: 这和先删除保存在分区中的所有记录，然后重新插入它们，具有同样的效果。它可用于整理分区碎片。
+
+示例：
+
+ALTER TABLE t1 REBUILD PARTITION (p0, p1)；
+·         优化分区：如果从分区中删除了大量的行，或者对一个带有可变长度的行（也就是说，有VARCHAR，BLOB，或TEXT类型的列）作了许多修改，可以使用“ALTER TABLE ... OPTIMIZE PARTITION”来收回没有使用的空间，并整理分区数据文件的碎片。
+
+示例：
+
+ALTER TABLE t1 OPTIMIZE PARTITION (p0, p1)；
+在一个给定的分区表上使用“OPTIMIZE PARTITION”等同于在那个分区上运行CHECK PARTITION，ANALYZE PARTITION，和REPAIR PARTITION。
+
+·         分析分区：读取并保存分区的键分布。
+
+示例：
+
+ALTER TABLE t1 ANALYZE PARTITION (p3)；
+·         修补分区： 修补被破坏的分区。
+
+示例：
+
+ALTER TABLE t1 REPAIR PARTITION (p0,p1);
+·         检查分区： 可以使用几乎与对非分区表使用CHECK TABLE 相同的方式检查分区。
+
+示例：
+
+ALTER TABLE trb3 CHECK PARTITION (p1)；
+			</pre>
+		</div>
+	</div>
+	<div class="section" title="12.8.6. EXPLAIN PARTITIONS"><div class="titlepage"><div><div><h3 class="title"><a name="idp762832"></a>12.8.6. EXPLAIN PARTITIONS</h3></div></div></div>
+		
+		<p>EXPLAIN PARTITIONS</p>
+		<pre class="screen">
+		
+mysql&gt; EXPLAIN PARTITIONS SELECT * FROM users\G
+*************************** 1. row ***************************
+           id: 1
+  select_type: SIMPLE
+        table: users
+   partitions: p0,p1,p2,p3,p4,p5,p6
+         type: ALL
+possible_keys: NULL
+          key: NULL
+      key_len: NULL
+          ref: NULL
+         rows: 7
+        Extra:
+1 row in set (0.03 sec)
+
+mysql&gt; EXPLAIN PARTITIONS SELECT * FROM users WHERE id &lt; 5\G
+*************************** 1. row ***************************
+           id: 1
+  select_type: SIMPLE
+        table: users
+   partitions: p0,p1,p2,p3,p4,p5,p6
+         type: range
+possible_keys: PRIMARY
+          key: PRIMARY
+      key_len: 4
+          ref: NULL
+         rows: 7
+        Extra: Using where
+1 row in set (0.00 sec)
+		
+		</pre>
+	</div>
+	<div class="section" title="12.8.7. SHOW CREATE TABLE"><div class="titlepage"><div><div><h3 class="title"><a name="idp765472"></a>12.8.7. SHOW CREATE TABLE</h3></div></div></div>
+		
+		<p>SHOW CREATE TABLE</p>
+		<pre class="screen">
+		
+mysql&gt; SHOW CREATE TABLE users\G
+*************************** 1. row ***************************
+       Table: users
+Create Table: CREATE TABLE `users` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `username` varchar(20) NOT NULL DEFAULT '',
+  `birthday` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`,`username`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=latin1
+/*!50100 PARTITION BY KEY (id,username)
+PARTITIONS 7 */
+1 row in set (0.00 sec)
+
+		
+		</pre>
+	</div>
+	<div class="section" title="12.8.8. INFORMATION_SCHEMA.partitions 表"><div class="titlepage"><div><div><h3 class="title"><a name="idp767760"></a>12.8.8. INFORMATION_SCHEMA.partitions 表</h3></div></div></div>
+		
+
+			<pre class="programlisting">
+			
+SELECT
+  partition_name part,
+  partition_expression expr,
+  partition_description descr,
+  table_rows
+FROM
+  INFORMATION_SCHEMA.partitions
+WHERE
+  TABLE_SCHEMA = schema()
+  AND TABLE_NAME='employees';
+			
+			</pre>
+			<pre class="programlisting">
+			
+select
+  partition_name part,
+  partition_expression expr,
+  from_seconds(partition_description) descr,
+  table_rows
+FROM
+INFORMATION_SCHEMA.partitions
+WHERE
+    TABLE_SCHEMA = 'test'
+    AND TABLE_NAME='t2';
+			
+			</pre>
+	</div>
+	<div class="section" title="12.8.9. ERROR 1503 (HY000): A PRIMARY KEY must include all columns in the table's partitioning function"><div class="titlepage"><div><div><h3 class="title"><a name="idp769984"></a>12.8.9. ERROR 1503 (HY000): A PRIMARY KEY must include all columns in the table's partitioning function</h3></div></div></div>
+		
+		<a class="ulink" href="http://dev.mysql.com/doc/refman/5.1/en/partitioning-limitations-partitioning-keys-unique-keys.html" target="_top">http://dev.mysql.com/doc/refman/5.1/en/partitioning-limitations-partitioning-keys-unique-keys.html</a>
+	</div>
+</div></body></html>

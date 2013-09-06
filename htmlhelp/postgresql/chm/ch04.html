@@ -1,0 +1,121 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>第 4 章 数据定义（DDL）</title><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"><link rel="home" href="index.html" title="Netkiller PostgreSQL 手札"><link rel="up" href="index.html" title="Netkiller PostgreSQL 手札"><link rel="prev" href="ch03s02.html" title="3.2. pg_shadow"><link rel="next" href="ch04s02.html" title="4.2. Types"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="chapter" title="第 4 章 数据定义（DDL）"><div class="titlepage"><div><div><h2 class="title"><a name="ddl"></a>第 4 章 数据定义（DDL）</h2></div></div></div><div class="toc"><p><b>目录</b></p><dl><dt><span class="section"><a href="ch04.html#schema">4.1. 模式</a></span></dt><dt><span class="section"><a href="ch04s02.html">4.2. Types</a></span></dt><dd><dl><dt><span class="section"><a href="ch04s02.html#idp262816">4.2.1. Enumerated Types</a></span></dt><dt><span class="section"><a href="ch04s02.html#idp264704">4.2.2. uuid</a></span></dt></dl></dd><dt><span class="section"><a href="ch04s03.html">4.3. 表</a></span></dt><dd><dl><dt><span class="section"><a href="ch04s03.html#idp268496">4.3.1. 默认时间与时区</a></span></dt><dt><span class="section"><a href="ch04s03.html#field.charset">4.3.2. 汉字做字段名</a></span></dt></dl></dd><dt><span class="section"><a href="ch04s04.html">4.4. 序列</a></span></dt><dd><dl><dt><span class="section"><a href="ch04s04.html#idp279040">4.4.1. 等差列 “1，2，3，4，5，6，7，8，9…”</a></span></dt><dt><span class="section"><a href="ch04s04.html#idp281728">4.4.2. 等差列 “1，3，5，7，9…”</a></span></dt><dt><span class="section"><a href="ch04s04.html#idp285312">4.4.3. 等差列 “2，4，6，8，10…”</a></span></dt><dt><span class="section"><a href="ch04s04.html#idp288048">4.4.4. n1+n2</a></span></dt></dl></dd><dt><span class="section"><a href="ch04s05.html">4.5. 约束</a></span></dt><dd><dl><dt><span class="section"><a href="ch04s05.html#idp290720">4.5.1. 检查约束</a></span></dt><dt><span class="section"><a href="ch04s05.html#idp294304">4.5.2. 非空约束</a></span></dt><dt><span class="section"><a href="ch04s05.html#idp296000">4.5.3. 唯一约束</a></span></dt></dl></dd><dt><span class="section"><a href="ch04s06.html">4.6. 主键/外键</a></span></dt><dd><dl><dt><span class="section"><a href="ch04s06.html#idp308720">4.6.1. 主键</a></span></dt><dt><span class="section"><a href="ch04s06.html#idp310144">4.6.2. 外键约束</a></span></dt><dt><span class="section"><a href="ch04s06.html#idp313008">4.6.3. 案例</a></span></dt></dl></dd></dl></div>
+	
+	<div class="section" title="4.1. 模式"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="schema"></a>4.1. 模式</h2></div></div></div>
+		
+		<pre class="screen">
+		
+3.10       模式
+
+一些用户为了使某些模块的表看起来清晰，一般他们采用“模块名_表名”：
+Auth_user
+Auth_group
+Bbs_topic
+Bbs_message
+
+PostgreSQL不必这样命名，可以使用Schema（模式）如：
+Auth.user
+Auth.group
+Bbs.topic
+Bbs.message
+
+3.10.1 创建模式
+
+CREATE SCHEMA your_schema;
+例：
+CREATE SCHEMA btob;
+CREATE SCHEMA auction;
+3.10.2 删除模式
+
+DROP SCHEMA your_schema;
+删除模式，并且同时删除模式下的（表，视图，触发器，过程……）
+DROP SCHEMA your_schema CASCADE;
+例：
+DROP SCHEMA btob CASCADE;
+DROP SCHEMA btob CASCADE;
+3.10.3 模式搜索路径
+
+查看当前模式SHOW search_path ;
+netkiller=&gt; SHOW search_path ;
+ search_path
+--------------
+ $user,public
+(1 row)
+netkiller=&gt; \dt
+            List of relations
+ Schema |    Name     | Type  |   Owner
+--------+-------------+-------+-----------
+ public | company     | table | netkiller
+ public | group       | table | netkiller
+ public | groupmember | table | netkiller
+ public | guestbook   | table | netkiller
+ public | prodorder   | table | netkiller
+ public | role        | table | netkiller
+ public | rolemember  | table | netkiller
+ public | system_log  | table | netkiller
+ public | templates   | table | netkiller
+ public | trust       | table | netkiller
+ public | user        | table | netkiller
+ public | user_log    | table | netkiller
+ public | userinfo    | table | netkiller
+(13 rows)
+如果不设置模式搜索路径，“\dt”只显示public模式下的表。
+设置模式SET search_path TO public,btob,auction;
+netkiller=&gt; SET search_path TO public,btob,auction;
+SET
+netkiller=&gt; \dt
+              List of relations
+ Schema  |     Name      | Type  |   Owner
+---------+---------------+-------+-----------
+ auction | messages      | table | netkiller
+ auction | product       | table | netkiller
+ auction | product_order | table | netkiller
+ btob    | directory     | table | netkiller
+ btob    | trade         | table | netkiller
+ btob    | trade_message | table | netkiller
+ public  | company       | table | netkiller
+ public  | group         | table | netkiller
+ public  | groupmember   | table | netkiller
+ public  | guestbook     | table | netkiller
+ public  | prodorder     | table | netkiller
+ public  | role          | table | netkiller
+ public  | rolemember    | table | netkiller
+ public  | system_log    | table | netkiller
+ public  | templates     | table | netkiller
+ public  | trust         | table | netkiller
+ public  | user          | table | netkiller
+ public  | user_log      | table | netkiller
+ public  | userinfo      | table | netkiller
+(19 rows)
+
+netkiller=&gt;
+
+-- ======================================================================
+-- 'btob.directory'
+-- ======================================================================
+Drop table btob.directory CASCADE;
+
+Create table btob.directory
+(
+    "id" Serial NOT NULL,
+    "root_id" Integer NOT NULL Default 0,
+    "name"    Varchar(20)NOT NULL ,
+    "status"   boolean Default 'true',
+    "created" Timestamp Default current_timestamp,
+    "modified" Timestamp Default current_timestamp,
+    UNIQUE (id,root_id,name),
+    PRIMARY KEY ("id")
+--    FOREIGN KEY (root_id) REFERENCES directory (id) ON DELETE CASCADE
+);
+INSERT INTO btob.directory (id,root_id,name) VALUES (0,0,'/');
+Alter table btob.directory add  FOREIGN KEY (root_id) REFERENCES btob.directory (id) ON DELETE CASCADE;
+Create index "directory_index" on btob.directory using btree ("id","root_id","name");
+
+		
+		</pre>
+	</div>
+	
+	
+	
+	
+	
+</div></body></html>

@@ -1,0 +1,104 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>第 49 章 Sphinx</title><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"><meta name="keywords" content="MySQL, PostgreSQL, Oracle, NoSQL, ER, TokyoCabinet/Tyrant, Memcache, Membase, Redis, Flare, Voldemort, LevelDB, MongoDB, GreenSQL, RDBMS, ORDBMS"><link rel="home" href="../index.html" title="Netkiller Database 手札"><link rel="up" href="pt06.html" title="部分 VI. Search Engine"><link rel="prev" href="ch48.html" title="第 48 章 Nutch"><link rel="next" href="ch50.html" title="第 50 章 Lucene"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="chapter" title="第 49 章 Sphinx"><div class="titlepage"><div><div><h2 class="title"><a name="sphinx"></a>第 49 章 Sphinx</h2></div></div></div>
+	
+	<p>http://sphinxsearch.com/</p>
+
+	<pre class="screen">
+sudo apt-get install sphinxsearch
+	</pre>
+	<p>/etc/sphinxsearch/sphinx.conf</p>
+	<pre class="screen">
+sudo cp /etc/sphinxsearch/sphinx-min.conf.dist /etc/sphinxsearch/sphinx.conf
+	</pre>
+	<p>创建测试数据库并导入测试数据</p>
+	<pre class="screen">
+	
+$ wget http://sphinxsearch.googlecode.com/svn/trunk/example.sql
+$ mysql -h localhost -uroot -p &lt; example.sql
+$ mysql -h localhost -uroot -p
+CREATE USER 'test'@'localhost' IDENTIFIED BY  '';
+GRANT SELECT ON test.* TO 'test'@'localhost';
+FLUSH PRIVILEGES;
+mysql&gt; quit
+
+
+$ echo "select * from documents" | mysql -utest -p test
+Enter password:
+id      group_id        group_id2       date_added      title   content
+1       1       5       2011-02-12 15:29:34     test one        this is my test document number one. also checking search within phrases.
+2       1       6       2011-02-12 15:29:34     test two        this is my test document number two
+3       2       7       2011-02-12 15:29:34     another doc     this is another group
+4       2       8       2011-02-12 15:29:34     doc number four this is to test groups
+
+	
+	</pre>
+	<p>创建索引</p>
+	<span class="command"><strong>sudo indexer &lt;index&gt;</strong></span>
+	<pre class="screen">
+	
+$ sudo indexer test1
+
+Sphinx 0.9.8.1-release (r1533)
+Copyright (c) 2001-2008, Andrew Aksyonoff
+
+using config file '/etc/sphinxsearch/sphinx.conf'...
+indexing index 'test1'...
+collected 4 docs, 0.0 MB
+sorted 0.0 Mhits, 100.0% done
+total 4 docs, 193 bytes
+total 0.012 sec, 16531.05 bytes/sec, 342.61 docs/sec
+	
+	</pre>
+	<pre class="screen">
+$ sudo /etc/init.d/sphinxsearch start
+Starting sphinx: Sphinx 0.9.8.1-release (r1533)
+Copyright (c) 2001-2008, Andrew Aksyonoff
+
+using config file '/etc/sphinxsearch/sphinx.conf'...
+creating server socket on 0.0.0.0:3312
+sphinx.
+	</pre>
+	<p>测试</p>
+	<p>search "keyword"</p>
+	<pre class="screen">
+	
+$ search test
+Sphinx 0.9.8.1-release (r1533)
+Copyright (c) 2001-2008, Andrew Aksyonoff
+
+using config file '/etc/sphinxsearch/sphinx.conf'...
+index 'test1': query 'test ': returned 3 matches of 3 total in 0.000 sec
+
+displaying matches:
+1. document=1, weight=2, group_id=1, date_added=Sat Feb 12 15:29:34 2011
+        id=1
+        group_id=1
+        group_id2=5
+        date_added=2011-02-12 15:29:34
+        title=test one
+        content=this is my test document number one. also checking search within phrases.
+2. document=2, weight=2, group_id=1, date_added=Sat Feb 12 15:29:34 2011
+        id=2
+        group_id=1
+        group_id2=6
+        date_added=2011-02-12 15:29:34
+        title=test two
+        content=this is my test document number two
+3. document=4, weight=1, group_id=2, date_added=Sat Feb 12 15:29:34 2011
+        id=4
+        group_id=2
+        group_id2=8
+        date_added=2011-02-12 15:29:34
+        title=doc number four
+        content=this is to test groups
+
+words:
+1. 'test': 3 documents, 5 hits
+
+	
+	</pre>
+	<pre class="screen">
+wget http://sphinxsearch.googlecode.com/svn/trunk/api/sphinxapi.php
+wget http://sphinxsearch.googlecode.com/svn/trunk/api/test.php
+php test.php test
+	</pre>
+</div></body></html>

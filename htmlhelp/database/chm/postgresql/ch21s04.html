@@ -1,0 +1,57 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>21.4. Backup / Restore</title><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"><meta name="keywords" content="MySQL, PostgreSQL, Oracle, NoSQL, ER, TokyoCabinet/Tyrant, Memcache, Membase, Redis, Flare, Voldemort, LevelDB, MongoDB, GreenSQL, RDBMS, ORDBMS"><link rel="home" href="../index.html" title="Netkiller Database 手札"><link rel="up" href="ch21.html" title="第 21 章 Administration"><link rel="prev" href="ch21s03.html" title="21.3. Table"><link rel="next" href="ch22.html" title="第 22 章 PostgreSQL 系统表"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="section" title="21.4. Backup / Restore"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="pg_dump"></a>21.4. Backup / Restore</h2></div></div></div>
+		
+		<div class="section" title="21.4.1. Backup"><div class="titlepage"><div><div><h3 class="title"><a name="idp1020144"></a>21.4.1. Backup</h3></div></div></div>
+			
+			<p>本地备份</p>
+			<pre class="screen">
+pg_dump --compress=9 --file=/backup/mydb.sql.gz mydb
+			</pre>
+			<p>Backup</p>
+			<pre class="screen">
+pg_dump -i -h localhost -p 5432 -U user -Fc -c -f "your_db.backup" your_db
+			</pre>
+		</div>
+		<div class="section" title="21.4.2. Restore"><div class="titlepage"><div><div><h3 class="title"><a name="idp1022848"></a>21.4.2. Restore</h3></div></div></div>
+			
+			<p>Restore</p>
+			<pre class="screen">
+pg_restore -i -h localhost -p 5432 -U user -d your_db -v -c -Fc "your_db.backup"
+			</pre>
+		</div>
+		<div class="section" title="21.4.3. import"><div class="titlepage"><div><div><h3 class="title"><a name="idp1024800"></a>21.4.3. import</h3></div></div></div>
+			
+			<p>导入</p>
+			<span class="command"><strong>\i file.backup</strong></span>
+			<pre class="screen">
+			
+postgres=# \i /home/neo/woodart.backup
+			
+			</pre>
+		</div>
+		<div class="section" title="21.4.4. PostgreSQL for windows"><div class="titlepage"><div><div><h3 class="title"><a name="idp1027104"></a>21.4.4. PostgreSQL for windows</h3></div></div></div>
+			
+			<p>local -&gt; remote</p>
+			<pre class="screen">
+set PG_HOME="C:\Program Files\PostgreSQL\8.1\bin"
+%PG_HOME%\pg_dump.exe -i -h localhost -p 5432 -U woodart -Fc -c -f "woodart.backup" woodart
+%PG_HOME%\pg_restore.exe -i -h woodart.8800.org -p 5432 -U woodart -d woodart -v -c -Fc "woodart.backup"
+			</pre>
+		</div>
+		<div class="section" title="21.4.5. 大型数据库备份"><div class="titlepage"><div><div><h3 class="title"><a name="idp1029136"></a>21.4.5. 大型数据库备份</h3></div></div></div>
+			
+			<p>split 命令可以将大型文件切成小块以适应文件系统限制的单个文件大小。</p>
+			<p>分割,每650M为一个文件，试用于光盘备份</p>
+			<pre class="screen">
+			
+$ pg_dump dbname | split -b 650m - filename
+			
+			</pre>
+			<p>合并，并且恢复到数据库中。</p>
+			<pre class="screen">
+			
+$ createdb dbname
+$ cat filename* | psql dbname
+			
+			</pre>
+		</div>
+	</div></body></html>

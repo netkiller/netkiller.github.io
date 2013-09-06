@@ -1,0 +1,61 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>第 5 章 DML</title><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"><link rel="home" href="index.html" title="Netkiller PostgreSQL 手札"><link rel="up" href="index.html" title="Netkiller PostgreSQL 手札"><link rel="prev" href="ch04s06.html" title="4.6. 主键/外键"><link rel="next" href="ch06.html" title="第 6 章 SQL"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="chapter" title="第 5 章 DML"><div class="titlepage"><div><div><h2 class="title"><a name="dml"></a>第 5 章 DML</h2></div></div></div><div class="toc"><p><b>目录</b></p><dl><dt><span class="section"><a href="ch05.html#idp335984">5.1. INSERT</a></span></dt><dd><dl><dt><span class="section"><a href="ch05.html#idp336624">5.1.1. 自动截取字符串</a></span></dt></dl></dd></dl></div>
+	
+	<div class="section" title="5.1. INSERT"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp335984"></a>5.1. INSERT</h2></div></div></div>
+		
+		<div class="section" title="5.1.1. 自动截取字符串"><div class="titlepage"><div><div><h3 class="title"><a name="idp336624"></a>5.1.1. 自动截取字符串</h3></div></div></div>
+			
+			<pre class="screen">
+CREATE TABLE test (c varchar(5));
+			</pre>
+			<p>现在开始插入数据库，每次增加一个长度</p>
+			<pre class="screen">
+			
+test=&gt; INSERT INTO test VALUES ('1');
+INSERT 0 1
+test=&gt; INSERT INTO test VALUES ('12');
+INSERT 0 1
+test=&gt; INSERT INTO test VALUES ('123');
+INSERT 0 1
+test=&gt; INSERT INTO test VALUES ('1234');
+INSERT 0 1
+test=&gt; INSERT INTO test VALUES ('12345');
+INSERT 0 1
+test=&gt; INSERT INTO test VALUES ('123456');
+ERROR:  value too long for type character varying(5)
+test=&gt; INSERT INTO test VALUES ('1234567');
+ERROR:  value too long for type character varying(5)
+test=&gt;
+			
+			</pre>
+			<p>超出长度会提示 ERROR:  value too long for type character varying(5)</p>
+			<p>通过 ::varchar(5) 截取5前五个字符，后面抛弃</p>
+			<pre class="screen">
+			
+test=&gt; INSERT INTO test VALUES ('123456'::varchar(5));
+INSERT 0 1
+test=&gt; INSERT INTO test VALUES ('1234567'::varchar(5));
+INSERT 0 1
+test=&gt; INSERT INTO test VALUES ('12345678'::varchar(5));
+INSERT 0 1
+			
+			</pre>
+			<p>超过的部分被自动截取</p>
+			<pre class="screen">
+			
+test=&gt; select * from test;
+   c
+-------
+ 1
+ 12
+ 123
+ 1234
+ 12345
+ 12345
+ 12345
+ 12345
+(8 rows)
+			
+			</pre>
+		</div>
+	</div>
+</div></body></html>

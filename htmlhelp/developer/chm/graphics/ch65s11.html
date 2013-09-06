@@ -1,0 +1,148 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>65.11. Example</title><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"><meta name="keywords" content="PHP, Python, Perl, Ruby, Java, HTML, XHTML, HTML5, CSS, Javascript, JQuery, C, C++, D"><link rel="home" href="../index.html" title="Netkiller Developer 手札"><link rel="up" href="ch65.html" title="第 65 章 RRDTool"><link rel="prev" href="ch65s10.html" title="65.10. AREA, LINE and STACK"><link rel="next" href="ch66.html" title="第 66 章 Graphviz - Graph Visualization Software"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="section" title="65.11. Example"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="rrdtool.example"></a>65.11. Example</h2></div></div></div>
+		
+		<div class="section" title="65.11.1. Memory"><div class="titlepage"><div><div><h3 class="title"><a name="idp1621056"></a>65.11.1. Memory</h3></div></div></div>
+			
+			<pre class="screen">
+rrdtool create memory.rrd \
+        --start 1023654125 \
+        --step 300 \
+        DS:mem:GAUGE:600:0:671744 \
+        RRA:AVERAGE:0.5:12:24 \
+        RRA:AVERAGE:0.5:288:31
+			</pre>
+			<pre class="screen">
+			
+for (( ; ; )) do
+	memory=$(snmpwalk -c public -v2c 172.16.1.10 hrSWRunPerfMem | awk 'BEGIN {total_mem=0} { if ($NF == "KBytes") {total_mem=total_mem+$(NF-1)}}  END {print total_mem}')
+	rrdtool update memory.rrd N:${memory}
+	sleep 300
+done &amp;
+			
+			</pre>
+			<pre class="screen">
+rrdtool graph memory.png \
+	--title="Memory Usage" \
+	--vertical-label="Memory Consumption (MB)" \
+	--start=0 \
+	--end=start+1day \
+	--color=BACK#CCCCCC \
+	--color=CANVAS#CCFFFF \
+	--color=SHADEB#9999CC \
+	--height=125 \
+	--upper-limit=656 \
+	--lower-limit=0 \
+	--rigid \
+	--base=1024 \
+	DEF:tot_mem=memory.rrd:mem:AVERAGE \
+	CDEF:tot_mem_cor=tot_mem,0,671744,LIMIT,UN,0,tot_mem,IF,1024,/ \
+	CDEF:machine_mem=tot_mem,656,+,tot_mem,- \
+	HRULE:656#000000:"Maximum Available Memory - 656 MB" \
+	AREA:machine_mem#CCFFFF:"Memory Unused" \
+	AREA:tot_mem_cor#6699CC:"Total memory consumed in MB"
+			</pre>
+		</div>
+		<div class="section" title="65.11.2. example 1"><div class="titlepage"><div><div><h3 class="title"><a name="idp1624384"></a>65.11.2. example 1</h3></div></div></div>
+			
+			<pre class="screen">
+rrdtool create test.rrd             \
+            --start 920804400          \
+            DS:speed:COUNTER:600:U:U   \
+            RRA:AVERAGE:0.5:1:24       \
+            RRA:AVERAGE:0.5:6:10
+
+rrdtool update test.rrd 920804700:12345 920805000:12357 920805300:12363
+rrdtool update test.rrd 920805600:12363 920805900:12363 920806200:12373
+rrdtool update test.rrd 920806500:12383 920806800:12393 920807100:12399
+rrdtool update test.rrd 920807400:12405 920807700:12411 920808000:12415
+rrdtool update test.rrd 920808300:12420 920808600:12422 920808900:12423
+
+rrdtool fetch test.rrd AVERAGE --start 920804400 --end 920809200
+
+rrdtool graph speed.png                                 \
+         --start 920804400 --end 920808000               \
+         DEF:myspeed=test.rrd:speed:AVERAGE              \
+         LINE2:myspeed#FF0000
+
+rrdtool graph speed2.png                           \
+      --start 920804400 --end 920808000               \
+      --vertical-label m/s                            \
+      DEF:myspeed=test.rrd:speed:AVERAGE              \
+      CDEF:realspeed=myspeed,1000,\*                  \
+      LINE2:realspeed#FF0000
+
+rrdtool graph speed3.png                             \
+      --start 920804400 --end 920808000               \
+      --vertical-label km/h                           \
+      DEF:myspeed=test.rrd:speed:AVERAGE              \
+      "CDEF:kmh=myspeed,3600,*"                       \
+      CDEF:fast=kmh,100,GT,kmh,0,IF                   \
+      CDEF:good=kmh,100,GT,0,kmh,IF                   \
+      HRULE:100#0000FF:"Maximum allowed"              \
+      AREA:good#00FF00:"Good speed"                   \
+      AREA:fast#FF0000:"Too fast"
+
+rrdtool graph speed4.png                           \
+      --start 920804400 --end 920808000               \
+      --vertical-label km/h                           \
+      DEF:myspeed=test.rrd:speed:AVERAGE              \
+      CDEF:nonans=myspeed,UN,0,myspeed,IF             \
+      CDEF:kmh=nonans,3600,*                          \
+      CDEF:fast=kmh,100,GT,100,0,IF                   \
+      CDEF:over=kmh,100,GT,kmh,100,-,0,IF             \
+      CDEF:good=kmh,100,GT,0,kmh,IF                   \
+      HRULE:100#0000FF:"Maximum allowed"              \
+      AREA:good#00FF00:"Good speed"                   \
+      AREA:fast#550000:"Too fast"                     \
+      STACK:over#FF0000:"Over speed"
+
+
+
+
+   rrdtool create all.rrd --start 978300900 \
+            DS:a:COUNTER:600:U:U \
+            DS:b:GAUGE:600:U:U \
+            DS:c:DERIVE:600:U:U \
+            DS:d:ABSOLUTE:600:U:U \
+            RRA:AVERAGE:0.5:1:10
+   rrdtool update all.rrd \
+            978301200:300:1:600:300    \
+            978301500:600:3:1200:600   \
+            978301800:900:5:1800:900   \
+            978302100:1200:3:2400:1200 \
+            978302400:1500:1:2400:1500 \
+            978302700:1800:2:1800:1800 \
+            978303000:2100:4:0:2100    \
+            978303300:2400:6:600:2400  \
+            978303600:2700:4:600:2700  \
+            978303900:3000:2:1200:3000
+   rrdtool graph all1.png -s 978300600 -e 978304200 -h 400 \
+            DEF:linea=all.rrd:a:AVERAGE LINE3:linea#FF0000:"Line A" \
+            DEF:lineb=all.rrd:b:AVERAGE LINE3:lineb#00FF00:"Line B" \
+            DEF:linec=all.rrd:c:AVERAGE LINE3:linec#0000FF:"Line C" \
+            DEF:lined=all.rrd:d:AVERAGE LINE3:lined#000000:"Line D"
+			</pre>
+		</div>
+		<div class="section" title="65.11.3. example 1"><div class="titlepage"><div><div><h3 class="title"><a name="idp1628928"></a>65.11.3. example 1</h3></div></div></div>
+			
+			<pre class="screen">
+rrdtool create seconds1.rrd   \
+  --start 920804700          \
+  DS:seconds:COUNTER:600:U:U \
+  RRA:AVERAGE:0.5:1:24
+
+rrdtool update seconds1.rrd \
+  920805000:000 920805300:300 920805600:600 920805900:900
+rrdtool update seconds1.rrd \
+  920806000:000 920806300:300 920806603:603 920806900:900
+
+rrdtool graph seconds1.png                       \
+  --start 920804700 --end 920806200             \
+  --height 200                                  \
+  --upper-limit 1.05 --lower-limit 0.95 --rigid \
+  DEF:seconds=seconds1.rrd:seconds:AVERAGE      \
+  CDEF:unknown=seconds,UN                       \
+  LINE2:seconds#0000FF                          \
+  AREA:unknown#FF0000
+			</pre>
+		</div>
+	</div></body></html>

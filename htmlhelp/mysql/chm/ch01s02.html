@@ -1,0 +1,392 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>1.2. my.cnf</title><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"><link rel="home" href="index.html" title="Netkiller MySQL 手札"><link rel="up" href="ch01.html" title="第 1 章 MySQL Server"><link rel="prev" href="ch01.html" title="第 1 章 MySQL Server"><link rel="next" href="ch01s03.html" title="1.3. Replication"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="section" title="1.2. my.cnf"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="my.cnf"></a>1.2. my.cnf</h2></div></div></div>
+		
+		<div class="section" title="1.2.1. bind-address"><div class="titlepage"><div><div><h3 class="title"><a name="idp205632"></a>1.2.1. bind-address</h3></div></div></div>
+			
+			<pre class="screen">
+bind-address = 0.0.0.0
+			</pre>
+		</div>
+		<div class="section" title="1.2.2. Configuring Database Character Encoding"><div class="titlepage"><div><div><h3 class="title"><a name="idp206816"></a>1.2.2. Configuring Database Character Encoding</h3></div></div></div>
+			
+			<p></p>
+			<pre class="screen">
+mysql&gt; SHOW VARIABLES LIKE 'character_set_%';
++--------------------------+----------------------------+
+| Variable_name            | Value                      |
++--------------------------+----------------------------+
+| character_set_client     | latin1                     |
+| character_set_connection | latin1                     |
+| character_set_database   | utf8                       |
+| character_set_filesystem | binary                     |
+| character_set_results    | latin1                     |
+| character_set_server     | latin1                     |
+| character_set_system     | utf8                       |
+| character_sets_dir       | /usr/share/mysql/charsets/ |
++--------------------------+----------------------------+
+8 rows in set (0.00 sec)
+			</pre>
+			<p>Server Character Set and Collation</p>
+			<pre class="screen">
+			
+shell&gt; mysqld --character-set-server=latin1
+shell&gt; mysqld --character-set-server=latin1 \
+           --collation-server=latin1_swedish_ci
+			
+			</pre>
+
+			<p>$ vim /etc/mysql/my.cnf</p>
+			<pre class="screen">
+[mysqld]
+character-set-server=utf8
+collation_server=utf8_general_ci
+init_connect='SET NAMES utf8'
+
+[client]
+character-set-server=utf8
+			</pre>
+
+			<pre class="screen">
+mysql --default-character-set=utf8 -u root -p
+			</pre>
+
+			<pre class="screen">
+			
+mysql&gt; show variables like 'character%';
++--------------------------+----------------------------+
+| Variable_name            | Value                      |
++--------------------------+----------------------------+
+| character_set_client     | utf8                       |
+| character_set_connection | utf8                       |
+| character_set_database   | utf8                       |
+| character_set_filesystem | binary                     |
+| character_set_results    | utf8                       |
+| character_set_server     | utf8                       |
+| character_set_system     | utf8                       |
+| character_sets_dir       | /usr/share/mysql/charsets/ |
++--------------------------+----------------------------+
+8 rows in set (0.00 sec)
+			
+			</pre>
+		</div>
+		<div class="section" title="1.2.3. max_connections"><div class="titlepage"><div><div><h3 class="title"><a name="idp211936"></a>1.2.3. max_connections</h3></div></div></div>
+			
+			<pre class="screen">
+[mysqld]
+max_connections=250
+			</pre>
+		</div>
+		<div class="section" title="1.2.4. storage-engine"><div class="titlepage"><div><div><h3 class="title"><a name="idp214160"></a>1.2.4. storage-engine</h3></div></div></div>
+			
+			<pre class="screen">
+[mysqld]
+default-storage-engine=INNODB
+			</pre>
+		</div>
+		<div class="section" title="1.2.5. max_allowed_packet"><div class="titlepage"><div><div><h3 class="title"><a name="idp215536"></a>1.2.5. max_allowed_packet</h3></div></div></div>
+			
+			<pre class="screen">
+max_allowed_packet=500M
+			</pre>
+		</div>
+
+		<div class="section" title="1.2.6. skip-name-resolve"><div class="titlepage"><div><div><h3 class="title"><a name="idp216912"></a>1.2.6. skip-name-resolve</h3></div></div></div>
+			
+			<p>跳过域名解析</p>
+			<pre class="screen">
+# vim /etc/mysql/my.cnf
+
+[mysqld]
+skip-external-locking
+skip-name-resolve
+			</pre>
+			<p>MySQL 登录缓慢，大量用户排队等待</p>
+			<pre class="screen">
+mysql&gt; SHOW FULL PROCESSLIST;
++-----+----------------------+------------------------+------+---------+------+-------+-----------------------+
+| Id  | User                 | Host                   | db   | Command | Time | State | Info                  |
++-----+----------------------+------------------------+------+---------+------+-------+-----------------------+
+| 718 | unauthenticated user | 192.168.3.124:42075    | NULL | Connect | NULL | login | NULL                  |
+| 719 | unauthenticated user | 192.168.3.124:42073    | NULL | Connect | NULL | login | NULL                  |
+| 720 | unauthenticated user | 192.168.3.124:42074    | NULL | Connect | NULL | login | NULL                  |
+| 721 | unauthenticated user | 192.168.3.124:42077    | NULL | Connect | NULL | login | NULL                  |
+| 722 | unauthenticated user | 192.168.3.124:42076    | NULL | Connect | NULL | login | NULL                  |
+| 723 | unauthenticated user | 192.168.3.124:42079    | NULL | Connect | NULL | login | NULL                  |
+| 724 | unauthenticated user | 192.168.3.124:42078    | NULL | Connect | NULL | login | NULL                  |
+| 725 | unauthenticated user | 192.168.3.124:42081    | NULL | Connect | NULL | login | NULL                  |
+| 726 | unauthenticated user | 192.168.3.124:42080    | NULL | Connect | NULL | login | NULL                  |
+| 727 | unauthenticated user | 192.168.3.124:42082    | NULL | Connect | NULL | login | NULL                  |
+| 728 | unauthenticated user | 192.168.3.124:42083    | NULL | Connect | NULL | login | NULL                  |
+| 729 | unauthenticated user | 192.168.3.124:42085    | NULL | Connect | NULL | login | NULL                  |
+| 730 | unauthenticated user | 192.168.3.124:42084    | NULL | Connect | NULL | login | NULL                  |
+| 731 | unauthenticated user | 192.168.3.124:42086    | NULL | Connect | NULL | login | NULL                  |
+| 732 | unauthenticated user | 192.168.3.124:42087    | NULL | Connect | NULL | login | NULL                  |
+| 733 | unauthenticated user | 192.168.3.124:42088    | NULL | Connect | NULL | login | NULL                  |
+| 734 | unauthenticated user | 192.168.3.124:42089    | NULL | Connect | NULL | login | NULL                  |
+| 735 | unauthenticated user | 192.168.3.124:42090    | NULL | Connect | NULL | login | NULL                  |
+| 736 | unauthenticated user | 192.168.3.124:42091    | NULL | Connect | NULL | login | NULL                  |
+| 737 | unauthenticated user | 192.168.3.124:42092    | NULL | Connect | NULL | login | NULL                  |
+| 738 | unauthenticated user | 192.168.3.124:42093    | NULL | Connect | NULL | login | NULL                  |
+| 739 | unauthenticated user | 192.168.3.124:42094    | NULL | Connect | NULL | login | NULL                  |
+| 740 | unauthenticated user | 192.168.3.124:42095    | NULL | Connect | NULL | login | NULL                  |
+| 741 | unauthenticated user | 192.168.3.124:42096    | NULL | Connect | NULL | login | NULL                  |
+| 742 | unauthenticated user | 192.168.3.124:42097    | NULL | Connect | NULL | login | NULL                  |
+| 743 | unauthenticated user | 192.168.3.124:42098    | NULL | Connect | NULL | login | NULL                  |
+| 744 | unauthenticated user | 192.168.3.124:42099    | NULL | Connect | NULL | login | NULL                  |
+| 745 | unauthenticated user | 192.168.3.124:42100    | NULL | Connect | NULL | login | NULL                  |
+| 746 | unauthenticated user | 192.168.3.124:42101    | NULL | Connect | NULL | login | NULL                  |
+| 747 | unauthenticated user | 192.168.3.124:42102    | NULL | Connect | NULL | login | NULL                  |
+| 748 | unauthenticated user | 192.168.3.124:42103    | NULL | Connect | NULL | login | NULL                  |
+| 749 | unauthenticated user | 192.168.3.124:42104    | NULL | Connect | NULL | login | NULL                  |
+| 750 | unauthenticated user | 192.168.3.124:42068    | NULL | Connect | NULL | login | NULL                  |
+| 751 | unauthenticated user | 192.168.3.124:42064    | NULL | Connect | NULL | login | NULL                  |
+| 752 | unauthenticated user | 192.168.3.124:42071    | NULL | Connect | NULL | login | NULL                  |
+| 753 | unauthenticated user | 192.168.3.124:42072    | NULL | Connect | NULL | login | NULL                  |
+| 754 | unauthenticated user | 192.168.3.124:42067    | NULL | Connect | NULL | login | NULL                  |
+| 755 | unauthenticated user | 192.168.3.124:42070    | NULL | Connect | NULL | login | NULL                  |
+| 756 | unauthenticated user | 192.168.3.124:42069    | NULL | Connect | NULL | login | NULL                  |
+| 757 | unauthenticated user | 192.168.3.124:42065    | NULL | Connect | NULL | login | NULL                  |
+| 758 | unauthenticated user | 192.168.3.124:42112    | NULL | Connect | NULL | login | NULL                  |
+| 759 | unauthenticated user | 192.168.3.50:4872      | NULL | Connect | NULL | login | NULL                  |
+| 761 | unauthenticated user | 192.168.3.40:36363     | NULL | Connect | NULL | login | NULL                  |
+| 762 | neo                  | www.example.com:56200  | NULL | Query   |    0 | NULL  | SHOW FULL PROCESSLIST |
++-----+----------------------+------------------------+------+---------+------+-------+-----------------------+
+44 rows in set (0.00 sec)
+
+mysql&gt; SHOW FULL PROCESSLIST;
++-----+----------------------+------------------------+------+---------+------+-------+-----------------------+
+| Id  | User                 | Host                   | db   | Command | Time | State | Info                  |
++-----+----------------------+------------------------+------+---------+------+-------+-----------------------+
+| 718 | unauthenticated user | 192.168.3.124:42075    | NULL | Connect | NULL | login | NULL                  |
+| 719 | unauthenticated user | 192.168.3.124:42073    | NULL | Connect | NULL | login | NULL                  |
+| 720 | unauthenticated user | 192.168.3.124:42074    | NULL | Connect | NULL | login | NULL                  |
+| 721 | unauthenticated user | 192.168.3.124:42077    | NULL | Connect | NULL | login | NULL                  |
+| 722 | unauthenticated user | 192.168.3.124:42076    | NULL | Connect | NULL | login | NULL                  |
+| 723 | unauthenticated user | 192.168.3.124:42079    | NULL | Connect | NULL | login | NULL                  |
+| 724 | unauthenticated user | 192.168.3.124:42078    | NULL | Connect | NULL | login | NULL                  |
+| 725 | unauthenticated user | 192.168.3.124:42081    | NULL | Connect | NULL | login | NULL                  |
+| 726 | unauthenticated user | 192.168.3.124:42080    | NULL | Connect | NULL | login | NULL                  |
+| 727 | unauthenticated user | 192.168.3.124:42082    | NULL | Connect | NULL | login | NULL                  |
+| 728 | unauthenticated user | 192.168.3.124:42083    | NULL | Connect | NULL | login | NULL                  |
+| 729 | unauthenticated user | 192.168.3.124:42085    | NULL | Connect | NULL | login | NULL                  |
+| 730 | unauthenticated user | 192.168.3.124:42084    | NULL | Connect | NULL | login | NULL                  |
+| 731 | unauthenticated user | 192.168.3.124:42086    | NULL | Connect | NULL | login | NULL                  |
+| 732 | unauthenticated user | 192.168.3.124:42087    | NULL | Connect | NULL | login | NULL                  |
+| 733 | unauthenticated user | 192.168.3.124:42088    | NULL | Connect | NULL | login | NULL                  |
+| 734 | unauthenticated user | 192.168.3.124:42089    | NULL | Connect | NULL | login | NULL                  |
+| 735 | unauthenticated user | 192.168.3.124:42090    | NULL | Connect | NULL | login | NULL                  |
+| 736 | unauthenticated user | 192.168.3.124:42091    | NULL | Connect | NULL | login | NULL                  |
+| 737 | unauthenticated user | 192.168.3.124:42092    | NULL | Connect | NULL | login | NULL                  |
+| 738 | unauthenticated user | 192.168.3.124:42093    | NULL | Connect | NULL | login | NULL                  |
+| 739 | unauthenticated user | 192.168.3.124:42094    | NULL | Connect | NULL | login | NULL                  |
+| 740 | unauthenticated user | 192.168.3.124:42095    | NULL | Connect | NULL | login | NULL                  |
+| 741 | unauthenticated user | 192.168.3.124:42096    | NULL | Connect | NULL | login | NULL                  |
+| 742 | unauthenticated user | 192.168.3.124:42097    | NULL | Connect | NULL | login | NULL                  |
+| 743 | unauthenticated user | 192.168.3.124:42098    | NULL | Connect | NULL | login | NULL                  |
+| 744 | unauthenticated user | 192.168.3.124:42099    | NULL | Connect | NULL | login | NULL                  |
+| 745 | unauthenticated user | 192.168.3.124:42100    | NULL | Connect | NULL | login | NULL                  |
+| 746 | unauthenticated user | 192.168.3.124:42101    | NULL | Connect | NULL | login | NULL                  |
+| 747 | unauthenticated user | 192.168.3.124:42102    | NULL | Connect | NULL | login | NULL                  |
+| 748 | unauthenticated user | 192.168.3.124:42103    | NULL | Connect | NULL | login | NULL                  |
+| 749 | unauthenticated user | 192.168.3.124:42104    | NULL | Connect | NULL | login | NULL                  |
+| 750 | unauthenticated user | 192.168.3.124:42068    | NULL | Connect | NULL | login | NULL                  |
+| 751 | unauthenticated user | 192.168.3.124:42064    | NULL | Connect | NULL | login | NULL                  |
+| 752 | unauthenticated user | 192.168.3.124:42071    | NULL | Connect | NULL | login | NULL                  |
+| 753 | unauthenticated user | 192.168.3.124:42072    | NULL | Connect | NULL | login | NULL                  |
+| 754 | unauthenticated user | 192.168.3.124:42067    | NULL | Connect | NULL | login | NULL                  |
+| 755 | unauthenticated user | 192.168.3.124:42070    | NULL | Connect | NULL | login | NULL                  |
+| 756 | unauthenticated user | 192.168.3.124:42069    | NULL | Connect | NULL | login | NULL                  |
+| 757 | unauthenticated user | 192.168.3.124:42065    | NULL | Connect | NULL | login | NULL                  |
+| 758 | unauthenticated user | 192.168.3.124:42112    | NULL | Connect | NULL | login | NULL                  |
+| 759 | unauthenticated user | 192.168.3.50:4872      | NULL | Connect | NULL | login | NULL                  |
+| 761 | unauthenticated user | 192.168.3.40:36363     | NULL | Connect | NULL | login | NULL                  |
+| 762 | neo                  | www.example.com:56200  | NULL | Query   |    0 | NULL  | SHOW FULL PROCESSLIST |
++-----+----------------------+------------------------+------+---------+------+-------+-----------------------+
+44 rows in set (0.00 sec)
+
+			</pre>
+			<p>解决方案 my.cnf 配置文件中加入skip-name-resolve</p>
+		</div>
+		<div class="section" title="1.2.7. 禁用TCP/IP链接"><div class="titlepage"><div><div><h3 class="title"><a name="idp230896"></a>1.2.7. 禁用TCP/IP链接</h3></div></div></div>
+			
+			<pre class="screen">
+[mysqld]
+skip-networking
+			</pre>
+		</div>
+		<div class="section" title="1.2.8. timeout"><div class="titlepage"><div><div><h3 class="title"><a name="idp232400"></a>1.2.8. timeout</h3></div></div></div>
+			
+			<pre class="screen">
+[mysqld]
+wait_timeout = 30
+interactive_timeout =30
+			</pre>
+			<p>如果你没有修改过MySQL的配置，缺省情况下，wait_timeout的初始值是28800。</p>
+			<p>wait_timeout过大有弊端，其体现就是MySQL里大量的SLEEP进程无法及时释放，拖累系统性能，不过也不能把这个指设置的过小，否则你可能会遭遇到“MySQL has gone away”之类的问题，通常来说，我觉得把wait_timeout设置为10是个不错的选择，但某些情况下可能也会出问题，比如说有一个CRON脚本，其中两次SQL查询的间隔时间大于10秒的话，那么这个设置就有问题了：</p>
+		</div>
+		<div class="section" title="1.2.9. 与复制有关的参数"><div class="titlepage"><div><div><h3 class="title"><a name="idp235264"></a>1.2.9. 与复制有关的参数</h3></div></div></div>
+			
+			<div class="section" title="1.2.9.1. 定义 log-bin 文件名"><div class="titlepage"><div><div><h4 class="title"><a name="idp236128"></a>1.2.9.1. 定义 log-bin 文件名</h4></div></div></div>
+				
+				<pre class="screen">
+log-bin=mysql-bin
+				</pre>
+			</div>
+			<div class="section" title="1.2.9.2. expire-logs-days"><div class="titlepage"><div><div><h4 class="title"><a name="idp237504"></a>1.2.9.2. expire-logs-days</h4></div></div></div>
+				
+				<p>bin log 保留时间</p>
+				<pre class="screen">
+expire-logs-days = 30
+				</pre>
+			</div>
+		</div>
+		<div class="section" title="1.2.10. 与 InnoDB 有关的配置项"><div class="titlepage"><div><div><h3 class="title"><a name="idp239424"></a>1.2.10. 与 InnoDB 有关的配置项</h3></div></div></div>
+			
+			<pre class="screen">
+innodb_file_per_table
+			</pre>
+			<p>配置后重启mysql运行下面命令将ibdata1拆分到tbl_name.ibd</p>
+			<pre class="screen">
+OPTIMIZE TABLE tbl_name;
+			</pre>
+			<p>ls /var/lib/mysql/中查看 tbl_name.ibd文件</p>
+			<p>临时开启</p>
+			<pre class="screen">
+SET @@global.innodb_file_per_table = 1;
+			</pre>
+		</div>
+		<div class="section" title="1.2.11. Example for my.cnf"><div class="titlepage"><div><div><h3 class="title"><a name="idp242992"></a>1.2.11. Example for my.cnf</h3></div></div></div>
+			
+			<div class="example"><a name="idp243792"></a><p class="title"><b>例 1.1. my.cnf</b></p><div class="example-contents">
+				
+			<pre class="screen">
+			
+# Example MySQL config file for very large systems.
+#
+# This is for a large system with memory of 1G-2G where the system runs mainly
+# MySQL.
+#
+# In this file, you can use all long options that a program supports.
+# If you want to know which options a program supports, run the program
+# with the "--help" option.
+
+# The following options will be passed to all MySQL clients
+[client]
+#password	= your_password
+port		= 3306
+socket		= /var/lib/mysql/mysql.sock
+
+# Here follows entries for some specific programs
+character-set-server=utf8
+
+# The MySQL server
+[mysqld]
+port		= 3306
+socket		= /var/lib/mysql/mysql.sock
+skip-external-locking
+key_buffer_size = 384M
+max_allowed_packet = 1M
+table_open_cache = 512
+sort_buffer_size = 2M
+read_buffer_size = 2M
+read_rnd_buffer_size = 8M
+myisam_sort_buffer_size = 64M
+thread_cache_size = 8
+query_cache_size = 32M
+# Try number of CPU's*2 for thread_concurrency
+thread_concurrency = 8
+
+#skip-networking
+
+# Replication Master Server (default)
+# binary logging is required for replication
+log-bin=mysql-bin
+
+# required unique id between 1 and 2^32 - 1
+# defaults to 1 if master-host is not set
+# but will not function as a master if omitted
+server-id	= 1
+
+# Replication Slave (comment out master section to use this)
+#
+#
+# required unique id between 2 and 2^32 - 1
+# (and different from the master)
+# defaults to 2 if master-host is set
+# but will not function as a slave if omitted
+#server-id       = 2
+#
+# The replication master for this slave - required
+#master-host     =   &lt;hostname&gt;
+#
+# The username the slave will use for authentication when connecting
+# to the master - required
+#master-user     =   &lt;username&gt;
+#
+# The password the slave will authenticate with when connecting to
+# the master - required
+#master-password =   &lt;password&gt;
+#
+# The port the master is listening on.
+# optional - defaults to 3306
+#master-port     =  &lt;port&gt;
+#
+# binary logging - not required for slaves, but recommended
+#log-bin=mysql-bin
+#
+# binary logging format - mixed recommended
+#binlog_format=mixed
+
+# Uncomment the following if you are using InnoDB tables
+#innodb_data_home_dir = /var/lib/mysql
+#innodb_data_file_path = ibdata1:2000M;ibdata2:10M:autoextend
+#innodb_log_group_home_dir = /var/lib/mysql
+# You can set .._buffer_pool_size up to 50 - 80 %
+# of RAM but beware of setting memory usage too high
+#innodb_buffer_pool_size = 384M
+#innodb_additional_mem_pool_size = 20M
+# Set .._log_file_size to 25 % of buffer pool size
+#innodb_log_file_size = 100M
+#innodb_log_buffer_size = 8M
+#innodb_flush_log_at_trx_commit = 1
+#innodb_lock_wait_timeout = 50
+
+# Here follows entries for some specific programs
+skip-name-resolve
+default-storage-engine	= INNODB
+
+character-set-server=utf8
+collation_server=utf8_general_ci
+init_connect='SET NAMES utf8'
+
+max_connections			= 4096
+max_connect_errors		= 10
+
+pid-file				= mysql.pid
+log 					= mysql.log
+log-error 				= mysql_error.log
+
+log-slow-queries 		= slow.log
+long_query_time 		= 10
+
+[mysqldump]
+quick
+max_allowed_packet = 16M
+
+[mysql]
+no-auto-rehash
+# Remove the next comment character if you are not familiar with SQL
+#safe-updates
+
+[myisamchk]
+key_buffer_size = 256M
+sort_buffer_size = 256M
+read_buffer = 2M
+write_buffer = 2M
+
+[mysqlhotcopy]
+interactive-timeout
+			
+			</pre>
+			</div></div><br class="example-break">
+		</div>
+	</div></body></html>

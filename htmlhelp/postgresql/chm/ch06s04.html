@@ -1,0 +1,210 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>6.4. Function</title><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"><link rel="home" href="index.html" title="Netkiller PostgreSQL 手札"><link rel="up" href="ch06.html" title="第 6 章 SQL"><link rel="prev" href="ch06s03.html" title="6.3. returning"><link rel="next" href="ch07.html" title="第 7 章 PostgreSQL GUI"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="section" title="6.4. Function"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="sql.function"></a>6.4. Function</h2></div></div></div>
+	
+	<div class="section" title="6.4.1. generate_series"><div class="titlepage"><div><div><h3 class="title"><a name="generate_series"></a>6.4.1. generate_series</h3></div></div></div>
+		
+		<p>生成序列数</p>
+		<pre class="screen">
+test=# select generate_series(1,10) as id;
+ id
+----
+  1
+  2
+  3
+  4
+  5
+  6
+  7
+  8
+  9
+ 10
+(10 rows)
+		</pre>
+	</div>
+	<div class="section" title="6.4.2. 日期/时间"><div class="titlepage"><div><div><h3 class="title"><a name="datetime"></a>6.4.2. 日期/时间</h3></div></div></div>
+		
+		<div class="section" title="6.4.2.1. Date/Time Operators"><div class="titlepage"><div><div><h4 class="title"><a name="idp379568"></a>6.4.2.1. Date/Time Operators</h4></div></div></div>
+			
+			<p>日期时间的偏移计算</p>
+			<pre class="screen">
+select now() + interval '3 day';
+select now() - interval '3 day';
+
+select now() + interval '1 hour';
+select now() - interval '1 hour';
+
+select now() + interval '10 minutes';
+select now() - interval '10 minutes';
+
+select now() + interval '5 days 3 hours';
+select now() + interval '5 days' + interval '3 hours';
+			</pre>
+		</div>
+		<div class="section" title="6.4.2.2. 当前日期/时间"><div class="titlepage"><div><div><h4 class="title"><a name="idp381696"></a>6.4.2.2. 当前日期/时间</h4></div></div></div>
+			
+			<pre class="screen">
+3.1.1   当前日期
+
+current_date
+netkiller=&gt; select current_date;
+    date
+------------
+ 2003-11-28
+(1 row)
+
+netkiller=&gt;
+
+3.1.2   当前时间
+
+current_time
+netkiller=&gt; select current_time;
+       timetz
+--------------------
+ 19:38:47.270235+08
+(1 row)
+
+netkiller=&gt;
+
+3.1.3   当前日期时间
+
+current_timestamp
+netkiller=&gt; select current_timestamp;
+          timestamptz
+-------------------------------
+ 2003-11-28 19:39:25.548505+08
+(1 row)
+
+netkiller=&gt;
+3.1.4   除去时区
+
+1.         current_timestamp::timestamp (0)
+2.         current_timestamp::timestamp (0) without time zone;
+netkiller=&gt; select current_timestamp::timestamp (0);
+      timestamp
+---------------------
+ 2003-11-28 19:44:33
+(1 row)
+
+netkiller=&gt;
+netkiller=&gt; select current_timestamp::timestamp (0) without time zone;
+      timestamp
+---------------------
+ 2003-11-28 19:40:10
+(1 row)
+			</pre>
+			<p>now() / clock_timestamp() 函数</p>
+			<pre class="screen">
+select now();			
+SELECT clock_timestamp();			
+			</pre>
+		</div>
+		<div class="section" title="6.4.2.3. 时间计算"><div class="titlepage"><div><div><h4 class="title"><a name="idp384592"></a>6.4.2.3. 时间计算</h4></div></div></div>
+			
+			<pre class="screen">
+3.1.5   计算时间差
+
+netkiller=&gt; select to_date('2003-12-2','YYYY-MM-DD')-to_date('2003-12-1','YYYY-MM-DD');
+?column?
+----------
+1
+(1 row)
+
+netkiller=&gt;
+netkiller=&gt; select to_date('2003-12-2','YYYY-MM-DD')-to_date('2003-10-2','YYYY-MM-DD');
+?column?
+----------
+61
+(1 row)
+3.1.6   计算时间和
+
+netkiller=&gt; select to_date('2003-12-6','yyyy-mm-dd')+12 ;
+?column?
+------------
+2003-12-18
+(1 row)
+
+netkiller=&gt; select to_date('2003-12-6','yyyy-mm-dd')+20 ;
+?column?
+------------
+2003-12-26
+(1 row)
+			</pre>
+		</div>
+		<div class="section" title="6.4.2.4. to_char() / to_date()"><div class="titlepage"><div><div><h4 class="title"><a name="idp386416"></a>6.4.2.4. to_char() / to_date()</h4></div></div></div>
+			
+			<p>to_char()</p>
+			<pre class="screen">
+select count(*) as c, to_char(ctime, 'yyyy-mm') as dt from practice group by dt order by dt;
+
+select count(*) as c, to_char(ctime, 'yyyy-mm-dd') as dt from practice group by dt order by dt;
+
+select count(*) as c, to_char(ctime, 'yyyy-mm-dd hh') as dt from practice group by dt order by dt;
+			</pre>
+		</div>
+		<div class="section" title="6.4.2.5. EXTRACT, date_part"><div class="titlepage"><div><div><h4 class="title"><a name="idp388576"></a>6.4.2.5. EXTRACT, date_part</h4></div></div></div>
+			
+			<pre class="screen">
+select extract (year from now());
+select extract (month from now());
+select extract (day from now());
+select extract (day from timestamp '2013-06-03');
+select extract (hour from now());
+select extract (minute from now());
+select extract (second from now());
+select extract (week from now());
+
+SELECT extract(century FROM now());
+			</pre>
+			<pre class="screen">
+3.1.7   date_part
+
+netkiller=&gt; select date_part('epoch', '2003-12-3 10:20:30' - timestamp '2003-12-1 02:00:00') ;
+ date_part
+-----------
+    202830
+(1 row)
+
+netkiller=&gt; select date_part('day', '2003-12-3 10:20:30' - timestamp '2003-12-1 02:00:00') ;
+ date_part
+-----------
+         2
+(1 row)
+
+netkiller=&gt; select date_part('hour', '2003-12-3 10:20:30' - timestamp '2003-12-1 02:00:00') ;
+date_part
+-----------
+         8
+(1 row)
+
+netkiller=&gt;
+			</pre>
+		</div>
+		<div class="section" title="6.4.2.6. date_trunc"><div class="titlepage"><div><div><h4 class="title"><a name="idp391216"></a>6.4.2.6. date_trunc</h4></div></div></div>
+			
+			<p></p>
+			<pre class="screen">
+select count(*) as c, date_trunc('day', ctime) as dt from practice group by dt;
+			</pre>
+		</div>
+		<div class="section" title="6.4.2.7. 延迟执行"><div class="titlepage"><div><div><h4 class="title"><a name="idp392848"></a>6.4.2.7. 延迟执行</h4></div></div></div>
+			
+			<p>pg_sleep(seconds)</p>
+			<pre class="screen">
+SELECT pg_sleep(1.5);
+			</pre>
+		</div>
+		<div class="section" title="6.4.2.8. 时区"><div class="titlepage"><div><div><h4 class="title"><a name="idp394704"></a>6.4.2.8. 时区</h4></div></div></div>
+			
+			<pre class="screen">
+SELECT now() AT TIME ZONE 'GMT';
+SELECT now() AT TIME ZONE 'GMT+8';			
+			</pre>
+		</div>
+	</div>
+	<div class="section" title="6.4.3. uuid"><div class="titlepage"><div><div><h3 class="title"><a name="idp395984"></a>6.4.3. uuid</h3></div></div></div>
+		
+		<pre class="programlisting">
+create extension "uuid-ossp";
+create table products (product_id  uuid primary key default uuid_generate_v4());
+		</pre>
+	</div>
+</div></body></html>
