@@ -1,0 +1,122 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>9.2. Soap</title><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"><meta name="keywords" content="php, pear, pecl, phar"><link rel="home" href="index.html" title="Netkiller PHP 手札"><link rel="up" href="ch09.html" title="第 9 章 Application"><link rel="prev" href="ch09.html" title="第 9 章 Application"><link rel="next" href="ch09s03.html" title="9.3. php function check"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="section" title="9.2. Soap"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="php.soap"></a>9.2. Soap</h2></div></div></div>
+	
+	<div class="section" title="9.2.1. soapfunc.php"><div class="titlepage"><div><div><h3 class="title"><a name="idp471136"></a>9.2.1. soapfunc.php</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+$ cat soapfunc.php
+&lt;?php
+
+function reverse($str){
+
+        $retval = '';
+
+        if(strlen($str) &lt; 1) {
+
+                return new SoapFault('Client','','Invalid string');
+
+        }
+
+        for ($i = 1; $i &lt;= strlen($str); $i++) {
+
+                $retval .= $str[(strlen($str) - $i)];
+
+        }
+
+        return $retval;
+
+}
+
+function sum($num1, $num2) {
+
+        if (trim($num1) != intval($num1)) {
+
+                return new SoapFault('Client','','The first number is invalid');
+
+        }
+
+        if (trim($num2) != intval($num2)) {
+
+                return new SoapFault('Client','','The second number is invalid');
+
+        }
+
+        return ($num1 + $num2);
+
+}
+
+function gettime(){
+
+        $time=strftime("%Y-%m-%d %H:%M:%S");
+
+        return $time;
+
+}
+
+?&gt;
+		
+		
+		</pre>
+	</div>
+	<div class="section" title="9.2.2. soapserver.php"><div class="titlepage"><div><div><h3 class="title"><a name="idp473488"></a>9.2.2. soapserver.php</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+$ cat soapserver.php
+&lt;?php
+include_once('soapfunc.php');
+
+$soap = new SoapServer(null,array('uri'=&gt;"http://netkiller.6600.org/"));
+
+$soap-&gt;addFunction('reverse');
+
+$soap-&gt;addFunction('sum');
+
+$soap-&gt;addFunction('gettime');
+
+$soap-&gt;addFunction(SOAP_FUNCTIONS_ALL);
+
+$soap-&gt;handle();
+
+?&gt;
+		
+		</pre>
+	</div>
+	<div class="section" title="9.2.3. soapclient.php"><div class="titlepage"><div><div><h3 class="title"><a name="idp475040"></a>9.2.3. soapclient.php</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+$ cat soapclient.php
+&lt;?php
+
+try {
+
+        $client = new SoapClient(null, array('location' =&gt;"http://netkiller.6600.org/soapserver.php",'uri' =&gt; "http://netkiller.6600.org/"));
+
+        $str = "This string will be reversed";
+
+        $reversed = $client-&gt;reverse($str);
+
+        echo "If you reverse '",$str,"', you get '",$reversed,"' &lt;/br&gt;";
+
+        $n1=50;
+
+        $n2=130;
+
+        $sum = $client-&gt;sum($n1,$n2);
+
+        echo "If you try ",$n1,"+",$n2,", you will get ",$sum,"&lt;/br&gt;";
+
+        echo "The system time is: ",$client-&gt;gettime();
+
+} catch (SoapFault $fault){
+
+        echo "Fault! code:",$fault-&gt;faultcode,", string: ",$fault-&gt;faultstring;
+
+}
+
+?&gt;
+		
+		</pre>
+	</div>
+</div></body></html>

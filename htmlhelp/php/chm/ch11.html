@@ -1,0 +1,127 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>第 11 章 PHP Extension 扩展开发</title><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"><meta name="keywords" content="php, pear, pecl, phar"><link rel="home" href="index.html" title="Netkiller PHP 手札"><link rel="up" href="index.html" title="Netkiller PHP 手札"><link rel="prev" href="ch10s05.html" title="10.5. Zend Framework"><link rel="next" href="ch11s02.html" title="11.2. PHP_FUNCTION"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="chapter" title="第 11 章 PHP Extension 扩展开发"><div class="titlepage"><div><div><h2 class="title"><a name="ext"></a>第 11 章 PHP Extension 扩展开发</h2></div></div></div><div class="toc"><p><b>目录</b></p><dl><dt><span class="section"><a href="ch11.html#extension%E3%80%82exampe">11.1. Extension Example</a></span></dt><dt><span class="section"><a href="ch11s02.html">11.2. PHP_FUNCTION</a></span></dt><dt><span class="section"><a href="ch11s03.html">11.3. PHP_INI</a></span></dt><dt><span class="section"><a href="ch11s04.html">11.4. PHP_MINFO_FUNCTION</a></span></dt></dl></div>
+	
+	<p>创建一个扩展只需要下面几个步骤</p>
+	<pre class="screen">
+	
+# cd php-5.4.14/ext/
+# ./ext_skel --extname=netkiller
+# cd netkiller
+# /srv/php-5.4.8/bin/phpize
+# ./configure --enable-netkiller --with-php-config=/srv/php-5.4.8/bin/php-config
+# make
+# make install
+	
+	</pre>
+	<div class="section" title="11.1. Extension Example"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="extension%E3%80%82exampe"></a>11.1. Extension Example</h2></div></div></div>
+		
+		<p>下面我们开始分部讲解，首先创建一个扩展。</p>
+		<pre class="screen">
+		
+./ext_skel --extname=netkiller
+Creating directory netkiller
+Creating basic files: config.m4 config.w32 .cvsignore netkiller.c php_netkiller.h CREDITS EXPERIMENTAL tests/001.phpt netkiller.php [done].
+
+To use your new extension, you will have to execute the following steps:
+
+1.  $ cd ..
+2.  $ vi ext/netkiller/config.m4
+3.  $ ./buildconf
+4.  $ ./configure --[with|enable]-netkiller
+5.  $ make
+6.  $ ./php -f ext/netkiller/netkiller.php
+7.  $ vi ext/netkiller/netkiller.c
+8.  $ make
+
+Repeat steps 3-6 until you are satisfied with ext/netkiller/config.m4 and
+step 6 confirms that your module is compiled into PHP. Then, start writing
+code and repeat the last two steps as often as necessary.
+		
+		</pre>
+		<p>编辑config.m4 </p>
+		<pre class="screen">
+		
+# vim netkiller/config.m4
+PHP_ARG_ENABLE(netkiller, whether to enable netkiller support,
+Make sure that the comment is aligned:
+[  --enable-netkiller           Enable netkiller support])
+		
+		</pre>
+		<p>去掉上面三行前的dnl， dnl 表示注释</p>
+		<pre class="screen">
+		
+# cat config.m4 | grep -v 'dnl'
+
+PHP_ARG_ENABLE(netkiller, whether to enable netkiller support,
+Make sure that the comment is aligned:
+[  --enable-netkiller           Enable netkiller support])
+
+if test "$PHP_netkiller" != "no"; then
+
+  PHP_NEW_EXTENSION(netkiller, netkiller.c, $ext_shared)
+fi
+		
+		</pre>
+		<p>执行 phpize</p>
+		<pre class="screen">
+		
+# cd netkiller
+# /srv/php-5.4.8/bin/phpize
+Configuring for:
+PHP Api Version:         20100412
+Zend Module Api No:      20100525
+Zend Extension Api No:   220100525
+
+# ./configure --enable-netkiller --with-php-config=/srv/php-5.4.8/bin/php-config
+# make
+# make install
+
+# ls modules/
+netkiller.la  netkiller.so
+		
+		</pre>
+		<p>创建 ini 文件</p>
+		<pre class="screen">
+		
+cat &gt;&gt; /srv/php/etc/conf.d/netkiller.ini &lt;&lt;PHP
+extension=netkiller.so
+PHP
+		
+		</pre>
+		<p>确认扩展看装成功</p>
+		<pre class="screen">
+		
+# /srv/php/bin/php -f netkiller.php
+Functions available in the test extension:
+confirm_netkiller_compiled
+
+Congratulations! You have successfully modified ext/netkiller/config.m4. Module netkiller is now compiled into PHP.
+
+# /srv/php-5.4.8/bin/php -m | grep netkiller
+netkiller
+		
+		</pre>
+		<p>创建 php 测试程序 </p>
+		<pre class="screen">
+		
+vim test.php
+
+&lt;?php
+echo confirm_netkiller_compiled('netkiller');
+phpinfo();
+		
+		</pre>
+		<p>输出结果</p>
+		<pre class="screen">
+		
+Congratulations! You have successfully modified ext/netkiller/config.m4. Module netkiller is now compiled into PHP.
+
+netkiller
+---------------------------
+netkiller support	enabled
+		
+		</pre>
+	</div>
+	
+	
+	
+</div></body></html>
