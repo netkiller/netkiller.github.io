@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>数据库恢复方案</title><link rel="stylesheet" type="text/css" href="journal.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.76.1" /><meta name="description" content="这里所谈的内容是对备份数据的恢复，不是对损坏数据表的恢复，或者说灾难恢复。" /><meta name="keywords" content="mysql, plugin, udf, images" /><script xmlns="" type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-11694057-1']);
+  _gaq.push(['_setDomainName', 'netkiller.sourceforge.net']);
+  _gaq.push(['_setAllowHash', 'false']);
+  _gaq.push(['_setAllowLinker', true]);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script></head><body><table xmlns="" width="100%" border="0"><tr><td align="left"><a href="http://netkiller.github.io/">Home</a> |
+        <a href="http://netkiller.sourceforge.net/">Mirror</a> |
+        <a href="/search.html">Search</a> |
+        <a href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
+        <a href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+        <a href="http://rline.blog.51cto.com/">51CTO 博客</a></td><td></td><td></td></tr></table><div xml:lang="zh-cn" class="article" title="数据库恢复方案" lang="zh-cn"><div class="titlepage"><div><div><h2 class="title"><a id="idp192"></a>数据库恢复方案</h2></div><div><h3 class="subtitle"><em>http://netkiller.github.io/journal/db.restore.html</em></h3></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(netkiller)</span>, <span class="lineage">陈景峰(BG7NYT)</span></h3><div class="affiliation">
+			<div class="address"><p><br />
+				<span class="country">中国</span><span class="state">广东省</span><span class="city">深圳市</span><span class="street">龙华新区民治街道溪山美地</span><br />
+				<span class="postcode">518131</span><br />
+				<span class="phone">+86 13113668890</span><br />
+				<span class="fax">+86 755 29812080</span><br />
+				<code class="email">&lt;<a class="email" href="mailto:netkiller@msn.com">netkiller@msn.com</a>&gt;</code><br />
+			</p></div>
+		</div></div></div><div><p class="releaseinfo">$Id$</p></div><div><p class="copyright">版权 © 2011, 2012, 2013 http://netkiller.github.io</p></div><div><p class="pubdate">$Date$</p></div><div><div class="abstract" title="摘要"><p class="title"><strong>摘要</strong></p>
+			<p>这里所谈的内容是对备份数据的恢复，不是对损坏数据表的恢复，或者说灾难恢复。 </p>
+		</div></div><div><div class="abstract" title="我的系列文档"><a id="abstract"></a><p class="title"><strong>我的系列文档</strong></p>
+	
+	<p>
+		</p><table border="0" summary="Simple list" class="simplelist"><tr><td>
+				<a class="ulink" href="../architect/index.html" target="_top">Netkiller Architect 手札</a>
+			</td><td>
+				<a class="ulink" href="../developer/index.html" target="_top">Netkiller Developer 手札</a>
+			</td><td>
+				<a class="ulink" href="../php/index.html" target="_top">Netkiller PHP 手札</a>
+			</td><td>
+				<a class="ulink" href="../python/index.html" target="_top">Netkiller Python 手札</a>
+			</td><td>
+				<a class="ulink" href="../testing/index.html" target="_top">Netkiller Testing 手札</a>
+			</td><td>
+				<a class="ulink" href="../cryptography/index.html" target="_top">Netkiller Cryptography 手札</a>
+			</td></tr><tr><td>
+				<a class="ulink" href="../linux/index.html" target="_top">Netkiller Linux 手札</a>
+			</td><td>
+				<a class="ulink" href="../centos/index.html" target="_top">Netkiller CentOS 手札</a>
+			</td><td>
+				<a class="ulink" href="../freebsd/index.html" target="_top">Netkiller FreeBSD 手札</a>
+			</td><td>
+				<a class="ulink" href="../security/index.html" target="_top">Netkiller Security 手札</a>
+			</td><td>
+				<a class="ulink" href="../version/index.html" target="_top">Netkiller Version 手札</a>
+			</td><td>
+				<a class="ulink" href="../www/index.html" target="_top">Netkiller Web 手札</a>
+			</td></tr><tr><td>
+				<a class="ulink" href="../monitoring/index.html" target="_top">Netkiller Monitoring 手札</a>
+			</td><td>
+				<a class="ulink" href="../storage/index.html" target="_top">Netkiller Storage 手札</a>
+			</td><td>
+				<a class="ulink" href="../mail/index.html" target="_top">Netkiller Mail 手札</a>
+			</td><td>
+				<a class="ulink" href="../shell/index.html" target="_top">Netkiller Shell 手札</a>
+			</td><td>
+				<a class="ulink" href="../network/index.html" target="_top">Netkiller Network 手札</a>
+			</td><td>
+				<a class="ulink" href="../database/index.html" target="_top">Netkiller Database 手札</a>
+			</td></tr><tr><td>
+				<a class="ulink" href="../postgresql/index.html" target="_top">Netkiller PostgreSQL 手札</a>
+			</td><td>
+				<a class="ulink" href="../mysql/index.html" target="_top">Netkiller MySQL 手札</a>
+			</td><td>
+				<a class="ulink" href="../nosql/index.html" target="_top">Netkiller NoSQL 手札</a>
+			</td><td>
+				<a class="ulink" href="../ldap/index.html" target="_top">Netkiller LDAP 手札</a>
+			</td><td>
+				<a class="ulink" href="../cisco/index.html" target="_top">Netkiller Cisco IOS 手札</a>
+			</td><td>
+				<a class="ulink" href="../h3c/index.html" target="_top">Netkiller H3C 手札</a>
+			</td></tr><tr><td>
+				<a class="ulink" href="../multimedia/index.html" target="_top">Netkiller Multimedia 手札</a>
+			</td><td>
+				<a class="ulink" href="../docbook/index.html" target="_top">Netkiller Docbook 手札</a>
+			</td><td>
+				<a class="ulink" href="../oss/index.html" target="_top">Netkiller 开源软件 手札</a>
+			</td><td> </td><td> </td><td> </td></tr></table><p>
+	</p>
+
+</div></div></div><hr /></div><div class="toc"><p><strong>目录</strong></p><dl><dt><span class="section"><a href="#idp10080">1. 背景</a></span></dt><dt><span class="section"><a href="#idp62304">2. 备份方式分析</a></span></dt><dt><span class="section"><a href="#idp62560">3. 恢复方案</a></span></dt><dd><dl><dt><span class="section"><a href="#idp78448">3.1. 第一种</a></span></dt><dt><span class="section"><a href="#idp83232">3.2. 第二种</a></span></dt><dt><span class="section"><a href="#idp87600">3.3. 第三种</a></span></dt><dt><span class="section"><a href="#idp93968">3.4. 第四种</a></span></dt></dl></dd><dt><span class="section"><a href="#idp97680">4. 手工恢复</a></span></dt></dl></div>
+	
+
+	<div class="section" title="1. 背景"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp10080"></a>1. 背景</h2></div></div></div>
+		
+		<p>我们来假设一个场景。</p>
+		<p>你是否适用 mysqldump 每隔一段时间备份一次数据库，每个备份一个数据文件。</p>
+		<p>公司决策你是不是因为数据持续增加，有些数据已经不会再查询，会删除旧的历史数据。</p>
+		<p>有时公司突然说要恢复历史数据，有可能全补回复，有可能部分恢复。</p>
+		<p>你将怎么做？</p>
+	</div>
+	<div class="section" title="2. 备份方式分析"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp62304"></a>2. 备份方式分析</h2></div></div></div>
+		
+		<p>首先看看备份方式，你是不是采用这种方法备份</p>
+		<p>我使用一串数字表述数据库数据递增情况，数据的增长变化</p>
+		<p>垂直轴表示备份时间轴</p>
+		<p>最常见的备份方法，完全备份</p>
+		<pre class="screen">
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 。。。
+|.......| 第一次备份
+|.................| 第二次备份
+|...........................| 第三次备份
+|......................................| 第四次备份
+|................................................| 第五次备份
+		</pre>
+		<p>下面这种备份方式也比较常见，这种方式很有规律。</p>
+		<pre class="screen">
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 。。。
+|.......| 第一次备份
+        |..........| 删除上一次以备份内容，第二次备份
+                   |..........| 删除上一次以备份内容，第三次备份数据库
+                              |..........| 删除上一次以备份内容，第四次备份
+                                         |.........| 删除上一次以备份内容，第五次备份
+		</pre>
+		<p>更复杂的情况，无规律可循</p>
+		<pre class="screen">
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 。。。
+|.......| 第一次备份
+|..................| 第二次备份
+        |......................| 删除一部分数据后同时做第三次备份数据库
+                   |......................| 又删除一部分数据，第四次备份
+                   |.............................| 第五次备份，没有删除数据
+                   |......................................| 第六次备份，依然没有删除数据
+                                          |..........................| 删除很多数据，第七次备份
+		</pre>
+		<p>以此类推，删除原因有多种，如空间不足，改善查询性能。。。等等</p>
+		<p>最杂的情况，无规律可循，同时交叉数据可能会有更新</p>
+		<pre class="screen">
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 。。。
+|...o...| 第一次备份
+|.....o............| 第二次备份
+        |....o...o.............| 删除一部分数据后同时做第三次备份数据库
+                   |.o..o..o..............| 又删除一部分数据，第四次备份
+                   |....o......o.......o.........| 第五次备份，没有删除数据
+                   |.......o.......o.........o............| 第六次备份，依然没有删除数据
+                                          |.o....o......o............| 删除很多数据，第七次备份
+		</pre>
+		<p>我用'o' 表示与上次备份中有差异的部分。</p>
+	</div>
+	<div class="section" title="3. 恢复方案"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp62560"></a>3. 恢复方案</h2></div></div></div>
+		
+		<p>，最好恢复，第二种。</p>
+		<div class="variablelist" title="上面所提三种备份方式"><p class="title"><strong>上面所提三种备份方式</strong></p><dl><dt><span class="term">第一种</span></dt><dd>
+					<p>最好恢复，100% 都能搞定.</p>
+				</dd><dt><span class="term">第二种</span></dt><dd>
+					<p>恢复起来稍复杂，仍能搞得定.</p>
+				</dd><dt><span class="term">第三种</span></dt><dd>
+					<p>比较复杂，因为本档案中存在重复记录，费点脑筋</p>
+				</dd><dt><span class="term">第四种</span></dt><dd>
+					<p>最复杂，看似复杂，其实也不复杂，跟第三种差不多.</p>
+				</dd></dl></div>
+ 		<div class="section" title="3.1. 第一种"><div class="titlepage"><div><div><h3 class="title"><a id="idp78448"></a>3.1. 第一种</h3></div></div></div>
+ 			
+ 			<p>这种备份非常简单，菜鸟也搞搞定</p>
+ 			<p>文本格式回复</p>
+			<pre class="screen">
+cat dbname.sql | mysql -u user -p pass -h localhost yourdb
+			</pre>
+			<p>压缩格式恢复</p>
+			<pre class="screen">
+zcat dbname.sql。gz | mysql -u user -p pass -h localhost yourdb
+			</pre>
+			<p>或者先使用gunzip解压，再恢复数据</p>
+			<pre class="screen">
+gunzip dbname.sql。gz
+cat dbname.sql | mysql -u user -p pass -h localhost yourdb
+			</pre>
+			<div class="tip" title="提示" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">提示</h3>
+				<p>很多人喜欢用tar打包，我不见这样做，一个文件时无需使用tar打包的，画蛇添足</p>
+				<p>仅使用gzip压缩，可以方便使用zcat直接操作文件。</p>
+			</div>
+ 		</div>
+		<div class="section" title="3.2. 第二种"><div class="titlepage"><div><div><h3 class="title"><a id="idp83232"></a>3.2. 第二种</h3></div></div></div>
+			
+			<p>这种备份时连续的，只要依次按顺序恢复即可。</p>
+			<pre class="screen">
+zcat dbname1.sql。gz | mysql -u user -p pass -h localhost yourdb
+zcat dbname2.sql。gz | mysql -u user -p pass -h localhost yourdb
+zcat dbname3.sql。gz | mysql -u user -p pass -h localhost yourdb
+...
+...
+zcat dbname10.sql。gz | mysql -u user -p pass -h localhost yourdb
+			</pre>
+			<p>也可以跳跃恢复数据</p>
+			<pre class="screen">
+zcat dbname2.sql。gz | mysql -u user -p pass -h localhost yourdb
+zcat dbname3.sql。gz | mysql -u user -p pass -h localhost yourdb
+zcat dbname5.sql。gz | mysql -u user -p pass -h localhost yourdb
+zcat dbname10.sql。gz | mysql -u user -p pass -h localhost yourdb
+			</pre>
+			<p>反向恢复数据</p>
+			<pre class="screen">
+zcat dbname20.sql。gz | mysql -u user -p pass -h localhost yourdb
+zcat dbname15.sql。gz | mysql -u user -p pass -h localhost yourdb
+zcat dbname13.sql。gz | mysql -u user -p pass -h localhost yourdb
+zcat dbname1.sql。gz | mysql -u user -p pass -h localhost yourdb
+			</pre>
+			<p>总之怎么恢复都可以</p>
+		</div>
+		<div class="section" title="3.3. 第三种"><div class="titlepage"><div><div><h3 class="title"><a id="idp87600"></a>3.3. 第三种</h3></div></div></div>
+			
+			<p>这种恢复建议按照顺序进行，即可以顺时间轴恢复也可以逆时间轴，条件是表结构需要有主键(PK)</p>
+			<p>正时序恢复案例，</p>
+			<pre class="screen">
+zcat dbname1.sql。gz | mysql -u user -p pass -h localhost yourdb
+zcat dbname2.sql。gz | mysql -u user -p pass -h localhost yourdb
+zcat dbname3.sql。gz | mysql -u user -p pass -h localhost yourdb
+			</pre>
+			<p>逆时序恢复数据</p>
+			<pre class="screen">
+zcat dbname3.sql。gz | mysql -u user -p pass -h localhost yourdb
+zcat dbname2.sql。gz | mysql -u user -p pass -h localhost yourdb
+zcat dbname1.sql。gz | mysql -u user -p pass -h localhost yourdb
+			</pre>			
+			<p>因为有主键，所以已存在的重复记录不会被重复插入。</p>
+			<div class="note" title="insert 方式有要求" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">insert 方式有要求</h3>
+				
+				<p>必须是</p>
+				<pre class="screen">
+insert into dbtable(f1, f2, f3...) value (v1, v2, v3);
+insert into dbtable(f1, f2, f3...) value (v1, v2, v3);
+insert into dbtable(f1, f2, f3...) value (v1, v2, v3);
+				</pre>
+				<p>不能是</p>
+				<pre class="screen">
+insert into dbtable(f1, f2, f3...) value (v1, v2, v3), (v1, v2, v3), value (v1, v2, v3);
+				</pre>
+			</div>
+		</div>
+		<div class="section" title="3.4. 第四种"><div class="titlepage"><div><div><h3 class="title"><a id="idp93968"></a>3.4. 第四种</h3></div></div></div>
+			
+			<p>这种恢复必须按照顺序进行，即可以顺时间轴恢复也可以逆时间轴，但处理上稍有不同.一旦操作错误数据就会损坏，同时也有很多条件。</p>
+			<p>顺时序恢复数据， 只需将 insert 替换为 replace 即可 </p>
+			<pre class="screen">
+replace into dbtable(f1, f2, f3...) value (v1, v2, v3);
+replace into dbtable(f1, f2, f3...) value (v1, v2, v3);
+replace into dbtable(f1, f2, f3...) value (v1, v2, v3);
+			</pre>
+			<p>新数据总会覆盖旧数据</p>
+			<p>但逆向就不同了，逆时序恢复数据与上面第三种相同, 恢复过程中旧数据在 insert 的时候不会覆盖现有的新数据。仅仅将失去的数据恢复到数据库中。</p>
+			<p>操作要十分谨慎，理解正向与逆向的不同，方能操作。</p>
+		</div>
+	</div>
+	<div class="section" title="4. 手工恢复"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp97680"></a>4. 手工恢复</h2></div></div></div>
+		
+		<p>有时上面所讲的四种恢复方法不能满足你需求，我们模拟一个场景，假如你需要恢复一个时间段的数据，或者ID字段去一个范围等等，上面所举例子均为一刀切。该怎么办呢？</p>
+		<p>不用担心方法总是有的</p>
+		<p>INSERT ... SELECT</p>
+		<pre class="screen">
+INSERT [LOW_PRIORITY | HIGH_PRIORITY] [IGNORE]
+    [INTO] tbl_name [(col_name,...)]
+    SELECT ...
+    [ ON DUPLICATE KEY UPDATE col_name=expr, ... ]		
+		</pre>
+		<p>REPLACE ... SELECT</p>
+		<pre class="screen">
+REPLACE [LOW_PRIORITY | DELAYED]
+    [INTO] tbl_name
+    [PARTITION (partition_name,...)]  
+    [(col_name,...)]
+    SELECT ...		
+		</pre>
+		<div class="example"><a id="idp101360"></a><p class="title"><strong>例 1. INSERT ... SELECT</strong></p><div class="example-contents">
+			
+			<pre class="screen">
+INSERT INTO tbl_name_new SELECT * FROM tbl_name_old WHERE name = 'netkiller';
+INSERT INTO db_new.tbl_name SELECT * FROM db_old.tbl_name WHERE id &gt; '10000';
+			</pre>
+		</div></div><br class="example-break" />
+		<p>这里仅给一个简单实例，因为每个人的需求都不同，你只需灵活变通，发挥你的想象力。</p>
+	</div>
+</div><div xmlns="" id="bdshare" class="bdshare_t bds_tools_32 get-codes-bdshare"><a class="bds_fbook"></a><a class="bds_twi"></a><a class="bds_ms"></a><a class="bds_msn"></a><a class="bds_buzz"></a><a class="bds_linkedin"></a><a class="bds_deli"></a><a class="bds_qzone"></a><a class="bds_qq"></a><a class="bds_tqq"></a><a class="bds_tqf"></a><a class="bds_tsina"></a><a class="bds_baidu"></a><a class="bds_renren"></a><a class="bds_t163"></a><a class="bds_tfh"></a><a class="bds_douban"></a><a class="bds_hi"></a><a class="bds_tieba"></a><a class="bds_tsohu"></a><span class="bds_more"></span><a class="shareCount"></a></div><script xmlns="" type="text/javascript" id="bdshare_js" data="type=tools"></script><script xmlns="" type="text/javascript" id="bdshell_js"></script><script xmlns="" type="text/javascript">
+	document.getElementById("bdshell_js").src = "http://bdimg.share.baidu.com/static/js/shell_v2.js?cdnversion=" + new Date().getHours();
+</script><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
+            /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+
+            if(document.domain == 'netkiller.github.com'){
+            var disqus_shortname = 'netkiller'; // required: replace example with your forum shortname
+            }else{
+			var disqus_shortname = 'neochan';
+            }
+
+            /* * * DON'T EDIT BELOW THIS LINE * * */
+            (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+            })();
+        </script><noscript xmlns="">Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><a xmlns="" href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a><br xmlns="" /><div xmlns="" id="clustrmaps-widget"></div><script xmlns="" type="text/javascript">var _clustrmaps = {'url' : 'http://netkiller.github.io', 'user' : 1107643, 'server' : '2', 'id' : 'clustrmaps-widget', 'version' : 1, 'date' : '2013-08-14', 'lang' : 'en', 'corners' : 'square' };(function (){ var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = 'http://www2.clustrmaps.com/counter/map.js'; var x = document.getElementsByTagName('script')[0]; x.parentNode.insertBefore(s, x);})();</script><noscript xmlns=""><a href="http://www2.clustrmaps.com/user/87410e6bb"><img src="http://www2.clustrmaps.com/stats/maps-no_clusters/netkiller.github.io-thumb.jpg" alt="Locations of visitors to this page" /></a></noscript></body></html>
