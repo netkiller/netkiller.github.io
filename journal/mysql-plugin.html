@@ -89,10 +89,10 @@
 			</td><td> </td><td> </td><td> </td></tr></table><p>
 	</p>
 
-</div></div></div><hr /></div><div class="toc"><p><strong>目录</strong></p><dl><dt><span class="section"><a href="#idp9760">1. 背景</a></span></dt><dt><span class="section"><a href="#idp63488">2. 解决思路</a></span></dt><dt><span class="section"><a href="#idp64784">3. 解决方案</a></span></dt><dt><span class="section"><a href="#idp75792">4. plugin 的开发与使用</a></span></dt></dl></div>
+</div></div></div><hr /></div><div class="toc"><p><strong>目录</strong></p><dl><dt><span class="section"><a href="#idp10992">1. 背景</a></span></dt><dt><span class="section"><a href="#idp100176">2. 解决思路</a></span></dt><dt><span class="section"><a href="#idp101472">3. 解决方案</a></span></dt><dt><span class="section"><a href="#idp112480">4. plugin 的开发与使用</a></span></dt></dl></div>
 	
 
-	<div class="section" title="1. 背景"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp9760"></a>1. 背景</h2></div></div></div>
+	<div class="section" title="1. 背景"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp10992"></a>1. 背景</h2></div></div></div>
 		
 		<p>我以电商网站为例，一般的网站产品数据存放在数据库中，商品图片是上传到文件服务器，然后通过http服务器浏览商品图片。这是最基本的也是最常见做法。</p>
 		<p>稍复杂的方案是，如果图片数量庞大，会使用分布式文件系统方案。但是这些方案都不能保证数据的完整性，极易产生脏数据（垃圾数据）。脏数据是指当你删除了数据库表中的记录后，图片仍然存在，或者手工删除了图片，而数据库中的记录仍然存在。</p>
@@ -100,11 +100,11 @@
 		<p>2009年我在走秀网工作，商品图片与缩图文件900GB到2012离职已经有10TB，每天有成百上千的商品上架下架，很多商品下架后永远不会再上架，这些批量下架的商品数据不会删除，仅仅标记为删除，总是期望以后能继续使用，实际上再也不会有人过问，另一方面随着品类经理频繁更换，员工离职，这些商品会石沉大海，再也无人问均。这些商品所对应的图片也就脏数据主要来源。新的品类经历上任后，会重新拍照，上传新图片。</p>
 		<p>总之，删除数据库中的数据不能将图片删除就会产生脏数据。很多采用删除数据的时候去检查图片如果存在先删除图片，再删除数据的方法。这种方案也非完美解决方案，存在这图片先被删除，程序出错SQL没有运行，或者反之。</p>
 	</div>
-	<div class="section" title="2. 解决思路"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp63488"></a>2. 解决思路</h2></div></div></div>
+	<div class="section" title="2. 解决思路"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp100176"></a>2. 解决思路</h2></div></div></div>
 		
 		<p>如果删除图片能够成为事物处理中的一个环节，所有问题都能迎刃而解，可彻底解决脏数据的烦恼。</p>
 	</div>
-	<div class="section" title="3. 解决方案"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp64784"></a>3. 解决方案</h2></div></div></div>
+	<div class="section" title="3. 解决方案"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp101472"></a>3. 解决方案</h2></div></div></div>
 		
 		<p>mysql plugin 开发 udf。我写几个function</p>
 		<div class="variablelist" title="UDF"><p class="title"><strong>UDF</strong></p><dl><dt><span class="term">image_check(filename)</span></dt><dd>
@@ -128,7 +128,7 @@
 2. delete 触发器的任务： 检查删除记录的时候，首先去改图片文件名，然后删除该记录，最后删除图片，删除成功。如果中间环境失败 记录会rollback，图片会在次修改文件名改回来。100% 保险
 		</pre>
 	</div>
-	<div class="section" title="4. plugin 的开发与使用"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp75792"></a>4. plugin 的开发与使用</h2></div></div></div>
+	<div class="section" title="4. plugin 的开发与使用"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp112480"></a>4. plugin 的开发与使用</h2></div></div></div>
 		
 		<p>开发UDF你需要安装下面的软件包</p>
 		<pre class="screen">
