@@ -20,6 +20,80 @@ COLLATE='utf8_general_ci'
 ENGINE=InnoDB
 AUTO_INCREMENT=2;
 		</pre>
+		<p>分区日志表</p>
+		<pre class="programlisting">
+		
+delimiter $$
+
+CREATE TABLE `logging` (
+  `tag` enum('unknow','login','info','admin','cron','manual') NOT NULL DEFAULT 'unknow' COMMENT '日志标签',
+  `asctime` datetime NOT NULL COMMENT '产生时间',
+  `facility` enum('account','bank','unionpay','sms','email','unknow') NOT NULL DEFAULT 'unknow' COMMENT '类别',
+  `priority` enum('info','warning','error','critical','exception','debug') NOT NULL DEFAULT 'debug' COMMENT '级别',
+  `message` varchar(512) NOT NULL COMMENT '内容',
+  `operator` varchar(50) NOT NULL DEFAULT 'computer' COMMENT '操作者'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8
+/*!50100 PARTITION BY RANGE (YEAR(asctime))
+SUBPARTITION BY HASH (MONTH(asctime))
+(PARTITION p0 VALUES LESS THAN (1990) ENGINE = InnoDB,
+ PARTITION p1 VALUES LESS THAN (2000) ENGINE = InnoDB,
+ PARTITION p2 VALUES LESS THAN MAXVALUE ENGINE = InnoDB) */$$		
+		
+		</pre>
+		<p>分表+分区，每年分表一次，每个分区中保存一个月的数据</p>
+		<pre class="programlisting">
+delimiter $$
+
+CREATE TABLE `logging_2013` (
+  `tag` enum('unknow','login','info','admin','cron','manual') NOT NULL DEFAULT 'unknow' COMMENT '日志标签',
+  `asctime` datetime NOT NULL COMMENT '产生时间',
+  `facility` enum('account','bank','unionpay','sms','email','unknow') NOT NULL DEFAULT 'unknow' COMMENT '类别',
+  `priority` enum('info','warning','error','critical','exception','debug') NOT NULL DEFAULT 'debug' COMMENT '级别',
+  `message` varchar(512) NOT NULL COMMENT '内容',
+  `operator` varchar(50) NOT NULL DEFAULT 'computer' COMMENT '操作者'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8
+/*!50100 PARTITION BY LIST (MONTH(asctime))
+SUBPARTITION BY KEY (facility)
+(PARTITION part0 VALUES IN (1) ENGINE = InnoDB,
+ PARTITION part1 VALUES IN (2) ENGINE = InnoDB,
+ PARTITION part2 VALUES IN (3) ENGINE = InnoDB,
+ PARTITION part3 VALUES IN (4) ENGINE = InnoDB,
+ PARTITION part4 VALUES IN (5) ENGINE = InnoDB,
+ PARTITION part5 VALUES IN (6) ENGINE = InnoDB,
+ PARTITION part6 VALUES IN (7) ENGINE = InnoDB,
+ PARTITION part7 VALUES IN (8) ENGINE = InnoDB,
+ PARTITION part8 VALUES IN (9) ENGINE = InnoDB,
+ PARTITION part9 VALUES IN (10) ENGINE = InnoDB,
+ PARTITION part10 VALUES IN (11) ENGINE = InnoDB,
+ PARTITION part11 VALUES IN (12) ENGINE = InnoDB) */$$		
+		</pre>
+		<p>命名分区</p>
+		<pre class="programlisting">
+delimiter $$
+
+CREATE TABLE `logging_2012` (
+  `tag` enum('unknow','login','info','admin','cron','manual') NOT NULL DEFAULT 'unknow' COMMENT '日志标签',
+  `asctime` datetime NOT NULL COMMENT '产生时间',
+  `facility` enum('account','bank','unionpay','sms','email','unknow') NOT NULL DEFAULT 'unknow' COMMENT '类别',
+  `priority` enum('info','warning','error','critical','exception','debug') NOT NULL DEFAULT 'debug' COMMENT '级别',
+  `message` varchar(512) NOT NULL COMMENT '内容',
+  `operator` varchar(50) NOT NULL DEFAULT 'computer' COMMENT '操作者'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8
+/*!50100 PARTITION BY LIST (MONTH(asctime))
+SUBPARTITION BY KEY (facility)
+(PARTITION January VALUES IN (1) ENGINE = InnoDB,
+ PARTITION February VALUES IN (2) ENGINE = InnoDB,
+ PARTITION March VALUES IN (3) ENGINE = InnoDB,
+ PARTITION April VALUES IN (4) ENGINE = InnoDB,
+ PARTITION May VALUES IN (5) ENGINE = InnoDB,
+ PARTITION June VALUES IN (6) ENGINE = InnoDB,
+ PARTITION July VALUES IN (7) ENGINE = InnoDB,
+ PARTITION August VALUES IN (8) ENGINE = InnoDB,
+ PARTITION September VALUES IN (9) ENGINE = InnoDB,
+ PARTITION October VALUES IN (10) ENGINE = InnoDB,
+ PARTITION November VALUES IN (11) ENGINE = InnoDB,
+ PARTITION December VALUES IN (12) ENGINE = InnoDB) */$$		
+		</pre>
 	</div><div xmlns="" id="bdshare" class="bdshare_t bds_tools_32 get-codes-bdshare"><a class="bds_fbook"></a><a class="bds_twi"></a><a class="bds_ms"></a><a class="bds_msn"></a><a class="bds_buzz"></a><a class="bds_linkedin"></a><a class="bds_deli"></a><a class="bds_qzone"></a><a class="bds_qq"></a><a class="bds_tqq"></a><a class="bds_tqf"></a><a class="bds_tsina"></a><a class="bds_baidu"></a><a class="bds_renren"></a><a class="bds_t163"></a><a class="bds_tfh"></a><a class="bds_douban"></a><a class="bds_hi"></a><a class="bds_tieba"></a><a class="bds_tsohu"></a><span class="bds_more"></span><a class="shareCount"></a></div><script xmlns="" type="text/javascript" id="bdshare_js" data="type=tools"></script><script xmlns="" type="text/javascript" id="bdshell_js"></script><script xmlns="" type="text/javascript">
 	document.getElementById("bdshell_js").src = "http://bdimg.share.baidu.com/static/js/shell_v2.js?cdnversion=" + new Date().getHours();
 </script><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">

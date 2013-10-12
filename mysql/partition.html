@@ -279,7 +279,7 @@ possible_keys: NULL
 
 		
 		</pre>
-		<div class="section" title="5.8.3.1. LINEAR HASH"><div class="titlepage"><div><div><h4 class="title"><a id="idp742656"></a>5.8.3.1. LINEAR HASH</h4></div></div></div>
+		<div class="section" title="5.8.3.1. LINEAR HASH"><div class="titlepage"><div><div><h4 class="title"><a id="idp742768"></a>5.8.3.1. LINEAR HASH</h4></div></div></div>
 			
 			<pre class="programlisting">
 CREATE TABLE employees (
@@ -309,9 +309,31 @@ PARTITION BY LINEAR KEY (col1)
 PARTITIONS 3;
 		</pre>
 	</div>
-	<div class="section" title="5.8.5. 分区管理"><div class="titlepage"><div><div><h3 class="title"><a id="idp746928"></a>5.8.5. 分区管理</h3></div></div></div>
+	<div class="section" title="5.8.5. Subpartitioning"><div class="titlepage"><div><div><h3 class="title"><a id="subpartitioning"></a>5.8.5. Subpartitioning</h3></div></div></div>
 		
-		<div class="section" title="5.8.5.1. 新增分区"><div class="titlepage"><div><div><h4 class="title"><a id="idp747744"></a>5.8.5.1. 新增分区</h4></div></div></div>
+		<pre class="programlisting">
+CREATE TABLE ts (id INT, purchased DATE)
+    PARTITION BY RANGE( YEAR(purchased) )
+    SUBPARTITION BY HASH( TO_DAYS(purchased) )
+    SUBPARTITIONS 2 (
+        PARTITION p0 VALUES LESS THAN (1990),
+        PARTITION p1 VALUES LESS THAN (2000),
+        PARTITION p2 VALUES LESS THAN MAXVALUE
+    );
+
+CREATE TABLE ts1 (id INT, purchased DATE)
+    PARTITION BY RANGE( YEAR(purchased) )
+    SUBPARTITION BY HASH( MONTH(purchased) )
+    SUBPARTITIONS 2 (
+        PARTITION p0 VALUES LESS THAN (1990),
+        PARTITION p1 VALUES LESS THAN (2000),
+        PARTITION p2 VALUES LESS THAN MAXVALUE
+    );
+		</pre>
+	</div>
+	<div class="section" title="5.8.6. 分区管理"><div class="titlepage"><div><div><h3 class="title"><a id="idp749216"></a>5.8.6. 分区管理</h3></div></div></div>
+		
+		<div class="section" title="5.8.6.1. 新增分区"><div class="titlepage"><div><div><h4 class="title"><a id="idp750240"></a>5.8.6.1. 新增分区</h4></div></div></div>
 			
 			<p>mysql 5.5+</p>
 			<p>为已经存在表添加分区</p>
@@ -411,14 +433,14 @@ Create Table: CREATE TABLE `t2` (
 			</pre>
 		</div>
 
-		<div class="section" title="5.8.5.2. 删除分区"><div class="titlepage"><div><div><h4 class="title"><a id="idp748032"></a>5.8.5.2. 删除分区</h4></div></div></div>
+		<div class="section" title="5.8.6.2. 删除分区"><div class="titlepage"><div><div><h4 class="title"><a id="idp750528"></a>5.8.6.2. 删除分区</h4></div></div></div>
 			
 			<p>删除分区 p0</p>
 			<pre class="programlisting">
 ALERT TABLE users DROP PARTITION p0;
 			</pre>
 		</div>
-		<div class="section" title="5.8.5.3. 重建分区"><div class="titlepage"><div><div><h4 class="title"><a id="idp757136"></a>5.8.5.3. 重建分区</h4></div></div></div>
+		<div class="section" title="5.8.6.3. 重建分区"><div class="titlepage"><div><div><h4 class="title"><a id="idp759504"></a>5.8.6.3. 重建分区</h4></div></div></div>
 			
 			<p>使用  REORGANIZE 重建分区。</p>
 			<pre class="programlisting">
@@ -441,7 +463,7 @@ ALTER TABLE users REORGANIZE PARTITION COALESCE PARTITION 2;
 ALTER TABLE users ADD PARTITION PARTITIONS 8;
 			</pre>
 		</div>
-		<div class="section" title="5.8.5.4. 分区维护"><div class="titlepage"><div><div><h4 class="title"><a id="idp760336"></a>5.8.5.4. 分区维护</h4></div></div></div>
+		<div class="section" title="5.8.6.4. 分区维护"><div class="titlepage"><div><div><h4 class="title"><a id="idp762800"></a>5.8.6.4. 分区维护</h4></div></div></div>
 			
 			<pre class="programlisting">
 重建分区: 这和先删除保存在分区中的所有记录，然后重新插入它们，具有同样的效果。它可用于整理分区碎片。
@@ -474,7 +496,7 @@ ALTER TABLE trb3 CHECK PARTITION (p1)；
 			</pre>
 		</div>
 	</div>
-	<div class="section" title="5.8.6. EXPLAIN PARTITIONS"><div class="titlepage"><div><div><h3 class="title"><a id="idp762912"></a>5.8.6. EXPLAIN PARTITIONS</h3></div></div></div>
+	<div class="section" title="5.8.7. EXPLAIN PARTITIONS"><div class="titlepage"><div><div><h3 class="title"><a id="idp765216"></a>5.8.7. EXPLAIN PARTITIONS</h3></div></div></div>
 		
 		<p>EXPLAIN PARTITIONS</p>
 		<pre class="screen">
@@ -511,7 +533,7 @@ possible_keys: PRIMARY
 		
 		</pre>
 	</div>
-	<div class="section" title="5.8.7. SHOW CREATE TABLE"><div class="titlepage"><div><div><h3 class="title"><a id="idp765552"></a>5.8.7. SHOW CREATE TABLE</h3></div></div></div>
+	<div class="section" title="5.8.8. SHOW CREATE TABLE"><div class="titlepage"><div><div><h3 class="title"><a id="idp767792"></a>5.8.8. SHOW CREATE TABLE</h3></div></div></div>
 		
 		<p>SHOW CREATE TABLE</p>
 		<pre class="screen">
@@ -532,7 +554,7 @@ PARTITIONS 7 */
 		
 		</pre>
 	</div>
-	<div class="section" title="5.8.8. INFORMATION_SCHEMA.partitions 表"><div class="titlepage"><div><div><h3 class="title"><a id="idp767808"></a>5.8.8. INFORMATION_SCHEMA.partitions 表</h3></div></div></div>
+	<div class="section" title="5.8.9. INFORMATION_SCHEMA.partitions 表"><div class="titlepage"><div><div><h3 class="title"><a id="idp770112"></a>5.8.9. INFORMATION_SCHEMA.partitions 表</h3></div></div></div>
 		
 
 			<pre class="programlisting">
@@ -564,7 +586,7 @@ WHERE
 			
 			</pre>
 	</div>
-	<div class="section" title="5.8.9. ERROR 1503 (HY000): A PRIMARY KEY must include all columns in the table's partitioning function"><div class="titlepage"><div><div><h3 class="title"><a id="idp769808"></a>5.8.9. ERROR 1503 (HY000): A PRIMARY KEY must include all columns in the table's partitioning function</h3></div></div></div>
+	<div class="section" title="5.8.10. ERROR 1503 (HY000): A PRIMARY KEY must include all columns in the table's partitioning function"><div class="titlepage"><div><div><h3 class="title"><a id="idp772224"></a>5.8.10. ERROR 1503 (HY000): A PRIMARY KEY must include all columns in the table's partitioning function</h3></div></div></div>
 		
 		<a class="ulink" href="http://dev.mysql.com/doc/refman/5.1/en/partitioning-limitations-partitioning-keys-unique-keys.html" target="_top">http://dev.mysql.com/doc/refman/5.1/en/partitioning-limitations-partitioning-keys-unique-keys.html</a>
 	</div>
