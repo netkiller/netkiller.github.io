@@ -14,7 +14,7 @@
     隔离性：一个事务的执行不能被其他事务干扰。即一个事务内部的操作及使用的数据对其他事务是隔离的，并发执行的各个事务之间互相不干扰。
     持久性：一个事务一旦成功提交，对数据库中数据的修改就是持久性的。接下来其他的其他操作或故障不应该对其执行结果有任何影响。
 	</pre>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp61843168"></a>8.2.1. 事务隔离级别</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp61918176"></a>8.2.1. 事务隔离级别</h3></div></div></div>
 		
 		<p>事务隔离模式</p>
 		<pre class="screen">
@@ -51,7 +51,7 @@ mysql&gt; set global transaction isolation level read committed;
 mysql&gt; set session transaction isolation level read committed;
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp61848144"></a>8.2.2. 事务所用到的表</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp61923008"></a>8.2.2. 事务所用到的表</h3></div></div></div>
 		
 		<p>information_schema</p>
 		<pre class="screen">
@@ -80,7 +80,7 @@ ENGINE=InnoDB;
 INSERT INTO `test`.`account` (`user`, `cash`,`point`) VALUES ('neo', 10,10);
 		</pre>
 		<p>下面通过account表，我来模拟一个返点场景，例如电商网站经常会用到“返点”，购买一定数量的商品赠送一定的点数，可以通过点数买东西，这样涉及到点的加于减操作。</p>
-		<div class="table"><a id="idp61853776"></a><p class="title"><strong>表 8.1. 更新丢失演示</strong></p><div class="table-contents">
+		<div class="table"><a id="idp61928240"></a><p class="title"><strong>表 8.1. 更新丢失演示</strong></p><div class="table-contents">
 		   
 		   <table summary="更新丢失演示" border="1"><colgroup><col /><col /></colgroup><thead><tr><th>Session A</th><th>Session B</th></tr></thead><tbody><tr><td>
 					<pre class="programlisting">
@@ -136,7 +136,7 @@ mysql&gt; SELECT @@tx_isolation;
 		
 		</pre>
 		<p>检查事务隔离级别为：REPEATABLE-READ</p>
-		<div class="table"><a id="idp61870144"></a><p class="title"><strong>表 8.2. 防止更新丢失加锁演示</strong></p><div class="table-contents">
+		<div class="table"><a id="idp61944384"></a><p class="title"><strong>表 8.2. 防止更新丢失加锁演示</strong></p><div class="table-contents">
 		   
 		   <table summary="防止更新丢失加锁演示" border="1"><colgroup><col /><col /></colgroup><thead><tr><th>Session A</th><th>Session B</th></tr></thead><tbody><tr><td>
 					<pre class="programlisting">
@@ -191,6 +191,29 @@ INSERT INTO `test`.`account` (`user`, `point`) VALUES ('neo', -20);
 		<p>计算剩余点数</p>
 		<pre class="programlisting">
 select sum(point) as point from account where user='neo';
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="savepoint"></a>8.2.4. SAVEPOINT</h3></div></div></div>
+		
+		<pre class="programlisting">
+DROP PROCEDURE IF EXISTS doOrder;
+
+DELIMITER $$
+
+CREATE PROCEDURE doOrder(IN orderUUID VARCHAR(40))
+  BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION ROLLBACK TO sp_order;
+
+    START TRANSACTION;
+    SAVEPOINT sp_order;
+
+    -- doing my updates and selects here...
+
+    COMMIT;
+
+  END $$
+
+DELIMITER ;
 		</pre>
 	</div>
 </div><div xmlns="" id="bdshare" class="bdshare_t bds_tools_32 get-codes-bdshare"><a class="bds_fbook"></a><a class="bds_twi"></a><a class="bds_ms"></a><a class="bds_msn"></a><a class="bds_buzz"></a><a class="bds_linkedin"></a><a class="bds_deli"></a><a class="bds_qzone"></a><a class="bds_qq"></a><a class="bds_tqq"></a><a class="bds_tqf"></a><a class="bds_tsina"></a><a class="bds_baidu"></a><a class="bds_renren"></a><a class="bds_t163"></a><a class="bds_tfh"></a><a class="bds_douban"></a><a class="bds_hi"></a><a class="bds_tieba"></a><a class="bds_tsohu"></a><span class="bds_more"></span><a class="shareCount"></a></div><script xmlns="" type="text/javascript" id="bdshare_js" data="type=tools"></script><script xmlns="" type="text/javascript" id="bdshell_js"></script><script xmlns="" type="text/javascript">
