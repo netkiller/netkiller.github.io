@@ -5,7 +5,7 @@
         <a href="http://my.oschina.net/neochen/">OSChina 博客</a> |
         <a href="http://rline.blog.51cto.com/">51CTO 博客</a></td><td><form id="searchbox_008589143145807374698:f5uprauilyy" action="/search.html"><input type="hidden" name="cx" value="008589143145807374698:f5uprauilyy" /><input type="hidden" name="cof" value="FORID:11" /><input name="q" type="text" size="25" style="border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; border-top-style: solid; border-right-style: solid; border-bottom-style: solid; border-left-style: solid; border-top-color: rgb(126, 157, 185); border-right-color: rgb(126, 157, 185); border-bottom-color: rgb(126, 157, 185); border-left-color: rgb(126, 157, 185); padding-top: 2px; padding-right: 2px; padding-bottom: 2px; padding-left: 2px; background-image: url(http://www.google.com/cse/intl/en/images/google_custom_search_watermark.gif); background-attachment: initial; background-origin: initial; background-clip: initial; background-color: rgb(255, 255, 255); background-position: 0% 50%; background-repeat: no-repeat no-repeat; " /><input type="submit" name="sa" value="Search" /><input name="siteurl" type="hidden" value="http://netkiller.sourceforge.net/" /></form><script type="text/javascript" src="http://www.google.com/coop/cse/brand?form=searchbox_008589143145807374698%3Af5uprauilyy"></script></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="category"></a>4.3. 分类表设计</h2></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp61371520"></a>4.3.1. 树形分类表</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp62271616"></a>4.3.1. 树形分类表</h3></div></div></div>
 			
 			<pre class="screen">
 			
@@ -37,7 +37,7 @@ ROW_FORMAT=DEFAULT
 		
 		</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp61374336"></a>4.3.2. 多对多分类</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp62274432"></a>4.3.2. 多对多分类</h3></div></div></div>
 			
 		<p>多对多分类,主要用于满足，一个产品/文章属于多个分类的需求。</p>
 		<pre class="programlisting">
@@ -64,7 +64,7 @@ ROW_FORMAT=DEFAULT
 		
 		</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp61376656"></a>4.3.3. 快速检索子分类设计</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp62276752"></a>4.3.3. 快速检索子分类设计</h3></div></div></div>
 			
 			<p>上面我刚刚讲过怎样实现“不限子树的分类树”，我们可以实现不限层次的无线分类表。</p>
 			<pre class="screen">
@@ -163,9 +163,36 @@ mysql&gt; select * from category where path like '1/4%';
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp61376912"></a>4.3.4. Example</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp62277008"></a>4.3.4. 计算节点数量</h3></div></div></div>
 			
-			<div class="example"><a id="idp61386560"></a><p class="title"><strong>例 4.1. identity_card 身份证归属地表</strong></p><div class="example-contents">
+			<pre class="screen">
+			
+DROP TABLE IF EXISTS `test`;
+CREATE TABLE IF NOT EXISTS `test` (
+  `id` int(11) DEFAULT NULL,
+  `pid` int(11) DEFAULT NULL,
+  `name` char(50) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+INSERT INTO `test` (`id`, `pid`, `name`) VALUES
+	(1, 0, 'A'),
+	(2, 1, 'B'),
+	(3, 1, 'C'),
+	(4, 0, 'D'),
+	(5, 0, 'E'),
+	(6, 5, 'F');
+
+select (select t2.name from test t2 where t2.id=t1.pid) as name, count(pid) as sum from test t1 where t1.pid &lt;&gt; 0 group by t1.pid;
+						
+			</pre>
+			<p>统计所有节点包括数量为零的</p>
+			<pre class="screen">
+select t1.name, (select count(t2.name) from test t2 where t2.pid=t1.id) as sum from test t1 			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp62288736"></a>4.3.5. Example</h3></div></div></div>
+			
+			<div class="example"><a id="idp62289408"></a><p class="title"><strong>例 4.1. identity_card 身份证归属地表</strong></p><div class="example-contents">
 				
 				<pre class="programlisting">
 CREATE TABLE `identity_card` (
@@ -207,7 +234,7 @@ ENGINE=InnoDB;
             //if(document.domain == 'netkiller.github.com'){
             var disqus_shortname = 'netkiller'; // required: replace example with your forum shortname
             //}else{
-			//var disqus_shortname = 'netkiller';
+			//var disqus_shortname = 'neochan';
             //}
 
             /* * * DON'T EDIT BELOW THIS LINE * * */

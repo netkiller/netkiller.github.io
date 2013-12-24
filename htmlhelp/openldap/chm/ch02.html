@@ -1,0 +1,129 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>第 2 章 Replication</title><meta name="generator" content="DocBook XSL Stylesheets V1.78.1"><link rel="home" href="index.html" title="Netkiller LDAP 手札"><link rel="up" href="index.html" title="Netkiller LDAP 手札"><link rel="prev" href="ch01s03.html" title="1.3. 基本操作"><link rel="next" href="ch02s02.html" title="2.2. Secondary"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="chapter"><div class="titlepage"><div><div><h1 class="title"><a name="replication"></a>第 2 章 Replication</h1></div></div></div><div class="toc"><p><b>目录</b></p><dl class="toc"><dt><span class="section"><a href="ch02.html#idp59145824">2.1. Primary</a></span></dt><dt><span class="section"><a href="ch02s02.html">2.2. Secondary</a></span></dt></dl></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp59145824"></a>2.1. Primary</h2></div></div></div>
+			
+			<div class="procedure"><a name="idp59146464"></a><p class="title"><b>过程 2.1. Primary configure</b></p><ol class="procedure" type="1"><li class="step">
+					<p>installation</p>
+					<pre class="screen">
+neo@master:~$ sudo apt-get install slapd ldap-utils
+					</pre>
+				</li><li class="step">
+					<p>slapd.conf</p>
+					<pre class="screen">
+neo@master:~$ vi /etc/ldap/slapd.conf
+suffix          "dc=example,dc=org"
+replogfile      /var/lib/ldap/replog
+syncrepl        rid=001
+                provider=ldap://192.168.245.131:389/
+                binddn="cn=admin,dc=example,dc=org"
+                bindmethod=simple
+                credentials=chen
+                searchbase="dc=example,dc=org"
+                type=refreshAndPersist
+                retry="5 5 300 5"
+					</pre>
+				</li><li class="step">
+					<p>initial entries base dn</p>
+					<pre class="screen">
+neo@master:~$ cat base-dn.ldif
+					
+dn: dc=example,dc=org
+objectclass: dcObject
+objectclass: organization
+o:example.org
+dc: example
+description:Top level of directory
+
+dn: cn=Manager,dc=example,dc=org
+objectclass: organizationalRole
+cn: Manager
+
+dn: cn=admin,dc=example,dc=org
+objectclass: organizationalRole
+cn: admin
+
+dn: cn=root,dc=example,dc=org
+objectclass: organizationalRole
+cn: root					
+					</pre>
+					<p>Add initial entries to your directory.</p>
+					<pre class="screen">
+neo@master:~$ ldapadd -x -D "cn=admin,dc=example,dc=org" -W -f base-dn.ldif
+Enter LDAP Password:
+adding new entry "dc=example,dc=org"
+
+adding new entry "cn=Manager,dc=example,dc=org"
+
+adding new entry "cn=admin,dc=example,dc=org"
+
+adding new entry "cn=root,dc=example,dc=org"					
+					</pre>
+					<p>check</p>
+					<pre class="screen">
+					
+neo@master:~$ ldapsearch -x -b 'dc=example,dc=org' '(objectclass=*)'
+# extended LDIF
+#
+# LDAPv3
+# base &lt;dc=example,dc=org&gt; with scope subtree
+# filter: (objectclass=*)
+# requesting: ALL
+#
+
+# example.org
+dn: dc=example,dc=org
+objectClass: dcObject
+objectClass: organization
+o: example.org
+dc: example
+description: Top level of directory
+
+# Manager, example.org
+dn: cn=Manager,dc=example,dc=org
+objectClass: organizationalRole
+cn: Manager
+
+# admin, example.org
+dn: cn=admin,dc=example,dc=org
+objectClass: organizationalRole
+cn: admin
+
+# root, example.org
+dn: cn=root,dc=example,dc=org
+objectClass: organizationalRole
+cn: root
+
+# search result
+search: 2
+result: 0 Success
+
+# numResponses: 5
+# numEntries: 4				
+						
+					</pre>
+				</li><li class="step">
+					<p>Export the database of the master using slapcat. Then copy master.ldif to the slave using scp or other tools. </p>
+					<pre class="screen">
+neo@master:~$ sudo slapcat -l master.ldif					
+					</pre>
+				</li></ol></div>
+		</div>
+		
+	</div><script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-11694057-1']);
+  _gaq.push(['_setDomainName', 'netkiller.github.io']);
+  _gaq.push(['_setAllowLinker', true]);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script><script type="text/javascript">
+var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F997cd4a7320a82d72cb74d179118f697' type='text/javascript'%3E%3C/script%3E"));
+</script></body></html>

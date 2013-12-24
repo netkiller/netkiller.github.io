@@ -1,0 +1,203 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>1.3. 基本操作</title><meta name="generator" content="DocBook XSL Stylesheets V1.78.1"><link rel="home" href="index.html" title="Netkiller LDAP 手札"><link rel="up" href="ch01.html" title="第 1 章 OpenLDAP server (slapd)"><link rel="prev" href="ch01s02.html" title="1.2. Configure"><link rel="next" href="ch02.html" title="第 2 章 Replication"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp59126320"></a>1.3. 基本操作</h2></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp59127136"></a>1.3.1. base-dn</h3></div></div></div>
+			
+ 			<p>建立基本DN</p>
+		  	<div class="example"><a name="idp59128160"></a><p class="title"><b>例 1.1. base-dn.ldif</b></p><div class="example-contents">
+		  		
+		  		<pre class="screen">
+dn: dc=bg7nyt,dc=cn
+objectclass: dcObject
+objectclass: organization
+o:bg7nyt.net
+dc: bg7nyt
+description:Top level of directory
+
+dn: cn=Manager,dc=bg7nyt,dc=cn
+objectclass: organizationalRole
+cn: Manager
+
+dn: cn=admin,dc=bg7nyt,dc=cn
+objectclass: organizationalRole
+cn: admin
+
+dn: cn=root,dc=bg7nyt,dc=cn
+objectclass: organizationalRole
+cn: root
+		  		</pre>
+			</div></div><br class="example-break">
+			<p>ldapadd -x -D "cn=root,dc=bg7nyt,dc=cn" -W -f base-dn.ldif</p>		
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp59130192"></a>1.3.2. Add</h3></div></div></div>
+			
+		      <p>添加条目</p>
+		  		<pre class="screen">
+		  		
+[chenjingfeng@backup ldap]$ ldapadd -x -D "cn=root,dc=bg7nyt,dc=cn" -W -f base-dn.ldif
+Enter LDAP Password:
+adding new entry "dc=bg7nyt,dc=cn"
+
+adding new entry "cn=Manager,dc=bg7nyt,dc=cn"
+
+adding new entry "cn=admin,dc=bg7nyt,dc=cn"
+
+adding new entry "cn=root,dc=bg7nyt,dc=cn"
+				
+				</pre>
+				<p>查看条目</p>
+				<pre class="screen">
+				
+[chenjingfeng@backup ldap]$ ldapsearch -x -b 'dc=bg7nyt,dc=cn' '(objectclass=*)'
+# extended LDIF
+#
+# LDAPv3
+# base &lt;dc=bg7nyt,dc=cn&gt; with scope sub
+# filter: (objectclass=*)
+# requesting: ALL
+#
+
+# bg7nyt.cn
+dn: dc=bg7nyt,dc=cn
+objectClass: dcObject
+objectClass: organization
+o: bg7nyt.net
+dc: bg7nyt
+description: Top level of directory
+
+# Manager, bg7nyt.cn
+dn: cn=Manager,dc=bg7nyt,dc=cn
+objectClass: organizationalRole
+cn: Manager
+
+# admin, bg7nyt.cn
+dn: cn=admin,dc=bg7nyt,dc=cn
+objectClass: organizationalRole
+cn: admin
+
+# root, bg7nyt.cn
+dn: cn=root,dc=bg7nyt,dc=cn
+objectClass: organizationalRole
+cn: root
+
+# search result
+search: 2
+result: 0 Success
+
+# numResponses: 5
+# numEntries: 4
+				
+			  </pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp59133584"></a>1.3.3. Search</h3></div></div></div>
+			
+		</div>		
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp59134352"></a>1.3.4. Modify</h3></div></div></div>
+			
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp59135120"></a>1.3.5. Delete</h3></div></div></div>
+			
+			<p>删除条目</p>
+			<pre class="screen">
+ldapdelete -x -D "cn=root,dc=bg7nyt,dc=cn" -W "dc=bg7nyt,dc=cn"
+			</pre>			
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp59136656"></a>1.3.6. Search</h3></div></div></div>
+			
+				<p>搜索条目</p>
+				<p>dn条目</p>
+				<pre class="screen">
+ldapsearch -x -b '' -s base '(objectclass=*)' namingContexts
+				</pre>
+				<p>结果</p>
+				<pre class="screen">
+				
+# extended LDIF
+#
+# LDAPv3
+# base &lt;&gt; with scope base
+# filter: (objectclass=*)
+# requesting: namingContexts
+#
+
+#
+dn:
+namingContexts: dc=bg7nyt,dc=cn
+
+# search result
+search: 2
+result: 0 Success
+
+# numResponses: 2
+# numEntries: 1
+				
+				</pre>
+				<pre class="screen">
+
+ldapsearch -x -b 'dc=bg7nyt,dc=cn'
+				</pre>			
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp59140032"></a>1.3.7. Organization Unit</h3></div></div></div>
+			
+			<p>建立组织单元</p>
+			<div class="example"><a name="idp59141232"></a><p class="title"><b>例 1.2. ou.ldif</b></p><div class="example-contents">
+				
+				<pre class="screen">
+dn: ou=address,dc=bg7nyt,dc=cn
+ou: address
+objectClass: organizationalUnit
+
+dn: cn=neo, ou=address, dc=bg7nyt,dc=cn
+objectClass: person
+cn: neo
+sn: neo
+
+dn: cn=netkiller, ou=address, dc=bg7nyt,dc=cn
+objectClass: person
+objectClass: inetOrgPerson
+cn: netkiller
+sn: netkiller
+mail: openunix@163.com
+
+dn: cn=bg7nyt, ou=address, dc=bg7nyt,dc=cn
+objectClass: person
+cn: bg7nyt
+sn: bg7nyt
+				</pre>
+			</div></div><br class="example-break">
+			<p>建立ou</p>
+			<pre class="screen">
+[chenjingfeng@backup ldap]$ ldapadd -x -D "cn=root,dc=bg7nyt,dc=cn" -W -f ou.ldif
+Enter LDAP Password:
+adding new entry "ou=address,dc=bg7nyt,dc=cn"
+
+adding new entry "cn=neo, ou=address, dc=bg7nyt,dc=cn"
+
+adding new entry "cn=netkiller, ou=address, dc=bg7nyt,dc=cn"
+
+adding new entry "cn=bg7nyt, ou=address, dc=bg7nyt,dc=cn"
+
+			</pre>
+			<p>删除ou</p>
+			<pre class="screen">
+[chenjingfeng@backup ldap]$ ldapdelete -x -D "cn=root,dc=bg7nyt,dc=cn" -W "ou=address,dc=bg7nyt,dc=cn"
+Enter LDAP Password:
+			</pre>		
+		</div>
+	</div><script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-11694057-1']);
+  _gaq.push(['_setDomainName', 'netkiller.github.io']);
+  _gaq.push(['_setAllowLinker', true]);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script><script type="text/javascript">
+var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F997cd4a7320a82d72cb74d179118f697' type='text/javascript'%3E%3C/script%3E"));
+</script></body></html>
