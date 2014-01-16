@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>1.2. PAM 插件认证</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.78.1" /><meta name="keywords" content="Sniffer, Scanner, Vulnerability, Penetration, nmap, tcpdump, sqlmap, Nessus, Backtrack" /><link rel="home" href="../index.html" title="Netkiller Security 手札" /><link rel="up" href="index.html" title="第 1 章 Authentication" /><link rel="prev" href="index.html" title="第 1 章 Authentication" /><link rel="next" href="auth.html" title="1.3. Network Authentication" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">1.2. PAM 插件认证</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><th width="60%" align="center">第 1 章 Authentication</th><td width="20%" align="right"> <a accesskey="n" href="auth.html">下一页</a></td></tr></table><hr /></div><table xmlns="" width="100%" border="0"><tr><td align="left"><a href="http://netkiller.github.io/">Home</a> |
+        <a href="http://netkiller.sourceforge.net/">Mirror</a> |
+        <a href="/search.html">Search</a></td><td><a href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
+        <a href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+        <a href="http://rline.blog.51cto.com/">51CTO 博客</a></td><td><form id="searchbox_008589143145807374698:f5uprauilyy" action="/search.html"><input type="hidden" name="cx" value="008589143145807374698:f5uprauilyy" /><input type="hidden" name="cof" value="FORID:11" /><input name="q" type="text" size="25" style="border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; border-top-style: solid; border-right-style: solid; border-bottom-style: solid; border-left-style: solid; border-top-color: rgb(126, 157, 185); border-right-color: rgb(126, 157, 185); border-bottom-color: rgb(126, 157, 185); border-left-color: rgb(126, 157, 185); padding-top: 2px; padding-right: 2px; padding-bottom: 2px; padding-left: 2px; background-image: url(http://www.google.com/cse/intl/en/images/google_custom_search_watermark.gif); background-attachment: initial; background-origin: initial; background-clip: initial; background-color: rgb(255, 255, 255); background-position: 0% 50%; background-repeat: no-repeat no-repeat; " /><input type="submit" name="sa" value="Search" /><input name="siteurl" type="hidden" value="http://netkiller.sourceforge.net/" /></form><script type="text/javascript" src="http://www.google.com/coop/cse/brand?form=searchbox_008589143145807374698%3Af5uprauilyy"></script></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="pam"></a>1.2. PAM 插件认证</h2></div></div></div>
+		
+		<p>配置文件</p>
+		<pre class="screen">
+ls  /etc/pam.d/
+chfn         crond                login    passwd            remote    runuser-l          smtp          ssh-keycat  sudo-i       system-auth-ac
+chsh         fingerprint-auth     newrole  password-auth     run_init  smartcard-auth     smtp.postfix  su          su-l
+config-util  fingerprint-auth-ac  other    password-auth-ac  runuser   smartcard-auth-ac  sshd          sudo        system-auth
+		</pre>
+		<p>认证插件</p>
+		<pre class="screen">
+ls /lib64/security/
+		</pre>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="pam_tally2.so"></a>1.2.1. pam_tally2.so</h3></div></div></div>
+			
+			<p>此模块的功能是，登陆错误输入密码3次，5分钟后自动解禁，在未解禁期间输入正确密码也无法登陆。</p>
+			<p>在配置文件 /etc/pam.d/sshd 顶端加入</p>
+			<pre class="screen">
+auth required pam_tally2.so deny=3 onerr=fail unlock_time=300
+			</pre>
+			<p>查看失败次数</p>
+			<pre class="screen">
+# pam_tally2
+Login           Failures Latest failure     From
+root               14    07/12/13 15:44:37  192.168.6.2
+neo                 8    07/12/13 15:45:36  192.168.6.2
+			</pre>
+			<p>重置计数器</p>
+			<pre class="screen">
+# pam_tally2 -r -u root
+Login           Failures Latest failure     From
+root               14    07/12/13 15:44:37  192.168.6.2
+
+# pam_tally2 -r -u neo
+Login           Failures Latest failure     From
+neo                 8    07/12/13 15:45:36  192.168.6.2
+			</pre>
+			<p>pam_tally2 计数器日志保存在 /var/log/tallylog 注意，这是二进制格式的文件</p>
+			<div class="example"><a id="idp59928704"></a><p class="title"><strong>例 1.1. /etc/pam.d/sshd - pam_tally2.so</strong></p><div class="example-contents">
+				
+				<pre class="screen">
+# cat  /etc/pam.d/sshd
+#%PAM-1.0
+auth required pam_tally2.so deny=3 onerr=fail unlock_time=300
+
+auth	   required	pam_sepermit.so
+auth       include      password-auth
+account    required     pam_nologin.so
+account    include      password-auth
+password   include      password-auth
+# pam_selinux.so close should be the first session rule
+session    required     pam_selinux.so close
+session    required     pam_loginuid.so
+# pam_selinux.so open should only be followed by sessions to be executed in the user context
+session    required     pam_selinux.so open env_params
+session    optional     pam_keyinit.so force revoke
+session    include      password-auth
+				</pre>
+			</div></div><br class="example-break" />
+			<p>以上配置root用户不受限制, 如果需要限制root用户，参考下面</p>
+			<pre class="screen">
+auth required pam_tally2.so deny=3 unlock_time=5 even_deny_root root_unlock_time=1800
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="pam_listfile.so"></a>1.2.2. pam_listfile.so</h3></div><div><h4 class="subtitle">用户登陆限制</h4></div></div></div>
+			
+			
+			<p>将下面一行添加到 /etc/pam.d/sshd 中，这里采用白名单方式，你也可以采用黑名单方式</p>
+			<pre class="screen">
+auth       required     pam_listfile.so item=user sense=allow file=/etc/ssh/whitelist onerr=fail
+			</pre>
+			<p>将允许登陆的用户添加到 /etc/ssh/whitelist，除此之外的用户将不能通过ssh登陆到你的系统</p>
+			<pre class="screen">
+# cat /etc/ssh/whitelist
+neo
+www
+			</pre>
+			<div class="example"><a id="idp59935360"></a><p class="title"><strong>例 1.2. /etc/pam.d/sshd - pam_listfile.so</strong></p><div class="example-contents">
+				
+				<pre class="screen">
+# cat /etc/pam.d/sshd
+#%PAM-1.0
+auth       required     pam_listfile.so item=user sense=allow file=/etc/ssh/whitelist onerr=fail
+auth       required     pam_tally2.so deny=3 onerr=fail unlock_time=300
+
+auth	   required	pam_sepermit.so
+auth       include      password-auth
+account    required     pam_nologin.so
+account    include      password-auth
+password   include      password-auth
+# pam_selinux.so close should be the first session rule
+session    required     pam_selinux.so close
+session    required     pam_loginuid.so
+# pam_selinux.so open should only be followed by sessions to be executed in the user context
+session    required     pam_selinux.so open env_params
+session    optional     pam_keyinit.so force revoke
+session    include      password-auth
+				</pre>
+			</div></div><br class="example-break" />
+			<p>sense=allow	白名单方式, sense=deny	黑名单方式</p>
+			<pre class="screen">
+auth       required     pam_listfile.so item=user sense=deny file=/etc/ssh/blacklist onerr=fail
+			</pre>
+			<p>更多细节请查看手册 $ man pam_listfile</p>
+		</div>
+
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="pam_access.so"></a>1.2.3. pam_access.so</h3></div></div></div>
+			
+			<p>编辑 /etc/pam.d/sshd 文件，加入下面一行</p>
+			<pre class="screen">
+account required pam_access.so
+			</pre>
+			<p>保存后重启sshd进程</p>
+			<p>编辑 /etc/security/access.conf 文件</p>
+			<pre class="screen">
+			
+cat &gt;&gt;  /etc/security/access.conf &lt;&lt; EOF
+
+- : root : ALL EXCEPT 192.168.6.1
+EOF
+			
+			</pre>
+			<p>只能通过 192.168.6.1 登陆, 添加多个IP地址</p>
+			<pre class="screen">
+- : root : ALL EXCEPT 192.168.6.1 192.168.6.2
+			</pre>
+			<p>测试是否生效</p>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="pam_wheel.so"></a>1.2.4. pam_wheel.so</h3></div></div></div>
+			
+			<p>限制普通用户通过su命令提升权限至root. 只有属于wheel组的用户允许通过su切换到root用户</p>
+			<p>编辑 /etc/pam.d/su 文件，去掉下面的注释</p>
+			<pre class="screen">
+auth		required	pam_wheel.so use_uid
+			</pre>
+			<p>修改用户组别，添加到wheel组</p>
+			<pre class="screen">
+# usermod -G wheel www
+
+# id www
+uid=501(www) gid=501(www) groups=501(www),10(wheel)
+			</pre>
+			<p>没有加入到wheel组的用户使用su时会提示密码不正确。</p>
+			<pre class="screen">
+$ su - root
+Password:
+su: incorrect password
+			</pre>
+		</div>
+	</div><div xmlns="" id="bdshare" class="bdshare_t bds_tools_32 get-codes-bdshare"><a class="bds_fbook"></a><a class="bds_twi"></a><a class="bds_ms"></a><a class="bds_msn"></a><a class="bds_buzz"></a><a class="bds_linkedin"></a><a class="bds_deli"></a><a class="bds_qzone"></a><a class="bds_qq"></a><a class="bds_tqq"></a><a class="bds_tqf"></a><a class="bds_tsina"></a><a class="bds_baidu"></a><a class="bds_renren"></a><a class="bds_t163"></a><a class="bds_tfh"></a><a class="bds_douban"></a><a class="bds_hi"></a><a class="bds_tieba"></a><a class="bds_tsohu"></a><span class="bds_more"></span><a class="shareCount"></a></div><script xmlns="" type="text/javascript" id="bdshare_js" data="type=tools"></script><script xmlns="" type="text/javascript" id="bdshell_js"></script><script xmlns="" type="text/javascript">
+	document.getElementById("bdshell_js").src = "http://bdimg.share.baidu.com/static/js/shell_v2.js?cdnversion=" + new Date().getHours();
+</script><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
+            /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+
+            //if(document.domain == 'netkiller.github.com'){
+            var disqus_shortname = 'netkiller'; // required: replace example with your forum shortname
+            //}else{
+			//var disqus_shortname = 'neochan';
+            //}
+
+            /* * * DON'T EDIT BELOW THIS LINE * * */
+            (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+            })();
+        </script><noscript xmlns="">Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><a xmlns="" href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a><br xmlns="" /><div xmlns="" id="clustrmaps-widget"></div><script xmlns="" type="text/javascript">var _clustrmaps = {'url' : 'http://netkiller.github.io', 'user' : 1107643, 'server' : '2', 'id' : 'clustrmaps-widget', 'version' : 1, 'date' : '2013-08-14', 'lang' : 'en', 'corners' : 'square' };(function (){ var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = 'http://www2.clustrmaps.com/counter/map.js'; var x = document.getElementsByTagName('script')[0]; x.parentNode.insertBefore(s, x);})();</script><noscript xmlns=""><a href="http://www2.clustrmaps.com/user/87410e6bb"><img src="http://www2.clustrmaps.com/stats/maps-no_clusters/netkiller.github.io-thumb.jpg" alt="Locations of visitors to this page" /></a></noscript><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="auth.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 1 章 Authentication </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 1.3. Network Authentication</td></tr></table></div><script xmlns="" type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-11694057-1']);
+  _gaq.push(['_setDomainName', 'netkiller.github.io']);
+  _gaq.push(['_setAllowLinker', true]);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script><script xmlns="" type="text/javascript">
+var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F997cd4a7320a82d72cb74d179118f697' type='text/javascript'%3E%3C/script%3E"));
+</script></body></html>
