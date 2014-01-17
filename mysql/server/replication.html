@@ -10,7 +10,7 @@
 
 		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="replication.master"></a>1.3.1.1. Master</h4></div></div></div>
 			
-			<div class="procedure"><a id="idp61194368"></a><p class="title"><strong>过程 1.1. Master 设置步骤</strong></p><ol class="procedure" type="1"><li class="step">
+			<div class="procedure"><a id="idp67666784"></a><p class="title"><strong>过程 1.1. Master 设置步骤</strong></p><ol class="procedure" type="1"><li class="step">
 					<p>配置 my.cnf 文件</p>
 					<p>确保主服务器主机上my.cnf文件的[mysqld]部分包括一个log-bin选项。该部分还应有一个server-id=Master_id选项</p>
 					<pre class="screen">
@@ -34,6 +34,17 @@ neo@netkiller:~$ sudo /etc/init.d/mysql reload
  * Reloading MySQL database server mysqld          [ OK ]
 					</pre>
 					<p>建议使用reload,如果不起作用再用restart</p>
+					<pre class="screen">
+					
+mysql&gt; SHOW GLOBAL VARIABLES like 'server_id';
++---------------+-------+
+| Variable_name | Value |
++---------------+-------+
+| server_id     | 1     |
++---------------+-------+
+1 row in set (0.00 sec)
+					
+					</pre>
 				</li><li class="step">
 					<p>登录slave服务器，测试主库3306工作情况，如果看到下面相关信息表示工作正常。</p>
 					<pre class="screen">
@@ -50,12 +61,12 @@ I
 					<p>创建账户并授予REPLICATION SLAVE权限</p>
 					<pre class="screen">
 					
-mysql&gt; GRANT REPLICATION SLAVE ON *.* TO 'replication'@'%.mydomain.com' IDENTIFIED BY 'slavepass';
+mysql&gt; GRANT REPLICATION SLAVE,REPLICATION CLIENT ON *.* TO 'replication'@'%.mydomain.com' IDENTIFIED BY 'slavepass';
 mysql&gt; FLUSH PRIVILEGES;
 					
 					</pre>
-					<p>GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO replication@'192.168.245.131' IDENTIFIED BY 'slavepass'</p>
-
+					<p>创建监控账号monitor（可选项），monitor 使用SHOW MASTER STATUS和SHOW SLAVE STATUS命令但没有复制权限</p>
+					<p>GRANT REPLICATION CLIENT ON *.* TO monitor@'192.168.245.131' IDENTIFIED BY 'monitorpass'</p>
 				</li><li class="step">
 					<p>锁表禁止写入新数据</p>
 					<pre class="screen">
@@ -95,7 +106,7 @@ mysql&gt; UNLOCK TABLES;
 		</div>
 		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="replication.slave"></a>1.3.1.2. Slave</h4></div></div></div>
 			
-			<div class="procedure"><a id="idp61209984"></a><p class="title"><strong>过程 1.2. Slave 设置步骤</strong></p><ol class="procedure" type="1"><li class="step">
+			<div class="procedure"><a id="idp67683520"></a><p class="title"><strong>过程 1.2. Slave 设置步骤</strong></p><ol class="procedure" type="1"><li class="step">
 					<p>配置my.cnf</p>
 					<p>从服务器的ID必须与主服务器的ID不相同,如果设置多个从服务器，每个从服务器必须有一个唯一的server-id值，必须与主服务器的以及其它从服务器的不相同。</p>
 					<pre class="screen">
@@ -122,12 +133,30 @@ mysql&gt; CHANGE MASTER TO
     -&gt;     MASTER_LOG_POS=recorded_log_position;
 	   				
 					</pre>
-					<p>CHANGE MASTER TO MASTER_HOST='192.168.245.129', MASTER_USER='replication', MASTER_PASSWORD='slavepass';</p>
+					<p>如果是全新服务器，空数据库可以忽略MASTER_LOG_FILE与MASTER_LOG_POS</p>
+					<pre class="screen">
+CHANGE MASTER TO MASTER_HOST='192.168.245.129', MASTER_USER='replication', MASTER_PASSWORD='slavepass';
+					</pre>
+					<p>如果是复制已经存在的数据库需要MASTER_LOG_FILE与MASTER_LOG_POS选项</p>
+					<p>首先到Master上运行 show master status 找到File与Position</p>
 					<pre class="screen">
 					
-mysql&gt; CHANGE MASTER TO MASTER_HOST='192.168.245.129', MASTER_USER='repl', MASTER_PASSWORD='slavepass';
-Query OK, 0 rows affected (0.14 sec)
+mysql&gt; show master status \G
+*************************** 1. row ***************************
+            File: mysql-bin.000009
+        Position: 3988
+    Binlog_Do_DB:
+Binlog_Ignore_DB:
+1 row in set (0.00 sec)
 					
+					</pre>
+					<pre class="screen">
+CHANGE MASTER TO
+     MASTER_HOST='192.168.2.1',
+     MASTER_USER='replication',
+     MASTER_PASSWORD='kJZBTo3BjMx9AnmD9Ryn',
+     MASTER_LOG_FILE='mysql-bin.000009',
+     MASTER_LOG_POS=3988;
 					</pre>
 				</li><li class="step">
 					<p>启动从服务器线程</p>
@@ -369,25 +398,11 @@ grant SELECT ON your_user.* to yourdb@'your_host' identified by 'password' with 
 			</pre>
 			<p>从库必须收回写操作</p>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="replication.error"></a>1.3.1.6. 主从不同步问题</h4></div></div></div>
-			
-			<p>执行下面语句</p>
-			<pre class="screen">
-stop slave;
-set global sql_slave_skip_counter =1 ;
-start slave;
-			</pre>
-			<p>Seconds_Behind_Master 值从NULL变为大于等于0是表示已经同步</p>
-			<pre class="screen">
-Seconds_Behind_Master: NULL
-Seconds_Behind_Master: 8893
-			</pre>
-		</div>
 	</div>
 
 	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="master.master"></a>1.3.2. Master Master(主主)</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp61256688"></a>1.3.2.1. Master A</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp67708608"></a>1.3.2.1. Master A</h4></div></div></div>
 			
 			<p>my.cnf 文件加入下面的内容</p>
 			<pre class="screen">
@@ -427,7 +442,7 @@ Binlog_Ignore_DB: mysql
 			</pre>
 
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp61260368"></a>1.3.2.2. Master B</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp67732944"></a>1.3.2.2. Master B</h4></div></div></div>
 			
 			<p>创建复制权限</p>
 			<pre class="screen">
@@ -466,7 +481,7 @@ Binlog_Ignore_DB: mysql
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp61264944"></a>1.3.2.3. 将Master A 数据库 同步到 Master B 两端数据库内容保持一致</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp67737456"></a>1.3.2.3. 将Master A 数据库 同步到 Master B 两端数据库内容保持一致</h4></div></div></div>
 			
 			<p>Master A，首先锁表为只读状态</p>
 			<pre class="screen">
@@ -486,7 +501,7 @@ mysql&gt;\q
   			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp61267984"></a>1.3.2.4. Master A - B 同步两端数据库</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp67740496"></a>1.3.2.4. Master A - B 同步两端数据库</h4></div></div></div>
 			
 			<p>master-A</p>
 			<pre class="screen">
@@ -501,7 +516,7 @@ mysql&gt;change master to master_host='192.168.1.1', master_user='replication', 
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp61270944"></a>1.3.2.5. Master A 数据库解除只读权限</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp67743616"></a>1.3.2.5. Master A 数据库解除只读权限</h4></div></div></div>
 			
 			<p>Master A 解锁</p>
 			<pre class="screen">
@@ -510,7 +525,7 @@ mysql&gt; UNLOCK TABLES;
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp61272864"></a>1.3.2.6. 查看主主的工作状态</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp67745280"></a>1.3.2.6. 查看主主的工作状态</h4></div></div></div>
 			
 			<p>分别在Master A与B 上运行</p>
 			<pre class="screen">
@@ -524,26 +539,10 @@ Slave_SQL_Running: Yes
 		</div>
 	</div>
 
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="replication.error"></a>1.3.3. 与复制有关的问题</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="semisynchronous"></a>1.3.3. Semisynchronous Replication</h3></div></div></div>
 		
-
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="replication.expire-logs-days"></a>1.3.3.1. mysql-bin 清理问题</h4></div></div></div>
-			
-			<p>缺省expire-logs-days为30天。这里设为7天，可根据自己情况调整。</p>
-			<pre class="screen">
-[mysqld]
-expire-logs-days = 7
-			</pre>
-			<p>通过SQL删除</p>
-			<pre class="screen">
-删除某个日志：	mysql&gt;PURGE MASTER LOGS TO ‘mysql-bin.015′;
-删除某天前的日志：	mysql&gt;PURGE MASTER LOGS BEFORE ’2010-10-25  14:00:00′;
-			</pre>
-		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp61278880"></a>1.3.3.2. Semisynchronous Replication</h4></div></div></div>
-			
-			<pre class="screen">
-			
+		<pre class="screen">
+		
 mysql&gt; SHOW VARIABLES LIKE "have_dynamic_loading";
 +----------------------+-------+
 | Variable_name        | Value |
@@ -553,33 +552,37 @@ mysql&gt; SHOW VARIABLES LIKE "have_dynamic_loading";
 1 row in set (0.00 sec)
 
 mysql&gt;
-			
-			</pre>
-			<pre class="screen">
+		
+		</pre>
+		<p>Master 配置</p>
+		<pre class="screen">
 master  &gt; INSTALL PLUGIN rpl_semi_sync_master SONAME ‘libsemisync_master.so’;
-slave-x &gt; INSTALL PLUGIN rpl_semi_sync_slave SONAME ‘libsemisync_slave.so’;
 master  &gt; SET GLOBAL rpl_semi_sync_master_enabled=1;
+		</pre>
+		<p>Slave 配置</p>
+		<pre class="screen">
+slave-x &gt; INSTALL PLUGIN rpl_semi_sync_slave SONAME ‘libsemisync_slave.so’;
 slave-x &gt; SET GLOBAL rpl_semi_sync_slave_enabled=1;
-			</pre>
-			<pre class="screen">
+		</pre>
+		<pre class="screen">
 CREATE USER 'replication'@'192.168.1.%' IDENTIFIED BY 'password';
 GRANT ALL PRIVILEGES ON *.* TO 'replication'@'192.168.1.%' IDENTIFIED BY 'password' WITH GRANT OPTION MAX_QUERIES_PER_HOUR 0 MAX_CONNECTIONS_PER_HOUR 0 MAX_UPDATES_PER_HOUR 0 MAX_USER_CONNECTIONS 0 ;
-			</pre>
-			<p>master_heartbeat_period</p>
-			<pre class="screen">
+		</pre>
+		<p>master_heartbeat_period</p>
+		<pre class="screen">
 STOP SLAVE;
 CHANGE MASTER TO master_heartbeat_period= milliseconds;
 START SLAVE;
-			</pre>
-			<pre class="screen">
+		</pre>
+		<pre class="screen">
 mysql&gt; CHANGE MASTER TO MASTER_HOST='xxx.xxx.xxx.xxx', MASTER_USER='root', MASTER_PASSWORD='password', MASTER_PORT=3306, MASTER_CONNECT_RETRY=10, MASTER_LOG_FILE='mysql-bin.000004', MASTER_LOG_POS=107;
-			</pre>
-			<p>跳过出问题的MySQL实例</p>
-			<pre class="screen">
+		</pre>
+		<p>跳过出问题的MySQL实例</p>
+		<pre class="screen">
 CHANGE MASTER TO MASTER_HOST=xxx.xxx.xxx.xxx IGNORE_SERVER_IDS=y
-			</pre>
-			<p>编辑my.cnf加入</p>
-			<pre class="screen">
+		</pre>
+		<p>编辑my.cnf加入</p>
+		<pre class="screen">
 # On Master
 [mysqld]
 rpl_semi_sync_master_enabled=1
@@ -588,8 +591,7 @@ rpl_semi_sync_master_timeout=1000 # 1 second
 # On Slave
 [mysqld]
 rpl_semi_sync_slave_enabled=1
-			</pre>
-		</div>
+		</pre>
 	</div>
 	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="multi-master"></a>1.3.4. multi-master replication</h3></div></div></div>
 		
@@ -634,7 +636,7 @@ slave&gt; start slave for channel="master2";
 		<pre class="screen">
 		
 slave &gt; SHOW SLAVE STATUS FOR CHANNEL="master1"\G
-slave &gt; SHOW SLAVE STATUS FOR CHANNEL="master2"\G		
+slave &gt; SHOW SLAVE STATUS FOR CHANNEL="master2"\G
 		
 		</pre>
 		<p>测试,分别在两个主服务器上创建数据库，然后查看从数据库同步结果.</p>
@@ -650,9 +652,60 @@ slave &gt; show databases like 'master%';
 | master1            |
 | master2            |
 +--------------------+
-		
+
 		
 		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="replication.error"></a>1.3.6. 与复制有关的问题</h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="replication.error"></a>1.3.6.1. 主从不同步问题</h4></div></div></div>
+			
+			<p>执行下面语句</p>
+			<pre class="screen">
+stop slave;
+set global sql_slave_skip_counter =1 ;
+start slave;
+
+mysql&gt; slave stop;
+mysql&gt; set GLOBAL SQL_SLAVE_SKIP_COUNTER=1;
+mysql&gt; slave start;
+			</pre>
+
+			<p>Seconds_Behind_Master 值从NULL变为大于等于0是表示已经同步</p>
+			<pre class="screen">
+Seconds_Behind_Master: NULL
+Seconds_Behind_Master: 8893
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="replication.expire-logs-days"></a>1.3.6.2. mysql-bin 清理问题</h4></div></div></div>
+			
+			<p>缺省expire-logs-days为30天。这里设为7天，可根据自己情况调整。</p>
+			<pre class="screen">
+[mysqld]
+expire-logs-days = 7
+			</pre>
+			<p>通过SQL删除</p>
+			<pre class="screen">
+删除某个日志：	mysql&gt;PURGE MASTER LOGS TO ‘mysql-bin.015′;
+删除某天前的日志：	mysql&gt;PURGE MASTER LOGS BEFORE ’2010-10-25  14:00:00′;
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp67771104"></a>1.3.6.3. 跳过 Last_Errno</h4></div></div></div>
+			
+			<p>修改mysql配置文件 /etc/my.cnf 在 [mysqld]下加一行</p>
+			<pre class="screen">
+[mysqld]
+slave_skip_errors = 1062
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp67772896"></a>1.3.6.4. 重置Slave</h4></div></div></div>
+			
+			<pre class="screen">
+STOP SLAVE; 
+RESET SLAVE; 
+START SLAVE;			
+			</pre>
+		</div>
 	</div>
 </div><div xmlns="" id="bdshare" class="bdshare_t bds_tools_32 get-codes-bdshare"><a class="bds_fbook"></a><a class="bds_twi"></a><a class="bds_ms"></a><a class="bds_msn"></a><a class="bds_buzz"></a><a class="bds_linkedin"></a><a class="bds_deli"></a><a class="bds_qzone"></a><a class="bds_qq"></a><a class="bds_tqq"></a><a class="bds_tqf"></a><a class="bds_tsina"></a><a class="bds_baidu"></a><a class="bds_renren"></a><a class="bds_t163"></a><a class="bds_tfh"></a><a class="bds_douban"></a><a class="bds_hi"></a><a class="bds_tieba"></a><a class="bds_tsohu"></a><span class="bds_more"></span><a class="shareCount"></a></div><script xmlns="" type="text/javascript" id="bdshare_js" data="type=tools"></script><script xmlns="" type="text/javascript" id="bdshell_js"></script><script xmlns="" type="text/javascript">
 	document.getElementById("bdshell_js").src = "http://bdimg.share.baidu.com/static/js/shell_v2.js?cdnversion=" + new Date().getHours();
