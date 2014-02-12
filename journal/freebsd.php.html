@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>Gearman + PHP 实现分布式对象调用</title><link rel="stylesheet" type="text/css" href="journal.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.78.1" /><meta name="description" content="在群里看到有网友问，IDC的服务器是否需要开启防火墙，我意识到应该写一篇关于IDC安全的文章。" /><meta name="keywords" content="Gearman, , " /><script xmlns="" type="text/javascript">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>FreeBSD 10 + Nginx 1.4.4 + PHP 5.5.9 + MySQL 5.6.15</title><link rel="stylesheet" type="text/css" href="journal.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.78.1" /><meta name="description" content="FreeBSD 10.0 的 pkg 无法安装php-fpm 最终采用 posts 编译安装 http://netkiller.github.io/journal/freebsd.php.html" /><meta name="keywords" content="FreeBSD 10.0, PHP 5.5.9, MySQL 5.6.15" /><script xmlns="" type="text/javascript">
 
   var _gaq = _gaq || [];
   _gaq.push(['_setAccount', 'UA-11694057-1']);
@@ -19,7 +19,7 @@
         <a href="/search.html">Search</a> |
         <a href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
         <a href="http://my.oschina.net/neochen/">OSChina 博客</a> |
-        <a href="http://rline.blog.51cto.com/">51CTO 博客</a></td><td></td><td></td></tr></table><div xml:lang="zh-cn" class="article" lang="zh-cn"><div class="titlepage"><div><div><h2 class="title"><a id="idp54669328"></a>Gearman + PHP 实现分布式对象调用</h2></div><div><h3 class="subtitle"><em>http://netkiller.github.io/journal/gearman.php.html</em></h3></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(netkiller)</span>, <span class="lineage">陈景峰(BG7NYT)</span></h3><div class="affiliation">
+        <a href="http://rline.blog.51cto.com/">51CTO 博客</a></td><td></td><td></td></tr></table><div xml:lang="zh-cn" class="article" lang="zh-cn"><div class="titlepage"><div><div><h2 class="title"><a id="idp54677408"></a>FreeBSD 10 + Nginx 1.4.4 + PHP 5.5.9 + MySQL 5.6.15</h2></div><div><h3 class="subtitle"><em>How to Install Nginx and PHP-FPM on FreeBSD 10</em></h3></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(netkiller)</span>, <span class="lineage">陈景峰(BG7NYT)</span></h3><div class="affiliation">
 			<div class="address"><p><br />
 				<span class="country">中国</span><span class="state">广东省</span><span class="city">深圳市</span><span class="street">龙华新区民治街道溪山美地</span><br />
 				<span class="postcode">518131</span><br />
@@ -28,7 +28,8 @@
 				<code class="email">&lt;<a class="email" href="mailto:netkiller@msn.com">netkiller@msn.com</a>&gt;</code><br />
 			</p></div>
 		</div></div></div><div><p class="releaseinfo">$Id$</p></div><div><p class="copyright">版权 © 2011, 2012, 2013, 2014 http://netkiller.github.io</p></div><div><p class="pubdate">$Date$</p></div><div><div class="abstract"><p class="title"><strong>摘要</strong></p>
-			<p>在群里看到有网友问，IDC的服务器是否需要开启防火墙，我意识到应该写一篇关于IDC安全的文章。 </p>
+			<p>FreeBSD 10.0 的 pkg 无法安装php-fpm 最终采用 posts 编译安装</p>
+			<p>http://netkiller.github.io/journal/freebsd.php.html</p>
 		</div></div><div><div class="abstract"><a id="abstract"></a><p class="title"><strong>我的系列文档</strong></p>
 	
 	<table border="0" summary="Simple list" class="simplelist"><tr><td>
@@ -88,185 +89,224 @@
 		</td><td> </td><td> </td><td> </td></tr></table>
 	
 
-</div></div></div><hr /></div><div class="toc"><p><strong>目录</strong></p><dl class="toc"><dt><span class="section"><a href="#idp54673328">1. Gearman Job Server</a></span></dt><dt><span class="section"><a href="#idp54749552">2. Gearman PHP扩展</a></span></dt><dt><span class="section"><a href="#idp54749808">3. 参数传递与返回值</a></span></dt></dl></div>
+</div></div></div><hr /></div><div class="toc"><p><strong>目录</strong></p><dl class="toc"><dt><span class="section"><a href="#idp54681408">1. PHP 5.5.9</a></span></dt><dt><span class="section"><a href="#idp54757168">2. MySQL 5.6.15</a></span></dt><dt><span class="section"><a href="#idp54765744">3. Nginx 1.4.4</a></span></dt></dl></div>
 	
 
- 	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54673328"></a>1. Gearman Job Server</h2></div></div></div>
+ 	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54681408"></a>1. PHP 5.5.9</h2></div></div></div>
 		
  		<p>文本格式回复</p>
 		<pre class="screen">
-yum install gearmand
-		</pre>	
-	</div>
-
-
-	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54749552"></a>2. Gearman PHP扩展</h2></div></div></div>
-		
-
-		<p>PHP扩展安装</p>
+cd /usr/ports/lang/php55
+make install clean; rehash
+		</pre>
+		<p>开启下面三个 PHP 编译选项</p>
 		<pre class="screen">
 		
-#!/bin/bash
-
-yum install libgearman-devel -y
-pecl install gearman
-
-cat &gt;&gt; /srv/php/etc/conf.d/gearman.ini &lt;&lt;EOF
-extension=gearman.so
+[X] CLI        Build CLI version
+[X] CGI        Build CGI version
+[X] FPM        Build FPM version (experimental)
+		
+		</pre>
+		<p>FreeBSD启动是自动开启php-fpm服务</p>
+		<pre class="screen">
+		
+cat &gt;&gt; /etc/rc.conf &lt;&lt;EOF
+php_fpm_enable="YES"
 EOF
 		
 		</pre>
-		<p>确认模块是否安装，同时检查gearman扩展的版本。</p>
+		<p>安装PHP扩展</p>
 		<pre class="screen">
-# php -m | grep gearman
-gearman
-
-# php -r 'printf("%s\r\n",gearman_version());'
-1.1.8
+cd /usr/ports/lang/php55-extensions
+make install clean; rehash
 		</pre>
-		<p>测试脚本 server.php</p>
+		<p>FPM启动脚本</p>
 		<pre class="screen">
-		
-&lt;?php
-$worker= new GearmanWorker();
-$worker-&gt;addServer();
-$worker-&gt;addFunction("reverse", "my_reverse_function");
-while ($worker-&gt;work());
-
-function my_reverse_function($job)
-{
-  return strrev($job-&gt;workload());
-}
-?&gt;		
-		
+# /usr/local/etc/rc.d/php-fpm start
 		</pre>
-		<p>测试脚本 client.php</p>
-		<pre class="screen">
-		
-&lt;?php
-$client= new GearmanClient();
-$client-&gt;addServer();
-print $client-&gt;doNormal("reverse", "Hello World!");
-?&gt;
-		
-		</pre>
-		<p>我用'o' 表示与上次备份中有差异的部分。</p>
-		
 	</div>
 
-	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54749808"></a>3. 参数传递与返回值</h2></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54757168"></a>2. MySQL 5.6.15</h2></div></div></div>
 		
-		<p>Gearman 向functon 传递参数只能通过$job-&gt;workload(), 而 $job-&gt;workload() 只能传递字符串。</p>
-		<p>如果托传递多个参数，需要将参数序列化后传递</p>
-		<p>返回值也一样，一个字符串可以直接返回，如果返回数字类型是不允许的，需要序列化处理</p>
-		<div class="example"><a id="idp54756752"></a><p class="title"><strong>例 1. 多参数传递与返回值实例</strong></p><div class="example-contents">
+		<p>安装 mysql server 与 client</p>
+		<pre class="screen">
+		
+pkg install mysql56-server
+pkg install mysql56-client
+		
+		</pre>
+
+		<p>设置mysql root密码</p>
+		<pre class="screen">
+/usr/local/etc/rc.d/mysql-server onestart
+/usr/local/bin/mysqladmin -u root password 'newpassword'
+		</pre>
+
+		<p>FreeBSD 启动时开启MySQL服务</p>
+		<pre class="screen">
+		
+cat &gt;&gt; /etc/rc.conf &lt;&lt;EOF
+mysql_enable="YES"
+EOF
+		
+		</pre>
+		<p>MySQL 启动脚本</p>
+		<pre class="screen">
+# /usr/local/etc/rc.d/mysql-server
+		</pre>
+	</div>
+
+	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54765744"></a>3. Nginx 1.4.4</h2></div></div></div>
+		
+		<p>所特殊需求，所以采用pkg安装</p>
+		<pre class="screen">
+# pkg install nginx
+		</pre>
+		<p>如果需要特别编译模块可以使用ports安装</p>
+		<pre class="screen">
+cd /usr/ports/www/nginx
+make install clean; rehash
+		</pre>
+		<p>服务开启</p>
+		<pre class="screen">
+		
+cat &gt;&gt; /etc/rc.conf &lt;&lt;EOF
+nginx_enable="YES"
+EOF
+		
+		</pre>
+		<p>Nginx 启动脚本的位置</p>
+		<pre class="screen">
+# /usr/local/etc/rc.d/nginx start
+		</pre>
+		<div class="example"><a id="idp54769792"></a><p class="title"><strong>例 1. Nginx 配置文件</strong></p><div class="example-contents">
 			
-			<p>Server</p>
+			<p>/usr/local/etc/nginx/nginx.conf</p>
 			<pre class="screen">
-			
-&lt;?php
-require 'Doctrine/Common/ClassLoader.php';
+#user  nobody;
+worker_processes  1;
 
-use Doctrine\Common\ClassLoader;
-use Doctrine\DBAL\DriverManager;
-use Doctrine\DBAL\Configuration;
+#error_log  logs/error.log;
+#error_log  logs/error.log  notice;
+#error_log  logs/error.log  info;
 
-$classLoader = new ClassLoader('Doctrine', '/www/DoctrineDBAL-2.3.4/');
-$classLoader-&gt;register();
+#pid        logs/nginx.pid;
 
-$config = new Configuration();
 
-$connectionParams = array(
-    'dbname' =&gt; 'example',
-    'user' =&gt; 'www',
-    'password' =&gt; 'password',
-    'host' =&gt; '192.168.2.1',
-    'driver' =&gt; 'pdo_mysql',
-);
-$conn = DriverManager::getConnection($connectionParams, $config);
-
-$host = '127.0.0.1';
-$port = 4730;
-
-echo "Starting\n";
-
-# Create our worker object.
-$gmworker= new GearmanWorker();
-
-# Add default server (localhost).
-$gmworker-&gt;addServer($host, $port);
-
-# Register function "reverse" with the server. Change the worker function to
-# "reverse_fn_fast" for a faster worker with no output.
-$gmworker-&gt;addFunction("members", "members");
-
-print "Waiting for job...\n";
-while($gmworker-&gt;work())
-{
-  if ($gmworker-&gt;returnCode() != GEARMAN_SUCCESS)
-  {
-    echo "return_code: " . $gmworker-&gt;returnCode() . "\n";
-    break;
-  }
+events {
+    worker_connections  1024;
 }
 
-function members($job)
-{
-	global  $conn;
-	$param = unserialize($job-&gt;workload());
-	print_r($param);
-	$sql = "SELECT username FROM members limit ".$param['limit'].",".$param['offset'];
-	$stmt = $conn-&gt;query($sql);
 
-	while ($row = $stmt-&gt;fetch()) {
-		//printf("%s\r\n", );
-		$result[] = $row['username'];
-	}
-	return serialize($result);
+http {
+    include       mime.types;
+    default_type  application/octet-stream;
+
+    #log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+    #                  '$status $body_bytes_sent "$http_referer" '
+    #                  '"$http_user_agent" "$http_x_forwarded_for"';
+
+    #access_log  logs/access.log  main;
+
+    sendfile        on;
+    #tcp_nopush     on;
+
+    #keepalive_timeout  0;
+    keepalive_timeout  65;
+
+    gzip  on;
+
+	include /usr/local/etc/nginx/conf.d/*.conf;
+
 }
-			
 			</pre>
-			<p>Client</p>
+			<p>/usr/local/etc/nginx/conf.d/host.domain.conf</p>
 			<pre class="screen">
-			
-&lt;?php
+server {
+    listen       80;
+    server_name  localhost;
 
-# create our client object
-$gmclient= new GearmanClient();
+    #charset koi8-r;
 
-# add the default server (localhost)
-$gmclient-&gt;addServer();
+    #access_log  logs/host.access.log  main;
 
-# run reverse client in the background
-$job_handle = $gmclient-&gt;doNormal("members",serialize(array('limit'=&gt;5,'offset'=&gt;10)));
+    location / {
+        root   /usr/local/www/nginx;
+        index  index.html index.php;
+    }
 
-if ($gmclient-&gt;returnCode() == GEARMAN_SUCCESS)
-{
-	print_r(unserialize($job_handle));
-}		
-				
-			</pre>
-			<p>运行结果</p>
-			<pre class="screen">
-$ php client.php 
-Array
-(
-    [0] =&gt; 257000005
-    [1] =&gt; 257000006
-    [2] =&gt; 257000009
-    [3] =&gt; 257000010
-    [4] =&gt; 257000011
-    [5] =&gt; 257000012
-    [6] =&gt; 257000013
-    [7] =&gt; 257000014
-    [8] =&gt; 257000015
-    [9] =&gt; 257000016
-)
+    #error_page  404              /404.html;
+
+    # redirect server error pages to the static page /50x.html
+    #
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/local/www/nginx-dist;
+    }
+
+    # proxy the PHP scripts to Apache listening on 127.0.0.1:80
+    #
+    #location ~ \.php$ {
+    #    proxy_pass   http://127.0.0.1;
+    #}
+
+    # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
+    #
+    location ~ \.php$ {
+        root           html;
+        fastcgi_pass   127.0.0.1:9000;
+        fastcgi_index  index.php;
+        fastcgi_param  SCRIPT_FILENAME  /usr/local/www/nginx$fastcgi_script_name;
+        include        fastcgi_params;
+    }
+
+    # deny access to .htaccess files, if Apache's document root
+    # concurs with nginx's one
+    #
+    #location ~ /\.ht {
+    #    deny  all;
+    #}
+}
+
+
+# another virtual host using mix of IP-, name-, and port-based configuration
+#
+#server {
+#    listen       8000;
+#    listen       somename:8080;
+#    server_name  somename  alias  another.alias;
+
+#    location / {
+#        root   html;
+#        index  index.html index.htm;
+#    }
+#}
+
+
+# HTTPS server
+#
+#server {
+#    listen       443;
+#    server_name  localhost;
+
+#    ssl                  on;
+#    ssl_certificate      cert.pem;
+#    ssl_certificate_key  cert.key;
+
+#    ssl_session_timeout  5m;
+
+#    ssl_protocols  SSLv2 SSLv3 TLSv1;
+#    ssl_ciphers  HIGH:!aNULL:!MD5;
+#    ssl_prefer_server_ciphers   on;
+
+#    location / {
+#        root   html;
+#        index  index.html index.htm;
+#    }
+#}
 			</pre>
 		</div></div><br class="example-break" />
-		<p></p>
 	</div>
-	
 </div><div xmlns="" id="bdshare" class="bdshare_t bds_tools_32 get-codes-bdshare"><a class="bds_fbook"></a><a class="bds_twi"></a><a class="bds_ms"></a><a class="bds_msn"></a><a class="bds_buzz"></a><a class="bds_linkedin"></a><a class="bds_deli"></a><a class="bds_qzone"></a><a class="bds_qq"></a><a class="bds_tqq"></a><a class="bds_tqf"></a><a class="bds_tsina"></a><a class="bds_baidu"></a><a class="bds_renren"></a><a class="bds_t163"></a><a class="bds_tfh"></a><a class="bds_douban"></a><a class="bds_hi"></a><a class="bds_tieba"></a><a class="bds_tsohu"></a><span class="bds_more"></span><a class="shareCount"></a></div><script xmlns="" type="text/javascript" id="bdshare_js" data="type=tools"></script><script xmlns="" type="text/javascript" id="bdshell_js"></script><script xmlns="" type="text/javascript">
 	document.getElementById("bdshell_js").src = "http://bdimg.share.baidu.com/static/js/shell_v2.js?cdnversion=" + new Date().getHours();
 </script><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
