@@ -19,7 +19,7 @@
         <a href="/search.html">Search</a> |
         <a href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
         <a href="http://my.oschina.net/neochen/">OSChina 博客</a> |
-        <a href="http://rline.blog.51cto.com/">51CTO 博客</a></td><td></td><td></td></tr></table><div xml:lang="zh-cn" class="article" lang="zh-cn"><div class="titlepage"><div><div><h2 class="title"><a id="idp54797296"></a>数据库进程间通信解决方案</h2></div><div><h3 class="subtitle"><em>数据库与其他第三方应用程序进程间通信解决方案</em></h3></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(netkiller)</span>, <span class="lineage">陈景峰(BG7NYT)</span></h3><div class="affiliation">
+        <a href="http://rline.blog.51cto.com/">51CTO 博客</a></td><td></td><td></td></tr></table><div xml:lang="zh-cn" class="article" lang="zh-cn"><div class="titlepage"><div><div><h2 class="title"><a id="idp56642688"></a>数据库进程间通信解决方案</h2></div><div><h3 class="subtitle"><em>数据库与其他第三方应用程序进程间通信解决方案</em></h3></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(netkiller)</span>, <span class="lineage">陈景峰(BG7NYT)</span></h3><div class="affiliation">
 			<div class="address"><p><br />
 				<span class="country">中国</span><span class="state">广东省</span><span class="city">深圳市</span><span class="street">龙华新区民治街道溪山美地</span><br />
 				<span class="postcode">518131</span><br />
@@ -89,10 +89,10 @@
 		</td><td> </td><td> </td><td> </td></tr></table>
 	
 
-</div></div></div><hr /></div><div class="toc"><p><strong>目录</strong></p><dl class="toc"><dt><span class="section"><a href="#idp54898176">1. 背景</a></span></dt><dt><span class="section"><a href="#idp54931472">2. 解决思路</a></span></dt><dt><span class="section"><a href="#idp54935024">3. Mysql plugin</a></span></dt><dt><span class="section"><a href="#idp54944192">4. plugin 的开发与使用</a></span></dt><dt><span class="section"><a href="#idp54944448">5. 插件如何使用</a></span></dt><dt><span class="section"><a href="#idp54949840">6. 部署相关问题</a></span></dt></dl></div>
+</div></div></div><hr /></div><div class="toc"><p><strong>目录</strong></p><dl class="toc"><dt><span class="section"><a href="#idp55687456">1. 背景</a></span></dt><dt><span class="section"><a href="#idp56685728">2. 解决思路</a></span></dt><dt><span class="section"><a href="#idp56689280">3. Mysql plugin</a></span></dt><dt><span class="section"><a href="#idp56698352">4. plugin 的开发与使用</a></span></dt><dt><span class="section"><a href="#idp56698608">5. 插件如何使用</a></span></dt><dt><span class="section"><a href="#idp56703920">6. 部署相关问题</a></span></dt></dl></div>
 	
 
-	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54898176"></a>1. 背景</h2></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp55687456"></a>1. 背景</h2></div></div></div>
 		
 		<p>你是否有这样的需求：</p>
 		<p>你需要监控访问网站的IP，当同一个IP地址访问次数过多需要做出处理，例如拉黑，直接丢进iptables 防火墙规则连中。你的做法只能每个一段时间查询一次数据库，并且判断是否满足拉黑需求？</p>
@@ -100,7 +100,7 @@
 		<p>你使用数据库做队列，例如发送邮件，短信等等。你要通知发送程序对那些手机或者短线发送数据</p>
 		<p></p>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54931472"></a>2. 解决思路</h2></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp56685728"></a>2. 解决思路</h2></div></div></div>
 		
 		<p>需要让数据库与其他进程通信，传递信号</p>
 		<p>例如，发送短信这个需求，你只要告诉发短信的机器人发送的手机号码即可，机器人永远守候那哪里，只要命令一下立即工作。</p>
@@ -108,7 +108,7 @@
 		<p>这里所提的方案是采用fifo(First In First Out)方案，通过管道相互传递信号，使两个进程协同工作，这样的效率远比定时任务高许多。fifo是用于操作系统内部进程间通信，如果跨越操作系统需要使用Socket，还有一个新名词MQ(Message queue).</p>
 		<p>这里只做fifo演示, 将本程序改为Socket方案，或者直接集成成熟的MQ也是分分钟可以实现。</p>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54935024"></a>3. Mysql plugin</h2></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp56689280"></a>3. Mysql plugin</h2></div></div></div>
 		
 		<p> 我开发了几个 UDF, 共4个 function</p>
 		<div class="variablelist"><p class="title"><strong>UDF</strong></p><dl class="variablelist"><dt><span class="term">fifo_create(pipename)</span></dt><dd>
@@ -122,7 +122,7 @@
 				</dd></dl></div>
 		<p>有了上面的function后你就可以在begin,commit,rollback 直接穿插使用，实现在事物处理期间做你爱做的事。也可以用在触发器与EVENT定时任务中。</p>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54944192"></a>4. plugin 的开发与使用</h2></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp56698352"></a>4. plugin 的开发与使用</h2></div></div></div>
 		
 		<p>编译UDF你需要安装下面的软件包</p>
 		<pre class="screen">
@@ -155,7 +155,7 @@ drop function fifo_read;
 drop function fifo_write;
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54944448"></a>5. 插件如何使用</h2></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp56698608"></a>5. 插件如何使用</h2></div></div></div>
 		
 		<p>插件有很多种用法，这里仅仅一个例</p>
 		<pre class="screen">
@@ -299,7 +299,7 @@ $ tail -f /tmp/demo.log
 [2013-12-16 14:55:48] [OK] 13322993040
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54949840"></a>6. 部署相关问题</h2></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp56703920"></a>6. 部署相关问题</h2></div></div></div>
 		
 		<p>我们可以采用主从数据库，将任务放在专用的从库上执行</p>
 		<p>我们可以创建很多个管道，用于做不同的工作，例如插入一个任务，更新一个任务，发短信一个任务，处理模板与静态化一个任务等等。</p>
