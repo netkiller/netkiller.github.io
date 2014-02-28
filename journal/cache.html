@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>实操 Web Cache</title><link rel="stylesheet" type="text/css" href="journal.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.78.1" /><meta name="description" content="http://netkiller.github.io/www/index.html " /><meta name="keywords" content="If-Modified-Since, Last-Modified, , " /><script xmlns="" type="text/javascript">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>实操 Web Cache</title><link rel="stylesheet" type="text/css" href="journal.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.78.1" /><meta name="description" content="写这篇文章的原因，是我看到网上很多谈这类的文章，多是人云亦云，不求实事，误导读者。 下面文中我会一个一个做实验，并展示给你，说明为什么会这样。只有自己亲自尝试才能拿出有说服力的真凭实据。" /><meta name="keywords" content="If-Modified-Since, Last-Modified, ETag, If-None-Match, " /><script xmlns="" type="text/javascript">
 
   var _gaq = _gaq || [];
   _gaq.push(['_setAccount', 'UA-11694057-1']);
@@ -19,7 +19,7 @@
         <a href="/search.html">Search</a> |
         <a href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
         <a href="http://my.oschina.net/neochen/">OSChina 博客</a> |
-        <a href="http://rline.blog.51cto.com/">51CTO 博客</a></td><td></td><td></td></tr></table><div xml:lang="zh-cn" class="article" lang="zh-cn"><div class="titlepage"><div><div><h2 class="title"><a id="idp54739136"></a>实操 Web Cache</h2></div><div><h3 class="subtitle"><em>http://netkiller.github.io/journal/cache.html</em></h3></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(netkiller)</span>, <span class="lineage">陈景峰(BG7NYT)</span></h3><div class="affiliation">
+        <a href="http://rline.blog.51cto.com/">51CTO 博客</a></td><td></td><td></td></tr></table><div xml:lang="zh-cn" class="article" lang="zh-cn"><div class="titlepage"><div><div><h2 class="title"><a id="idp54608160"></a>实操 Web Cache</h2></div><div><h3 class="subtitle"><em>http://netkiller.github.io/journal/cache.html</em></h3></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(netkiller)</span>, <span class="lineage">陈景峰(BG7NYT)</span></h3><div class="affiliation">
 			<div class="address"><p><br />
 				<span class="country">中国</span><span class="state">广东省</span><span class="city">深圳市</span><span class="street">龙华新区民治街道溪山美地</span><br />
 				<span class="postcode">518131</span><br />
@@ -28,8 +28,8 @@
 				<code class="email">&lt;<a class="email" href="mailto:netkiller@msn.com">netkiller@msn.com</a>&gt;</code><br />
 			</p></div>
 		</div></div></div><div><p class="releaseinfo">$Id$</p></div><div><p class="copyright">版权 © 2011, 2012, 2013, 2014 http://netkiller.github.io</p></div><div><p class="pubdate">$Date$</p></div><div><div class="abstract"><p class="title"><strong>摘要</strong></p>
-			<p>http://netkiller.github.io/www/index.html</p>
-			<p></p>
+			<p>写这篇文章的原因，是我看到网上很多谈这类的文章，多是人云亦云，不求实事，误导读者。</p>
+			<p>下面文中我会一个一个做实验，并展示给你，说明为什么会这样。只有自己亲自尝试才能拿出有说服力的真凭实据。</p>
 		</div></div><div><div class="abstract"><a id="abstract"></a><p class="title"><strong>我的系列文档</strong></p>
 	
 	<table border="0" summary="Simple list" class="simplelist"><tr><td>
@@ -89,17 +89,25 @@
 		</td><td> </td><td> </td><td> </td></tr></table>
 	
 
-</div></div></div><hr /></div><div class="toc"><p><strong>目录</strong></p><dl class="toc"><dt><span class="section"><a href="#idp54740448">1. If-Modified-Since / Last-Modified</a></span></dt><dd><dl><dt><span class="section"><a href="#idp54821216">1.1. 静态文件</a></span></dt><dt><span class="section"><a href="#idp54830032">1.2. 动态文件</a></span></dt><dt><span class="section"><a href="#idp54836944">1.3. 通过rewrite伪静态处理</a></span></dt></dl></dd><dt><span class="section"><a href="#idp54841952">2. ETag / If-None-Match</a></span></dt><dd><dl><dt><span class="section"><a href="#idp54844832">2.1. 静态文件</a></span></dt><dt><span class="section"><a href="#idp54848176">2.2. 动态程序</a></span></dt></dl></dd><dt><span class="section"><a href="#idp54848432">3. Expires / Cache-Control</a></span></dt><dd><dl><dt><span class="section"><a href="#idp54861360">3.1. 静态文件</a></span></dt><dt><span class="section"><a href="#idp54865168">3.2. 动态文件</a></span></dt></dl></dd></dl></div>
+</div></div></div><hr /></div><div class="toc"><p><strong>目录</strong></p><dl class="toc"><dt><span class="section"><a href="#idp54609408">1. 测试环境</a></span></dt><dt><span class="section"><a href="#idp54654144">2. If-Modified-Since / Last-Modified</a></span></dt><dd><dl><dt><span class="section"><a href="#idp54656128">2.1. 静态文件</a></span></dt><dt><span class="section"><a href="#idp54656384">2.2. 动态文件</a></span></dt><dt><span class="section"><a href="#idp54682480">2.3. 通过rewrite伪静态处理</a></span></dt></dl></dd><dt><span class="section"><a href="#idp54687568">3. ETag / If-None-Match</a></span></dt><dd><dl><dt><span class="section"><a href="#idp54691856">3.1. 静态文件</a></span></dt><dt><span class="section"><a href="#idp54695200">3.2. 动态程序</a></span></dt></dl></dd><dt><span class="section"><a href="#idp54695456">4. Expires / Cache-Control</a></span></dt><dd><dl><dt><span class="section"><a href="#idp54708368">4.1. 静态文件</a></span></dt><dt><span class="section"><a href="#idp54712176">4.2. 动态文件</a></span></dt></dl></dd><dt><span class="section"><a href="#idp54712432">5. FastCGI 缓存相关</a></span></dt><dt><span class="section"><a href="#idp54721936">6. HTML META 与 Cache</a></span></dt><dt><span class="section"><a href="#idp54727216">7. 总结</a></span></dt></dl></div>
 	
-
- 	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54740448"></a>1. If-Modified-Since / Last-Modified</h2></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54609408"></a>1. 测试环境</h2></div></div></div>
+		
+		<p>CentOS 6.5</p>
+		<p>Nginx安装脚本 https://github.com/oscm/shell/blob/master/nginx/nginx.sh</p>
+		<p>php安装脚本 https://github.com/oscm/shell/blob/master/php/5.5.8.sh</p>
+	</div>
+ 	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54654144"></a>2. If-Modified-Since / Last-Modified</h2></div></div></div>
  		
  		<p>If-Modified-Since 小于 Last-Modified 返回 HTTP/1.1 200 OK, 否则返回 HTTP/1.0 304 Not Modified</p>
-
- 		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp54821216"></a>1.1. 静态文件</h3></div></div></div>
+		<p>每次浏览器请求文件会携带  If-Modified-Since 头，将当前时间发送给服务器，与服务器的Last-Modified时间对对比，如果大于Last-Modified时间，返回HTTP/1.0 304 Not Modified不会重新打开文件，否则重新读取文件并返回内容</p>
+ 		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp54656128"></a>2.1. 静态文件</h3></div></div></div>
 			
-			<p>静态文件自动产生 Last-Modified 头</p>
+			<p>nginx/1.0.15 静态文件自动产生 Last-Modified 头</p>
 			<pre class="screen">
+# nginx -v
+nginx version: nginx/1.0.15
+
 # curl -I http://192.168.6.9/index.html
 HTTP/1.1 200 OK
 Server: nginx/1.0.15
@@ -122,19 +130,140 @@ Last-Modified: Thu, 27 Feb 2014 07:36:59 GMT
 Connection: keep-alive
 Accept-Ranges: bytes
 			</pre>
-			<p>每次浏览器请求文件会携带  If-Modified-Since 头，将当前时间发送给服务器，与服务器的Last-Modified时间对对比，如果大于Last-Modified时间，返回HTTP/1.0 304 Not Modified不会重新打开文件，否则重新读取文件并返回内容</p>
+			<p>nginx/1.4.5 默认没有 Last-Modified</p>
 			<pre class="screen">
-# curl -H "If-Modified-Since: Fir, 28 Feb 2014 07:42:55 GMT" -I http://www.163.com/
-HTTP/1.0 304 Not Modified
-Date: Thu, 27 Feb 2014 07:51:20 GMT
-Content-Type: text/html; charset=GBK
-Expires: Thu, 27 Feb 2014 07:51:34 GMT
-Cache-Control: max-age=80
-Age: 54
-X-Via: 1.0 fjpt182:1 (Cdn Cache Server V2.0)
+# nginx -v
+nginx version: nginx/1.4.5
+
+# curl -I http://192.168.2.15/index.html
+HTTP/1.1 200 OK
+Server: nginx/1.4.5
+Date: Fri, 28 Feb 2014 02:13:44 GMT
+Content-Type: text/html
+Connection: keep-alive
+
+# curl -I http://localhost/mobile.css
+HTTP/1.1 403 Forbidden
+Server: nginx/1.4.5
+Date: Fri, 28 Feb 2014 03:11:43 GMT
+Content-Type: text/html
 Connection: keep-alive
 			</pre>
+			<p>通过参数 if_modified_since 可以开启 Last-Modified</p>
+			<pre class="screen">
+server {
+    listen       80;
+    server_name  192.168.2.15;
+    if_modified_since before;
+}
+			</pre>
+			<p>测试结果看不到 Last-Modified, 因为 Nginx 的 if_modified_since before;参数只有接收到浏览器发过来的If-Modified-Since头才会发送Last-Modified</p>
+			<pre class="screen">
+# curl -I http://192.168.2.15/test.html
+HTTP/1.1 200 OK
+Server: nginx/1.4.5
+Date: Fri, 28 Feb 2014 02:27:15 GMT
+Content-Type: text/html
+Connection: keep-alive
+			</pre>
+			<p>再测试一次</p>
+			<pre class="screen">
+# curl -H "If-Modified-Since: Fir, 28 Feb 2014 07:42:55 GMT" -I http://192.168.2.15/test.html
+HTTP/1.1 304 Not Modified
+Server: nginx/1.4.5
+Date: Fri, 28 Feb 2014 02:34:54 GMT
+Last-Modified: Fri, 28 Feb 2014 01:55:50 GMT
+Connection: keep-alive
+ETag: "530feca6-8b"
+			</pre>
+			<p>测试结果成功返回 HTTP/1.1 304 Not Modified， 但又莫名其妙的出现了 ETag。 这就是Nignx本版差异，非常混乱。</p>
+			<p>既然出现了ETag我们也顺便测试一下</p>
+			<pre class="screen">
+# curl -H 'If-None-Match: "530feca6-8b"' -I http://192.168.2.15/test.html
+HTTP/1.1 304 Not Modified
+Server: nginx/1.4.5
+Date: Fri, 28 Feb 2014 02:39:18 GMT
+Last-Modified: Fri, 28 Feb 2014 01:55:50 GMT
+Connection: keep-alive
+ETag: "530feca6-8b"			
+			</pre>
+			<p>也是成功的</p>
+			<p>现在换成浏览器测试 Chrome Firefox， 你会发现始终返回 200，因为浏览器不会主动发送If-Modified-Since, 浏览器只有发现Last-Modified后，第二次请求才会推送 If-Modified-Since</p>
+			<pre class="screen">
+# curl -I http://192.168.2.15/test.html
+HTTP/1.1 200 OK
+Server: nginx/1.4.5
+Date: Fri, 28 Feb 2014 02:39:42 GMT
+Content-Type: text/html
+Connection: keep-alive
+			</pre>
+			<p>最终 if_modified_since before; 数没有起到作用</p>
+			<p>参数设置为 if_modified_since exact;</p>
+			<pre class="screen">
+# curl -I http://192.168.2.15/test.html
+HTTP/1.1 200 OK
+Server: nginx/1.4.5
+Date: Fri, 28 Feb 2014 02:45:40 GMT
+Content-Type: text/html
+Connection: keep-alive
 
+# curl -H 'If-None-Match: "530feca6-8b"' -I http://192.168.2.15/test.html
+HTTP/1.1 304 Not Modified
+Server: nginx/1.4.5
+Date: Fri, 28 Feb 2014 02:45:44 GMT
+Last-Modified: Fri, 28 Feb 2014 01:55:50 GMT
+Connection: keep-alive
+ETag: "530feca6-8b"
+
+# curl -H "If-Modified-Since: Fir, 28 Feb 2014 07:42:55 GMT" -I http://192.168.2.15/test.html
+HTTP/1.1 200 OK
+Server: nginx/1.4.5
+Date: Fri, 28 Feb 2014 02:45:50 GMT
+Content-Type: text/html
+Connection: keep-alive
+			</pre>
+			<p>测试失败，浏览器也是实测失败，ETag却成功</p>
+			<p>偶然一个发现Nginx(nginx/1.4.5)对于HTML文件不会返回Last-Modified, 对于图片却会返回 Last-Modified与ETag (if_modified_since 没有做任何设置) </p>
+			<pre class="screen">
+# curl -I http://localhost/index.html
+HTTP/1.1 200 OK
+Server: nginx/1.4.5
+Date: Fri, 28 Feb 2014 02:59:08 GMT
+Content-Type: text/html
+Connection: keep-alive
+			
+# curl -I http://localhost/logo.jpg
+HTTP/1.1 200 OK
+Server: nginx/1.4.5
+Date: Fri, 28 Feb 2014 02:59:04 GMT
+Content-Type: image/jpeg
+Content-Length: 10103
+Last-Modified: Fri, 28 Feb 2014 02:56:37 GMT
+Connection: keep-alive
+ETag: "530ffae5-2777"
+Accept-Ranges: bytes	
+
+
+# curl -H 'If-None-Match: "530ffae5-2777"' -I http://localhost/logo.jpg
+HTTP/1.1 304 Not Modified
+Server: nginx/1.4.5
+Date: Fri, 28 Feb 2014 03:03:33 GMT
+Last-Modified: Fri, 28 Feb 2014 02:56:37 GMT
+Connection: keep-alive
+ETag: "530ffae5-2777"
+
+# curl -H "If-Modified-Since: Fri, 28 Feb 2014 12:04:18 GMT" -I http://localhost/logo.jpg
+HTTP/1.1 200 OK
+Server: nginx/1.4.5
+Date: Fri, 28 Feb 2014 03:04:45 GMT
+Content-Type: image/jpeg
+Content-Length: 10103
+Last-Modified: Fri, 28 Feb 2014 02:56:37 GMT
+Connection: keep-alive
+ETag: "530ffae5-2777"
+Accept-Ranges: bytes		
+			</pre>
+			<p>测试结果，ETag通过测试，If-Modified-Since无论如何也无法返回 304 </p>
 			<div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">注意</h3>
 	 			
 	 			<p>每一个WEB服务器的实现方式不一样，每个浏览器的实现方式也不同，例如我们对nginx与lighttpd测试，使用curl发送If-Modified-Since头，nginx 无法返回304始终返回200，而lighttpd 可以返回304</p>
@@ -189,7 +318,7 @@ Server: lighttpd/1.4.31
 	 		</div>
 
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp54830032"></a>1.2. 动态文件</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp54656384"></a>2.2. 动态文件</h3></div></div></div>
 			
 			<p>动态文件没有 Last-Modified 头，我们可以伪造一个</p>
 			<pre class="screen">
@@ -261,7 +390,7 @@ Last-Modified: Thu, 27 Feb 2014 08:39:35 GMT
 				<p>Last-Modified 对动态程序来说没有起到实际作用</p>
 			</div>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp54836944"></a>1.3. 通过rewrite伪静态处理</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp54682480"></a>2.3. 通过rewrite伪静态处理</h3></div></div></div>
 			
 			<p>index.php仍然是上面的那个php文件，我们只是做了伪静态</p>
 			<pre class="screen">
@@ -294,8 +423,9 @@ Last-Modified: Thu, 26 Feb 2014 08:39:35 GMT
 
 	</div>
 
-	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54841952"></a>2. ETag / If-None-Match</h2></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54687568"></a>3. ETag / If-None-Match</h2></div></div></div>
 		
+		<p>上面的Last-Modified测试中发现ETag虽然不限制，但是暗中还是可用的：）</p>
 		<p>etag on; 开启Nginx etag支持，lighttpd 默认开启</p>
 		<pre class="screen">
 		
@@ -316,6 +446,13 @@ server {
 		</pre>
 		<p>检查ETag输出</p>
 		<pre class="screen">
+# curl -I http://localhost/index.html
+HTTP/1.1 200 OK
+Server: nginx/1.4.5
+Date: Fri, 28 Feb 2014 03:08:28 GMT
+Content-Type: text/html
+Connection: keep-alive
+		
 # curl -I http://phalcon/img/css.png
 HTTP/1.1 200 OK
 Server: nginx
@@ -325,10 +462,17 @@ Content-Length: 1133
 Last-Modified: Fri, 14 Feb 2014 08:05:03 GMT
 Connection: keep-alive
 ETag: "52fdce2f-46d"
-Accept-Ranges: bytes
-		</pre>
+Accept-Ranges: bytes3
 
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp54844832"></a>2.1. 静态文件</h3></div></div></div>
+# curl -I http://localhost/mobile.css
+HTTP/1.1 403 Forbidden
+Server: nginx/1.4.5
+Date: Fri, 28 Feb 2014 03:11:43 GMT
+Content-Type: text/html
+Connection: keep-alive
+		</pre>
+		<p>即使你开启了 ETag Nginx 对 HTML、CSS文件也不做处理。最终在一个外国网站是找到一个nginx-static-etags模块，有兴趣自己尝试，这里就不讲了。</p>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp54691856"></a>3.1. 静态文件</h3></div></div></div>
 			
 			<p>首先查询etag值</p>
 			<pre class="screen">
@@ -355,7 +499,7 @@ ETag: "52fdce2f-46d"
 			</pre>
 			<p>这次比较顺利，成功返回HTTP/1.1 304 Not Modified</p>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp54848176"></a>2.2. 动态程序</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp54695200"></a>3.2. 动态程序</h3></div></div></div>
 			
 			<p>默认情况输出如下</p>
 			<pre class="screen">
@@ -374,7 +518,7 @@ header('Last-Modified: Thu, 26 Feb 2014 08:39:35 GMT' );
 header('Etag: "abcdefg"');
 #header('Last-Modified: ' .gmdate('D, d M Y H:i:s') . ' GMT' );
 ?&gt;
-Hello 
+Hello
 			
 			</pre>
 			<p>测试效果</p>
@@ -411,16 +555,16 @@ function cache($etag)
         if(array_key_exists ('HTTP_IF_NONE_MATCH',$_SERVER)){
                 $http_if_none_match = $_SERVER['HTTP_IF_NONE_MATCH'];
         }
-        
-        if ($http_if_none_match == $etag)  
-        { 
-                header('Etag: '.$etag, true, 304); 
-                exit; 
+
+        if ($http_if_none_match == $etag)
+        {
+                header('Etag: '.$etag, true, 304);
+                exit;
         } else {
-                header('Etag: '.$etag);  
+                header('Etag: '.$etag);
         }
-        
-} 
+
+}
 print_r($_SERVER);
 echo date("Y-m-d H:i:s");
 ?&gt;
@@ -452,16 +596,16 @@ $etag = $_SERVER['REQUEST_URI']
 			</pre>
 			<p>URL类似 http://www.example.com/news/100/1000.html 一次请求便缓存页面，这样带来一个更新的问题，于是又做了这样的处理</p>
 			<pre class="screen">
-http://www.example.com/news/100/1000.1.html			
+http://www.example.com/news/100/1000.1.html
 			</pre>
 			<p>.1.是版本号，每次修改后+1操作，.1.没有人格意义rewrite操作是会丢弃这个参数，仅仅是为了始终有新的URL对应内容</p>
 		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54848432"></a>3. Expires / Cache-Control</h2></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54695456"></a>4. Expires / Cache-Control</h2></div></div></div>
 		
 		<p>前面所讲 Last-Modified 与 Etag 主要用于分辨文件是否修改过， 无法控制页面在浏览器端缓存的时间。Expires / Cache-Control 可以控制缓存的时间段</p>
 		<p>Expires 是 HTTP/1.0标准，Cache-Control是 HTTP/1.1标准。都能正常工作，HTTP/1.1规范中max-age优先级高于Expires,有些浏览器会联动设置，例如你设置了Cache-Control随之自动生成Expires，仅仅为了兼容。</p>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp54861360"></a>3.1. 静态文件</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp54708368"></a>4.1. 静态文件</h3></div></div></div>
 			
 			<p>首先配置nginx设置html与png文件缓存1天</p>
 			<pre class="screen">
@@ -497,7 +641,7 @@ Cache-Control: max-age=86400
 Accept-Ranges: bytes
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp54865168"></a>3.2. 动态文件</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp54712176"></a>4.2. 动态文件</h3></div></div></div>
 			
 			<p>默认返回</p>
 			<pre class="screen">
@@ -506,7 +650,7 @@ HTTP/1.1 200 OK
 Server: nginx/1.0.15
 Date: Thu, 27 Feb 2014 11:45:05 GMT
 Content-Type: text/html
-Connection: keep-alive	
+Connection: keep-alive
 			</pre>
 			<p>index.php 增加 Cache-Control 输出控制</p>
 			<pre class="screen">
@@ -524,7 +668,114 @@ Content-Type: text/html
 Connection: keep-alive
 Cache-Control: max-age=259200
 			</pre>
+			<p>现在使用 Chrome 、Firefox 测试，你会发现始终返回200，并且max-age=259200数值不会改变。</p>
+			<p>原因是Cache-Control程序输出的，Nginx并不知道，所以Nginx 不会给你返回304</p>
+			<pre class="screen">
+			
+header('Expires: Mon, 29 Jan 2007 08:56:01 GMT');			
+header('Last-Modified: ' .gmdate('D, d M Y H:i:s') . ' GMT' );
+$ttl=3600;
+header("Cache-Control: max-age=$ttl, must-revalidate");			
+			
+			</pre>
+			<p>这种方法根本不能实现缓存的目的</p>
 		</div>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54712432"></a>5. FastCGI 缓存相关</h2></div></div></div>
+		
+		<p>我们做个尝试将 expires 1d;加到location ~ \.php$中，看看能不能实现缓存的目的。</p>
+		<pre class="screen">
+    location ~ \.php$ {
+        root           /www;
+        fastcgi_pass   127.0.0.1:9000;
+        fastcgi_index  index.php;
+        fastcgi_param  SCRIPT_FILENAME  /www$fastcgi_script_name;
+        include        fastcgi_params;
+		expires      1d;
+    }		
+		</pre>
+		<p>测试程序</p>
+		<pre class="screen">
+		
+# cat expires.php
+&lt;?php
+echo date("Y-m-d H:i:s");
+?&gt;		
+		
+		</pre>
+		<p>测试结果</p>
+		<pre class="screen">
+# curl -I http://localhost/expires.php
+HTTP/1.1 200 OK
+Server: nginx/1.4.5
+Date: Fri, 28 Feb 2014 04:39:57 GMT
+Content-Type: text/html
+Connection: keep-alive
+Expires: Sat, 01 Mar 2014 04:39:57 GMT
+Cache-Control: max-age=86400
+		</pre>
+		<p>虽然推送 Cache-Control: max-age=86400 但是 IE Chrome Firefox 仍不能缓存页面</p>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54721936"></a>6. HTML META 与 Cache</h2></div></div></div>
+		
+		<p>创建一个测试文件如下</p>
+		<pre class="screen">
+		
+&lt;html&gt;
+&lt;head&gt;
+	&lt;title&gt;Hello&lt;/title&gt;
+	&lt;meta http-equiv="Cache-Control" content="max-age=7200" /&gt;
+	&lt;meta http-equiv="expires" content="Fri, 28 Feb 2014 12:04:18 GMT" /&gt;
+&lt;/head&gt;
+&lt;body&gt;
+	Helloworld
+&lt;/body&gt;
+&lt;/html&gt;
+		
+		</pre>
+		<p>测试HTML页面</p>
+		<pre class="screen">
+		
+# curl -i http://localhost/test.html
+HTTP/1.1 200 OK
+Server: nginx/1.4.5
+Date: Fri, 28 Feb 2014 03:30:45 GMT
+Content-Type: text/html
+Transfer-Encoding: chunked
+Connection: keep-alive
+
+&lt;html&gt;
+&lt;head&gt;
+	&lt;title&gt;Hello&lt;/title&gt;
+	&lt;meta http-equiv="Cache-Control" content="max-age=7200" /&gt;
+	&lt;meta http-equiv="expires" content="Fri, 28 Feb 2014 12:04:18 GMT" /&gt;
+&lt;/head&gt;
+&lt;body&gt;
+	Helloworld
+&lt;/body&gt;
+&lt;/html&gt;
+		
+		</pre>
+		<p>我们可以看到HTML页面中meta设置缓存对Nginx并不起作用, 很多人会说对浏览器起作用！</p>
+		<p>这次我测试了 IE11, Chrome, Firefox 发现都无法缓存页面，可能对IE5什么的还有用，我没有环境测试，因为10年前我们在B/S开发经常这样使用</p>
+		<pre class="screen">
+		
+&lt;meta http-equiv="cache-control" content="max-age=0" /&gt;
+&lt;meta http-equiv="cache-control" content="no-cache" /&gt;
+&lt;meta http-equiv="expires" content="0" /&gt;
+&lt;meta http-equiv="expires" content="Tue, 01 Jan 1980 1:00:00 GMT" /&gt;
+&lt;meta http-equiv="pragma" content="no-cache" /&gt;
+		
+		</pre>
+		<p>至少在当年IE是认这些Meta的，进入HTML5时代很多都发生了变化，所以不能一概而论</p>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54727216"></a>7. 总结</h2></div></div></div>
+		
+		<p>经过详细的测试我们发现不同的浏览器，不同的Web服务器，甚至每个版本都有所差异。</p>
+		<p>测试总结 Apache HTTPD 最完善 Lighttpd 其次， Nignx仍在快速发展中，Nignx每个版本差异很大，对HTTP协议实现标准也不太严谨，因为Nignx在大陆是趋势，所以下面给出的例子都是nginx</p>
+		<p>我比较看好Lighttpd，FastCGI 部分我一般是用php-fpm替代Lighttpd的spawn-fcgi</p>
+		<p>切记使用Nginx要注意每个本版细微变化，否则升级后会有影响。我习惯使用yum 安装 nginx 随时 yum update 升级。</p>
+		<p>延伸阅读《	Netkiller Web 手札》<a class="ulink" href="http://netkiller.github.io/www/index.html" target="_top">http://netkiller.github.io/www/index.html</a></p>
 	</div>
 </div><div xmlns="" id="bdshare" class="bdshare_t bds_tools_32 get-codes-bdshare"><a class="bds_fbook"></a><a class="bds_twi"></a><a class="bds_ms"></a><a class="bds_msn"></a><a class="bds_buzz"></a><a class="bds_linkedin"></a><a class="bds_deli"></a><a class="bds_qzone"></a><a class="bds_qq"></a><a class="bds_tqq"></a><a class="bds_tqf"></a><a class="bds_tsina"></a><a class="bds_baidu"></a><a class="bds_renren"></a><a class="bds_t163"></a><a class="bds_tfh"></a><a class="bds_douban"></a><a class="bds_hi"></a><a class="bds_tieba"></a><a class="bds_tsohu"></a><span class="bds_more"></span><a class="shareCount"></a></div><script xmlns="" type="text/javascript" id="bdshare_js" data="type=tools"></script><script xmlns="" type="text/javascript" id="bdshell_js"></script><script xmlns="" type="text/javascript">
 	document.getElementById("bdshell_js").src = "http://bdimg.share.baidu.com/static/js/shell_v2.js?cdnversion=" + new Date().getHours();
