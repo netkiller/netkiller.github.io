@@ -19,7 +19,7 @@
         <a href="/search.html">Search</a> |
         <a href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
         <a href="http://my.oschina.net/neochen/">OSChina 博客</a> |
-        <a href="http://rline.blog.51cto.com/">51CTO 博客</a></td><td></td><td></td></tr></table><div xml:lang="zh-cn" class="article" lang="zh-cn"><div class="titlepage"><div><div><h2 class="title"><a id="idp54608160"></a>实操 Web Cache</h2></div><div><h3 class="subtitle"><em>http://netkiller.github.io/journal/cache.html</em></h3></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(netkiller)</span>, <span class="lineage">陈景峰(BG7NYT)</span></h3><div class="affiliation">
+        <a href="http://rline.blog.51cto.com/">51CTO 博客</a></td><td></td><td></td></tr></table><div xml:lang="zh-cn" class="article" lang="zh-cn"><div class="titlepage"><div><div><h2 class="title"><a id="idp54753136"></a>实操 Web Cache</h2></div><div><h3 class="subtitle"><em>http://netkiller.github.io/journal/cache.html</em></h3></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(netkiller)</span>, <span class="lineage">陈景峰(BG7NYT)</span></h3><div class="affiliation">
 			<div class="address"><p><br />
 				<span class="country">中国</span><span class="state">广东省</span><span class="city">深圳市</span><span class="street">龙华新区民治街道溪山美地</span><br />
 				<span class="postcode">518131</span><br />
@@ -89,19 +89,19 @@
 		</td><td> </td><td> </td><td> </td></tr></table>
 	
 
-</div></div></div><hr /></div><div class="toc"><p><strong>目录</strong></p><dl class="toc"><dt><span class="section"><a href="#idp54609408">1. 测试环境</a></span></dt><dt><span class="section"><a href="#idp54654144">2. If-Modified-Since / Last-Modified</a></span></dt><dd><dl><dt><span class="section"><a href="#idp54656128">2.1. 静态文件</a></span></dt><dt><span class="section"><a href="#idp54656384">2.2. 动态文件</a></span></dt><dt><span class="section"><a href="#idp54682480">2.3. 通过rewrite伪静态处理</a></span></dt></dl></dd><dt><span class="section"><a href="#idp54687568">3. ETag / If-None-Match</a></span></dt><dd><dl><dt><span class="section"><a href="#idp54691856">3.1. 静态文件</a></span></dt><dt><span class="section"><a href="#idp54695200">3.2. 动态程序</a></span></dt></dl></dd><dt><span class="section"><a href="#idp54695456">4. Expires / Cache-Control</a></span></dt><dd><dl><dt><span class="section"><a href="#idp54708368">4.1. 静态文件</a></span></dt><dt><span class="section"><a href="#idp54712176">4.2. 动态文件</a></span></dt></dl></dd><dt><span class="section"><a href="#idp54712432">5. FastCGI 缓存相关</a></span></dt><dt><span class="section"><a href="#idp54721936">6. HTML META 与 Cache</a></span></dt><dt><span class="section"><a href="#idp54727216">7. 总结</a></span></dt></dl></div>
+</div></div></div><hr /></div><div class="toc"><p><strong>目录</strong></p><dl class="toc"><dt><span class="section"><a href="#idp54754304">1. 测试环境</a></span></dt><dt><span class="section"><a href="#idp54799040">2. If-Modified-Since / Last-Modified</a></span></dt><dd><dl><dt><span class="section"><a href="#idp54801024">2.1. 静态文件</a></span></dt><dd><dl><dt><span class="section"><a href="#idp54812816">2.1.1. if_modified_since</a></span></dt></dl></dd><dt><span class="section"><a href="#idp54801280">2.2. 通过rewrite伪静态处理</a></span></dt><dt><span class="section"><a href="#idp54822608">2.3. 动态文件</a></span></dt></dl></dd><dt><span class="section"><a href="#idp54822864">3. ETag / If-None-Match</a></span></dt><dd><dl><dt><span class="section"><a href="#idp54841264">3.1. 静态文件</a></span></dt><dt><span class="section"><a href="#idp54844528">3.2. 动态程序</a></span></dt></dl></dd><dt><span class="section"><a href="#idp54844784">4. Expires / Cache-Control</a></span></dt><dd><dl><dt><span class="section"><a href="#idp54857696">4.1. 静态文件</a></span></dt><dt><span class="section"><a href="#idp54861504">4.2. 动态文件</a></span></dt></dl></dd><dt><span class="section"><a href="#idp54861760">5. FastCGI 缓存相关</a></span></dt><dt><span class="section"><a href="#idp54871312">6. HTML META 与 Cache</a></span></dt><dt><span class="section"><a href="#idp54876592">7. 反向代理与缓存</a></span></dt><dt><span class="section"><a href="#idp54878352">8. 总结</a></span></dt></dl></div>
 	
-	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54609408"></a>1. 测试环境</h2></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54754304"></a>1. 测试环境</h2></div></div></div>
 		
 		<p>CentOS 6.5</p>
 		<p>Nginx安装脚本 https://github.com/oscm/shell/blob/master/nginx/nginx.sh</p>
 		<p>php安装脚本 https://github.com/oscm/shell/blob/master/php/5.5.8.sh</p>
 	</div>
- 	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54654144"></a>2. If-Modified-Since / Last-Modified</h2></div></div></div>
+ 	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54799040"></a>2. If-Modified-Since / Last-Modified</h2></div></div></div>
  		
  		<p>If-Modified-Since 小于 Last-Modified 返回 HTTP/1.1 200 OK, 否则返回 HTTP/1.0 304 Not Modified</p>
 		<p>每次浏览器请求文件会携带  If-Modified-Since 头，将当前时间发送给服务器，与服务器的Last-Modified时间对对比，如果大于Last-Modified时间，返回HTTP/1.0 304 Not Modified不会重新打开文件，否则重新读取文件并返回内容</p>
- 		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp54656128"></a>2.1. 静态文件</h3></div></div></div>
+ 		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp54801024"></a>2.1. 静态文件</h3></div></div></div>
 			
 			<p>nginx/1.0.15 静态文件自动产生 Last-Modified 头</p>
 			<pre class="screen">
@@ -130,8 +130,10 @@ Last-Modified: Thu, 27 Feb 2014 07:36:59 GMT
 Connection: keep-alive
 Accept-Ranges: bytes
 			</pre>
-			<p>nginx/1.4.5 默认没有 Last-Modified</p>
-			<pre class="screen">
+
+			<div class="tip" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">提示</h3>
+			<p>疑问 nginx/1.4.5 默认没有 Last-Modified</p>
+				<pre class="screen">
 # nginx -v
 nginx version: nginx/1.4.5
 
@@ -141,31 +143,23 @@ Server: nginx/1.4.5
 Date: Fri, 28 Feb 2014 02:13:44 GMT
 Content-Type: text/html
 Connection: keep-alive
-
-# curl -I http://localhost/mobile.css
-HTTP/1.1 403 Forbidden
-Server: nginx/1.4.5
-Date: Fri, 28 Feb 2014 03:11:43 GMT
-Content-Type: text/html
-Connection: keep-alive
-			</pre>
-			<p>通过参数 if_modified_since 可以开启 Last-Modified</p>
-			<pre class="screen">
-server {
-    listen       80;
-    server_name  192.168.2.15;
-    if_modified_since before;
-}
-			</pre>
-			<p>测试结果看不到 Last-Modified, 因为 Nginx 的 if_modified_since before;参数只有接收到浏览器发过来的If-Modified-Since头才会发送Last-Modified</p>
-			<pre class="screen">
-# curl -I http://192.168.2.15/test.html
+				</pre>
+				<p>经过一番周折最终找到答案 Nginx 如果开启 ssi 会禁用Last-Modified 关闭 ssi 后输出如下</p>
+				<pre class="screen">
+# curl -I  http://localhost/index.html
 HTTP/1.1 200 OK
 Server: nginx/1.4.5
-Date: Fri, 28 Feb 2014 02:27:15 GMT
+Date: Fri, 28 Feb 2014 05:44:29 GMT
 Content-Type: text/html
+Content-Length: 6
+Last-Modified: Wed, 25 Dec 2013 03:18:16 GMT
 Connection: keep-alive
-			</pre>
+ETag: "52ba4e78-6"
+Accept-Ranges: bytes				
+				</pre>
+				<p></p>
+			</div>
+			
 			<p>再测试一次</p>
 			<pre class="screen">
 # curl -H "If-Modified-Since: Fir, 28 Feb 2014 07:42:55 GMT" -I http://192.168.2.15/test.html
@@ -185,21 +179,72 @@ Server: nginx/1.4.5
 Date: Fri, 28 Feb 2014 02:39:18 GMT
 Last-Modified: Fri, 28 Feb 2014 01:55:50 GMT
 Connection: keep-alive
-ETag: "530feca6-8b"			
+ETag: "530feca6-8b"
 			</pre>
 			<p>也是成功的</p>
-			<p>现在换成浏览器测试 Chrome Firefox， 你会发现始终返回 200，因为浏览器不会主动发送If-Modified-Since, 浏览器只有发现Last-Modified后，第二次请求才会推送 If-Modified-Since</p>
+			
+			<p>测试图片</p>
 			<pre class="screen">
+# curl -I http://localhost/logo.jpg
+HTTP/1.1 200 OK
+Server: nginx/1.4.5
+Date: Fri, 28 Feb 2014 02:59:04 GMT
+Content-Type: image/jpeg
+Content-Length: 10103
+Last-Modified: Fri, 28 Feb 2014 02:56:37 GMT
+Connection: keep-alive
+ETag: "530ffae5-2777"
+Accept-Ranges: bytes
+
+
+# curl -H 'If-None-Match: "530ffae5-2777"' -I http://localhost/logo.jpg
+HTTP/1.1 304 Not Modified
+Server: nginx/1.4.5
+Date: Fri, 28 Feb 2014 03:03:33 GMT
+Last-Modified: Fri, 28 Feb 2014 02:56:37 GMT
+Connection: keep-alive
+ETag: "530ffae5-2777"
+
+# curl -H "If-Modified-Since: Fri, 28 Feb 2014 12:04:18 GMT" -I http://localhost/logo.jpg
+HTTP/1.1 200 OK
+Server: nginx/1.4.5
+Date: Fri, 28 Feb 2014 03:04:45 GMT
+Content-Type: image/jpeg
+Content-Length: 10103
+Last-Modified: Fri, 28 Feb 2014 02:56:37 GMT
+Connection: keep-alive
+ETag: "530ffae5-2777"
+Accept-Ranges: bytes
+			</pre>
+			<p>测试结果，ETag通过测试，If-Modified-Since无论如何也无法返回 304 可能还需要其他的HTTP头，浏览器测试都通过返回 HTTP/1.1 304 Not Modified</p>
+			
+			<p>现在换成浏览器测试 Chrome Firefox成功， 因为浏览器不会主动发送If-Modified-Since, 浏览器只有发现Last-Modified后，第二次请求才会推送 If-Modified-Since 需要刷新两次页面。</p>
+			
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp54812816"></a>2.1.1. if_modified_since</h4></div></div></div>
+				
+				<p>在开启ssi的情况下，通过参数 if_modified_since 可以开启 Last-Modified</p>
+				<pre class="screen">
+server {
+    listen       80;
+    server_name  192.168.2.15;
+    if_modified_since before;
+}
+				</pre>
+				
+				<p>测试结果看不到 Last-Modified, 因为 Nginx 的 if_modified_since before;参数只有接收到浏览器发过来的If-Modified-Since头才会发送Last-Modified</p>
+				
+				<pre class="screen">
 # curl -I http://192.168.2.15/test.html
 HTTP/1.1 200 OK
 Server: nginx/1.4.5
 Date: Fri, 28 Feb 2014 02:39:42 GMT
 Content-Type: text/html
 Connection: keep-alive
-			</pre>
-			<p>最终 if_modified_since before; 数没有起到作用</p>
-			<p>参数设置为 if_modified_since exact;</p>
-			<pre class="screen">
+				</pre>
+				<p>最终 if_modified_since before; 数没有起到作用</p>
+				
+				<p>参数设置为 if_modified_since exact;</p>
+				<pre class="screen">
 # curl -I http://192.168.2.15/test.html
 HTTP/1.1 200 OK
 Server: nginx/1.4.5
@@ -221,104 +266,43 @@ Server: nginx/1.4.5
 Date: Fri, 28 Feb 2014 02:45:50 GMT
 Content-Type: text/html
 Connection: keep-alive
-			</pre>
-			<p>测试失败，浏览器也是实测失败，ETag却成功</p>
-			<p>偶然一个发现Nginx(nginx/1.4.5)对于HTML文件不会返回Last-Modified, 对于图片却会返回 Last-Modified与ETag (if_modified_since 没有做任何设置) </p>
-			<pre class="screen">
-# curl -I http://localhost/index.html
-HTTP/1.1 200 OK
-Server: nginx/1.4.5
-Date: Fri, 28 Feb 2014 02:59:08 GMT
-Content-Type: text/html
-Connection: keep-alive
-			
-# curl -I http://localhost/logo.jpg
-HTTP/1.1 200 OK
-Server: nginx/1.4.5
-Date: Fri, 28 Feb 2014 02:59:04 GMT
-Content-Type: image/jpeg
-Content-Length: 10103
-Last-Modified: Fri, 28 Feb 2014 02:56:37 GMT
-Connection: keep-alive
-ETag: "530ffae5-2777"
-Accept-Ranges: bytes	
-
-
-# curl -H 'If-None-Match: "530ffae5-2777"' -I http://localhost/logo.jpg
-HTTP/1.1 304 Not Modified
-Server: nginx/1.4.5
-Date: Fri, 28 Feb 2014 03:03:33 GMT
-Last-Modified: Fri, 28 Feb 2014 02:56:37 GMT
-Connection: keep-alive
-ETag: "530ffae5-2777"
-
-# curl -H "If-Modified-Since: Fri, 28 Feb 2014 12:04:18 GMT" -I http://localhost/logo.jpg
-HTTP/1.1 200 OK
-Server: nginx/1.4.5
-Date: Fri, 28 Feb 2014 03:04:45 GMT
-Content-Type: image/jpeg
-Content-Length: 10103
-Last-Modified: Fri, 28 Feb 2014 02:56:37 GMT
-Connection: keep-alive
-ETag: "530ffae5-2777"
-Accept-Ranges: bytes		
-			</pre>
-			<p>测试结果，ETag通过测试，If-Modified-Since无论如何也无法返回 304 </p>
-			<div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">注意</h3>
-	 			
-	 			<p>每一个WEB服务器的实现方式不一样，每个浏览器的实现方式也不同，例如我们对nginx与lighttpd测试，使用curl发送If-Modified-Since头，nginx 无法返回304始终返回200，而lighttpd 可以返回304</p>
-	 			<pre class="screen">
-				
-# curl -H "If-Modified-Since: Fri, 29 Feb 2014 08:42:55 GMT" -I -v  http://192.168.6.9/index.html
-* About to connect() to 192.168.6.9 port 80 (#0)
-*   Trying 192.168.6.9... connected
-* Connected to 192.168.6.9 (192.168.6.9) port 80 (#0)
-&gt; HEAD /index.html HTTP/1.1
-&gt; User-Agent: curl/7.19.7 (x86_64-redhat-linux-gnu) libcurl/7.19.7 NSS/3.14.0.0 zlib/1.2.3 libidn/1.18 libssh2/1.4.2
-&gt; Host: 192.168.6.9
-&gt; Accept: */*
-&gt; If-Modified-Since: Fri, 29 Feb 2014 08:42:55 GMT
-&gt;
-&lt; HTTP/1.1 200 OK
-HTTP/1.1 200 OK
-&lt; Server: nginx/1.0.15
-Server: nginx/1.0.15
-&lt; Date: Thu, 27 Feb 2014 08:15:20 GMT
-Date: Thu, 27 Feb 2014 08:15:20 GMT
-&lt; Content-Type: text/html
-Content-Type: text/html
-&lt; Content-Length: 6
-Content-Length: 6
-&lt; Last-Modified: Thu, 27 Feb 2014 07:29:50 GMT
-Last-Modified: Thu, 27 Feb 2014 07:29:50 GMT
-&lt; Connection: keep-alive
-Connection: keep-alive
-&lt; Accept-Ranges: bytes
-Accept-Ranges: bytes
-
-&lt;
-* Connection #0 to host 192.168.6.9 left intact
-* Closing connection #0
-				
 				</pre>
-	 			<p>lighttpd 会正常返回304</p>
-	 			<pre class="screen">
-				
-# curl -H "If-Modified-Since: Fri, 28 Feb 2014 08:42:55 GMT" -I http://192.168.6.2/index.html
-HTTP/1.1 304 Not Modified
-Content-Type: text/html
-Accept-Ranges: bytes
-ETag: "4021085363"
-Last-Modified: Thu, 20 Feb 2014 09:45:00 GMT
-Date: Thu, 27 Feb 2014 08:10:49 GMT
-Server: lighttpd/1.4.31
-				
-				</pre>
-				<p>在使用 Chrome / Firefox 浏览器测试一下，你很发现都能实现返回 304，包括 nginx.说明nginx 如果想返回304需要提供其他HTTP头，而不能仅仅推送 If-Modified-Since</p>
-	 		</div>
-
+				<p>测试失败，浏览器也是实测失败，ETag却成功</p>
+			</div>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp54656384"></a>2.2. 动态文件</h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp54801280"></a>2.2. 通过rewrite伪静态处理</h3></div></div></div>
+			
+			<p>index.php仍然是上面的那个php文件，我们只是做了伪静态</p>
+			<pre class="screen">
+			
+location / {
+        root   /www;
+        index  index.html index.htm;
+		rewrite ^/test.html$ /index.php last;
+}
+			
+			</pre>
+			<p>现在我们分别通过curl有chrome/firefox进行测试</p>
+
+			<pre class="screen">
+			
+# curl -H "If-Modified-Since: Fri, 28 Feb 2014 08:42:55 GMT" -I  http://192.168.6.9/test.html
+HTTP/1.1 200 OK
+Server: nginx/1.0.15
+Date: Thu, 27 Feb 2014 08:55:19 GMT
+Content-Type: text/html
+Connection: keep-alive
+Last-Modified: Thu, 26 Feb 2014 08:39:35 GMT
+			
+			</pre>
+			<p>经过测试无论是 curl 还是 chrome/firefox 均无法返回304.</p>
+			<p>下面是我的分析，仅供参考。用户请求index.html Nginx 会找到该文件读取 mtime 与 If-Modified-Since 匹配，如果If-Modified-Since大于 Last-Modified返回 304否则返回200.</p>
+			<p>为什么同样操作经过伪静态的test.html就不行呢？ 我分析当用户请求test.html Nginx 首先做Rewrite处理，然后跳转到index.php 整个过程nginx 并没有访问实际物理文件test.html也就没有mtime, 所以Nginx 返回200.</p>
+			<p>如果 Nginx 按预想的返回304，nginx 需要读取程序返回的HTTP头，Nginx 并没有这样的处理逻辑。</p>
+		</div>
+		
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp54822608"></a>2.3. 动态文件</h3></div></div></div>
 			
 			<p>动态文件没有 Last-Modified 头，我们可以伪造一个</p>
 			<pre class="screen">
@@ -345,13 +329,13 @@ Hello
 			<p>现在你将看到 Last-Modified</p>
 			<pre class="screen">
 			
-# curl -I http://192.168.6.9/index.php
+# curl -I http://localhost/modified.php
 HTTP/1.1 200 OK
-Server: nginx/1.0.15
-Date: Thu, 27 Feb 2014 08:32:40 GMT
+Server: nginx/1.4.5
+Date: Fri, 28 Feb 2014 05:59:28 GMT
 Content-Type: text/html
 Connection: keep-alive
-Last-Modified: Thu, 27 Feb 2014 08:32:39 GMT
+Last-Modified: Fri, 28 Feb 2014 10:04:18 GMT
 			
 			</pre>
 			<div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">注意</h3>
@@ -359,71 +343,118 @@ Last-Modified: Thu, 27 Feb 2014 08:32:39 GMT
 				<p>虽然我们让动态程序返回了 Last-Modified ，但浏览器不认，经过测试 Chrome / Firefox 均不会承认.php文件，并缓存其内容。</p>
 				<pre class="screen">
 				
-# curl -H "If-Modified-Since: Fri, 28 Feb 2014 08:42:55 GMT" -I -v http://192.168.6.9/index.php
-* About to connect() to 192.168.6.9 port 80 (#0)
-*   Trying 192.168.6.9... connected
-* Connected to 192.168.6.9 (192.168.6.9) port 80 (#0)
-&gt; HEAD /index.php HTTP/1.1
-&gt; User-Agent: curl/7.19.7 (x86_64-redhat-linux-gnu) libcurl/7.19.7 NSS/3.14.0.0 zlib/1.2.3 libidn/1.18 libssh2/1.4.2
-&gt; Host: 192.168.6.9
-&gt; Accept: */*
-&gt; If-Modified-Since: Fri, 28 Feb 2014 08:42:55 GMT
-&gt;
-&lt; HTTP/1.1 200 OK
+# curl -I http://localhost/modified.php
 HTTP/1.1 200 OK
-&lt; Server: nginx/1.0.15
-Server: nginx/1.0.15
-&lt; Date: Thu, 27 Feb 2014 08:39:36 GMT
-Date: Thu, 27 Feb 2014 08:39:36 GMT
-&lt; Content-Type: text/html
+Server: nginx/1.4.5
+Date: Fri, 28 Feb 2014 05:59:28 GMT
 Content-Type: text/html
-&lt; Connection: keep-alive
 Connection: keep-alive
-&lt; Last-Modified: Thu, 27 Feb 2014 08:39:35 GMT
-Last-Modified: Thu, 27 Feb 2014 08:39:35 GMT
-* no chunk, no close, no size. Assume close to signal end
-
-&lt;
-* Closing connection #0
+Last-Modified: Fri, 28 Feb 2014 10:04:18 GMT
+				
+# curl -H "If-Modified-Since: Fri, 28 Feb 2014 08:42:55 GMT" -I  http://localhost/modified.php
+HTTP/1.1 200 OK
+Server: nginx/1.0.15
+Date: Fri, 28 Feb 2014 05:32:30 GMT
+Content-Type: text/html
+Connection: keep-alive
+Last-Modified: Thu, 26 Feb 2014 08:39:35 GMT
 				
 				</pre>
 				<p>Last-Modified 对动态程序来说没有起到实际作用</p>
 			</div>
-		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp54682480"></a>2.3. 通过rewrite伪静态处理</h3></div></div></div>
 			
-			<p>index.php仍然是上面的那个php文件，我们只是做了伪静态</p>
+			<p>Last-Modified是程序产生的，Nginx无法读到，让程序去处理状态返回是可行的，下面我们修改程序如下。</p>
 			<pre class="screen">
 			
-location / {
-        root   /www;
-        index  index.html index.htm;
-		rewrite ^/test.html$ /index.php last;
+# cat modified.php
+&lt;?php
+$mtime = 'Fri, 28 Feb 2014 12:04:18 GMT';
+cache($mtime);
+function cache($mtime)
+{
+	$http_if_modified_since = null;
+	if(array_key_exists ('HTTP_IF_MODIFIED_SINCE',$_SERVER)){
+		$http_if_modified_since = $_SERVER['HTTP_IF_MODIFIED_SINCE'];
+	}
+	echo $http_if_modified_since;
+	if ($http_if_modified_since &gt;= $mtime)
+	{
+		header('Last-Modified: '.$mtime, true, 304);
+		exit;
+	} else {
+		header('Last-Modified: ' . $mtime );
+	}
+
 }
+print_r($_SERVER);
+echo date("Y-m-d H:i:s");
+?&gt;
 			
 			</pre>
-			<p>现在我们分别通过curl有chrome/firefox进行测试</p>
-
+			<p>测试效果</p>
 			<pre class="screen">
 			
-	# curl -H "If-Modified-Since: Fri, 28 Feb 2014 08:42:55 GMT" -I  http://192.168.6.9/test.html
+# curl -I http://localhost/modified.php
 HTTP/1.1 200 OK
-Server: nginx/1.0.15
-Date: Thu, 27 Feb 2014 08:55:19 GMT
+Server: nginx/1.4.5
+Date: Fri, 28 Feb 2014 05:22:28 GMT
 Content-Type: text/html
 Connection: keep-alive
-Last-Modified: Thu, 26 Feb 2014 08:39:35 GMT
 			
 			</pre>
-			<p>经过测试无论是 curl 还是 chrome/firefox 均无法返回304.</p>
-			<p>下面是我的分析，仅供参考。用户请求index.html Nginx 会找到该文件读取 mtime 与 If-Modified-Since 匹配，如果If-Modified-Since大于 Last-Modified返回 304否则返回200.</p>
-			<p>为什么同样操作经过伪静态的test.html就不行呢？ 我分析当用户请求test.html Nginx 首先做Rewrite处理，然后跳转到index.php 整个过程nginx 并没有访问实际物理文件test.html也就没有mtime, 所以Nginx 返回200.</p>
-			<p>如果 Nginx 按预想的返回304，nginx 需要读取程序返回的HTTP头，Nginx 并没有这样的处理逻辑。</p>
-		</div>
+			<p>伪造一个 If-Modified-Since 日期小于我们指定的日期程序返回HTTP/1.1 200 OK</p>
+			<pre class="screen">
+			
+# curl -H "If-Modified-Since: Fri, 28 Feb 2014 10:04:18 GMT" -I http://localhost/modified.php
+HTTP/1.1 200 OK
+Server: nginx/1.4.5
+Date: Fri, 28 Feb 2014 05:22:13 GMT
+Content-Type: text/html
+Connection: keep-alive
+			
+			</pre>
+			<p>伪造一个 If-Modified-Since 日期大于我们指定的日期程序返回HTTP/1.1 304 Not Modified</p>
+			<pre class="screen">
+			
+# curl -H "If-Modified-Since: Fri, 28 Feb 2014 20:04:18 GMT" -I http://localhost/modified.php
+HTTP/1.1 304 Not Modified
+Server: nginx/1.4.5
+Date: Fri, 28 Feb 2014 05:21:31 GMT
+Connection: keep-alive
+Last-Modified: Fri, 28 Feb 2014 12:04:18 GMT
+			
+			</pre>
+			<p>虽然测试成功，并且在浏览器端也测试成功 HTTP/1.1 304 Not Modified</p>
+			<p>将modified.php伪静态处理 </p>
+			<pre class="screen">
+    location / {
+        root   /www;
+        index  index.html index.htm;
+		rewrite ^/modified.html$ /modified.php last;
+    }			
+			</pre>
+			<p>测试</p>
+			<pre class="screen">
+# curl -I http://localhost/modified.html
+HTTP/1.1 200 OK
+Server: nginx/1.4.5
+Date: Fri, 28 Feb 2014 06:21:10 GMT
+Content-Type: text/html
+Connection: keep-alive
+Last-Modified: Fri, 28 Feb 2014 10:04:18 GMT
 
+# curl -H "If-Modified-Since: Fri, 28 Feb 2014 12:04:18 GMT" -I http://localhost/modified.html
+HTTP/1.1 304 Not Modified
+Server: nginx/1.4.5
+Date: Fri, 28 Feb 2014 06:21:22 GMT
+Connection: keep-alive
+Last-Modified: Fri, 28 Feb 2014 10:04:18 GMT
+			</pre>
+			<p>达到预期效果</p>
+		</div>
 	</div>
 
-	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54687568"></a>3. ETag / If-None-Match</h2></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54822864"></a>3. ETag / If-None-Match</h2></div></div></div>
 		
 		<p>上面的Last-Modified测试中发现ETag虽然不限制，但是暗中还是可用的：）</p>
 		<p>etag on; 开启Nginx etag支持，lighttpd 默认开启</p>
@@ -452,7 +483,7 @@ Server: nginx/1.4.5
 Date: Fri, 28 Feb 2014 03:08:28 GMT
 Content-Type: text/html
 Connection: keep-alive
-		
+
 # curl -I http://phalcon/img/css.png
 HTTP/1.1 200 OK
 Server: nginx
@@ -472,7 +503,7 @@ Content-Type: text/html
 Connection: keep-alive
 		</pre>
 		<p>即使你开启了 ETag Nginx 对 HTML、CSS文件也不做处理。最终在一个外国网站是找到一个nginx-static-etags模块，有兴趣自己尝试，这里就不讲了。</p>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp54691856"></a>3.1. 静态文件</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp54841264"></a>3.1. 静态文件</h3></div></div></div>
 			
 			<p>首先查询etag值</p>
 			<pre class="screen">
@@ -499,7 +530,7 @@ ETag: "52fdce2f-46d"
 			</pre>
 			<p>这次比较顺利，成功返回HTTP/1.1 304 Not Modified</p>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp54695200"></a>3.2. 动态程序</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp54844528"></a>3.2. 动态程序</h3></div></div></div>
 			
 			<p>默认情况输出如下</p>
 			<pre class="screen">
@@ -601,11 +632,11 @@ http://www.example.com/news/100/1000.1.html
 			<p>.1.是版本号，每次修改后+1操作，.1.没有人格意义rewrite操作是会丢弃这个参数，仅仅是为了始终有新的URL对应内容</p>
 		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54695456"></a>4. Expires / Cache-Control</h2></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54844784"></a>4. Expires / Cache-Control</h2></div></div></div>
 		
 		<p>前面所讲 Last-Modified 与 Etag 主要用于分辨文件是否修改过， 无法控制页面在浏览器端缓存的时间。Expires / Cache-Control 可以控制缓存的时间段</p>
 		<p>Expires 是 HTTP/1.0标准，Cache-Control是 HTTP/1.1标准。都能正常工作，HTTP/1.1规范中max-age优先级高于Expires,有些浏览器会联动设置，例如你设置了Cache-Control随之自动生成Expires，仅仅为了兼容。</p>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp54708368"></a>4.1. 静态文件</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp54857696"></a>4.1. 静态文件</h3></div></div></div>
 			
 			<p>首先配置nginx设置html与png文件缓存1天</p>
 			<pre class="screen">
@@ -641,7 +672,7 @@ Cache-Control: max-age=86400
 Accept-Ranges: bytes
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp54712176"></a>4.2. 动态文件</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp54861504"></a>4.2. 动态文件</h3></div></div></div>
 			
 			<p>默认返回</p>
 			<pre class="screen">
@@ -672,16 +703,19 @@ Cache-Control: max-age=259200
 			<p>原因是Cache-Control程序输出的，Nginx并不知道，所以Nginx 不会给你返回304</p>
 			<pre class="screen">
 			
-header('Expires: Mon, 29 Jan 2007 08:56:01 GMT');			
 header('Last-Modified: ' .gmdate('D, d M Y H:i:s') . ' GMT' );
+
+$offset = 60 * 60 * 24;
+header('Expires: ' . gmdate('D, d M Y H:i:s', time() + $offset) . ' GMT');
+
 $ttl=3600;
-header("Cache-Control: max-age=$ttl, must-revalidate");			
+header("Cache-Control: max-age=$ttl, must-revalidate");
 			
 			</pre>
-			<p>这种方法根本不能实现缓存的目的</p>
+			<p>这种方法不能实现缓存的目的</p>
 		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54712432"></a>5. FastCGI 缓存相关</h2></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54861760"></a>5. FastCGI 缓存相关</h2></div></div></div>
 		
 		<p>我们做个尝试将 expires 1d;加到location ~ \.php$中，看看能不能实现缓存的目的。</p>
 		<pre class="screen">
@@ -692,7 +726,7 @@ header("Cache-Control: max-age=$ttl, must-revalidate");
         fastcgi_param  SCRIPT_FILENAME  /www$fastcgi_script_name;
         include        fastcgi_params;
 		expires      1d;
-    }		
+    }
 		</pre>
 		<p>测试程序</p>
 		<pre class="screen">
@@ -700,7 +734,7 @@ header("Cache-Control: max-age=$ttl, must-revalidate");
 # cat expires.php
 &lt;?php
 echo date("Y-m-d H:i:s");
-?&gt;		
+?&gt;
 		
 		</pre>
 		<p>测试结果</p>
@@ -716,7 +750,7 @@ Cache-Control: max-age=86400
 		</pre>
 		<p>虽然推送 Cache-Control: max-age=86400 但是 IE Chrome Firefox 仍不能缓存页面</p>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54721936"></a>6. HTML META 与 Cache</h2></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54871312"></a>6. HTML META 与 Cache</h2></div></div></div>
 		
 		<p>创建一个测试文件如下</p>
 		<pre class="screen">
@@ -769,7 +803,14 @@ Connection: keep-alive
 		</pre>
 		<p>至少在当年IE是认这些Meta的，进入HTML5时代很多都发生了变化，所以不能一概而论</p>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54727216"></a>7. 总结</h2></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54876592"></a>7. 反向代理与缓存</h2></div></div></div>
+		
+		<p></p>
+		<pre class="screen">
+		</pre>
+		<p></p>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54878352"></a>8. 总结</h2></div></div></div>
 		
 		<p>经过详细的测试我们发现不同的浏览器，不同的Web服务器，甚至每个版本都有所差异。</p>
 		<p>测试总结 Apache HTTPD 最完善 Lighttpd 其次， Nignx仍在快速发展中，Nignx每个版本差异很大，对HTTP协议实现标准也不太严谨，因为Nignx在大陆是趋势，所以下面给出的例子都是nginx</p>
