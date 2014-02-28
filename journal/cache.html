@@ -19,7 +19,7 @@
         <a href="/search.html">Search</a> |
         <a href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
         <a href="http://my.oschina.net/neochen/">OSChina 博客</a> |
-        <a href="http://rline.blog.51cto.com/">51CTO 博客</a></td><td></td><td></td></tr></table><div xml:lang="zh-cn" class="article" lang="zh-cn"><div class="titlepage"><div><div><h2 class="title"><a id="idp54753136"></a>实操 Web Cache</h2></div><div><h3 class="subtitle"><em>http://netkiller.github.io/journal/cache.html</em></h3></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(netkiller)</span>, <span class="lineage">陈景峰(BG7NYT)</span></h3><div class="affiliation">
+        <a href="http://rline.blog.51cto.com/">51CTO 博客</a></td><td></td><td></td></tr></table><div xml:lang="zh-cn" class="article" lang="zh-cn"><div class="titlepage"><div><div><h2 class="title"><a id="idp55149360"></a>实操 Web Cache</h2></div><div><h3 class="subtitle"><em>http://netkiller.github.io/journal/cache.html</em></h3></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(netkiller)</span>, <span class="lineage">陈景峰(BG7NYT)</span></h3><div class="affiliation">
 			<div class="address"><p><br />
 				<span class="country">中国</span><span class="state">广东省</span><span class="city">深圳市</span><span class="street">龙华新区民治街道溪山美地</span><br />
 				<span class="postcode">518131</span><br />
@@ -89,19 +89,19 @@
 		</td><td> </td><td> </td><td> </td></tr></table>
 	
 
-</div></div></div><hr /></div><div class="toc"><p><strong>目录</strong></p><dl class="toc"><dt><span class="section"><a href="#idp54754304">1. 测试环境</a></span></dt><dt><span class="section"><a href="#idp54799040">2. If-Modified-Since / Last-Modified</a></span></dt><dd><dl><dt><span class="section"><a href="#idp54801024">2.1. 静态文件</a></span></dt><dd><dl><dt><span class="section"><a href="#idp54812816">2.1.1. if_modified_since</a></span></dt></dl></dd><dt><span class="section"><a href="#idp54801280">2.2. 通过rewrite伪静态处理</a></span></dt><dt><span class="section"><a href="#idp54822608">2.3. 动态文件</a></span></dt></dl></dd><dt><span class="section"><a href="#idp54822864">3. ETag / If-None-Match</a></span></dt><dd><dl><dt><span class="section"><a href="#idp54841264">3.1. 静态文件</a></span></dt><dt><span class="section"><a href="#idp54844528">3.2. 动态程序</a></span></dt></dl></dd><dt><span class="section"><a href="#idp54844784">4. Expires / Cache-Control</a></span></dt><dd><dl><dt><span class="section"><a href="#idp54857696">4.1. 静态文件</a></span></dt><dt><span class="section"><a href="#idp54861504">4.2. 动态文件</a></span></dt></dl></dd><dt><span class="section"><a href="#idp54861760">5. FastCGI 缓存相关</a></span></dt><dt><span class="section"><a href="#idp54871312">6. HTML META 与 Cache</a></span></dt><dt><span class="section"><a href="#idp54876592">7. 反向代理与缓存</a></span></dt><dt><span class="section"><a href="#idp54878352">8. 总结</a></span></dt></dl></div>
+</div></div></div><hr /></div><div class="toc"><p><strong>目录</strong></p><dl class="toc"><dt><span class="section"><a href="#idp55150400">1. 测试环境</a></span></dt><dt><span class="section"><a href="#idp55195120">2. 文件修改日期 If-Modified-Since / Last-Modified</a></span></dt><dd><dl><dt><span class="section"><a href="#idp55197104">2.1. 静态文件</a></span></dt><dd><dl><dt><span class="section"><a href="#idp55208896">2.1.1. if_modified_since</a></span></dt></dl></dd><dt><span class="section"><a href="#idp55197360">2.2. 通过rewrite伪静态处理</a></span></dt><dt><span class="section"><a href="#idp55218784">2.3. 动态文件</a></span></dt></dl></dd><dt><span class="section"><a href="#idp55219040">3. ETag / If-None-Match</a></span></dt><dd><dl><dt><span class="section"><a href="#idp55237264">3.1. 静态文件</a></span></dt><dt><span class="section"><a href="#idp55240528">3.2. 动态程序</a></span></dt></dl></dd><dt><span class="section"><a href="#idp55240784">4. Expires / Cache-Control</a></span></dt><dd><dl><dt><span class="section"><a href="#idp55253696">4.1. 静态文件</a></span></dt><dt><span class="section"><a href="#idp55257504">4.2. 动态文件</a></span></dt></dl></dd><dt><span class="section"><a href="#idp55257760">5. FastCGI 缓存相关</a></span></dt><dt><span class="section"><a href="#idp55267312">6. HTML META 与 Cache</a></span></dt><dt><span class="section"><a href="#idp55272592">7. 反向代理与缓存</a></span></dt><dt><span class="section"><a href="#idp55272848">8. 总结</a></span></dt></dl></div>
 	
-	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54754304"></a>1. 测试环境</h2></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp55150400"></a>1. 测试环境</h2></div></div></div>
 		
 		<p>CentOS 6.5</p>
 		<p>Nginx安装脚本 https://github.com/oscm/shell/blob/master/nginx/nginx.sh</p>
 		<p>php安装脚本 https://github.com/oscm/shell/blob/master/php/5.5.8.sh</p>
 	</div>
- 	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54799040"></a>2. If-Modified-Since / Last-Modified</h2></div></div></div>
+ 	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp55195120"></a>2. 文件修改日期 If-Modified-Since / Last-Modified</h2></div></div></div>
  		
  		<p>If-Modified-Since 小于 Last-Modified 返回 HTTP/1.1 200 OK, 否则返回 HTTP/1.0 304 Not Modified</p>
 		<p>每次浏览器请求文件会携带  If-Modified-Since 头，将当前时间发送给服务器，与服务器的Last-Modified时间对对比，如果大于Last-Modified时间，返回HTTP/1.0 304 Not Modified不会重新打开文件，否则重新读取文件并返回内容</p>
- 		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp54801024"></a>2.1. 静态文件</h3></div></div></div>
+ 		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp55197104"></a>2.1. 静态文件</h3></div></div></div>
 			
 			<p>nginx/1.0.15 静态文件自动产生 Last-Modified 头</p>
 			<pre class="screen">
@@ -155,11 +155,11 @@ Content-Length: 6
 Last-Modified: Wed, 25 Dec 2013 03:18:16 GMT
 Connection: keep-alive
 ETag: "52ba4e78-6"
-Accept-Ranges: bytes				
+Accept-Ranges: bytes
 				</pre>
 				<p></p>
 			</div>
-			
+
 			<p>再测试一次</p>
 			<pre class="screen">
 # curl -H "If-Modified-Since: Fir, 28 Feb 2014 07:42:55 GMT" -I http://192.168.2.15/test.html
@@ -182,7 +182,7 @@ Connection: keep-alive
 ETag: "530feca6-8b"
 			</pre>
 			<p>也是成功的</p>
-			
+
 			<p>测试图片</p>
 			<pre class="screen">
 # curl -I http://localhost/logo.jpg
@@ -217,10 +217,10 @@ ETag: "530ffae5-2777"
 Accept-Ranges: bytes
 			</pre>
 			<p>测试结果，ETag通过测试，If-Modified-Since无论如何也无法返回 304 可能还需要其他的HTTP头，浏览器测试都通过返回 HTTP/1.1 304 Not Modified</p>
-			
+
 			<p>现在换成浏览器测试 Chrome Firefox成功， 因为浏览器不会主动发送If-Modified-Since, 浏览器只有发现Last-Modified后，第二次请求才会推送 If-Modified-Since 需要刷新两次页面。</p>
-			
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp54812816"></a>2.1.1. if_modified_since</h4></div></div></div>
+
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp55208896"></a>2.1.1. if_modified_since</h4></div></div></div>
 				
 				<p>在开启ssi的情况下，通过参数 if_modified_since 可以开启 Last-Modified</p>
 				<pre class="screen">
@@ -230,9 +230,9 @@ server {
     if_modified_since before;
 }
 				</pre>
-				
+
 				<p>测试结果看不到 Last-Modified, 因为 Nginx 的 if_modified_since before;参数只有接收到浏览器发过来的If-Modified-Since头才会发送Last-Modified</p>
-				
+
 				<pre class="screen">
 # curl -I http://192.168.2.15/test.html
 HTTP/1.1 200 OK
@@ -242,7 +242,7 @@ Content-Type: text/html
 Connection: keep-alive
 				</pre>
 				<p>最终 if_modified_since before; 数没有起到作用</p>
-				
+
 				<p>参数设置为 if_modified_since exact;</p>
 				<pre class="screen">
 # curl -I http://192.168.2.15/test.html
@@ -270,8 +270,8 @@ Connection: keep-alive
 				<p>测试失败，浏览器也是实测失败，ETag却成功</p>
 			</div>
 		</div>
-		
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp54801280"></a>2.2. 通过rewrite伪静态处理</h3></div></div></div>
+
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp55197360"></a>2.2. 通过rewrite伪静态处理</h3></div></div></div>
 			
 			<p>index.php仍然是上面的那个php文件，我们只是做了伪静态</p>
 			<pre class="screen">
@@ -301,8 +301,8 @@ Last-Modified: Thu, 26 Feb 2014 08:39:35 GMT
 			<p>为什么同样操作经过伪静态的test.html就不行呢？ 我分析当用户请求test.html Nginx 首先做Rewrite处理，然后跳转到index.php 整个过程nginx 并没有访问实际物理文件test.html也就没有mtime, 所以Nginx 返回200.</p>
 			<p>如果 Nginx 按预想的返回304，nginx 需要读取程序返回的HTTP头，Nginx 并没有这样的处理逻辑。</p>
 		</div>
-		
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp54822608"></a>2.3. 动态文件</h3></div></div></div>
+
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp55218784"></a>2.3. 动态文件</h3></div></div></div>
 			
 			<p>动态文件没有 Last-Modified 头，我们可以伪造一个</p>
 			<pre class="screen">
@@ -350,7 +350,7 @@ Date: Fri, 28 Feb 2014 05:59:28 GMT
 Content-Type: text/html
 Connection: keep-alive
 Last-Modified: Fri, 28 Feb 2014 10:04:18 GMT
-				
+
 # curl -H "If-Modified-Since: Fri, 28 Feb 2014 08:42:55 GMT" -I  http://localhost/modified.php
 HTTP/1.1 200 OK
 Server: nginx/1.0.15
@@ -362,7 +362,7 @@ Last-Modified: Thu, 26 Feb 2014 08:39:35 GMT
 				</pre>
 				<p>Last-Modified 对动态程序来说没有起到实际作用</p>
 			</div>
-			
+
 			<p>Last-Modified是程序产生的，Nginx无法读到，让程序去处理状态返回是可行的，下面我们修改程序如下。</p>
 			<pre class="screen">
 			
@@ -431,7 +431,7 @@ Last-Modified: Fri, 28 Feb 2014 12:04:18 GMT
         root   /www;
         index  index.html index.htm;
 		rewrite ^/modified.html$ /modified.php last;
-    }			
+    }
 			</pre>
 			<p>测试</p>
 			<pre class="screen">
@@ -454,7 +454,7 @@ Last-Modified: Fri, 28 Feb 2014 10:04:18 GMT
 		</div>
 	</div>
 
-	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54822864"></a>3. ETag / If-None-Match</h2></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp55219040"></a>3. ETag / If-None-Match</h2></div></div></div>
 		
 		<p>上面的Last-Modified测试中发现ETag虽然不限制，但是暗中还是可用的：）</p>
 		<p>etag on; 开启Nginx etag支持，lighttpd 默认开启</p>
@@ -494,16 +494,9 @@ Last-Modified: Fri, 14 Feb 2014 08:05:03 GMT
 Connection: keep-alive
 ETag: "52fdce2f-46d"
 Accept-Ranges: bytes3
-
-# curl -I http://localhost/mobile.css
-HTTP/1.1 403 Forbidden
-Server: nginx/1.4.5
-Date: Fri, 28 Feb 2014 03:11:43 GMT
-Content-Type: text/html
-Connection: keep-alive
 		</pre>
 		<p>即使你开启了 ETag Nginx 对 HTML、CSS文件也不做处理。最终在一个外国网站是找到一个nginx-static-etags模块，有兴趣自己尝试，这里就不讲了。</p>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp54841264"></a>3.1. 静态文件</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp55237264"></a>3.1. 静态文件</h3></div></div></div>
 			
 			<p>首先查询etag值</p>
 			<pre class="screen">
@@ -530,7 +523,7 @@ ETag: "52fdce2f-46d"
 			</pre>
 			<p>这次比较顺利，成功返回HTTP/1.1 304 Not Modified</p>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp54844528"></a>3.2. 动态程序</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp55240528"></a>3.2. 动态程序</h3></div></div></div>
 			
 			<p>默认情况输出如下</p>
 			<pre class="screen">
@@ -632,11 +625,11 @@ http://www.example.com/news/100/1000.1.html
 			<p>.1.是版本号，每次修改后+1操作，.1.没有人格意义rewrite操作是会丢弃这个参数，仅仅是为了始终有新的URL对应内容</p>
 		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54844784"></a>4. Expires / Cache-Control</h2></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp55240784"></a>4. Expires / Cache-Control</h2></div></div></div>
 		
 		<p>前面所讲 Last-Modified 与 Etag 主要用于分辨文件是否修改过， 无法控制页面在浏览器端缓存的时间。Expires / Cache-Control 可以控制缓存的时间段</p>
 		<p>Expires 是 HTTP/1.0标准，Cache-Control是 HTTP/1.1标准。都能正常工作，HTTP/1.1规范中max-age优先级高于Expires,有些浏览器会联动设置，例如你设置了Cache-Control随之自动生成Expires，仅仅为了兼容。</p>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp54857696"></a>4.1. 静态文件</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp55253696"></a>4.1. 静态文件</h3></div></div></div>
 			
 			<p>首先配置nginx设置html与png文件缓存1天</p>
 			<pre class="screen">
@@ -672,7 +665,7 @@ Cache-Control: max-age=86400
 Accept-Ranges: bytes
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp54861504"></a>4.2. 动态文件</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp55257504"></a>4.2. 动态文件</h3></div></div></div>
 			
 			<p>默认返回</p>
 			<pre class="screen">
@@ -715,7 +708,7 @@ header("Cache-Control: max-age=$ttl, must-revalidate");
 			<p>这种方法不能实现缓存的目的</p>
 		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54861760"></a>5. FastCGI 缓存相关</h2></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp55257760"></a>5. FastCGI 缓存相关</h2></div></div></div>
 		
 		<p>我们做个尝试将 expires 1d;加到location ~ \.php$中，看看能不能实现缓存的目的。</p>
 		<pre class="screen">
@@ -750,7 +743,7 @@ Cache-Control: max-age=86400
 		</pre>
 		<p>虽然推送 Cache-Control: max-age=86400 但是 IE Chrome Firefox 仍不能缓存页面</p>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54871312"></a>6. HTML META 与 Cache</h2></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp55267312"></a>6. HTML META 与 Cache</h2></div></div></div>
 		
 		<p>创建一个测试文件如下</p>
 		<pre class="screen">
@@ -803,19 +796,137 @@ Connection: keep-alive
 		</pre>
 		<p>至少在当年IE是认这些Meta的，进入HTML5时代很多都发生了变化，所以不能一概而论</p>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54876592"></a>7. 反向代理与缓存</h2></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp55272592"></a>7. 反向代理与缓存</h2></div></div></div>
 		
-		<p></p>
+		<p>反向代理服务器缓存方式分为：</p>
+		<p>强制缓存，指定文件，扩展名，URL设置缓存时间</p>
+ 		<p>遵循HTTP协议头标准进行缓存</p>
+		<p>默认配置，只进行代理，不进行缓存</p>
+ 		<pre class="screen">
+server {
+    listen       80;
+    server_name  192.168.2.15;
+    #access_log  /var/log/nginx/log/host.access.log  main;
+
+	location / {
+	  proxy_pass        http://localhost:80;
+	  proxy_set_header  X-Real-IP  $remote_addr;
+	}
+}
+ 		</pre>
+ 		<p>反向代理会产生两条日志（access_log 写入一个文件中，如果分开写，则会分开写入日志）</p>
+ 		<pre class="screen">
+192.168.2.15 - - [28/Feb/2014:18:09:33 +0800] "HEAD /modified.html HTTP/1.1" 200 0 "-" "curl/7.19.7 (x86_64-redhat-linux-gnu) libcurl/7.19.7 NSS/3.14.0.0 zlib/1.2.3 libidn/1.18 libssh2/1.4.2" "-"
+127.0.0.1 - - [28/Feb/2014:18:09:33 +0800] "HEAD /modified.html HTTP/1.0" 200 0 "-" "curl/7.19.7 (x86_64-redhat-linux-gnu) libcurl/7.19.7 NSS/3.14.0.0 zlib/1.2.3 libidn/1.18 libssh2/1.4.2" "-"
+		</pre>
+		<p>Last-Modified 与 ETag 会透传过去</p>
 		<pre class="screen">
+# curl -H "If-Modified-Since: Fri, 28 Feb 2014 12:04:18 GMT" -I http://192.168.2.15/modified.html
+HTTP/1.1 304 Not Modified
+Server: nginx/1.4.5
+Date: Fri, 28 Feb 2014 10:17:30 GMT
+Connection: keep-alive
+Last-Modified: Fri, 28 Feb 2014 10:04:18 GMT
+		</pre>
+		<p>我们可以看到两条日志都返回304</p>
+		<pre class="screen">
+192.168.2.15 - - [28/Feb/2014:18:17:30 +0800] "HEAD /modified.html HTTP/1.1" 304 0 "-" "curl/7.19.7 (x86_64-redhat-linux-gnu) libcurl/7.19.7 NSS/3.14.0.0 zlib/1.2.3 libidn/1.18 libssh2/1.4.2" "-"
+127.0.0.1 - - [28/Feb/2014:18:17:30 +0800] "HEAD /modified.html HTTP/1.0" 304 0 "-" "curl/7.19.7 (x86_64-redhat-linux-gnu) libcurl/7.19.7 NSS/3.14.0.0 zlib/1.2.3 libidn/1.18 libssh2/1.4.2" "-"
+		</pre>
+		<p>下面为反向代理增加缓存功能</p>
+		<pre class="screen">
+proxy_temp_path   /tmp/proxy_temp_dir;
+proxy_cache_path  /tmp/proxy_cache_dir  levels=1:2   keys_zone=nginx_cache:200m inactive=3d max_size=30g;
+
+server {
+    listen       80;
+    server_name  192.168.2.15;
+
+	location / {
+		proxy_cache nginx_cache;
+		proxy_cache_key $host$uri$is_args$args;
+		proxy_set_header  X-Real-IP  $remote_addr;
+		proxy_set_header  X-Forwarded-For  $proxy_add_x_forwarded_for;
+		proxy_cache_valid 200 10m;
+		proxy_pass        http://localhost;
+	}
+
+	location ~ .*\.(php|jsp|cgi)?$
+	{
+	     proxy_set_header Host  $host;
+	     proxy_set_header X-Forwarded-For  $remote_addr;
+	     proxy_pass http://backend_server;
+	}
+}
 		</pre>
 		<p></p>
+		<pre class="screen">
+# curl  -I http://192.168.2.15/index.html
+HTTP/1.1 200 OK
+Server: nginx/1.4.5
+Date: Fri, 28 Feb 2014 10:57:35 GMT
+Content-Type: text/html
+Content-Length: 12
+Connection: keep-alive
+Last-Modified: Fri, 28 Feb 2014 06:54:45 GMT
+ETag: "531032b5-c"
+Expires: Sat, 01 Mar 2014 10:57:35 GMT
+Cache-Control: max-age=86400
+Accept-Ranges: bytes
+
+# curl  -I http://192.168.2.15/index.html
+HTTP/1.1 200 OK
+Server: nginx/1.4.5
+Date: Fri, 28 Feb 2014 10:57:41 GMT
+Content-Type: text/html
+Content-Length: 12
+Connection: keep-alive
+Last-Modified: Fri, 28 Feb 2014 06:54:45 GMT
+ETag: "531032b5-c"
+Expires: Sat, 01 Mar 2014 10:57:35 GMT
+Cache-Control: max-age=86400
+Accept-Ranges: bytes
+
+# curl  -I http://192.168.2.15/index.html
+HTTP/1.1 200 OK
+Server: nginx/1.4.5
+Date: Fri, 28 Feb 2014 10:57:46 GMT
+Content-Type: text/html
+Content-Length: 12
+Connection: keep-alive
+Last-Modified: Fri, 28 Feb 2014 06:54:45 GMT
+ETag: "531032b5-c"
+Expires: Sat, 01 Mar 2014 10:57:35 GMT
+Cache-Control: max-age=86400
+Accept-Ranges: bytes
+		</pre>
+		<p>上面共请求了3次服务器</p>
+		<pre class="screen">
+192.168.2.15 - - [28/Feb/2014:18:57:35 +0800] "HEAD /index.html HTTP/1.1" 200 0 "-" "curl/7.19.7 (x86_64-redhat-linux-gnu) libcurl/7.19.7 NSS/3.14.0.0 zlib/1.2.3 libidn/1.18 libssh2/1.4.2" "-"
+127.0.0.1 - - [28/Feb/2014:18:57:35 +0800] "GET /index.html HTTP/1.0" 200 12 "-" "curl/7.19.7 (x86_64-redhat-linux-gnu) libcurl/7.19.7 NSS/3.14.0.0 zlib/1.2.3 libidn/1.18 libssh2/1.4.2" "192.168.2.15"
+192.168.2.15 - - [28/Feb/2014:18:57:41 +0800] "HEAD /index.html HTTP/1.1" 200 0 "-" "curl/7.19.7 (x86_64-redhat-linux-gnu) libcurl/7.19.7 NSS/3.14.0.0 zlib/1.2.3 libidn/1.18 libssh2/1.4.2" "-"
+192.168.2.15 - - [28/Feb/2014:18:57:46 +0800] "HEAD /index.html HTTP/1.1" 200 0 "-" "curl/7.19.7 (x86_64-redhat-linux-gnu) libcurl/7.19.7 NSS/3.14.0.0 zlib/1.2.3 libidn/1.18 libssh2/1.4.2" "-"
+		</pre>
+		<p>第一次连接192.168.2.15然后转发给127.0.0.1 返回 HTTP/1.1 200 OK</p>
+		<p>后面两次连接192.168.2.15没有转发给127.0.0.1 直接返回 HTTP/1.1 200 OK</p>
+		<p>查看缓存目录,我们可以看到生成的缓存文件</p>
+		<pre class="screen">
+# find /tmp/proxy_*
+/tmp/proxy_cache_dir
+/tmp/proxy_cache_dir/1
+/tmp/proxy_cache_dir/1/79
+/tmp/proxy_cache_dir/1/79/b47a0009c531900de2a15ba80c0e3791
+/tmp/proxy_temp_dir
+		</pre>
+		
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54878352"></a>8. 总结</h2></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp55272848"></a>8. 总结</h2></div></div></div>
 		
 		<p>经过详细的测试我们发现不同的浏览器，不同的Web服务器，甚至每个版本都有所差异。</p>
 		<p>测试总结 Apache HTTPD 最完善 Lighttpd 其次， Nignx仍在快速发展中，Nignx每个版本差异很大，对HTTP协议实现标准也不太严谨，因为Nignx在大陆是趋势，所以下面给出的例子都是nginx</p>
 		<p>我比较看好Lighttpd，FastCGI 部分我一般是用php-fpm替代Lighttpd的spawn-fcgi</p>
 		<p>切记使用Nginx要注意每个本版细微变化，否则升级后会有影响。我习惯使用yum 安装 nginx 随时 yum update 升级。</p>
+		<p>另外FastCGI 与 mod_php也有所区别</p>
 		<p>延伸阅读《	Netkiller Web 手札》<a class="ulink" href="http://netkiller.github.io/www/index.html" target="_top">http://netkiller.github.io/www/index.html</a></p>
 	</div>
 </div><div xmlns="" id="bdshare" class="bdshare_t bds_tools_32 get-codes-bdshare"><a class="bds_fbook"></a><a class="bds_twi"></a><a class="bds_ms"></a><a class="bds_msn"></a><a class="bds_buzz"></a><a class="bds_linkedin"></a><a class="bds_deli"></a><a class="bds_qzone"></a><a class="bds_qq"></a><a class="bds_tqq"></a><a class="bds_tqf"></a><a class="bds_tsina"></a><a class="bds_baidu"></a><a class="bds_renren"></a><a class="bds_t163"></a><a class="bds_tfh"></a><a class="bds_douban"></a><a class="bds_hi"></a><a class="bds_tieba"></a><a class="bds_tsohu"></a><span class="bds_more"></span><a class="shareCount"></a></div><script xmlns="" type="text/javascript" id="bdshare_js" data="type=tools"></script><script xmlns="" type="text/javascript" id="bdshell_js"></script><script xmlns="" type="text/javascript">
