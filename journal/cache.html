@@ -19,7 +19,7 @@
         <a href="/search.html">Search</a> |
         <a href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
         <a href="http://my.oschina.net/neochen/">OSChina 博客</a> |
-        <a href="http://rline.blog.51cto.com/">51CTO 博客</a></td><td></td><td></td></tr></table><div xml:lang="zh-cn" class="article" lang="zh-cn"><div class="titlepage"><div><div><h2 class="title"><a id="idp55149360"></a>实操 Web Cache</h2></div><div><h3 class="subtitle"><em>http://netkiller.github.io/journal/cache.html</em></h3></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(netkiller)</span>, <span class="lineage">陈景峰(BG7NYT)</span></h3><div class="affiliation">
+        <a href="http://rline.blog.51cto.com/">51CTO 博客</a></td><td></td><td></td></tr></table><div xml:lang="zh-cn" class="article" lang="zh-cn"><div class="titlepage"><div><div><h2 class="title"><a id="idp56810288"></a>实操 Web Cache</h2></div><div><h3 class="subtitle"><em>http://netkiller.github.io/journal/cache.html</em></h3></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(netkiller)</span>, <span class="lineage">陈景峰(BG7NYT)</span></h3><div class="affiliation">
 			<div class="address"><p><br />
 				<span class="country">中国</span><span class="state">广东省</span><span class="city">深圳市</span><span class="street">龙华新区民治街道溪山美地</span><br />
 				<span class="postcode">518131</span><br />
@@ -89,19 +89,19 @@
 		</td><td> </td><td> </td><td> </td></tr></table>
 	
 
-</div></div></div><hr /></div><div class="toc"><p><strong>目录</strong></p><dl class="toc"><dt><span class="section"><a href="#idp55150400">1. 测试环境</a></span></dt><dt><span class="section"><a href="#idp55195120">2. 文件修改日期 If-Modified-Since / Last-Modified</a></span></dt><dd><dl><dt><span class="section"><a href="#idp55197104">2.1. 静态文件</a></span></dt><dd><dl><dt><span class="section"><a href="#idp55208896">2.1.1. if_modified_since</a></span></dt></dl></dd><dt><span class="section"><a href="#idp55197360">2.2. 通过rewrite伪静态处理</a></span></dt><dt><span class="section"><a href="#idp55218784">2.3. 动态文件</a></span></dt></dl></dd><dt><span class="section"><a href="#idp55219040">3. ETag / If-None-Match</a></span></dt><dd><dl><dt><span class="section"><a href="#idp55237264">3.1. 静态文件</a></span></dt><dt><span class="section"><a href="#idp55240528">3.2. 动态程序</a></span></dt></dl></dd><dt><span class="section"><a href="#idp55240784">4. Expires / Cache-Control</a></span></dt><dd><dl><dt><span class="section"><a href="#idp55253696">4.1. 静态文件</a></span></dt><dt><span class="section"><a href="#idp55257504">4.2. 动态文件</a></span></dt></dl></dd><dt><span class="section"><a href="#idp55257760">5. FastCGI 缓存相关</a></span></dt><dt><span class="section"><a href="#idp55267312">6. HTML META 与 Cache</a></span></dt><dt><span class="section"><a href="#idp55272592">7. 反向代理与缓存</a></span></dt><dt><span class="section"><a href="#idp55272848">8. 总结</a></span></dt></dl></div>
+</div></div></div><hr /></div><div class="toc"><p><strong>目录</strong></p><dl class="toc"><dt><span class="section"><a href="#idp56811952">1. 测试环境</a></span></dt><dt><span class="section"><a href="#modified">2. 文件修改日期 If-Modified-Since / Last-Modified</a></span></dt><dd><dl><dt><span class="section"><a href="#idp56945520">2.1. 静态文件</a></span></dt><dd><dl><dt><span class="section"><a href="#idp56957312">2.1.1. if_modified_since</a></span></dt></dl></dd><dt><span class="section"><a href="#idp56945776">2.2. 通过rewrite伪静态处理</a></span></dt><dt><span class="section"><a href="#idp56967104">2.3. 动态文件</a></span></dt></dl></dd><dt><span class="section"><a href="#etag">3. ETag / If-None-Match</a></span></dt><dd><dl><dt><span class="section"><a href="#idp56985984">3.1. 静态文件</a></span></dt><dt><span class="section"><a href="#idp56989248">3.2. 动态程序</a></span></dt></dl></dd><dt><span class="section"><a href="#expires">4. Expires / Cache-Control</a></span></dt><dd><dl><dt><span class="section"><a href="#idp57002720">4.1. 静态文件</a></span></dt><dt><span class="section"><a href="#idp57006448">4.2. 动态文件</a></span></dt></dl></dd><dt><span class="section"><a href="#fastcgi">5. FastCGI 缓存相关</a></span></dt><dt><span class="section"><a href="#meta">6. HTML META 与 Cache</a></span></dt><dt><span class="section"><a href="#gzip">7. gzip</a></span></dt><dd><dl><dt><span class="section"><a href="#idp57029152">7.1. gzip 总结</a></span></dt></dl></dd><dt><span class="section"><a href="#proxy">8. 反向代理与缓存</a></span></dt><dd><dl><dt><span class="section"><a href="#proxy.gzip">8.1. gzip 处理</a></span></dt></dl></dd><dt><span class="section"><a href="#summary">9. 总结</a></span></dt></dl></div>
 	
-	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp55150400"></a>1. 测试环境</h2></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp56811952"></a>1. 测试环境</h2></div></div></div>
 		
 		<p>CentOS 6.5</p>
 		<p>Nginx安装脚本 https://github.com/oscm/shell/blob/master/nginx/nginx.sh</p>
 		<p>php安装脚本 https://github.com/oscm/shell/blob/master/php/5.5.8.sh</p>
 	</div>
- 	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp55195120"></a>2. 文件修改日期 If-Modified-Since / Last-Modified</h2></div></div></div>
+ 	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="modified"></a>2. 文件修改日期 If-Modified-Since / Last-Modified</h2></div></div></div>
  		
  		<p>If-Modified-Since 小于 Last-Modified 返回 HTTP/1.1 200 OK, 否则返回 HTTP/1.0 304 Not Modified</p>
 		<p>每次浏览器请求文件会携带  If-Modified-Since 头，将当前时间发送给服务器，与服务器的Last-Modified时间对对比，如果大于Last-Modified时间，返回HTTP/1.0 304 Not Modified不会重新打开文件，否则重新读取文件并返回内容</p>
- 		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp55197104"></a>2.1. 静态文件</h3></div></div></div>
+ 		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp56945520"></a>2.1. 静态文件</h3></div></div></div>
 			
 			<p>nginx/1.0.15 静态文件自动产生 Last-Modified 头</p>
 			<pre class="screen">
@@ -220,7 +220,7 @@ Accept-Ranges: bytes
 
 			<p>现在换成浏览器测试 Chrome Firefox成功， 因为浏览器不会主动发送If-Modified-Since, 浏览器只有发现Last-Modified后，第二次请求才会推送 If-Modified-Since 需要刷新两次页面。</p>
 
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp55208896"></a>2.1.1. if_modified_since</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp56957312"></a>2.1.1. if_modified_since</h4></div></div></div>
 				
 				<p>在开启ssi的情况下，通过参数 if_modified_since 可以开启 Last-Modified</p>
 				<pre class="screen">
@@ -271,7 +271,7 @@ Connection: keep-alive
 			</div>
 		</div>
 
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp55197360"></a>2.2. 通过rewrite伪静态处理</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp56945776"></a>2.2. 通过rewrite伪静态处理</h3></div></div></div>
 			
 			<p>index.php仍然是上面的那个php文件，我们只是做了伪静态</p>
 			<pre class="screen">
@@ -302,7 +302,7 @@ Last-Modified: Thu, 26 Feb 2014 08:39:35 GMT
 			<p>如果 Nginx 按预想的返回304，nginx 需要读取程序返回的HTTP头，Nginx 并没有这样的处理逻辑。</p>
 		</div>
 
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp55218784"></a>2.3. 动态文件</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp56967104"></a>2.3. 动态文件</h3></div></div></div>
 			
 			<p>动态文件没有 Last-Modified 头，我们可以伪造一个</p>
 			<pre class="screen">
@@ -424,7 +424,7 @@ Connection: keep-alive
 Last-Modified: Fri, 28 Feb 2014 12:04:18 GMT
 			
 			</pre>
-			<p>虽然测试成功，并且在浏览器端也测试成功 HTTP/1.1 304 Not Modified</p>
+			<p>测试成功，并且在浏览器端也测试成功 HTTP/1.1 304 Not Modified</p>
 			<p>将modified.php伪静态处理 </p>
 			<pre class="screen">
     location / {
@@ -454,7 +454,7 @@ Last-Modified: Fri, 28 Feb 2014 10:04:18 GMT
 		</div>
 	</div>
 
-	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp55219040"></a>3. ETag / If-None-Match</h2></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="etag"></a>3. ETag / If-None-Match</h2></div></div></div>
 		
 		<p>上面的Last-Modified测试中发现ETag虽然不限制，但是暗中还是可用的：）</p>
 		<p>etag on; 开启Nginx etag支持，lighttpd 默认开启</p>
@@ -496,7 +496,7 @@ ETag: "52fdce2f-46d"
 Accept-Ranges: bytes3
 		</pre>
 		<p>即使你开启了 ETag Nginx 对 HTML、CSS文件也不做处理。最终在一个外国网站是找到一个nginx-static-etags模块，有兴趣自己尝试，这里就不讲了。</p>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp55237264"></a>3.1. 静态文件</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp56985984"></a>3.1. 静态文件</h3></div></div></div>
 			
 			<p>首先查询etag值</p>
 			<pre class="screen">
@@ -523,7 +523,7 @@ ETag: "52fdce2f-46d"
 			</pre>
 			<p>这次比较顺利，成功返回HTTP/1.1 304 Not Modified</p>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp55240528"></a>3.2. 动态程序</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp56989248"></a>3.2. 动态程序</h3></div></div></div>
 			
 			<p>默认情况输出如下</p>
 			<pre class="screen">
@@ -625,11 +625,11 @@ http://www.example.com/news/100/1000.1.html
 			<p>.1.是版本号，每次修改后+1操作，.1.没有人格意义rewrite操作是会丢弃这个参数，仅仅是为了始终有新的URL对应内容</p>
 		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp55240784"></a>4. Expires / Cache-Control</h2></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="expires"></a>4. Expires / Cache-Control</h2></div></div></div>
 		
 		<p>前面所讲 Last-Modified 与 Etag 主要用于分辨文件是否修改过， 无法控制页面在浏览器端缓存的时间。Expires / Cache-Control 可以控制缓存的时间段</p>
 		<p>Expires 是 HTTP/1.0标准，Cache-Control是 HTTP/1.1标准。都能正常工作，HTTP/1.1规范中max-age优先级高于Expires,有些浏览器会联动设置，例如你设置了Cache-Control随之自动生成Expires，仅仅为了兼容。</p>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp55253696"></a>4.1. 静态文件</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp57002720"></a>4.1. 静态文件</h3></div></div></div>
 			
 			<p>首先配置nginx设置html与png文件缓存1天</p>
 			<pre class="screen">
@@ -665,7 +665,7 @@ Cache-Control: max-age=86400
 Accept-Ranges: bytes
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp55257504"></a>4.2. 动态文件</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp57006448"></a>4.2. 动态文件</h3></div></div></div>
 			
 			<p>默认返回</p>
 			<pre class="screen">
@@ -708,7 +708,7 @@ header("Cache-Control: max-age=$ttl, must-revalidate");
 			<p>这种方法不能实现缓存的目的</p>
 		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp55257760"></a>5. FastCGI 缓存相关</h2></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="fastcgi"></a>5. FastCGI 缓存相关</h2></div></div></div>
 		
 		<p>我们做个尝试将 expires 1d;加到location ~ \.php$中，看看能不能实现缓存的目的。</p>
 		<pre class="screen">
@@ -743,7 +743,7 @@ Cache-Control: max-age=86400
 		</pre>
 		<p>虽然推送 Cache-Control: max-age=86400 但是 IE Chrome Firefox 仍不能缓存页面</p>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp55267312"></a>6. HTML META 与 Cache</h2></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="meta"></a>6. HTML META 与 Cache</h2></div></div></div>
 		
 		<p>创建一个测试文件如下</p>
 		<pre class="screen">
@@ -796,7 +796,80 @@ Connection: keep-alive
 		</pre>
 		<p>至少在当年IE是认这些Meta的，进入HTML5时代很多都发生了变化，所以不能一概而论</p>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp55272592"></a>7. 反向代理与缓存</h2></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="gzip"></a>7. gzip</h2></div></div></div>
+		
+		<p>defalte 是 Apache httpd 的标准这里只谈gzip</p>
+		<p>首先创建一个 gzip.html</p>
+		<pre class="screen">
+# curl -I http://localhost/gzip.html
+HTTP/1.1 200 OK
+Server: nginx/1.4.5
+Date: Mon, 03 Mar 2014 01:49:45 GMT
+Content-Type: text/html
+Content-Length: 19644
+Last-Modified: Mon, 03 Mar 2014 01:49:02 GMT
+Connection: keep-alive
+ETag: "5313df8e-4cbc"
+Accept-Ranges: bytes
+		</pre>
+		<p>开启 gzip on;</p>
+		<pre class="screen">
+server {
+    listen       80;
+    server_name  localhost;
+
+    #charset utf-8;
+    #access_log  /var/log/nginx/log/host.access.log  main;
+    #etag on;
+    #ssi on;
+    gzip on;
+		</pre>
+		<p>现在看看效果</p>
+		<pre class="screen">
+# curl -I http://localhost/gzip.html
+HTTP/1.1 200 OK
+Server: nginx/1.4.5
+Date: Mon, 03 Mar 2014 01:51:56 GMT
+Content-Type: text/html
+Content-Length: 19644
+Last-Modified: Mon, 03 Mar 2014 01:49:02 GMT
+Connection: keep-alive
+ETag: "5313df8e-4cbc"
+Accept-Ranges: bytes
+		</pre>
+		<p>并没有什么不同，现在增加HTTP头Accept-Encoding:gzip,defalte看看</p>
+		<pre class="screen">
+		
+# curl -H Accept-Encoding:gzip,defalte  http://localhost/gzip.html
+		
+		</pre>
+		<p>如果你能看到非文本内容（俗称乱码）就表示成功了。输入内容就是gzip压缩后二进制数据，我们使用gunzip可以解压缩</p>
+		<pre class="screen">
+# curl -H Accept-Encoding:gzip,defalte  http://localhost/gzip.html | gunzip
+		</pre>
+		<p>如果能正常看到html输出，表示压缩无误。</p>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp57029152"></a>7.1. gzip 总结</h3></div></div></div>
+			
+			<p>gzip on; 开启后默认支持 text/html 不能在 gzip_types 再次定义，否则会提示重复MIME类型</p>
+			<pre class="screen">
+Starting nginx: nginx: [warn] duplicate MIME type "text/html" in /etc/nginx/conf.d/localhost.conf:16
+			</pre>
+			<p>高级配置参考</p>
+			<pre class="screen">
+    gzip  on;
+    gzip_http_version 1.0;
+    gzip_types        text/plain text/xml text/css application/xml application/xhtml+xml application/rss+xml application/atom_xml application/javascript application/x-javascript application/json;
+    gzip_disable      "MSIE [1-6]\.";
+    gzip_disable      "Mozilla/4";
+    gzip_comp_level   6;
+    gzip_proxied      any;
+    gzip_vary         on;
+    gzip_buffers      4 8k;
+    gzip_min_length   1000;		
+			</pre>
+		</div>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="proxy"></a>8. 反向代理与缓存</h2></div></div></div>
 		
 		<p>反向代理服务器缓存方式分为：</p>
 		<p>强制缓存，指定文件，扩展名，URL设置缓存时间</p>
@@ -919,8 +992,68 @@ Accept-Ranges: bytes
 /tmp/proxy_temp_dir
 		</pre>
 		
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="proxy.gzip"></a>8.1. gzip 处理</h3></div></div></div>
+			
+			<p>http://localhost/gzip.html 是支持压缩的，192.168.2.15 proxy_pass http://localhost</p>
+			<pre class="screen">
+# curl -H Accept-Encoding:gzip,defalte  http://localhost/gzip.html			
+			</pre>
+			<p>运行后输出乱码</p>
+			<pre class="screen">
+# curl -H Accept-Encoding:gzip,defalte  http://192.168.2.15/gzip.html
+			</pre>
+			<p>现在透过反向代理请求试试，你会发现gzip压缩无效，输出的是HTML，这是怎么回事呢？这是因为反向代理不清楚后面的服务器是否支持gzip，所以一律按照正常html请求。现在我们开启 gzip_vary on; 每次返回数据会携带Vary: Accept-Encoding 头。</p>
+			<pre class="screen">
+	gzip  on;
+	gzip_vary on;
+			</pre>
+			<p>reload nginx 后查看Vary: Accept-Encoding输出</p>
+			<pre class="screen">
+# curl -I http://localhost/gzip.html
+HTTP/1.1 200 OK
+Server: nginx/1.4.5
+Date: Mon, 03 Mar 2014 02:09:16 GMT
+Content-Type: text/html
+Content-Length: 19644
+Last-Modified: Mon, 03 Mar 2014 01:49:02 GMT
+Connection: keep-alive
+Vary: Accept-Encoding
+ETag: "5313df8e-4cbc"
+Accept-Ranges: bytes
+			</pre>
+			<p>有 Vary: Accept-Encoding 头，现在再测试一次</p>
+			<pre class="screen">
+			
+# curl -H "Accept-Encoding: gzip" http://192.168.2.15/gzip.html
+&lt;html&gt;
+&lt;head&gt;
+	&lt;title&gt;Hello&lt;/title&gt;
+			
+			</pre>
+			<p>测试失败，并没有出现预期效果，于是到网站找答案，中文与英文资料都看个遍，没有解决.</p>
+			<p>最后只能让反向代理取到数据后再压缩一次，配置开启 gzip on;</p>
+			<pre class="screen">
+proxy_temp_path   /tmp/proxy_temp_dir;
+proxy_cache_path  /tmp/proxy_cache_dir  levels=1:2   keys_zone=nginx_cache:200m inactive=3d max_size=30g;
+
+server {
+    listen       80;
+    server_name  192.168.2.15;
+
+	gzip on;
+	
+	location / {
+		proxy_set_header X-Real-IP  $remote_addr;
+		proxy_set_header X-Forwarded-For  $proxy_add_x_forwarded_for; 
+		# proxy_set_header Accept-Encoding "gzip"; 没有任何效果
+		proxy_pass       http://localhost;
+	}
+}
+			</pre>
+			<p>Nginx 反向代理作为代理绰绰有余，如果做缓存服务器，还是使用squid, varnish吧。</p>
+		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp55272848"></a>8. 总结</h2></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="summary"></a>9. 总结</h2></div></div></div>
 		
 		<p>经过详细的测试我们发现不同的浏览器，不同的Web服务器，甚至每个版本都有所差异。</p>
 		<p>测试总结 Apache HTTPD 最完善 Lighttpd 其次， Nignx仍在快速发展中，Nignx每个版本差异很大，对HTTP协议实现标准也不太严谨，因为Nignx在大陆是趋势，所以下面给出的例子都是nginx</p>
