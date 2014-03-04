@@ -17,9 +17,10 @@
 </script></head><body><table xmlns="" width="100%" border="0"><tr><td align="left"><a href="http://netkiller.github.io/">Home</a> |
         <a href="http://netkiller.sourceforge.net/">Mirror</a> |
         <a href="/search.html">Search</a> |
+        <a href="/journal/index.html">杂文</a> |
         <a href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
         <a href="http://my.oschina.net/neochen/">OSChina 博客</a> |
-        <a href="http://rline.blog.51cto.com/">51CTO 博客</a></td><td></td><td></td></tr></table><div xml:lang="zh-cn" class="article" lang="zh-cn"><div class="titlepage"><div><div><h2 class="title"><a id="idp56810288"></a>实操 Web Cache</h2></div><div><h3 class="subtitle"><em>http://netkiller.github.io/journal/cache.html</em></h3></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(netkiller)</span>, <span class="lineage">陈景峰(BG7NYT)</span></h3><div class="affiliation">
+        <a href="http://rline.blog.51cto.com/">51CTO 博客</a></td><td></td><td></td></tr></table><div xml:lang="zh-cn" class="article" lang="zh-cn"><div class="titlepage"><div><div><h2 class="title"><a id="idp53750016"></a>实操 Web Cache</h2></div><div><h3 class="subtitle"><em>http://netkiller.github.io/journal/cache.html</em></h3></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(netkiller)</span>, <span class="lineage">陈景峰(BG7NYT)</span></h3><div class="affiliation">
 			<div class="address"><p><br />
 				<span class="country">中国</span><span class="state">广东省</span><span class="city">深圳市</span><span class="street">龙华新区民治街道溪山美地</span><br />
 				<span class="postcode">518131</span><br />
@@ -27,7 +28,24 @@
 				<span class="fax">+86 755 29812080</span><br />
 				<code class="email">&lt;<a class="email" href="mailto:netkiller@msn.com">netkiller@msn.com</a>&gt;</code><br />
 			</p></div>
-		</div></div></div><div><p class="releaseinfo">$Id$</p></div><div><p class="copyright">版权 © 2011, 2012, 2013, 2014 http://netkiller.github.io</p></div><div><p class="pubdate">$Date$</p></div><div><div class="abstract"><p class="title"><strong>摘要</strong></p>
+		</div></div></div><div><p class="releaseinfo">$Id$</p></div><div><p class="copyright">版权 © 2011, 2012, 2013, 2014 http://netkiller.github.io</p></div><div><div class="legalnotice"><a id="legalnotice"></a>
+	<p class="legalnotice-title"><strong>版权声明</strong></p>
+	<p>转载请与作者联系，转载时请务必标明文章原始出处和作者信息及本声明。</p>
+	<table border="0" summary="Simple list" class="simplelist"><tr><td>
+		<a class="ulink" href="http://creativecommons.org/licenses/by/3.0/" target="_top">
+			<div><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="180"><tr><td><img src="/images/by-nc-sa.png" width="180" /></td></tr></table></div>
+		</a>
+		</td><td>
+			<table border="0" summary="Simple list" class="simplelist"><tr><td>
+					文档出处:
+				</td></tr><tr><td>
+					<a class="ulink" href="http://netkiller.github.io/" target="_top">http://netkiller.github.io</a>
+				</td></tr><tr><td>
+					<a class="ulink" href="http://netkiller.sourceforge.net/" target="_top">http://netkiller.sourceforge.net</a>
+				</td></tr></table>
+		</td></tr></table>
+	<p></p>
+</div></div><div><p class="pubdate">$Date$</p></div><div><div class="abstract"><p class="title"><strong>摘要</strong></p>
 			<p>写这篇文章的原因，是我看到网上很多谈这类的文章，多是人云亦云，不求实事，误导读者。</p>
 			<p>下面文中我会一个一个做实验，并展示给你，说明为什么会这样。只有自己亲自尝试才能拿出有说服力的真凭实据。</p>
 		</div></div><div><div class="abstract"><a id="abstract"></a><p class="title"><strong>我的系列文档</strong></p>
@@ -89,9 +107,9 @@
 		</td><td> </td><td> </td><td> </td></tr></table>
 	
 
-</div></div></div><hr /></div><div class="toc"><p><strong>目录</strong></p><dl class="toc"><dt><span class="section"><a href="#idp56811952">1. 测试环境</a></span></dt><dt><span class="section"><a href="#modified">2. 文件修改日期 If-Modified-Since / Last-Modified</a></span></dt><dd><dl><dt><span class="section"><a href="#idp56945520">2.1. 静态文件</a></span></dt><dd><dl><dt><span class="section"><a href="#idp56957312">2.1.1. if_modified_since</a></span></dt></dl></dd><dt><span class="section"><a href="#idp56945776">2.2. 通过rewrite伪静态处理</a></span></dt><dt><span class="section"><a href="#idp56967104">2.3. 动态文件</a></span></dt></dl></dd><dt><span class="section"><a href="#etag">3. ETag / If-None-Match</a></span></dt><dd><dl><dt><span class="section"><a href="#idp56985984">3.1. 静态文件</a></span></dt><dt><span class="section"><a href="#idp56989248">3.2. 动态程序</a></span></dt></dl></dd><dt><span class="section"><a href="#expires">4. Expires / Cache-Control</a></span></dt><dd><dl><dt><span class="section"><a href="#idp57002720">4.1. 静态文件</a></span></dt><dt><span class="section"><a href="#idp57006448">4.2. 动态文件</a></span></dt></dl></dd><dt><span class="section"><a href="#fastcgi">5. FastCGI 缓存相关</a></span></dt><dt><span class="section"><a href="#meta">6. HTML META 与 Cache</a></span></dt><dt><span class="section"><a href="#gzip">7. gzip</a></span></dt><dd><dl><dt><span class="section"><a href="#idp57029152">7.1. gzip 总结</a></span></dt></dl></dd><dt><span class="section"><a href="#proxy">8. 反向代理与缓存</a></span></dt><dd><dl><dt><span class="section"><a href="#proxy.gzip">8.1. gzip 处理</a></span></dt></dl></dd><dt><span class="section"><a href="#summary">9. 总结</a></span></dt></dl></div>
+</div></div></div><hr /></div><div class="toc"><p><strong>目录</strong></p><dl class="toc"><dt><span class="section"><a href="#idp50184720">1. 测试环境</a></span></dt><dt><span class="section"><a href="#modified">2. 文件修改日期 If-Modified-Since / Last-Modified</a></span></dt><dd><dl><dt><span class="section"><a href="#idp50266576">2.1. 静态文件</a></span></dt><dd><dl><dt><span class="section"><a href="#idp50280208">2.1.1. if_modified_since</a></span></dt></dl></dd><dt><span class="section"><a href="#idp50266864">2.2. 通过rewrite伪静态处理</a></span></dt><dt><span class="section"><a href="#idp50291536">2.3. 动态文件</a></span></dt></dl></dd><dt><span class="section"><a href="#etag">3. ETag / If-None-Match</a></span></dt><dd><dl><dt><span class="section"><a href="#idp50312816">3.1. 静态文件</a></span></dt><dt><span class="section"><a href="#idp50316688">3.2. 动态程序</a></span></dt></dl></dd><dt><span class="section"><a href="#expires">4. Expires / Cache-Control</a></span></dt><dd><dl><dt><span class="section"><a href="#idp50332176">4.1. 静态文件</a></span></dt><dt><span class="section"><a href="#idp50336688">4.2. 动态文件</a></span></dt></dl></dd><dt><span class="section"><a href="#fastcgi">5. FastCGI 缓存相关</a></span></dt><dt><span class="section"><a href="#meta">6. HTML META 与 Cache</a></span></dt><dt><span class="section"><a href="#gzip">7. gzip</a></span></dt><dd><dl><dt><span class="section"><a href="#idp50362560">7.1. gzip 总结</a></span></dt></dl></dd><dt><span class="section"><a href="#proxy">8. 反向代理与缓存</a></span></dt><dd><dl><dt><span class="section"><a href="#proxy.gzip">8.1. gzip 处理</a></span></dt></dl></dd><dt><span class="section"><a href="#summary">9. 总结</a></span></dt></dl></div>
 	
-	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp56811952"></a>1. 测试环境</h2></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp50184720"></a>1. 测试环境</h2></div></div></div>
 		
 		<p>CentOS 6.5</p>
 		<p>Nginx安装脚本 https://github.com/oscm/shell/blob/master/nginx/nginx.sh</p>
@@ -101,7 +119,7 @@
  		
  		<p>If-Modified-Since 小于 Last-Modified 返回 HTTP/1.1 200 OK, 否则返回 HTTP/1.0 304 Not Modified</p>
 		<p>每次浏览器请求文件会携带  If-Modified-Since 头，将当前时间发送给服务器，与服务器的Last-Modified时间对对比，如果大于Last-Modified时间，返回HTTP/1.0 304 Not Modified不会重新打开文件，否则重新读取文件并返回内容</p>
- 		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp56945520"></a>2.1. 静态文件</h3></div></div></div>
+ 		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp50266576"></a>2.1. 静态文件</h3></div></div></div>
 			
 			<p>nginx/1.0.15 静态文件自动产生 Last-Modified 头</p>
 			<pre class="screen">
@@ -220,7 +238,7 @@ Accept-Ranges: bytes
 
 			<p>现在换成浏览器测试 Chrome Firefox成功， 因为浏览器不会主动发送If-Modified-Since, 浏览器只有发现Last-Modified后，第二次请求才会推送 If-Modified-Since 需要刷新两次页面。</p>
 
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp56957312"></a>2.1.1. if_modified_since</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp50280208"></a>2.1.1. if_modified_since</h4></div></div></div>
 				
 				<p>在开启ssi的情况下，通过参数 if_modified_since 可以开启 Last-Modified</p>
 				<pre class="screen">
@@ -271,7 +289,7 @@ Connection: keep-alive
 			</div>
 		</div>
 
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp56945776"></a>2.2. 通过rewrite伪静态处理</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp50266864"></a>2.2. 通过rewrite伪静态处理</h3></div></div></div>
 			
 			<p>index.php仍然是上面的那个php文件，我们只是做了伪静态</p>
 			<pre class="screen">
@@ -302,7 +320,7 @@ Last-Modified: Thu, 26 Feb 2014 08:39:35 GMT
 			<p>如果 Nginx 按预想的返回304，nginx 需要读取程序返回的HTTP头，Nginx 并没有这样的处理逻辑。</p>
 		</div>
 
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp56967104"></a>2.3. 动态文件</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp50291536"></a>2.3. 动态文件</h3></div></div></div>
 			
 			<p>动态文件没有 Last-Modified 头，我们可以伪造一个</p>
 			<pre class="screen">
@@ -496,7 +514,7 @@ ETag: "52fdce2f-46d"
 Accept-Ranges: bytes3
 		</pre>
 		<p>即使你开启了 ETag Nginx 对 HTML、CSS文件也不做处理。最终在一个外国网站是找到一个nginx-static-etags模块，有兴趣自己尝试，这里就不讲了。</p>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp56985984"></a>3.1. 静态文件</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp50312816"></a>3.1. 静态文件</h3></div></div></div>
 			
 			<p>首先查询etag值</p>
 			<pre class="screen">
@@ -523,7 +541,7 @@ ETag: "52fdce2f-46d"
 			</pre>
 			<p>这次比较顺利，成功返回HTTP/1.1 304 Not Modified</p>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp56989248"></a>3.2. 动态程序</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp50316688"></a>3.2. 动态程序</h3></div></div></div>
 			
 			<p>默认情况输出如下</p>
 			<pre class="screen">
@@ -629,7 +647,7 @@ http://www.example.com/news/100/1000.1.html
 		
 		<p>前面所讲 Last-Modified 与 Etag 主要用于分辨文件是否修改过， 无法控制页面在浏览器端缓存的时间。Expires / Cache-Control 可以控制缓存的时间段</p>
 		<p>Expires 是 HTTP/1.0标准，Cache-Control是 HTTP/1.1标准。都能正常工作，HTTP/1.1规范中max-age优先级高于Expires,有些浏览器会联动设置，例如你设置了Cache-Control随之自动生成Expires，仅仅为了兼容。</p>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp57002720"></a>4.1. 静态文件</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp50332176"></a>4.1. 静态文件</h3></div></div></div>
 			
 			<p>首先配置nginx设置html与png文件缓存1天</p>
 			<pre class="screen">
@@ -665,7 +683,7 @@ Cache-Control: max-age=86400
 Accept-Ranges: bytes
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp57006448"></a>4.2. 动态文件</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp50336688"></a>4.2. 动态文件</h3></div></div></div>
 			
 			<p>默认返回</p>
 			<pre class="screen">
@@ -848,7 +866,7 @@ Accept-Ranges: bytes
 # curl -H Accept-Encoding:gzip,defalte  http://localhost/gzip.html | gunzip
 		</pre>
 		<p>如果能正常看到html输出，表示压缩无误。</p>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp57029152"></a>7.1. gzip 总结</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp50362560"></a>7.1. gzip 总结</h3></div></div></div>
 			
 			<p>gzip on; 开启后默认支持 text/html 不能在 gzip_types 再次定义，否则会提示重复MIME类型</p>
 			<pre class="screen">

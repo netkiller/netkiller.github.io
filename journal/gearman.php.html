@@ -17,9 +17,10 @@
 </script></head><body><table xmlns="" width="100%" border="0"><tr><td align="left"><a href="http://netkiller.github.io/">Home</a> |
         <a href="http://netkiller.sourceforge.net/">Mirror</a> |
         <a href="/search.html">Search</a> |
+        <a href="/journal/index.html">杂文</a> |
         <a href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
         <a href="http://my.oschina.net/neochen/">OSChina 博客</a> |
-        <a href="http://rline.blog.51cto.com/">51CTO 博客</a></td><td></td><td></td></tr></table><div xml:lang="zh-cn" class="article" lang="zh-cn"><div class="titlepage"><div><div><h2 class="title"><a id="idp55301760"></a>Gearman + PHP 实现分布式对象调用</h2></div><div><h3 class="subtitle"><em>http://netkiller.github.io/journal/gearman.php.html</em></h3></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(netkiller)</span>, <span class="lineage">陈景峰(BG7NYT)</span></h3><div class="affiliation">
+        <a href="http://rline.blog.51cto.com/">51CTO 博客</a></td><td></td><td></td></tr></table><div xml:lang="zh-cn" class="article" lang="zh-cn"><div class="titlepage"><div><div><h2 class="title"><a id="idp54523664"></a>Gearman + PHP 实现分布式对象调用</h2></div><div><h3 class="subtitle"><em>http://netkiller.github.io/journal/gearman.php.html</em></h3></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(netkiller)</span>, <span class="lineage">陈景峰(BG7NYT)</span></h3><div class="affiliation">
 			<div class="address"><p><br />
 				<span class="country">中国</span><span class="state">广东省</span><span class="city">深圳市</span><span class="street">龙华新区民治街道溪山美地</span><br />
 				<span class="postcode">518131</span><br />
@@ -27,7 +28,24 @@
 				<span class="fax">+86 755 29812080</span><br />
 				<code class="email">&lt;<a class="email" href="mailto:netkiller@msn.com">netkiller@msn.com</a>&gt;</code><br />
 			</p></div>
-		</div></div></div><div><p class="releaseinfo">$Id$</p></div><div><p class="copyright">版权 © 2011, 2012, 2013, 2014 http://netkiller.github.io</p></div><div><p class="pubdate">$Date$</p></div><div><div class="abstract"><p class="title"><strong>摘要</strong></p>
+		</div></div></div><div><p class="releaseinfo">$Id$</p></div><div><p class="copyright">版权 © 2011, 2012, 2013, 2014 http://netkiller.github.io</p></div><div><div class="legalnotice"><a id="legalnotice"></a>
+	<p class="legalnotice-title"><strong>版权声明</strong></p>
+	<p>转载请与作者联系，转载时请务必标明文章原始出处和作者信息及本声明。</p>
+	<table border="0" summary="Simple list" class="simplelist"><tr><td>
+		<a class="ulink" href="http://creativecommons.org/licenses/by/3.0/" target="_top">
+			<div><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="180"><tr><td><img src="/images/by-nc-sa.png" width="180" /></td></tr></table></div>
+		</a>
+		</td><td>
+			<table border="0" summary="Simple list" class="simplelist"><tr><td>
+					文档出处:
+				</td></tr><tr><td>
+					<a class="ulink" href="http://netkiller.github.io/" target="_top">http://netkiller.github.io</a>
+				</td></tr><tr><td>
+					<a class="ulink" href="http://netkiller.sourceforge.net/" target="_top">http://netkiller.sourceforge.net</a>
+				</td></tr></table>
+		</td></tr></table>
+	<p></p>
+</div></div><div><p class="pubdate">$Date$</p></div><div><div class="abstract"><p class="title"><strong>摘要</strong></p>
 			<p>在群里看到有网友问，IDC的服务器是否需要开启防火墙，我意识到应该写一篇关于IDC安全的文章。 </p>
 		</div></div><div><div class="abstract"><a id="abstract"></a><p class="title"><strong>我的系列文档</strong></p>
 	
@@ -88,10 +106,10 @@
 		</td><td> </td><td> </td><td> </td></tr></table>
 	
 
-</div></div></div><hr /></div><div class="toc"><p><strong>目录</strong></p><dl class="toc"><dt><span class="section"><a href="#idp55303184">1. Gearman Job Server</a></span></dt><dt><span class="section"><a href="#idp55433888">2. Gearman PHP扩展</a></span></dt><dt><span class="section"><a href="#idp55434144">3. 参数传递与返回值</a></span></dt></dl></div>
+</div></div></div><hr /></div><div class="toc"><p><strong>目录</strong></p><dl class="toc"><dt><span class="section"><a href="#idp54524976">1. Gearman Job Server</a></span></dt><dt><span class="section"><a href="#idp54614144">2. Gearman PHP扩展</a></span></dt><dt><span class="section"><a href="#idp54614400">3. 参数传递与返回值</a></span></dt></dl></div>
 	
 
- 	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp55303184"></a>1. Gearman Job Server</h2></div></div></div>
+ 	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54524976"></a>1. Gearman Job Server</h2></div></div></div>
 		
  		<p>文本格式回复</p>
 		<pre class="screen">
@@ -100,7 +118,7 @@ yum install gearmand
 	</div>
 
 
-	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp55433888"></a>2. Gearman PHP扩展</h2></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54614144"></a>2. Gearman PHP扩展</h2></div></div></div>
 		
 
 		<p>PHP扩展安装</p>
@@ -154,12 +172,12 @@ print $client-&gt;doNormal("reverse", "Hello World!");
 		
 	</div>
 
-	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp55434144"></a>3. 参数传递与返回值</h2></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp54614400"></a>3. 参数传递与返回值</h2></div></div></div>
 		
 		<p>Gearman 向functon 传递参数只能通过$job-&gt;workload(), 而 $job-&gt;workload() 只能传递字符串。</p>
 		<p>如果托传递多个参数，需要将参数序列化后传递</p>
 		<p>返回值也一样，一个字符串可以直接返回，如果返回数字类型是不允许的，需要序列化处理</p>
-		<div class="example"><a id="idp55441088"></a><p class="title"><strong>例 1. 多参数传递与返回值实例</strong></p><div class="example-contents">
+		<div class="example"><a id="idp54621344"></a><p class="title"><strong>例 1. 多参数传递与返回值实例</strong></p><div class="example-contents">
 			
 			<p>Server</p>
 			<pre class="screen">
