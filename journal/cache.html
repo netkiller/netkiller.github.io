@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>实操 Web Cache</title><link rel="stylesheet" type="text/css" href="journal.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.78.1" /><meta name="description" content="写这篇文章的原因，是我看到网上很多谈这类的文章，多是人云亦云，不求实事，误导读者。 下面文中我会一个一个做实验，并展示给你，说明为什么会这样。只有自己亲自尝试才能拿出有说服力的真凭实据。" /><meta name="keywords" content="If-Modified-Since, Last-Modified, ETag, If-None-Match, " /><script xmlns="" type="text/javascript">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>实操 Web Cache</title><link rel="stylesheet" type="text/css" href="docbook.css"/><link rel="stylesheet" type="text/css" href="journal.css"/><meta name="generator" content="DocBook XSL Stylesheets V1.78.1"/><meta name="description" content="写这篇文章的原因，是我看到网上很多谈这类的文章，多是人云亦云，不求实事，误导读者。 下面文中我会一个一个做实验，并展示给你，说明为什么会这样。只有自己亲自尝试才能拿出有说服力的真凭实据。"/><meta name="keywords" content="If-Modified-Since, Last-Modified, ETag, If-None-Match, "/><script xmlns="" type="text/javascript">
 
   var _gaq = _gaq || [];
   _gaq.push(['_setAccount', 'UA-11694057-1']);
@@ -14,29 +14,23 @@
     var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
   })();
 
-</script></head><body><table xmlns="" width="100%" border="0"><tr><td align="left"><a href="http://netkiller.github.io/">Home</a> |
-        <a href="http://netkiller.sourceforge.net/">Mirror</a> |
-        <a href="/search.html">Search</a> |
-        <a href="/journal/index.html">杂文</a> |
-        <a href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
-        <a href="http://my.oschina.net/neochen/">OSChina 博客</a> |
-        <a href="http://rline.blog.51cto.com/">51CTO 博客</a></td><td></td><td></td></tr></table><div xml:lang="zh-cn" class="article" lang="zh-cn"><div class="titlepage"><div><div><h2 class="title"><a id="idp53750016"></a>实操 Web Cache</h2></div><div><h3 class="subtitle"><em>http://netkiller.github.io/journal/cache.html</em></h3></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(netkiller)</span>, <span class="lineage">陈景峰(BG7NYT)</span></h3><div class="affiliation">
-			<div class="address"><p><br />
-				<span class="country">中国</span><span class="state">广东省</span><span class="city">深圳市</span><span class="street">龙华新区民治街道溪山美地</span><br />
-				<span class="postcode">518131</span><br />
-				<span class="phone">+86 13113668890</span><br />
-				<span class="fax">+86 755 29812080</span><br />
-				<code class="email">&lt;<a class="email" href="mailto:netkiller@msn.com">netkiller@msn.com</a>&gt;</code><br />
+</script></head><body><table xmlns=""><tr><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.com&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"/></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;epo=netkiller.github.com&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"/></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"/></td></tr></table><section xml:lang="zh-cn" class="article" id="idp54438768"><div class="titlepage"><div><div><h2 class="title">实操 Web Cache</h2></div><div><h3 class="subtitle"><em>http://netkiller.github.io/journal/cache.html</em></h3></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(netkiller)</span>, <span class="lineage">陈景峰(BG7NYT)</span></h3><div class="affiliation">
+			<div class="address"><p><br/>
+				<span class="country">中国</span><span class="state">广东省</span><span class="city">深圳市</span><span class="street">龙华新区民治街道溪山美地</span><br/>
+				<span class="postcode">518131</span><br/>
+				<span class="phone">+86 13113668890</span><br/>
+				<span class="fax">+86 755 29812080</span><br/>
+				<code class="email">&lt;<a class="email" href="mailto:netkiller@msn.com">netkiller@msn.com</a>&gt;</code><br/>
 			</p></div>
-		</div></div></div><div><p class="releaseinfo">$Id$</p></div><div><p class="copyright">版权 © 2011, 2012, 2013, 2014 http://netkiller.github.io</p></div><div><div class="legalnotice"><a id="legalnotice"></a>
+		</div></div></div><div><p class="releaseinfo">$Id$</p></div><div><p class="copyright">版权 © 2011, 2012, 2013, 2014 http://netkiller.github.io</p></div><div><div class="legalnotice" id="legalnotice">
 	<p class="legalnotice-title"><strong>版权声明</strong></p>
 	<p>转载请与作者联系，转载时请务必标明文章原始出处和作者信息及本声明。</p>
-	<table border="0" summary="Simple list" class="simplelist"><tr><td>
+	<table style="border: 0; " class="simplelist"><tr><td>
 		<a class="ulink" href="http://creativecommons.org/licenses/by/3.0/" target="_top">
-			<div><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="180"><tr><td><img src="/images/by-nc-sa.png" width="180" /></td></tr></table></div>
+			<div><table style="border: 0; width: 180; cellpadding: 0; cellspacing: 0;"><tr><td><img src="/images/by-nc-sa.png" width="180"/></td></tr></table></div>
 		</a>
 		</td><td>
-			<table border="0" summary="Simple list" class="simplelist"><tr><td>
+			<table style="border: 0; " class="simplelist"><tr><td>
 					文档出处:
 				</td></tr><tr><td>
 					<a class="ulink" href="http://netkiller.github.io/" target="_top">http://netkiller.github.io</a>
@@ -44,13 +38,13 @@
 					<a class="ulink" href="http://netkiller.sourceforge.net/" target="_top">http://netkiller.sourceforge.net</a>
 				</td></tr></table>
 		</td></tr></table>
-	<p></p>
-</div></div><div><p class="pubdate">$Date$</p></div><div><div class="abstract"><p class="title"><strong>摘要</strong></p>
+	<p/>
+</div></div><div><p class="pubdate">$Date$</p></div><div><div class="abstract"><div class="abstract-title">摘要</div>
 			<p>写这篇文章的原因，是我看到网上很多谈这类的文章，多是人云亦云，不求实事，误导读者。</p>
 			<p>下面文中我会一个一个做实验，并展示给你，说明为什么会这样。只有自己亲自尝试才能拿出有说服力的真凭实据。</p>
-		</div></div><div><div class="abstract"><a id="abstract"></a><p class="title"><strong>我的系列文档</strong></p>
+		</div></div><div><div class="abstract" id="abstract"><div class="abstract-title">我的系列文档</div>
 	
-	<table border="0" summary="Simple list" class="simplelist"><tr><td>
+	<table style="border: 0; " class="simplelist"><tr><td>
 			<a class="ulink" href="../architect/index.html" target="_top">Netkiller Architect 手札</a>
 		</td><td>
 			<a class="ulink" href="../developer/index.html" target="_top">Netkiller Developer 手札</a>
@@ -104,22 +98,24 @@
 			<a class="ulink" href="../h3c/index.html" target="_top">Netkiller H3C 手札</a>
 		</td><td>
 			<a class="ulink" href="../multimedia/index.html" target="_top">Netkiller Multimedia 手札</a>
-		</td><td> </td><td> </td><td> </td></tr></table>
+		</td><td>
+			<a class="ulink" href="../radio/index.html" target="_top">Netkiller Amateur Radio 手札</a>
+		</td><td> </td><td> </td></tr></table>
 	
 
-</div></div></div><hr /></div><div class="toc"><p><strong>目录</strong></p><dl class="toc"><dt><span class="section"><a href="#idp50184720">1. 测试环境</a></span></dt><dt><span class="section"><a href="#modified">2. 文件修改日期 If-Modified-Since / Last-Modified</a></span></dt><dd><dl><dt><span class="section"><a href="#idp50266576">2.1. 静态文件</a></span></dt><dd><dl><dt><span class="section"><a href="#idp50280208">2.1.1. if_modified_since</a></span></dt></dl></dd><dt><span class="section"><a href="#idp50266864">2.2. 通过rewrite伪静态处理</a></span></dt><dt><span class="section"><a href="#idp50291536">2.3. 动态文件</a></span></dt></dl></dd><dt><span class="section"><a href="#etag">3. ETag / If-None-Match</a></span></dt><dd><dl><dt><span class="section"><a href="#idp50312816">3.1. 静态文件</a></span></dt><dt><span class="section"><a href="#idp50316688">3.2. 动态程序</a></span></dt></dl></dd><dt><span class="section"><a href="#expires">4. Expires / Cache-Control</a></span></dt><dd><dl><dt><span class="section"><a href="#idp50332176">4.1. 静态文件</a></span></dt><dt><span class="section"><a href="#idp50336688">4.2. 动态文件</a></span></dt></dl></dd><dt><span class="section"><a href="#fastcgi">5. FastCGI 缓存相关</a></span></dt><dt><span class="section"><a href="#meta">6. HTML META 与 Cache</a></span></dt><dt><span class="section"><a href="#gzip">7. gzip</a></span></dt><dd><dl><dt><span class="section"><a href="#idp50362560">7.1. gzip 总结</a></span></dt></dl></dd><dt><span class="section"><a href="#proxy">8. 反向代理与缓存</a></span></dt><dd><dl><dt><span class="section"><a href="#proxy.gzip">8.1. gzip 处理</a></span></dt></dl></dd><dt><span class="section"><a href="#summary">9. 总结</a></span></dt></dl></div>
+</div></div></div><hr/></div><div class="toc"><div class="toc-title">目录</div><ul class="toc"><li><span class="section"><a href="#idp52349088">1. 测试环境</a></span></li><li><span class="section"><a href="#modified">2. 文件修改日期 If-Modified-Since / Last-Modified</a></span><ul><li><span class="section"><a href="#idp50826128">2.1. 静态文件</a></span><ul><li><span class="section"><a href="#idp50839760">2.1.1. if_modified_since</a></span></li></ul></li><li><span class="section"><a href="#idp50826416">2.2. 通过rewrite伪静态处理</a></span></li><li><span class="section"><a href="#idp50851088">2.3. 动态文件</a></span></li></ul></li><li><span class="section"><a href="#etag">3. ETag / If-None-Match</a></span><ul><li><span class="section"><a href="#idp50872368">3.1. 静态文件</a></span></li><li><span class="section"><a href="#idp50876240">3.2. 动态程序</a></span></li></ul></li><li><span class="section"><a href="#expires">4. Expires / Cache-Control</a></span><ul><li><span class="section"><a href="#idp50891712">4.1. 静态文件</a></span></li><li><span class="section"><a href="#idp50896224">4.2. 动态文件</a></span></li></ul></li><li><span class="section"><a href="#fastcgi">5. FastCGI 缓存相关</a></span></li><li><span class="section"><a href="#meta">6. HTML META 与 Cache</a></span></li><li><span class="section"><a href="#gzip">7. gzip</a></span><ul><li><span class="section"><a href="#idp50921936">7.1. gzip 总结</a></span></li></ul></li><li><span class="section"><a href="#proxy">8. 反向代理与缓存</a></span><ul><li><span class="section"><a href="#proxy.gzip">8.1. gzip 处理</a></span></li></ul></li><li><span class="section"><a href="#summary">9. 总结</a></span></li></ul></div>
 	
-	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp50184720"></a>1. 测试环境</h2></div></div></div>
+	<section class="section" id="idp52349088"><div class="titlepage"><div><div><h2 class="title" style="clear: both">1. 测试环境</h2></div></div></div>
 		
 		<p>CentOS 6.5</p>
 		<p>Nginx安装脚本 https://github.com/oscm/shell/blob/master/nginx/nginx.sh</p>
 		<p>php安装脚本 https://github.com/oscm/shell/blob/master/php/5.5.8.sh</p>
-	</div>
- 	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="modified"></a>2. 文件修改日期 If-Modified-Since / Last-Modified</h2></div></div></div>
+	</section>
+ 	<section class="section" id="modified"><div class="titlepage"><div><div><h2 class="title" style="clear: both">2. 文件修改日期 If-Modified-Since / Last-Modified</h2></div></div></div>
  		
  		<p>If-Modified-Since 小于 Last-Modified 返回 HTTP/1.1 200 OK, 否则返回 HTTP/1.0 304 Not Modified</p>
 		<p>每次浏览器请求文件会携带  If-Modified-Since 头，将当前时间发送给服务器，与服务器的Last-Modified时间对对比，如果大于Last-Modified时间，返回HTTP/1.0 304 Not Modified不会重新打开文件，否则重新读取文件并返回内容</p>
- 		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp50266576"></a>2.1. 静态文件</h3></div></div></div>
+ 		<section class="section" id="idp50826128"><div class="titlepage"><div><div><h3 class="title">2.1. 静态文件</h3></div></div></div>
 			
 			<p>nginx/1.0.15 静态文件自动产生 Last-Modified 头</p>
 			<pre class="screen">
@@ -149,7 +145,7 @@ Connection: keep-alive
 Accept-Ranges: bytes
 			</pre>
 
-			<div class="tip" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">提示</h3>
+			<div class="tip"><h3 class="title">提示</h3>
 			<p>疑问 nginx/1.4.5 默认没有 Last-Modified</p>
 				<pre class="screen">
 # nginx -v
@@ -175,7 +171,7 @@ Connection: keep-alive
 ETag: "52ba4e78-6"
 Accept-Ranges: bytes
 				</pre>
-				<p></p>
+				<p/>
 			</div>
 
 			<p>再测试一次</p>
@@ -238,7 +234,7 @@ Accept-Ranges: bytes
 
 			<p>现在换成浏览器测试 Chrome Firefox成功， 因为浏览器不会主动发送If-Modified-Since, 浏览器只有发现Last-Modified后，第二次请求才会推送 If-Modified-Since 需要刷新两次页面。</p>
 
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp50280208"></a>2.1.1. if_modified_since</h4></div></div></div>
+			<section class="section" id="idp50839760"><div class="titlepage"><div><div><h4 class="title">2.1.1. if_modified_since</h4></div></div></div>
 				
 				<p>在开启ssi的情况下，通过参数 if_modified_since 可以开启 Last-Modified</p>
 				<pre class="screen">
@@ -286,10 +282,10 @@ Content-Type: text/html
 Connection: keep-alive
 				</pre>
 				<p>测试失败，浏览器也是实测失败，ETag却成功</p>
-			</div>
-		</div>
+			</section>
+		</section>
 
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp50266864"></a>2.2. 通过rewrite伪静态处理</h3></div></div></div>
+		<section class="section" id="idp50826416"><div class="titlepage"><div><div><h3 class="title">2.2. 通过rewrite伪静态处理</h3></div></div></div>
 			
 			<p>index.php仍然是上面的那个php文件，我们只是做了伪静态</p>
 			<pre class="screen">
@@ -318,9 +314,9 @@ Last-Modified: Thu, 26 Feb 2014 08:39:35 GMT
 			<p>下面是我的分析，仅供参考。用户请求index.html Nginx 会找到该文件读取 mtime 与 If-Modified-Since 匹配，如果If-Modified-Since大于 Last-Modified返回 304否则返回200.</p>
 			<p>为什么同样操作经过伪静态的test.html就不行呢？ 我分析当用户请求test.html Nginx 首先做Rewrite处理，然后跳转到index.php 整个过程nginx 并没有访问实际物理文件test.html也就没有mtime, 所以Nginx 返回200.</p>
 			<p>如果 Nginx 按预想的返回304，nginx 需要读取程序返回的HTTP头，Nginx 并没有这样的处理逻辑。</p>
-		</div>
+		</section>
 
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp50291536"></a>2.3. 动态文件</h3></div></div></div>
+		<section class="section" id="idp50851088"><div class="titlepage"><div><div><h3 class="title">2.3. 动态文件</h3></div></div></div>
 			
 			<p>动态文件没有 Last-Modified 头，我们可以伪造一个</p>
 			<pre class="screen">
@@ -356,7 +352,7 @@ Connection: keep-alive
 Last-Modified: Fri, 28 Feb 2014 10:04:18 GMT
 			
 			</pre>
-			<div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">注意</h3>
+			<div class="note"><h3 class="title">注意</h3>
 				
 				<p>虽然我们让动态程序返回了 Last-Modified ，但浏览器不认，经过测试 Chrome / Firefox 均不会承认.php文件，并缓存其内容。</p>
 				<pre class="screen">
@@ -469,10 +465,10 @@ Connection: keep-alive
 Last-Modified: Fri, 28 Feb 2014 10:04:18 GMT
 			</pre>
 			<p>达到预期效果</p>
-		</div>
-	</div>
+		</section>
+	</section>
 
-	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="etag"></a>3. ETag / If-None-Match</h2></div></div></div>
+	<section class="section" id="etag"><div class="titlepage"><div><div><h2 class="title" style="clear: both">3. ETag / If-None-Match</h2></div></div></div>
 		
 		<p>上面的Last-Modified测试中发现ETag虽然不限制，但是暗中还是可用的：）</p>
 		<p>etag on; 开启Nginx etag支持，lighttpd 默认开启</p>
@@ -514,7 +510,7 @@ ETag: "52fdce2f-46d"
 Accept-Ranges: bytes3
 		</pre>
 		<p>即使你开启了 ETag Nginx 对 HTML、CSS文件也不做处理。最终在一个外国网站是找到一个nginx-static-etags模块，有兴趣自己尝试，这里就不讲了。</p>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp50312816"></a>3.1. 静态文件</h3></div></div></div>
+		<section class="section" id="idp50872368"><div class="titlepage"><div><div><h3 class="title">3.1. 静态文件</h3></div></div></div>
 			
 			<p>首先查询etag值</p>
 			<pre class="screen">
@@ -540,8 +536,8 @@ Connection: keep-alive
 ETag: "52fdce2f-46d"
 			</pre>
 			<p>这次比较顺利，成功返回HTTP/1.1 304 Not Modified</p>
-		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp50316688"></a>3.2. 动态程序</h3></div></div></div>
+		</section>
+		<section class="section" id="idp50876240"><div class="titlepage"><div><div><h3 class="title">3.2. 动态程序</h3></div></div></div>
 			
 			<p>默认情况输出如下</p>
 			<pre class="screen">
@@ -641,13 +637,13 @@ $etag = $_SERVER['REQUEST_URI']
 http://www.example.com/news/100/1000.1.html
 			</pre>
 			<p>.1.是版本号，每次修改后+1操作，.1.没有人格意义rewrite操作是会丢弃这个参数，仅仅是为了始终有新的URL对应内容</p>
-		</div>
-	</div>
-	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="expires"></a>4. Expires / Cache-Control</h2></div></div></div>
+		</section>
+	</section>
+	<section class="section" id="expires"><div class="titlepage"><div><div><h2 class="title" style="clear: both">4. Expires / Cache-Control</h2></div></div></div>
 		
 		<p>前面所讲 Last-Modified 与 Etag 主要用于分辨文件是否修改过， 无法控制页面在浏览器端缓存的时间。Expires / Cache-Control 可以控制缓存的时间段</p>
 		<p>Expires 是 HTTP/1.0标准，Cache-Control是 HTTP/1.1标准。都能正常工作，HTTP/1.1规范中max-age优先级高于Expires,有些浏览器会联动设置，例如你设置了Cache-Control随之自动生成Expires，仅仅为了兼容。</p>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp50332176"></a>4.1. 静态文件</h3></div></div></div>
+		<section class="section" id="idp50891712"><div class="titlepage"><div><div><h3 class="title">4.1. 静态文件</h3></div></div></div>
 			
 			<p>首先配置nginx设置html与png文件缓存1天</p>
 			<pre class="screen">
@@ -682,8 +678,8 @@ Expires: Fri, 28 Feb 2014 10:42:09 GMT
 Cache-Control: max-age=86400
 Accept-Ranges: bytes
 			</pre>
-		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp50336688"></a>4.2. 动态文件</h3></div></div></div>
+		</section>
+		<section class="section" id="idp50896224"><div class="titlepage"><div><div><h3 class="title">4.2. 动态文件</h3></div></div></div>
 			
 			<p>默认返回</p>
 			<pre class="screen">
@@ -724,9 +720,9 @@ header("Cache-Control: max-age=$ttl, must-revalidate");
 			
 			</pre>
 			<p>这种方法不能实现缓存的目的</p>
-		</div>
-	</div>
-	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="fastcgi"></a>5. FastCGI 缓存相关</h2></div></div></div>
+		</section>
+	</section>
+	<section class="section" id="fastcgi"><div class="titlepage"><div><div><h2 class="title" style="clear: both">5. FastCGI 缓存相关</h2></div></div></div>
 		
 		<p>我们做个尝试将 expires 1d;加到location ~ \.php$中，看看能不能实现缓存的目的。</p>
 		<pre class="screen">
@@ -760,8 +756,8 @@ Expires: Sat, 01 Mar 2014 04:39:57 GMT
 Cache-Control: max-age=86400
 		</pre>
 		<p>虽然推送 Cache-Control: max-age=86400 但是 IE Chrome Firefox 仍不能缓存页面</p>
-	</div>
-	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="meta"></a>6. HTML META 与 Cache</h2></div></div></div>
+	</section>
+	<section class="section" id="meta"><div class="titlepage"><div><div><h2 class="title" style="clear: both">6. HTML META 与 Cache</h2></div></div></div>
 		
 		<p>创建一个测试文件如下</p>
 		<pre class="screen">
@@ -813,8 +809,8 @@ Connection: keep-alive
 		
 		</pre>
 		<p>至少在当年IE是认这些Meta的，进入HTML5时代很多都发生了变化，所以不能一概而论</p>
-	</div>
-	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="gzip"></a>7. gzip</h2></div></div></div>
+	</section>
+	<section class="section" id="gzip"><div class="titlepage"><div><div><h2 class="title" style="clear: both">7. gzip</h2></div></div></div>
 		
 		<p>defalte 是 Apache httpd 的标准这里只谈gzip</p>
 		<p>首先创建一个 gzip.html</p>
@@ -866,7 +862,7 @@ Accept-Ranges: bytes
 # curl -H Accept-Encoding:gzip,defalte  http://localhost/gzip.html | gunzip
 		</pre>
 		<p>如果能正常看到html输出，表示压缩无误。</p>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp50362560"></a>7.1. gzip 总结</h3></div></div></div>
+		<section class="section" id="idp50921936"><div class="titlepage"><div><div><h3 class="title">7.1. gzip 总结</h3></div></div></div>
 			
 			<p>gzip on; 开启后默认支持 text/html 不能在 gzip_types 再次定义，否则会提示重复MIME类型</p>
 			<pre class="screen">
@@ -885,9 +881,9 @@ Starting nginx: nginx: [warn] duplicate MIME type "text/html" in /etc/nginx/conf
     gzip_buffers      4 8k;
     gzip_min_length   1000;		
 			</pre>
-		</div>
-	</div>
-	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="proxy"></a>8. 反向代理与缓存</h2></div></div></div>
+		</section>
+	</section>
+	<section class="section" id="proxy"><div class="titlepage"><div><div><h2 class="title" style="clear: both">8. 反向代理与缓存</h2></div></div></div>
 		
 		<p>反向代理服务器缓存方式分为：</p>
 		<p>强制缓存，指定文件，扩展名，URL设置缓存时间</p>
@@ -950,7 +946,7 @@ server {
 	}
 }
 		</pre>
-		<p></p>
+		<p/>
 		<pre class="screen">
 # curl  -I http://192.168.2.15/index.html
 HTTP/1.1 200 OK
@@ -1010,7 +1006,7 @@ Accept-Ranges: bytes
 /tmp/proxy_temp_dir
 		</pre>
 		
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="proxy.gzip"></a>8.1. gzip 处理</h3></div></div></div>
+		<section class="section" id="proxy.gzip"><div class="titlepage"><div><div><h3 class="title">8.1. gzip 处理</h3></div></div></div>
 			
 			<p>http://localhost/gzip.html 是支持压缩的，192.168.2.15 proxy_pass http://localhost</p>
 			<pre class="screen">
@@ -1069,9 +1065,9 @@ server {
 }
 			</pre>
 			<p>Nginx 反向代理作为代理绰绰有余，如果做缓存服务器，还是使用squid, varnish吧。</p>
-		</div>
-	</div>
-	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="summary"></a>9. 总结</h2></div></div></div>
+		</section>
+	</section>
+	<section class="section" id="summary"><div class="titlepage"><div><div><h2 class="title" style="clear: both">9. 总结</h2></div></div></div>
 		
 		<p>经过详细的测试我们发现不同的浏览器，不同的Web服务器，甚至每个版本都有所差异。</p>
 		<p>测试总结 Apache HTTPD 最完善 Lighttpd 其次， Nignx仍在快速发展中，Nignx每个版本差异很大，对HTTP协议实现标准也不太严谨，因为Nignx在大陆是趋势，所以下面给出的例子都是nginx</p>
@@ -1079,10 +1075,10 @@ server {
 		<p>切记使用Nginx要注意每个本版细微变化，否则升级后会有影响。我习惯使用yum 安装 nginx 随时 yum update 升级。</p>
 		<p>另外FastCGI 与 mod_php也有所区别</p>
 		<p>延伸阅读《	Netkiller Web 手札》<a class="ulink" href="http://netkiller.github.io/www/index.html" target="_top">http://netkiller.github.io/www/index.html</a></p>
-	</div>
-</div><div xmlns="" id="bdshare" class="bdshare_t bds_tools_32 get-codes-bdshare"><a class="bds_fbook"></a><a class="bds_twi"></a><a class="bds_ms"></a><a class="bds_msn"></a><a class="bds_buzz"></a><a class="bds_linkedin"></a><a class="bds_deli"></a><a class="bds_qzone"></a><a class="bds_qq"></a><a class="bds_tqq"></a><a class="bds_tqf"></a><a class="bds_tsina"></a><a class="bds_baidu"></a><a class="bds_renren"></a><a class="bds_t163"></a><a class="bds_tfh"></a><a class="bds_douban"></a><a class="bds_hi"></a><a class="bds_tieba"></a><a class="bds_tsohu"></a><span class="bds_more"></span><a class="shareCount"></a></div><script xmlns="" type="text/javascript" id="bdshare_js" data="type=tools"></script><script xmlns="" type="text/javascript" id="bdshell_js"></script><script xmlns="" type="text/javascript">
+	</section>
+</section><div xmlns="" id="bdshare" class="bdshare_t bds_tools_32 get-codes-bdshare"><a class="bds_fbook"/><a class="bds_twi"/><a class="bds_ms"/><a class="bds_msn"/><a class="bds_buzz"/><a class="bds_linkedin"/><a class="bds_deli"/><a class="bds_qzone"/><a class="bds_qq"/><a class="bds_tqq"/><a class="bds_tqf"/><a class="bds_tsina"/><a class="bds_baidu"/><a class="bds_renren"/><a class="bds_t163"/><a class="bds_tfh"/><a class="bds_douban"/><a class="bds_hi"/><a class="bds_tieba"/><a class="bds_tsohu"/><span class="bds_more"/><a class="shareCount"/></div><script xmlns="" type="text/javascript" id="bdshare_js" data="type=tools"/><script xmlns="" type="text/javascript" id="bdshell_js"/><script xmlns="" type="text/javascript">
 	document.getElementById("bdshell_js").src = "http://bdimg.share.baidu.com/static/js/shell_v2.js?cdnversion=" + new Date().getHours();
-</script><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
+</script><div xmlns="" id="disqus_thread"/><script xmlns="" type="text/javascript">
 	        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
 	        var disqus_shortname = 'netkiller'; // required: replace example with your forum shortname
 	
@@ -1092,4 +1088,4 @@ server {
 	            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
 	            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
 	        })();
-	    </script><noscript xmlns="">Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><a xmlns="" href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a><br xmlns="" /><div xmlns="" id="clustrmaps-widget"></div><script xmlns="" type="text/javascript">var _clustrmaps = {'url' : 'http://netkiller.github.io', 'user' : 1107643, 'server' : '2', 'id' : 'clustrmaps-widget', 'version' : 1, 'date' : '2013-08-14', 'lang' : 'en', 'corners' : 'square' };(function (){ var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = 'http://www2.clustrmaps.com/counter/map.js'; var x = document.getElementsByTagName('script')[0]; x.parentNode.insertBefore(s, x);})();</script><noscript xmlns=""><a href="http://www2.clustrmaps.com/user/87410e6bb"><img src="http://www2.clustrmaps.com/stats/maps-no_clusters/netkiller.github.io-thumb.jpg" alt="Locations of visitors to this page" /></a></noscript></body></html>
+	    </script><noscript xmlns="">Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><a xmlns="" href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a><br xmlns=""/><div xmlns="" id="clustrmaps-widget"/><script xmlns="" type="text/javascript">var _clustrmaps = {'url' : 'http://netkiller.github.io', 'user' : 1107643, 'server' : '2', 'id' : 'clustrmaps-widget', 'version' : 1, 'date' : '2013-08-14', 'lang' : 'en', 'corners' : 'square' };(function (){ var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = 'http://www2.clustrmaps.com/counter/map.js'; var x = document.getElementsByTagName('script')[0]; x.parentNode.insertBefore(s, x);})();</script><noscript xmlns=""><a href="http://www2.clustrmaps.com/user/87410e6bb"><img src="http://www2.clustrmaps.com/stats/maps-no_clusters/netkiller.github.io-thumb.jpg" alt="Locations of visitors to this page"/></a></noscript></body></html>
