@@ -1,0 +1,134 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>5.18. XHProf</title><meta name="generator" content="DocBook XSL Stylesheets V1.78.1"><meta name="keywords" content="php, pear, pecl, phar"><link rel="home" href="../index.html" title="Netkiller PHP 手札"><link rel="up" href="ch05.html" title="第 5 章 PECL :: The PHP Extension Community Library"><link rel="prev" href="ch05s17.html" title="5.17. XCache"><link rel="next" href="ch05s19.html" title="5.19. Xdebug"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="xhprof"></a>5.18. XHProf</h2></div></div></div>
+		
+		<p>XHProf是facebook开源出来的一个php轻量级的性能分析工具，跟Xdebug类似，但性能开销更低，还可以用在生产环境中，也可以由程序开 关来控制是否进行profile。</p>
+		<p>https://github.com/facebook/xhprof</p>
+		<p>安装依赖工具</p>
+		<pre class="screen">
+		
+$ sudo apt-get install graphviz
+
+or
+
+wget http://www.graphviz.org/pub/graphviz/stable/SOURCES/graphviz-2.24.0.tar.gz
+tar zxf graphviz-2.24.0.tar.gz
+cd graphviz-2.24.0
+./configure
+make &amp;&amp; make install
+		
+		</pre>
+		<p>编译安装xhprof</p>
+		<pre class="screen">
+		
+wget http://pecl.php.net/get/xhprof
+
+tar zxf xhprof-0.9.2.tgz
+cd xhprof-0.9.2
+cp -r xhprof_html xhprof_lib /www/www.example.com/xhprof/
+cd extension/
+/usr/local/webserver/php/bin/phpize
+./configure  –with-php-config=/srv/php/bin/php-config
+make &amp;&amp; make install
+		
+		</pre>
+		<p>pecl 安装</p>
+		<pre class="screen">
+# pecl install xhprof
+		</pre>
+		<p>指定版本</p>
+		<pre class="screen">
+# pecl install xhprof-0.9.4
+		</pre>
+		<p>安装完提示：</p>
+		<pre class="screen">
+Installing shared extensions:     /srv/php/lib/php/extensions/no-debug-non-zts-20060613/
+
+cp /srv/php/lib/php/extensions/no-debug-non-zts-20060613/* /srv/php/lib/php/extensions/
+		</pre>
+		<p>增加xhprof.ini</p>
+		<pre class="screen">
+		
+cat &gt;&gt; /srv/php/etc/conf.d/xhprof.ini &lt;&lt;EOF
+extension=xhprof.so
+xhprof.output_dir=/www/logs/xhprof
+EOF
+		
+		</pre>
+		<p>分析日志输出在/www/logs/xhprof目录</p>
+		<p>检查安装是否成功</p>
+		<pre class="screen">
+# /srv/php/bin/php -m | grep xhprof
+xhprof
+		</pre>
+		<div class="example"><a name="idp62027856"></a><p class="title"><b>例 5.7. xhprof/sample.php</b></p><div class="example-contents">
+			
+			<pre class="screen">
+			
+&lt;?php
+
+function bar($x) {
+  if ($x &gt; 0) {
+    bar($x - 1);
+  }
+}
+
+function foo() {
+  for ($idx = 0; $idx &lt; 5; $idx++) {
+    bar($idx);
+    $x = strlen("abc");
+  }
+}
+
+// start profiling
+xhprof_enable();
+
+// run program
+foo();
+
+// stop profiler
+$xhprof_data = xhprof_disable();
+
+// display raw xhprof data for the profiler run
+print_r($xhprof_data);
+
+
+$XHPROF_ROOT = realpath(dirname(__FILE__) .'/..');
+include_once $XHPROF_ROOT . "/xhprof_lib/utils/xhprof_lib.php";
+include_once $XHPROF_ROOT . "/xhprof_lib/utils/xhprof_runs.php";
+
+// save raw data for this profiler run using default
+// implementation of iXHProfRuns.
+$xhprof_runs = new XHProfRuns_Default();
+
+// save the run under a namespace "xhprof_foo"
+$run_id = $xhprof_runs-&gt;save_run($xhprof_data, "xhprof_foo");
+
+echo "---------------\n".
+     "Assuming you have set up the http based UI for \n".
+     "XHProf at some address, you can view run at \n".
+     "http://&lt;xhprof-ui-address&gt;/index.php?run=$run_id&amp;source=xhprof_foo\n".
+     "---------------\n";
+			
+			</pre>
+		</div></div><br class="example-break">
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp62030240"></a>5.18.1. XHGui</h3></div></div></div>
+			
+			<p><a class="ulink" href="https://github.com/preinheimer/xhgui" target="_top">https://github.com/preinheimer/xhgui</a></p>
+		</div>
+	</div><script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-11694057-1']);
+  _gaq.push(['_setDomainName', 'netkiller.github.io']);
+  _gaq.push(['_setAllowLinker', true]);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script><script type="text/javascript">
+var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F997cd4a7320a82d72cb74d179118f697' type='text/javascript'%3E%3C/script%3E"));
+</script></body></html>

@@ -1,0 +1,218 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>3.15. pthreads</title><meta name="generator" content="DocBook XSL Stylesheets V1.78.1"><meta name="keywords" content="php, pear, pecl, phar"><link rel="home" href="../index.html" title="Netkiller PHP 手札"><link rel="up" href="ch03.html" title="第 3 章 Function Reference"><link rel="prev" href="ch03s14.html" title="3.14. PHP Data Objects (PDO)"><link rel="next" href="../extension/ch05.html" title="第 5 章 PECL :: The PHP Extension Community Library"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="pthreads"></a>3.15. pthreads</h2></div></div></div>
+	
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp61879552"></a>3.15.1. Thread</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+&lt;?php
+
+class test extends Thread {
+
+    public $name   = '';
+    public $runing = false;
+
+    public function __construct($name) {
+
+        $this-&gt;name   = $name;
+        $this-&gt;runing = true;
+    }
+
+    public function run() {
+	$n = 0;
+        while ($this-&gt;runing) {
+		printf("name: %s %s\n",$this-&gt;name, $n);
+		$n++;
+                sleep(1);
+        }
+    }
+
+}
+
+$pool[] = new test('a');
+$pool[] = new test('b');
+$pool[] = new test('c');
+
+foreach ($pool as $w) {
+    $w-&gt;start();
+}
+		
+		</pre>
+		<p>线程池实现方法</p>
+		<pre class="programlisting">
+		
+	$pool = array();
+	while($member = $row-&gt;fetch(PDO::FETCH_ASSOC))
+	{
+
+		while ( true ){
+			if(count($pool) &lt; 2000){ //定义线程池数量，小于线程池数量则开启新的线程直到小于2000为止
+				$pool[$id] = new Update($member);
+				$pool[$id]-&gt;start();
+				break;
+			}else{
+				foreach ( $pool as $name =&gt; $worker){
+					//如果线程已经运行结束，销毁线程，给新的任务使用
+					if(! $worker-&gt;isRunning()){
+						unset($pool[$name]);
+					}
+				}
+			}
+
+		}
+
+	}
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp61882704"></a>3.15.2. Pool</h3></div></div></div>
+		
+		<pre class="screen">
+		
+&lt;?php
+class ExampleWork extends Stackable {
+        public function __construct($data) {
+                $this-&gt;local = $data;
+        }
+        public function run() {
+	//	print_r($this-&gt;local);echo "\r\n";
+	echo '------------------- '. $this-&gt;local . " -----------------\r\n";
+	sleep(1);
+        }
+}
+class ExampleWorker extends Worker {
+
+        public function __construct($name) {
+                $this-&gt;name = $name;
+                $this-&gt;data = array();
+        }
+        public function run(){
+                $this-&gt;name = sprintf("(%lu)", $this-&gt;getThreadId());
+        }
+}
+/* Dead simple pthreads pool */
+class Pool {
+        /* to hold worker threads */
+        public $workers;
+        /* to hold exit statuses */
+        public $status;
+        /* prepare $size workers */
+        public function __construct($size = 10) {
+                $this-&gt;size = $size;
+        }
+        /* submit Stackable to Worker */
+        public function submit(Stackable $stackable) {
+            if (count($this-&gt;workers)&lt;$this-&gt;size) {
+                    $id = count($this-&gt;workers);
+                    $this-&gt;workers[$id] = new ExampleWorker(sprintf("Worker [%d]", $id));
+                    $this-&gt;workers[$id]-&gt;start(PTHREADS_INHERIT_NONE);
+
+                    if ($this-&gt;workers[$id]-&gt;stack($stackable)) {
+                           return $stackable;
+                    } else trigger_error(sprintf("failed to push Stackable onto %s", $this-&gt;workers[$id]-&gt;getName()), E_USER_WARNING);
+            }else{
+				for ($i=0;$i&lt;count($this-&gt;workers);$i++){
+                	if( ! $this-&gt;workers[$i]-&gt;isWorking()){
+						$this-&gt;workers[$i]-&gt;stack($stackable);
+						return $stackable;
+				}
+        	}
+		}
+
+                return false;
+        }
+	public function status(){
+		for ($i=0;$i&lt;count($this-&gt;workers);$i++){
+		printf("(%s:%s)\r\n",$i, $this-&gt;workers[$i]-&gt;isWorking());
+		}
+		printf("\r\n");
+
+	}
+        /* Shutdown the pool of threads cleanly, retaining exit status locally */
+        public function shutdown() {
+                foreach($this-&gt;workers as $worker) {
+                        $this-&gt;status[$worker-&gt;getThreadId()]=$worker-&gt;shutdown();
+                }
+        }
+}
+/* Create a pool of ten threads */
+$pool = new Pool(100);
+/* Create and submit an array of Stackables */
+$work = array();
+for ($target = 0; $target &lt; 1000; $target++){
+
+    $work[$target]=$pool-&gt;submit(new ExampleWork($target));
+
+	if($work[$target] == false){
+		$target--;
+		sleep(1);
+		continue;
+	}
+	for ($i=0;$i&lt;count($work);$i++){
+		if($work[$i]-&gt;isRunning()){
+			printf("cell: %s, status: %s\r\n",$i, $work[$i]-&gt;isRunning());
+		}
+	}
+	printf("\r\n");
+}
+$pool-&gt;shutdown();
+exit();
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp61886656"></a>3.15.3. FAQ</h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a name="idp61887296"></a>3.15.3.1. You cannot serialize or unserialize PDO instances</h4></div></div></div>
+			
+			<pre class="screen">
+			
+PHP Fatal error:  Uncaught exception 'PDOException' with message 'You cannot serialize or unserialize PDO instances' in /home/www/threads.php:38
+Stack trace:
+#0 /home/www/threads.php(38): PDO-&gt;__sleep()
+#1 [internal function]: SQLWorker-&gt;run()
+#2 {main}
+  thrown in /home/www/threads.php on line 38
+ not ready
+ 			
+			</pre>
+			<pre class="screen">
+			
+&lt;?php
+class MyWorker extends Worker{
+    public static $pdo;
+
+    function __construct($conf){
+        $this-&gt;conf = $conf;
+    }
+
+    function run(){
+        self::$pdo = new PDO(
+            'mysql:host=localhost;dbname=test');
+    }
+
+    function get_connection(){
+        return self::$pdo;
+    }
+}
+?&gt;
+			
+			</pre>
+		</div>
+	</div>
+</div><script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-11694057-1']);
+  _gaq.push(['_setDomainName', 'netkiller.github.io']);
+  _gaq.push(['_setAllowLinker', true]);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script><script type="text/javascript">
+var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F997cd4a7320a82d72cb74d179118f697' type='text/javascript'%3E%3C/script%3E"));
+</script></body></html>

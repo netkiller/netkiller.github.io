@@ -1,0 +1,71 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>32.5. Script for automatic startup on boot</title><meta name="generator" content="DocBook XSL Stylesheets V1.78.1"><meta name="keywords" content="MySQL, PostgreSQL, Oracle, NoSQL, ER, TokyoCabinet/Tyrant, Memcache, Membase, Redis, Flare, Voldemort, LevelDB, MongoDB, GreenSQL, RDBMS, ORDBMS"><link rel="home" href="../index.html" title="Netkiller Database 手札"><link rel="up" href="ch32.html" title="第 32 章 Manager"><link rel="prev" href="ch32s04.html" title="32.4.  oracle 817 script"><link rel="next" href="ch32s06.html" title="32.6. Run level shell script to start Oracle 10g services on RedHat Enterprise Linux (RHAS 4)"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="oracle.script.9"></a>32.5. Script for automatic startup on boot</h2></div></div></div>
+		
+		<pre class="screen">
+		
+#!/bin/bash
+#
+# Run-level Startup script for the Oracle Instance and Listener
+#
+# chkconfig: 345 91 19
+# description: Startup/Shutdown Oracle listener and instance
+
+ORA_HOME="/u01/app/oracle/product/9.2.0.1.0"
+ORA_OWNR="oracle"
+
+# if the executables do not exist -- display error
+
+if [ ! -f $ORA_HOME/bin/dbstart -o ! -d $ORA_HOME ]
+then
+        echo "Oracle startup: cannot start"
+        exit 1
+fi
+
+# depending on parameter -- startup, shutdown, restart 
+# of the instance and listener or usage display 
+
+case "$1" in
+    start)
+        # Oracle listener and instance startup
+        echo -n "Starting Oracle: "
+        su - $ORA_OWNR -c "$ORA_HOME/bin/lsnrctl start"
+        su - $ORA_OWNR -c $ORA_HOME/bin/dbstart
+        touch /var/lock/subsys/oracle
+        echo "OK"
+        ;;
+    stop)
+        # Oracle listener and instance shutdown
+        echo -n "Shutdown Oracle: "
+        su - $ORA_OWNR -c "$ORA_HOME/bin/lsnrctl stop"
+        su - $ORA_OWNR -c $ORA_HOME/bin/dbshut
+        rm -f /var/lock/subsys/oracle
+        echo "OK"
+        ;;
+    reload|restart)
+        $0 stop
+        $0 start
+        ;;
+    *)
+        echo "Usage: $0 start|stop|restart|reload"
+        exit 1
+esac
+exit 0
+		
+		</pre>
+	</div><script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-11694057-1']);
+  _gaq.push(['_setDomainName', 'netkiller.github.io']);
+  _gaq.push(['_setAllowLinker', true]);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script><script type="text/javascript">
+var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F997cd4a7320a82d72cb74d179118f697' type='text/javascript'%3E%3C/script%3E"));
+</script></body></html>

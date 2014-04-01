@@ -1,0 +1,61 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>32.4.  oracle 817 script</title><meta name="generator" content="DocBook XSL Stylesheets V1.78.1"><meta name="keywords" content="MySQL, PostgreSQL, Oracle, NoSQL, ER, TokyoCabinet/Tyrant, Memcache, Membase, Redis, Flare, Voldemort, LevelDB, MongoDB, GreenSQL, RDBMS, ORDBMS"><link rel="home" href="../index.html" title="Netkiller Database 手札"><link rel="up" href="ch32.html" title="第 32 章 Manager"><link rel="prev" href="ch32s03.html" title="32.3. 显示表"><link rel="next" href="ch32s05.html" title="32.5. Script for automatic startup on boot"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="oracle.script.8"></a>32.4.  oracle 817 script</h2></div></div></div>
+		
+		<p>Oracle 817 数据库启动脚本</p>
+		<pre class="screen">
+		
+#!/bin/bash
+##############################################################
+# Script to startup and shutdown Oracle and listener
+# File:/etc/rc.d/init.d/orcl
+##############################################################
+# Setup environment for script execution
+#./home/oracle/.bash_profile
+#
+ORACLE_HOME=/u01/app/oracle/product/8.1.7
+# Determine and execute action based on command line parameter
+case "$1" in
+start)
+echo "Starting Oracle database(s) listed in /etc/oratab ..."
+sleep 2
+su - oracle -c "$ORACLE_HOME/bin/dbstart"
+echo "Starting TNS listener ..."
+sleep 2
+su - oracle -c "$ORACLE_HOME/bin/lsnrctl start"
+touch /var/lock/subsys/orcl
+;;
+stop)
+echo "Shutting down TNS listener ..."
+sleep 2
+su - oracle -c "$ORACLE_HOME/bin/lsnrctl stop"
+echo "Shutting down Oracle database(s) listed in /etc/oratab ..."
+su - oracle -c "$ORACLE_HOME/bin/dbshut"
+rm -f /var/lock/subsys/orcl
+;;
+status)
+ps -ax | grep -e ora_ -e tnslsnr
+;;
+*)
+echo "Usage: $1 {start|stop|status}"
+;;
+esac
+exit 0	
+		
+		</pre>
+	</div><script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-11694057-1']);
+  _gaq.push(['_setDomainName', 'netkiller.github.io']);
+  _gaq.push(['_setAllowLinker', true]);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script><script type="text/javascript">
+var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F997cd4a7320a82d72cb74d179118f697' type='text/javascript'%3E%3C/script%3E"));
+</script></body></html>

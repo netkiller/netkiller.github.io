@@ -1,0 +1,286 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>3.13. Web Services / SOAP</title><meta name="generator" content="DocBook XSL Stylesheets V1.78.1"><meta name="keywords" content="php, pear, pecl, phar"><link rel="home" href="../index.html" title="Netkiller PHP 手札"><link rel="up" href="ch03.html" title="第 3 章 Function Reference"><link rel="prev" href="ch03s12.html" title="3.12. ERROR 报告与推出函数是"><link rel="next" href="ch04.html" title="第 4 章 SSL"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="soap"></a>3.13. Web Services / SOAP</h2></div></div></div>
+	
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp61840656"></a>3.13.1. Server</h3></div></div></div>
+		
+		<p></p>
+		<pre class="screen">
+		
+'encoding'=&gt;'UTF-8'
+		
+		</pre>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a name="idp61842208"></a>3.13.1.1. addFunction</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+function echoString($inputString)
+{
+    return $inputString;
+}
+
+function echoTwoStrings($inputString1, $inputString2)
+{
+    return array("outputString1" =&gt; $inputString1,
+                 "outputString2" =&gt; $inputString2);
+}
+
+$server = new SoapServer(null, array('uri' =&gt; "http://192.168.2.15"));
+$server-&gt;addFunction("echoString");
+$server-&gt;addFunction("echoTwoStrings");
+
+$server-&gt;addFunction(SOAP_FUNCTIONS_ALL);
+$server-&gt;handle();
+			
+			</pre>
+
+			<pre class="programlisting">
+			
+&lt;?php
+
+$options = array('uri' =&gt; "http://192.168.2.15",
+                'location'=&gt;'http://192.168.2.15/soapserver.php',
+                'trace'=&gt;true);
+$client = new SoapClient(null, $options);
+echo $client-&gt;echoString("aaa");
+print_r($client-&gt;echoTwoStrings('B','A'));
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a name="idp61845600"></a>3.13.1.2. setClass</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+&lt;?php
+Class Test{
+    public function hello($val){
+        return ($val);
+    }
+	public function sum($v1,$v2){
+		return($v1+$v2);
+	}
+}
+
+$server = new SoapServer(null, array('uri' =&gt; "http://192.168.2.15"));
+$server-&gt;setClass("Test");
+$server-&gt;handle();
+			
+			</pre>
+			<pre class="programlisting">
+			
+&lt;?php
+$options = array('uri' =&gt; "http://192.168.2.15",
+                'location'=&gt;'http://192.168.2.15/soapserver.php',
+                'trace'=&gt;true);
+$client = new SoapClient(null, $options);
+echo $client-&gt;hello("Hello");
+print_r($client-&gt;sum(10,20));
+			
+			</pre>
+		</div>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp61847936"></a>3.13.2. SoapClient</h3></div></div></div>
+		
+		<p>$options</p>
+		<div class="sidebar"><div class="titlepage"><div><div><p class="title"><b>compression</b></p></div></div></div>
+			
+			<pre class="screen">
+$client = new SoapClient("some.wsdl",
+  array('compression' =&gt; SOAP_COMPRESSION_ACCEPT | SOAP_COMPRESSION_GZIP));
+			</pre>
+		</div>
+		<p>ssl_method</p>
+		<pre class="screen">
+'ssl_method' =&gt; SOAP_SSL_METHOD_SSLv3
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp61851664"></a>3.13.3. HTTP 验证</h3></div></div></div>
+		
+		<p>配置 Nginx</p>
+		<pre class="screen">
+		
+server {
+    listen       80;
+    server_name  api.example.com;
+
+    charset utf-8;
+    access_log  /var/log/nginx/api.example.com.access.log  main;
+    auth_basic            "Login";
+    auth_basic_user_file  htpasswd;
+
+    location / {
+        root   /www/example.com/api.example.com;
+        index  index.html index.php;
+
+    }
+    ...
+    ...
+}    		
+		
+		</pre>
+		<p>创建密码文件，请参考《Netkiller Web 手札》</p>
+		<pre class="screen">
+# cat /etc/nginx/htpasswd 
+neo:$apr1$mnT/iqg5$gn7m7xx.eflX9VK6p8hyj0		
+		</pre>
+		<p>SoapClient 需要 login与password两个选项</p>
+		<pre class="screen">
+		
+&lt;?php
+
+$options = array('uri' =&gt; "http://api.example.com",
+                'location'=&gt;'http://api.example.com/soapserver.php',
+				'login'=&gt;'neo',
+				'password'=&gt;'chen',
+                'trace'=&gt;true
+				);
+$client = new SoapClient(null, $options);
+
+try { 
+	echo $client-&gt;hello("Hello");
+	print_r($client-&gt;sum(10,20));
+   
+} 
+catch (Exception $e) 
+{ 
+    echo 'Caught exception: ',  $e-&gt;getMessage(), "\n"; 
+} 
+		
+		</pre>
+	</div>
+
+ 	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="soap.example"></a>3.13.4. Example</h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a name="idp61857168"></a>3.13.4.1. addFunction 实例</h4></div></div></div>
+			
+			<p>soapfunc.php</p>
+			<pre class="programlisting">
+			
+$ cat soapfunc.php
+&lt;?php
+
+function reverse($str){
+
+        $retval = '';
+
+        if(strlen($str) &lt; 1) {
+
+                return new SoapFault('Client','','Invalid string');
+
+        }
+
+        for ($i = 1; $i &lt;= strlen($str); $i++) {
+
+                $retval .= $str[(strlen($str) - $i)];
+
+        }
+
+        return $retval;
+
+}
+
+function sum($num1, $num2) {
+
+        if (trim($num1) != intval($num1)) {
+
+                return new SoapFault('Client','','The first number is invalid');
+
+        }
+
+        if (trim($num2) != intval($num2)) {
+
+                return new SoapFault('Client','','The second number is invalid');
+
+        }
+
+        return ($num1 + $num2);
+
+}
+
+function gettime(){
+
+        $time=strftime("%Y-%m-%d %H:%M:%S");
+
+        return $time;
+
+}
+
+?&gt;
+			
+			</pre>
+			<p>soapserver.php</p>
+
+			<pre class="programlisting">
+			
+$ cat soapserver.php
+&lt;?php
+include_once('soapfunc.php');
+
+$soap = new SoapServer(null,array('uri'=&gt;"http://netkiller.6600.org/"));
+
+$soap-&gt;addFunction('reverse');
+
+$soap-&gt;addFunction('sum');
+
+$soap-&gt;addFunction('gettime');
+
+$soap-&gt;addFunction(SOAP_FUNCTIONS_ALL);
+
+$soap-&gt;handle();
+
+?&gt;
+			
+			</pre>
+			<p>soapclient.php</p>
+			<pre class="programlisting">
+			
+$ cat soapclient.php
+&lt;?php
+
+try {
+
+        $client = new SoapClient(null, array('location' =&gt;"http://netkiller.6600.org/soapserver.php",'uri' =&gt; "http://netkiller.6600.org/"));
+
+        $str = "This string will be reversed";
+
+        $reversed = $client-&gt;reverse($str);
+
+        echo "If you reverse '",$str,"', you get '",$reversed,"' &lt;/br&gt;";
+
+        $n1=50;
+
+        $n2=130;
+
+        $sum = $client-&gt;sum($n1,$n2);
+
+        echo "If you try ",$n1,"+",$n2,", you will get ",$sum,"&lt;/br&gt;";
+
+        echo "The system time is: ",$client-&gt;gettime();
+
+} catch (SoapFault $fault){
+
+        echo "Fault! code:",$fault-&gt;faultcode,", string: ",$fault-&gt;faultstring;
+
+}
+
+?&gt;
+			
+			</pre>
+		</div>
+	</div>
+</div><script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-11694057-1']);
+  _gaq.push(['_setDomainName', 'netkiller.github.io']);
+  _gaq.push(['_setAllowLinker', true]);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script><script type="text/javascript">
+var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F997cd4a7320a82d72cb74d179118f697' type='text/javascript'%3E%3C/script%3E"));
+</script></body></html>

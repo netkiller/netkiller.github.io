@@ -1,0 +1,234 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>11.2. Access Privilege System</title><meta name="generator" content="DocBook XSL Stylesheets V1.78.1"><meta name="keywords" content="MySQL, PostgreSQL, Oracle, NoSQL, ER, TokyoCabinet/Tyrant, Memcache, Membase, Redis, Flare, Voldemort, LevelDB, MongoDB, GreenSQL, RDBMS, ORDBMS"><link rel="home" href="../index.html" title="Netkiller Database 手札"><link rel="up" href="ch11.html" title="第 11 章 Database Administration"><link rel="prev" href="ch11.html" title="第 11 章 Database Administration"><link rel="next" href="ch11s03.html" title="11.3. Maintenance 数据库维护"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="mysql.privilege"></a>11.2. Access Privilege System</h2></div></div></div>
+		
+		<pre class="screen">
+global privileges
+OR (database privileges AND host privileges)
+OR table privileges
+OR column privileges
+OR routine privileges
+		</pre>
+		<pre class="screen">
+Table 12.1. Permissible Privileges for GRANT and REVOKE
+
+Privilege	Meaning
+ALL [PRIVILEGES]	Grant all privileges at specified access level except GRANT OPTION
+ALTER	Enable use of ALTER TABLE
+ALTER ROUTINE	Enable stored routines to be altered or dropped
+CREATE	Enable database and table creation
+CREATE ROUTINE	Enable stored routine creation
+CREATE TABLESPACE	Enable tablespaces and log file groups to be created, altered, or dropped
+CREATE TEMPORARY TABLES	Enable use of CREATE TEMPORARY TABLE
+CREATE USER	Enable use of CREATE USER, DROP USER, RENAME USER, and REVOKE ALL PRIVILEGES
+CREATE VIEW	Enable views to be created or altered
+DELETE	Enable use of DELETE
+DROP	Enable databases, tables, and views to be dropped
+EVENT	Enable use of events for the Event Scheduler
+EXECUTE	Enable the user to execute stored routines
+FILE	Enable the user to cause the server to read or write files
+GRANT OPTION	Enable privileges to be granted to or removed from other accounts
+INDEX	Enable indexes to be created or dropped
+INSERT	Enable use of INSERT
+LOCK TABLES	Enable use of LOCK TABLES on tables for which you have the SELECT privilege
+PROCESS	Enable the user to see all processes with SHOW PROCESSLIST
+PROXY	Enable user proxying
+REFERENCES	Not implemented
+RELOAD	Enable use of FLUSH operations
+REPLICATION CLIENT	Enable the user to ask where master or slave servers are
+REPLICATION SLAVE	Enable replication slaves to read binary log events from the master
+SELECT	Enable use of SELECT
+SHOW DATABASES	Enable SHOW DATABASES to show all databases
+SHOW VIEW	Enable use of SHOW CREATE VIEW
+SHUTDOWN	Enable use of mysqladmin shutdown
+SUPER	Enable use of other administrative operations such as CHANGE MASTER TO, KILL, PURGE BINARY LOGS, SET GLOBAL, and mysqladmin debug command
+TRIGGER	Enable trigger operations
+UPDATE	Enable use of UPDATE
+USAGE	Synonym for “no privileges”
+		</pre>
+		<a class="ulink" href="http://dev.mysql.com/doc/refman/5.5/en/grant.html#grant-table-privileges" target="_top">http://dev.mysql.com/doc/refman/5.5/en/grant.html#grant-table-privileges</a>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp68838480"></a>11.2.1. SHOW GRANTS</h3></div></div></div>
+			
+			<pre class="screen">
+			
+mysql&gt; SHOW GRANTS FOR 'root'@'localhost';
++---------------------------------------------------------------------+
+| Grants for root@localhost                                           |
++---------------------------------------------------------------------+
+| GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' WITH GRANT OPTION |
++---------------------------------------------------------------------+
+1 row in set (0.00 sec)
+			
+			</pre>
+			<pre class="screen">
+			
+mysql&gt; show grants;
++---------------------------------------------------------------------------------+
+| Grants for root@localhost                                           |
++---------------------------------------------------------------------------------+
+| GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' WITH GRANT OPTION |
++---------------------------------------------------------------------------------+
+1 row in set (0.00 sec)
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp68841088"></a>11.2.2. show privileges</h3></div></div></div>
+			
+			<pre class="screen">
+			
+mysql&gt; show privileges;
++-------------------------+---------------------------------------+-------------------------------------------------------+
+| Privilege               | Context                               | Comment                                               |
++-------------------------+---------------------------------------+-------------------------------------------------------+
+| Alter                   | Tables                                | To alter the table                                    |
+| Alter routine           | Functions,Procedures                  | To alter or drop stored functions/procedures          |
+| Create                  | Databases,Tables,Indexes              | To create new databases and tables                    |
+| Create routine          | Databases                             | To use CREATE FUNCTION/PROCEDURE                      |
+| Create temporary tables | Databases                             | To use CREATE TEMPORARY TABLE                         |
+| Create view             | Tables                                | To create new views                                   |
+| Create user             | Server Admin                          | To create new users                                   |
+| Delete                  | Tables                                | To delete existing rows                               |
+| Drop                    | Databases,Tables                      | To drop databases, tables, and views                  |
+| Event                   | Server Admin                          | To create, alter, drop and execute events             |
+| Execute                 | Functions,Procedures                  | To execute stored routines                            |
+| File                    | File access on server                 | To read and write files on the server                 |
+| Grant option            | Databases,Tables,Functions,Procedures | To give to other users those privileges you possess   |
+| Index                   | Tables                                | To create or drop indexes                             |
+| Insert                  | Tables                                | To insert data into tables                            |
+| Lock tables             | Databases                             | To use LOCK TABLES (together with SELECT privilege)   |
+| Process                 | Server Admin                          | To view the plain text of currently executing queries |
+| Proxy                   | Server Admin                          | To make proxy user possible                           |
+| References              | Databases,Tables                      | To have references on tables                          |
+| Reload                  | Server Admin                          | To reload or refresh tables, logs and privileges      |
+| Replication client      | Server Admin                          | To ask where the slave or master servers are          |
+| Replication slave       | Server Admin                          | To read binary log events from the master             |
+| Select                  | Tables                                | To retrieve rows from table                           |
+| Show databases          | Server Admin                          | To see all databases with SHOW DATABASES              |
+| Show view               | Tables                                | To see views with SHOW CREATE VIEW                    |
+| Shutdown                | Server Admin                          | To shut down the server                               |
+| Super                   | Server Admin                          | To use KILL thread, SET GLOBAL, CHANGE MASTER, etc.   |
+| Trigger                 | Tables                                | To use triggers                                       |
+| Create tablespace       | Server Admin                          | To create/alter/drop tablespaces                      |
+| Update                  | Tables                                | To update existing rows                               |
+| Usage                   | Server Admin                          | No privileges - allow connect only                    |
++-------------------------+---------------------------------------+-------------------------------------------------------+
+31 rows in set (0.00 sec)
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp68846848"></a>11.2.3. Grant privileges </h3></div></div></div>
+			
+			<p>Global privileges </p>
+			<pre class="screen">
+GRANT ALL ON *.* TO 'someuser'@'somehost';
+GRANT SELECT, INSERT ON *.* TO 'someuser'@'somehost';
+			</pre>
+			<p>Database privileges </p>
+			<pre class="screen">
+GRANT ALL ON mydb.* TO 'someuser'@'somehost';
+GRANT SELECT, INSERT ON mydb.* TO 'someuser'@'somehost';
+			</pre>
+			<p>Table privileges </p>
+			<pre class="screen">
+GRANT ALL ON mydb.mytbl TO 'someuser'@'somehost';
+GRANT SELECT, INSERT ON mydb.mytbl TO 'someuser'@'somehost';
+			</pre>
+			<p>Column privileges </p>
+			<pre class="screen">
+GRANT SELECT (col1), INSERT (col1,col2) ON mydb.mytbl TO 'someuser'@'somehost';
+			</pre>
+			<p>Routine privileges </p>
+			<pre class="screen">
+GRANT CREATE ROUTINE ON mydb.* TO 'someuser'@'somehost';
+GRANT EXECUTE ON PROCEDURE mydb.myproc TO 'someuser'@'somehost';
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp68847136"></a>11.2.4. Revoke privileges</h3></div></div></div>
+			
+			<pre class="screen">
+REVOKE
+    priv_type [(column_list)]
+      [, priv_type [(column_list)]] ...
+    ON [object_type] priv_level
+    FROM user [, user] ...
+
+REVOKE ALL PRIVILEGES, GRANT OPTION
+    FROM user [, user] ...
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp68854304"></a>11.2.5. Show Privileges</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+mysql&gt; select * from user where user = 'neo'\G
+*************************** 1. row ***************************
+                 Host: 192.168.0.5
+                 User: neo
+             Password: *7564B7B0A062C9523700601CBA1DCE1F861D6270
+          Select_priv: Y
+          Insert_priv: Y
+          Update_priv: Y
+          Delete_priv: Y
+          Create_priv: Y
+            Drop_priv: Y
+          Reload_priv: Y
+        Shutdown_priv: Y
+         Process_priv: Y
+            File_priv: Y
+           Grant_priv: N
+      References_priv: Y
+           Index_priv: Y
+           Alter_priv: Y
+         Show_db_priv: Y
+           Super_priv: Y
+Create_tmp_table_priv: Y
+     Lock_tables_priv: Y
+         Execute_priv: Y
+      Repl_slave_priv: Y
+     Repl_client_priv: Y
+     Create_view_priv: Y
+       Show_view_priv: Y
+  Create_routine_priv: Y
+   Alter_routine_priv: Y
+     Create_user_priv: Y
+           Event_priv: Y
+         Trigger_priv: Y
+             ssl_type:
+           ssl_cipher:
+          x509_issuer:
+         x509_subject:
+        max_questions: 0
+          max_updates: 0
+      max_connections: 0
+ max_user_connections: 0
+1 row in set (0.00 sec)
+
+mysql&gt;
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp68856768"></a>11.2.6. MAX_QUERIES_PER_HOUR/MAX_UPDATES_PER_HOUR</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+GRANT USAGE ON *.* TO ...
+  WITH MAX_QUERIES_PER_HOUR 500 MAX_UPDATES_PER_HOUR 100;
+			
+			</pre>
+		</div>
+	</div><script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-11694057-1']);
+  _gaq.push(['_setDomainName', 'netkiller.github.io']);
+  _gaq.push(['_setAllowLinker', true]);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script><script type="text/javascript">
+var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F997cd4a7320a82d72cb74d179118f697' type='text/javascript'%3E%3C/script%3E"));
+</script></body></html>

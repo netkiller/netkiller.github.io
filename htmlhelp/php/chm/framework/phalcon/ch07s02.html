@@ -1,0 +1,108 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>7.2. Phalcon - High performance PHP framework</title><meta name="generator" content="DocBook XSL Stylesheets V1.78.1"><meta name="keywords" content="php, pear, pecl, phar"><link rel="home" href="../../index.html" title="Netkiller PHP 手札"><link rel="up" href="../ch07.html" title="第 7 章 Frameworks"><link rel="prev" href="../ch07.html" title="第 7 章 Frameworks"><link rel="next" href="../ch07s03.html" title="7.3. CodeIgniter - Open source PHP web application framework"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="index"></a>7.2. Phalcon - High performance PHP framework</h2></div></div></div>
+	
+	<p>http://phalconphp.com/</p>
+	<p>与其他框架实现方法不同，Phalcon直接采用C代码编写，编译成PHP共享库载入。所以速度是最快的。 </p>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp62127840"></a>7.2.1. 安装配置 Phalcon </h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a name="idp62128480"></a>7.2.1.1. 安装扩展</h4></div></div></div>
+			
+			<pre class="screen">
+			
+cd /usr/local/src/
+
+git clone git://github.com/phalcon/cphalcon.git
+cd cphalcon/build
+./install
+
+cat &gt; /srv/php/etc/conf.d/phalcon.ini &lt;&lt;EOF
+extension=phalcon.so
+EOF
+			
+			</pre>
+			<p>确认安装是否成功</p>
+			<pre class="screen">
+# php -m | grep phalcon
+phalcon
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a name="idp62130976"></a>7.2.1.2. Nginx 配置</h4></div></div></div>
+			
+			<pre class="screen">
+			
+server {
+    listen       80;
+    server_name  localhost;
+
+    charset utf-8;
+
+    access_log  /var/log/nginx/host.access.log  main;
+
+    location / {
+        root   /www/phalcon/public;
+        index  index.html index.php;
+    		if ($request_filename !~ (js|css|img|/images|robots/.txt|index/.php) ) {
+        		rewrite ^/(.*)$ /index.php?_url=/$1 last;
+        		break;
+    		}
+    }
+
+    #error_page  404              /404.html;
+
+    # redirect server error pages to the static page /50x.html
+    #
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/local/www/nginx-dist;
+    }
+
+    # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
+    #
+    location ~ /index.php {
+        root           /www/phalcon/public;
+        fastcgi_pass   127.0.0.1:9000;
+        fastcgi_index  index.php;
+        fastcgi_param  SCRIPT_FILENAME  /www/phalcon/public$fastcgi_script_name;
+        include        fastcgi_params;
+    }
+
+    # deny access to .htaccess files, if Apache's document root
+    # concurs with nginx's one
+    #
+    location ~ /\.ht {
+        deny  all;
+    }
+}
+			
+			</pre>
+			<p>注意两点： </p>
+			<p>一是rewrite设置需要 $request_filename 过滤文件与目录</p>
+			<p>二是fastcgi配置location ~ /index.php 这样的设置是为了".php"只能运行 index.php，其他目录下的.php文件无法运行，这样解决的注入与非法脚本运行。</p>
+		</div>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp62135168"></a>7.2.2. dispatcher</h3></div></div></div>
+		
+		<p>取当前的控制器、方法，参数</p>
+		<pre class="screen">
+$this-&gt;dispatcher-&gt;getControllerName(),
+$this-&gt;dispatcher-&gt;getActionName(),
+$this-&gt;dispatcher-&gt;getParams()	
+		</pre>
+	</div>
+</div><script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-11694057-1']);
+  _gaq.push(['_setDomainName', 'netkiller.github.io']);
+  _gaq.push(['_setAllowLinker', true]);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script><script type="text/javascript">
+var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F997cd4a7320a82d72cb74d179118f697' type='text/javascript'%3E%3C/script%3E"));
+</script></body></html>

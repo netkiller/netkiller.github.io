@@ -1,0 +1,132 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>36.3. redis-cli - Command-line client to redis-server</title><meta name="generator" content="DocBook XSL Stylesheets V1.78.1"><meta name="keywords" content="MySQL, PostgreSQL, Oracle, NoSQL, ER, TokyoCabinet/Tyrant, Memcache, Membase, Redis, Flare, Voldemort, LevelDB, MongoDB, GreenSQL, RDBMS, ORDBMS"><link rel="home" href="../../index.html" title="Netkiller Database 手札"><link rel="up" href="ch36.html" title="第 36 章 Redis"><link rel="prev" href="ch36s02.html" title="36.2. /etc/redis.conf"><link rel="next" href="ch36s04.html" title="36.4. phpRedisAdmin"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="redis-cli"></a>36.3. redis-cli - Command-line client to redis-server</h2></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp69936496"></a>36.3.1. info</h3></div></div></div>
+			
+			<pre class="screen">
+			
+redis 127.0.0.1:6379&gt; info
+redis_version:2.4.10
+redis_git_sha1:00000000
+redis_git_dirty:0
+arch_bits:64
+multiplexing_api:epoll
+gcc_version:4.4.6
+process_id:29663
+uptime_in_seconds:1189
+uptime_in_days:0
+lru_clock:1018411
+used_cpu_sys:0.10
+used_cpu_user:0.09
+used_cpu_sys_children:0.01
+used_cpu_user_children:0.00
+connected_clients:1
+connected_slaves:0
+client_longest_output_list:0
+client_biggest_input_buf:0
+blocked_clients:0
+used_memory:730664
+used_memory_human:713.54K
+used_memory_rss:7225344
+used_memory_peak:730720
+used_memory_peak_human:713.59K
+mem_fragmentation_ratio:9.89
+mem_allocator:jemalloc-2.2.5
+loading:0
+aof_enabled:0
+changes_since_last_save:0
+bgsave_in_progress:0
+last_save_time:1373332622
+bgrewriteaof_in_progress:0
+total_connections_received:4
+total_commands_processed:14
+expired_keys:0
+evicted_keys:0
+keyspace_hits:3
+keyspace_misses:0
+pubsub_channels:0
+pubsub_patterns:0
+latest_fork_usec:744
+vm_enabled:0
+role:master
+db0:keys=4,expires=0
+redis 127.0.0.1:6379&gt;
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp69938656"></a>36.3.2. save/bgsave/lastsave</h3></div></div></div>
+			
+			<p>save/bgsave 保存持久化将数据，lastsave 查看相关信息</p>
+			<pre class="screen">
+			
+redis 127.0.0.1:6379&gt; save
+OK
+redis 127.0.0.1:6379&gt; bgsave
+Background saving started
+redis 127.0.0.1:6379&gt; lastsave
+(integer) 1373335757
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp69940704"></a>36.3.3. Pub/Sub 订阅与发布</h3></div></div></div>
+			
+			<p>redis 提供基本的MQ 功能，下面我们做一个演示</p>
+			<p>开启第一个终端窗口，订阅first second</p>
+			<pre class="screen">
+$ redis-cli
+redis 127.0.0.1:6379&gt; SUBSCRIBE first second
+Reading messages... (press Ctrl-C to quit)
+1) "subscribe"
+2) "first"
+3) (integer) 1
+1) "subscribe"
+2) "second"
+3) (integer) 2
+			</pre>
+			<p>开启第二个终端窗口，分别发送first second</p>
+			<pre class="screen">
+$ redis-cli
+redis 127.0.0.1:6379&gt;  PUBLISH second Hello
+(integer) 1
+redis 127.0.0.1:6379&gt;  PUBLISH first Helloworld!!!
+(integer) 1
+redis 127.0.0.1:6379&gt; quit
+			</pre>
+			<p>现在切换到第一个终端窗口，应该能够看到发送过来的字符串</p>
+			<pre class="screen">
+$ redis-cli
+redis 127.0.0.1:6379&gt; SUBSCRIBE first second
+Reading messages... (press Ctrl-C to quit)
+1) "subscribe"
+2) "first"
+3) (integer) 1
+1) "subscribe"
+2) "second"
+3) (integer) 2
+
+1) "message"
+2) "second"
+3) "Hello"
+
+1) "message"
+2) "first"
+3) "Helloworld!!!"
+			</pre>
+		</div>
+	</div><script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-11694057-1']);
+  _gaq.push(['_setDomainName', 'netkiller.github.io']);
+  _gaq.push(['_setAllowLinker', true]);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script><script type="text/javascript">
+var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F997cd4a7320a82d72cb74d179118f697' type='text/javascript'%3E%3C/script%3E"));
+</script></body></html>
