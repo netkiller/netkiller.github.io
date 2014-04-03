@@ -16,10 +16,11 @@
 
 </script></head><body><a xmlns="" href="http://netkiller.github.io/">Home</a> |
         <a xmlns="" href="http://netkiller.sourceforge.net/">Mirror</a> |
-        <a xmlns="" href="/search.html">Search</a><a xmlns="" href="/journal/index.html">杂文</a> |
+        <a xmlns="" href="/search.html">Search</a> | 
+		<a xmlns="" href="/journal/index.html">杂文</a> |
         <a xmlns="" href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
         <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
-        <a xmlns="" href="http://rline.blog.51cto.com/">51CTO 博客</a><section xml:lang="zh-cn" class="article" id="idp59343296"><div class="titlepage"><div><div><h2 class="title">网站静态内容出版解决方案</h2></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(netkiller)</span>, <span class="lineage">陈景峰(BG7NYT)</span></h3><div class="affiliation"><div class="address"><p><br/>
+        <a xmlns="" href="http://rline.blog.51cto.com/">51CTO 博客</a><section xml:lang="zh-cn" class="article" id="idp56466032"><div class="titlepage"><div><div><h2 class="title">网站静态内容出版解决方案</h2></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(netkiller)</span>, <span class="lineage">陈景峰(BG7NYT)</span></h3><div class="affiliation"><div class="address"><p><br/>
 				<span class="country">中国</span><span class="state">广东省</span><span class="city">深圳市</span><span class="street">龙华新区民治街道溪山美地</span><br/>
 				<span class="postcode">518131</span><br/>
 				<span class="phone">+86 13113668890</span><br/>
@@ -94,10 +95,12 @@
 		</td><td>
 			<a class="ulink" href="../multimedia/index.html" target="_top">Netkiller Multimedia 手札</a>
 		</td><td>
+			<a class="ulink" href="../perl/index.html" target="_top">Netkiller Perl 手札</a>
+		</td><td>
 			<a class="ulink" href="../radio/index.html" target="_top">Netkiller Amateur Radio 手札</a>
-		</td><td> </td><td> </td></tr></table></div></div></div><hr/></div><div class="toc"><div class="toc-title">目录</div><ul class="toc"><li><span class="section"><a href="#idp59344528">1. 架构总览</a></span></li><li><span class="section"><a href="#idp59392288">2. cdn</a></span></li><li><span class="section"><a href="#idp59412144">3. www 服务器</a></span></li><li><span class="section"><a href="#idp59421888">4. cms 服务器</a></span></li><li><span class="section"><a href="#idp59435824">5. img</a></span></li><li><span class="section"><a href="#idp59441136">6. Ajax 局部更新与缓存</a></span></li></ul></div>
+		</td><td> </td></tr></table></div></div></div><hr/></div><div class="toc"><div class="toc-title">目录</div><ul class="toc"><li><span class="section"><a href="#idp56419664">1. 架构总览</a></span></li><li><span class="section"><a href="#idp56506368">2. cdn</a></span></li><li><span class="section"><a href="#idp56523728">3. www 服务器</a></span></li><li><span class="section"><a href="#idp56532464">4. cms 服务器</a></span></li><li><span class="section"><a href="#idp56545312">5. img</a></span></li><li><span class="section"><a href="#idp56549936">6. Ajax 局部更新与缓存</a></span></li></ul></div>
 	
-	<section class="section" id="idp59344528"><div class="titlepage"><div><div><h2 class="title" style="clear: both">1. 架构总览</h2></div></div></div>
+	<section class="section" id="idp56419664"><div class="titlepage"><div><div><h2 class="title" style="clear: both">1. 架构总览</h2></div></div></div>
 		
 		<p>www 负责静态文件浏览, 台数不定, 可以采用零成本的DNS轮询, 或者4层LVS, 或者7层HAProxy, 还可以用F5, Array 等负载均衡设备.</p>
 		<p>cms 负责静态文件生成. 生成后的文件要同步到www中, 或者采用网络共享, 再者使用分布式文件系统, 总之将生成的文件交给www服务器, 根据你压力横向扩展即可</p>
@@ -113,14 +116,14 @@
 		<div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>访问www服务器</p></li><li class="listitem"><p>nginx 判断文件是否存在,如果存在将文件显示出来</p></li><li class="listitem"><p>如果文件不存在,去cms服务器上查找, 如果存在便返回给www服务器,并显示出来</p></li><li class="listitem"><p>如果cms上文件不存在,cms服务器便使用rewrite生成该文件, 同时将内容返回给www服务器,www将内容缓存在自己的服务器上,并将内容显示出来</p></li></ol></div>
 
 	</section>
-	<section class="section" id="idp59392288"><div class="titlepage"><div><div><h2 class="title" style="clear: both">2. cdn</h2></div></div></div>
+	<section class="section" id="idp56506368"><div class="titlepage"><div><div><h2 class="title" style="clear: both">2. cdn</h2></div></div></div>
 		
 		<p>如何使用 cdn 来缓存你的网站内容</p>
 		<p>让你的网页缓存在 cdn 节点上的方式有下面几种</p>
 		<div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>让cdn的客服帮你配置缓存的规则, 他们很喜欢一刀切, 例如所有html都缓存2小时</p></li><li class="listitem"><p>在他们管理后台自行使用正则配置缓存的时间, 这个他们一般不会提供, 某些公司的CDN会提供这个功能. 非常方便.</p></li><li class="listitem"><p>通过HTTP头自行控制缓存时间, 一般是使用 max-age / s-maxage / Last-Modified 判断缓存时间</p></li></ol></div>
 		<p>我比较喜欢最后一种, 通常我们使用max-age 与 s-maxage 同时使用, 这样我可以按照我的意向来决定文件的缓存时间<a class="ulink" href="http://netkiller.github.com/architect/architecture/cache.html" target="_top">这里有更详细的解释说明.</a></p>
 	</section>
-	<section class="section" id="idp59412144"><div class="titlepage"><div><div><h2 class="title" style="clear: both">3. www 服务器</h2></div></div></div>
+	<section class="section" id="idp56523728"><div class="titlepage"><div><div><h2 class="title" style="clear: both">3. www 服务器</h2></div></div></div>
 		
 		<p>下面给出一个精简后的配置例子</p>
 		<p>如果文件不存在就会连接后端cms服务器生成文件,并且显示出来,同时加上缓存. 生成的文件会从cms中同步到www服务器上. </p>
@@ -186,7 +189,7 @@ server {
 		
 		</pre>
 	</section>
-	<section class="section" id="idp59421888"><div class="titlepage"><div><div><h2 class="title" style="clear: both">4. cms 服务器</h2></div></div></div>
+	<section class="section" id="idp56532464"><div class="titlepage"><div><div><h2 class="title" style="clear: both">4. cms 服务器</h2></div></div></div>
 		
 		<div class="orderedlist"><div class="orderedlist-title">CMS 内容管理系统的主要功能</div><ol class="orderedlist" type="1"><li class="listitem"><p>内容分类管理</p></li><li class="listitem"><p>内容模板管理</p></li><li class="listitem"><p>内容编辑与发布</p></li><li class="listitem"><p>内容生成</p></li></ol></div>
 
@@ -282,7 +285,7 @@ server {
 		
 		</pre>
 	</section>
-	<section class="section" id="idp59435824"><div class="titlepage"><div><div><h2 class="title" style="clear: both">5. img</h2></div></div></div>
+	<section class="section" id="idp56545312"><div class="titlepage"><div><div><h2 class="title" style="clear: both">5. img</h2></div></div></div>
 		
 		<p>img.mydomain.com</p>
 		<p/>
@@ -325,7 +328,7 @@ server {
 		<p>/theme/2012/08/15/images.3.jpg 也是  /theme/2012/08/15/images.jpg</p>
 		<p>但CDN与你的浏览器会每次下载新的文件, 这样只要更新CDN中的html页面即可, 不用去理睬图片, 你的浏览器会用新的地址下载图片. 这样就解决了烦琐的刷新工作.</p>
 	</section>
-	<section class="section" id="idp59441136"><div class="titlepage"><div><div><h2 class="title" style="clear: both">6. Ajax 局部更新与缓存</h2></div></div></div>
+	<section class="section" id="idp56549936"><div class="titlepage"><div><div><h2 class="title" style="clear: both">6. Ajax 局部更新与缓存</h2></div></div></div>
 		
 		<p>例如我的新闻评论页面,需要使用ajax技术, 将用户回复的品论显示来, ajax 载入json数据然后局部更新, 我对他做了1分钟的缓存</p>
 		<pre class="screen">
@@ -347,4 +350,21 @@ if ($request_uri ~* "\.(xml|json)$") {
 	            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
 	            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
 	        })();
-	    </script><noscript xmlns="">Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><a xmlns="" href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a><br xmlns=""/><div xmlns="" id="clustrmaps-widget"/><script xmlns="" type="text/javascript">var _clustrmaps = {'url' : 'http://netkiller.github.io', 'user' : 1107643, 'server' : '2', 'id' : 'clustrmaps-widget', 'version' : 1, 'date' : '2013-08-14', 'lang' : 'en', 'corners' : 'square' };(function (){ var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = 'http://www2.clustrmaps.com/counter/map.js'; var x = document.getElementsByTagName('script')[0]; x.parentNode.insertBefore(s, x);})();</script><noscript xmlns=""><a href="http://www2.clustrmaps.com/user/87410e6bb"><img src="http://www2.clustrmaps.com/stats/maps-no_clusters/netkiller.github.io-thumb.jpg" alt="Locations of visitors to this page"/></a></noscript></body></html>
+	    </script><noscript xmlns="">Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><a xmlns="" href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a><br xmlns=""/><div xmlns="" id="clustrmaps-widget"/><script xmlns="" type="text/javascript">var _clustrmaps = {'url' : 'http://netkiller.github.io', 'user' : 1107643, 'server' : '2', 'id' : 'clustrmaps-widget', 'version' : 1, 'date' : '2013-08-14', 'lang' : 'en', 'corners' : 'square' };(function (){ var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = 'http://www2.clustrmaps.com/counter/map.js'; var x = document.getElementsByTagName('script')[0]; x.parentNode.insertBefore(s, x);})();</script><noscript xmlns=""><a href="http://www2.clustrmaps.com/user/87410e6bb"><img src="http://www2.clustrmaps.com/stats/maps-no_clusters/netkiller.github.io-thumb.jpg" alt="Locations of visitors to this page"/></a></noscript><script xmlns="" type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-11694057-1']);
+  _gaq.push(['_setDomainName', 'netkiller.github.io']);
+  _gaq.push(['_setAllowLinker', true]);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script><script xmlns="" type="text/javascript">
+var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F997cd4a7320a82d72cb74d179118f697' type='text/javascript'%3E%3C/script%3E"));
+</script><script xmlns="" type="text/javascript" src="/js/q.js"/></body></html>
