@@ -1,21 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Meta Trades 数据库优化</title><link rel="stylesheet" type="text/css" href="docbook.css"/><link rel="stylesheet" type="text/css" href="/journal/journal.css"/><meta name="generator" content="DocBook XSL Stylesheets V1.78.1"/><meta name="description" content=""/><meta name="keywords" content=", , , "/><script xmlns="">
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-
-  ga('create', 'UA-11694057-1', 'netkiller.github.io');
-  ga('send', 'pageview');
-
-</script></head><body><a xmlns="" href="http://netkiller.github.io/">Home</a> |
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Meta Trades 数据库优化</title><link rel="stylesheet" type="text/css" href="docbook.css"/><link rel="stylesheet" type="text/css" href="/journal/journal.css"/><meta name="generator" content="DocBook XSL Stylesheets V1.78.1"/><meta name="description" content=""/><meta name="keywords" content=", , , "/></head><body><a xmlns="" href="http://netkiller.github.io/">Home</a> |
         <a xmlns="" href="http://netkiller.sourceforge.net/">Mirror</a> |
         <a xmlns="" href="/search.html">Search</a> | 
 		<a xmlns="" href="/journal/index.html">杂文</a> |
         <a xmlns="" href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
         <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
         <a xmlns="" href="http://rline.blog.51cto.com/">51CTO 博客</a> |
-        <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a><section xml:lang="zh-cn" class="article" id="idp56801120"><div class="titlepage"><div><div><h2 class="title">Meta Trades 数据库优化</h2></div><div><h3 class="subtitle"><em/></h3></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(netkiller)</span>, <span class="lineage">陈景峰(BG7NYT)</span></h3><div class="affiliation"><div class="address"><p><br/>
+        <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a><section xml:lang="zh-cn" class="article" id="idp57103360"><div class="titlepage"><div><div><h2 class="title">Meta Trades 数据库优化</h2></div><div><h3 class="subtitle"><em>http://netkiller.github.io/journal/metatrades.html</em></h3></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(netkiller)</span>, <span class="lineage">陈景峰(BG7NYT)</span></h3><div class="affiliation"><div class="address"><p><br/>
 				<span class="country">中国</span><span class="state">广东省</span><span class="city">深圳市</span><span class="street">龙华新区民治街道溪山美地</span><br/>
 				<span class="postcode">518131</span><br/>
 				<span class="phone">+86 13113668890</span><br/>
@@ -93,12 +84,37 @@
 			<a class="ulink" href="../perl/index.html" target="_top">Netkiller Perl 手札</a>
 		</td><td>
 			<a class="ulink" href="../radio/index.html" target="_top">Netkiller Amateur Radio 手札</a>
-		</td><td> </td></tr></table></div></div></div><hr/></div><div class="toc"><div class="toc-title">目录</div><ul class="toc"><li><span class="section"><a href="#idp56854672">1. 怎样优化Meta Trades 数据库</a></span><ul><li><span class="section"><a href="#idp56855312">1.1. MT4_TRADES 表的优化方案</a></span></li><li><span class="section"><a href="#idp56861248">1.2. MT4_PRICES 表</a></span></li><li><span class="section"><a href="#idp56870176">1.3. MT4_DAILY 表实现月结单</a></span></li></ul></li></ul></div>
+		</td><td> </td></tr></table></div></div></div><hr/></div><div class="toc"><div class="toc-title">目录</div><ul class="toc"><li><span class="section"><a href="#idp57183376">1. 怎样优化Meta Trades 数据库</a></span><ul><li><span class="section"><a href="#idp57184192">1.1. MT4_USERS 表</a></span></li><li><span class="section"><a href="#idp57188944">1.2. MT4_TRADES 表的优化方案</a></span></li><li><span class="section"><a href="#idp57194448">1.3. MT4_PRICES 表</a></span></li><li><span class="section"><a href="#idp57202688">1.4. MT4_DAILY 表实现月结单</a></span></li></ul></li></ul></div>
 	
 	
-	<section class="section" id="idp56854672"><div class="titlepage"><div><div><h2 class="title" style="clear: both">1. 怎样优化Meta Trades 数据库</h2></div></div></div>
+	<section class="section" id="idp57183376"><div class="titlepage"><div><div><h2 class="title" style="clear: both">1. 怎样优化Meta Trades 数据库</h2></div></div></div>
 		
-		<section class="section" id="idp56855312"><div class="titlepage"><div><div><h3 class="title">1.1. MT4_TRADES 表的优化方案</h3></div></div></div>
+		<section class="section" id="idp57184192"><div class="titlepage"><div><div><h3 class="title">1.1. MT4_USERS 表</h3></div></div></div>
+			
+			<p>监控MT4用户变化，随时将状态与我们的用户表同步，下面是当交易账号被删除后，会将我们用户数据库的记录状态改为已删除状态</p>
+			<pre class="screen">
+CREATE DEFINER=`dba`@`192.168.6.20` TRIGGER `MT4_USERS_AFTER_DELETE` AFTER DELETE ON `MT4_USERS` FOR EACH ROW BEGIN
+	UPDATE `yourdb`.members SET `status` = 'Deleted' WHERE username = OLD.LOGIN;
+END			
+			</pre>
+			<p>交易账号状态监控</p>
+			<pre class="screen">
+CREATE DEFINER=`dba`@`192.168.6.20` TRIGGER `MT4_USERS_AFTER_UPDATE` AFTER UPDATE ON `MT4_USERS` FOR EACH ROW BEGIN
+	IF OLD.ENABLE = '0' THEN
+		UPDATE `yourdb`.members SET `status` = 'Disabled' WHERE username = OLD.LOGIN;
+	ELSE
+		UPDATE `yourdb`.members SET `status` = 'Enabled' WHERE username = OLD.LOGIN;
+	END IF;
+END
+			</pre>
+			<p>你也可以监控MT4的开户</p>
+			<pre class="screen">
+CREATE TRIGGER `MT4_USERS_AFTER_INSERT` AFTER INSERT ON `MT4_USERS` FOR EACH ROW BEGIN
+	/*这里写入你的INSERT语句即可*/
+END
+			</pre>
+		</section>
+		<section class="section" id="idp57188944"><div class="titlepage"><div><div><h3 class="title">1.2. MT4_TRADES 表的优化方案</h3></div></div></div>
 			
 			<p>我将TICKET主键去除，然后对MT4_TRADES表进行分区处理，因为我们所有的查询都会涉及LOGIN字段，所以我使用LOGIN字段分区，是之每次查询都能精准地定位到该分区，同时将数据库存储引擎改为InnoDB。</p>
 			<pre class="screen">
@@ -152,9 +168,9 @@ BEGIN
 	SELECT SUBSTRING_INDEX(`comment`, ':', 1) into orderNumber;
 
 	IF orderType = 'DEPOSIT' THEN
-		UPDATE hx9999.accounts SET paystatus = '成功', deposit_time = opentime, mtime = now() where `order` = orderNumber;
+		UPDATE yourdb.accounts SET paystatus = '成功', deposit_time = opentime, mtime = now() where `order` = orderNumber;
 	END IF;
-	UPDATE hx9999.withdrawing SET deposit_time = opentime, mtime = now() where `order` = orderNumber; -- operator = 'TRIGGER', `status` = 'Completed'
+	UPDATE yourdb.withdrawing SET deposit_time = opentime, mtime = now() where `order` = orderNumber; -- operator = 'TRIGGER', `status` = 'Completed'
 END//
 DELIMITER ;
 
@@ -167,7 +183,7 @@ DELIMITER ;
 SET SQL_MODE=@OLDTMP_SQL_MODE;			
 			</pre>
 		</section>
-		<section class="section" id="idp56861248"><div class="titlepage"><div><div><h3 class="title">1.2. MT4_PRICES 表</h3></div></div></div>
+		<section class="section" id="idp57194448"><div class="titlepage"><div><div><h3 class="title">1.3. MT4_PRICES 表</h3></div></div></div>
 			
 			<p>MT4_PRICES 表结构</p>
 			<pre class="screen">
@@ -280,12 +296,11 @@ SET SQL_MODE=@OLD_SQL_MODE;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;			
 			</pre>
 		</section>
-		<section class="section" id="idp56870176"><div class="titlepage"><div><div><h3 class="title">1.3. MT4_DAILY 表实现月结单</h3></div></div></div>
+		<section class="section" id="idp57202688"><div class="titlepage"><div><div><h3 class="title">1.4. MT4_DAILY 表实现月结单</h3></div></div></div>
 			
 			<p>MT4_DAILY 表存储日结单数据，我们可以随时查询他们，但是当数据量达到一定程度。运算量就会影响到查询性能，我们需要实现月结单功能，已避免每次查询都运算一次。</p>
 		</section>		
 	</section>
-
 </section><div xmlns="" id="bdshare" class="bdshare_t bds_tools_32 get-codes-bdshare"><a class="bds_fbook"/><a class="bds_twi"/><a class="bds_ms"/><a class="bds_msn"/><a class="bds_buzz"/><a class="bds_linkedin"/><a class="bds_deli"/><a class="bds_qzone"/><a class="bds_qq"/><a class="bds_tqq"/><a class="bds_tqf"/><a class="bds_tsina"/><a class="bds_baidu"/><a class="bds_renren"/><a class="bds_t163"/><a class="bds_tfh"/><a class="bds_douban"/><a class="bds_hi"/><a class="bds_tieba"/><a class="bds_tsohu"/><span class="bds_more"/><a class="shareCount"/></div><script xmlns="" type="text/javascript" id="bdshare_js" data="type=tools"/><script xmlns="" type="text/javascript" id="bdshell_js"/><script xmlns="" type="text/javascript">
 	document.getElementById("bdshell_js").src = "http://bdimg.share.baidu.com/static/js/shell_v2.js?cdnversion=" + new Date().getHours();
 </script><div xmlns="" id="disqus_thread"/><script xmlns="" type="text/javascript">
@@ -298,19 +313,14 @@ SET SQL_MODE=@OLD_SQL_MODE;
 	            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
 	            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
 	        })();
-	    </script><noscript xmlns="">Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><a xmlns="" href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a><br xmlns=""/><div xmlns="" id="clustrmaps-widget"/><script xmlns="" type="text/javascript">var _clustrmaps = {'url' : 'http://netkiller.github.io', 'user' : 1107643, 'server' : '2', 'id' : 'clustrmaps-widget', 'version' : 1, 'date' : '2013-08-14', 'lang' : 'en', 'corners' : 'square' };(function (){ var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = 'http://www2.clustrmaps.com/counter/map.js'; var x = document.getElementsByTagName('script')[0]; x.parentNode.insertBefore(s, x);})();</script><noscript xmlns=""><a href="http://www2.clustrmaps.com/user/87410e6bb"><img src="http://www2.clustrmaps.com/stats/maps-no_clusters/netkiller.github.io-thumb.jpg" alt="Locations of visitors to this page"/></a></noscript><script xmlns="" type="text/javascript">
+	    </script><noscript xmlns="">Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><a xmlns="" href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a><br xmlns=""/><div xmlns="" id="clustrmaps-widget"/><script xmlns="" type="text/javascript">var _clustrmaps = {'url' : 'http://netkiller.github.io', 'user' : 1107643, 'server' : '2', 'id' : 'clustrmaps-widget', 'version' : 1, 'date' : '2013-08-14', 'lang' : 'en', 'corners' : 'square' };(function (){ var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = 'http://www2.clustrmaps.com/counter/map.js'; var x = document.getElementsByTagName('script')[0]; x.parentNode.insertBefore(s, x);})();</script><noscript xmlns=""><a href="http://www2.clustrmaps.com/user/87410e6bb"><img src="http://www2.clustrmaps.com/stats/maps-no_clusters/netkiller.github.io-thumb.jpg" alt="Locations of visitors to this page"/></a></noscript><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
 
-  var _gaq = _gaq || [];
-  _gaq.push(['_setAccount', 'UA-11694057-1']);
-  _gaq.push(['_setDomainName', 'netkiller.github.io']);
-  _gaq.push(['_setAllowLinker', true]);
-  _gaq.push(['_trackPageview']);
-
-  (function() {
-    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-  })();
+  ga('create', 'UA-11694057-1', 'netkiller.github.io');
+  ga('send', 'pageview');
 
 </script><script xmlns="" type="text/javascript">
 var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
