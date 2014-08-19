@@ -6,7 +6,7 @@
         <a xmlns="" href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
         <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
         <a xmlns="" href="http://rline.blog.51cto.com/">51CTO 博客</a> |
-        <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a><section xml:lang="zh-cn" class="article" id="idp57106368"><div class="titlepage"><div><div><h2 class="title">数据库记录安全解决方案</h2></div><div><h3 class="subtitle"><em>http://netkiller.github.io/journal/mysql.security.html</em></h3></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(netkiller)</span>, <span class="lineage">陈景峰(BG7NYT)</span></h3><div class="affiliation"><div class="address"><p><br/>
+        <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a><section xml:lang="zh-cn" class="article" id="idp55447472"><div class="titlepage"><div><div><h2 class="title">数据库记录安全解决方案</h2></div><div><h3 class="subtitle"><em>http://netkiller.github.io/journal/mysql.security.html</em></h3></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(netkiller)</span>, <span class="lineage">陈景峰(BG7NYT)</span></h3><div class="affiliation"><div class="address"><p><br/>
 				<span class="country">中国</span><span class="state">广东省</span><span class="city">深圳市</span><span class="street">龙华新区民治街道溪山美地</span><br/>
 				<span class="postcode">518131</span><br/>
 				<span class="phone">+86 13113668890</span><br/>
@@ -86,7 +86,7 @@
 			<a class="ulink" href="../radio/index.html" target="_top">Netkiller Amateur Radio 手札</a>
 		</td><td>
 			<a class="ulink" href="../devops/index.html" target="_top">Netkiller DevOps 手札</a>
-		</td></tr></table></div></div></div><hr/></div><div class="toc"><div class="toc-title">目录</div><ul class="toc"><li><span class="section"><a href="#what">1. 什么是防删除，防撰改</a></span></li><li><span class="section"><a href="#why">2. 为什么要做防删除，防撰改限制</a></span></li><li><span class="section"><a href="#when">3. 何时做防删除，防撰改限制</a></span></li><li><span class="section"><a href="#where">4. 在哪里做防删除，防撰改限制</a></span></li><li><span class="section"><a href="#who">5. 谁去做防删除，防撰改限制</a></span></li><li><span class="section"><a href="#how">6. 怎么做防删除，防撰改限制</a></span><ul><li><span class="section"><a href="#idp57201872">6.1. 限制删除</a></span></li><li><span class="section"><a href="#idp57204320">6.2. 限制修改</a></span></li><li><span class="section"><a href="#idp57207040">6.3. 版本控制</a></span></li></ul></li></ul></div>
+		</td></tr></table></div></div></div><hr/></div><div class="toc"><div class="toc-title">目录</div><ul class="toc"><li><span class="section"><a href="#what">1. 什么是防删除，防撰改</a></span></li><li><span class="section"><a href="#why">2. 为什么要做防删除，防撰改限制</a></span></li><li><span class="section"><a href="#when">3. 何时做防删除，防撰改限制</a></span></li><li><span class="section"><a href="#where">4. 在哪里做防删除，防撰改限制</a></span></li><li><span class="section"><a href="#who">5. 谁去做防删除，防撰改限制</a></span></li><li><span class="section"><a href="#how">6. 怎么做防删除，防撰改限制</a></span><ul><li><span class="section"><a href="#idp55524240">6.1. 限制删除</a></span></li><li><span class="section"><a href="#idp55526240">6.2. 限制修改</a></span></li><li><span class="section"><a href="#idp55530400">6.3. 版本控制</a></span></li></ul></li></ul></div>
 	
 	<section class="section" id="what"><div class="titlepage"><div><div><h2 class="title" style="clear: both">1. 什么是防删除，防撰改</h2></div></div></div>
 		
@@ -114,7 +114,7 @@
 	</section>
 	<section class="section" id="how"><div class="titlepage"><div><div><h2 class="title" style="clear: both">6. 怎么做防删除，防撰改限制</h2></div></div></div>
 		
-		<section class="section" id="idp57201872"><div class="titlepage"><div><div><h3 class="title">6.1. 限制删除</h3></div></div></div>
+		<section class="section" id="idp55524240"><div class="titlepage"><div><div><h3 class="title">6.1. 限制删除</h3></div></div></div>
 			
 			<pre class="screen">
 CREATE DEFINER=`dba`@`192.168.%` TRIGGER `account_before_delete` BEFORE DELETE ON `account` FOR EACH ROW BEGIN
@@ -123,8 +123,16 @@ END
 			</pre>
 			<p>对account表中的记录做删除操作，数据库抛出异常 Permission denied</p>
 		</section>
-		<section class="section" id="idp57204320"><div class="titlepage"><div><div><h3 class="title">6.2. 限制修改</h3></div></div></div>
+		<section class="section" id="idp55526240"><div class="titlepage"><div><div><h3 class="title">6.2. 限制修改</h3></div></div></div>
 			
+			<p>禁止所有修改操作</p>
+			<pre class="screen">
+DELIMITER $$
+CREATE DEFINER=`dba`@`192.168.%` TRIGGER `logging_before_update` BEFORE UPDATE ON `logging` FOR EACH ROW BEGIN
+	SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Permission denied', MYSQL_ERRNO = 1001;
+END			
+			</pre>
+			<p>限制部分子段修改，其他子段扔允许修改</p>
 			<pre class="screen">
 CREATE DEFINER=`dba`@`192.168.%` TRIGGER `members_before_update` BEFORE UPDATE ON `members` FOR EACH ROW BEGIN
 	SET NEW.`id` = OLD.id;
@@ -145,7 +153,7 @@ END
 			</pre>
 			<p>在数据库修改前我们覆盖掉修改的数据，使之更新后数据保持不变。</p>
 		</section>
-		<section class="section" id="idp57207040"><div class="titlepage"><div><div><h3 class="title">6.3. 版本控制</h3></div></div></div>
+		<section class="section" id="idp55530400"><div class="titlepage"><div><div><h3 class="title">6.3. 版本控制</h3></div></div></div>
 			
 			<p>主表</p>
 			<pre class="screen">
