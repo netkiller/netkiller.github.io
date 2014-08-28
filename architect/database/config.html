@@ -59,6 +59,44 @@ payment.status.yeepay
 select `key`,`value` from config where `key` like 'payment.status.%';
 select `key`,`value` from config where `key` like 'database.?.status';
 		</pre>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp62389104"></a>4.14.1. 配置表历史记录</h3></div></div></div>
+			
+			<pre class="programlisting">
+CREATE TABLE `config_fee` (
+	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+	`level` INT(11) NULL DEFAULT NULL COMMENT '层级',
+	`type` ENUM('Deposit','Withdrawing') NOT NULL DEFAULT 'Withdrawing' COMMENT '类型，存款，取款',
+	`min_fee` FLOAT(10,2) NOT NULL COMMENT '最低手续费',
+	`max_fee` FLOAT(10,2) NOT NULL COMMENT '最高手续费',
+	`ratio` FLOAT(10,2) NOT NULL COMMENT '手续费比例',
+	`operator` VARCHAR(10) NOT NULL COMMENT '操作者',
+	`status` ENUM('Current','Trash') NOT NULL DEFAULT 'Current',
+	`ctime` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	`mtime` TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+	PRIMARY KEY (`id`)
+)
+COMMENT='手续费管理'
+COLLATE='utf8_general_ci'
+ENGINE=InnoDB;
+			</pre>
+			<pre class="screen">
+			
+mysql&gt; select type,operator,status,ctime,mtime from config_mtf_fee;
++---------+----------+---------+---------------------+---------------------+
+| type    | operator | status  | ctime               | mtime               |
++---------+----------+---------+---------------------+---------------------+
+| Deposit | 141      | Trash   | 2014-08-28 11:10:17 | 2014-08-28 11:10:57 |
+| Deposit | 141      | Trash   | 2014-08-28 11:10:17 | 2014-08-28 11:10:57 |
+| Deposit | 141      | Trash   | 2014-08-28 11:10:17 | 2014-08-28 11:10:57 |
+| Deposit | 141      | Trash   | 2014-08-28 11:10:17 | 2014-08-28 11:10:57 |
+| Deposit | 324      | Current | 2014-08-28 11:10:54 | 2014-08-28 11:10:59 |
++---------+----------+---------+---------------------+---------------------+
+2 rows in set (0.00 sec)
+						
+			</pre>
+			<p>如上图所示，状态 Current 是当前记录，而Trash是废弃的历史记录。</p>
+			<p>每次修改数据，首先将Current改为Trash，然后插入一条新数据状态为Current，我们只会使用最后一条状态为current的数据。</p>
+		</div>
 	</div><div xmlns="" id="bdshare" class="bdshare_t bds_tools_32 get-codes-bdshare"><a class="bds_fbook"></a><a class="bds_twi"></a><a class="bds_ms"></a><a class="bds_msn"></a><a class="bds_buzz"></a><a class="bds_linkedin"></a><a class="bds_deli"></a><a class="bds_qzone"></a><a class="bds_qq"></a><a class="bds_tqq"></a><a class="bds_tqf"></a><a class="bds_tsina"></a><a class="bds_baidu"></a><a class="bds_renren"></a><a class="bds_t163"></a><a class="bds_tfh"></a><a class="bds_douban"></a><a class="bds_hi"></a><a class="bds_tieba"></a><a class="bds_tsohu"></a><span class="bds_more"></span><a class="shareCount"></a></div><script xmlns="" type="text/javascript" id="bdshare_js" data="type=tools"></script><script xmlns="" type="text/javascript" id="bdshell_js"></script><script xmlns="" type="text/javascript">
 	document.getElementById("bdshell_js").src = "http://bdimg.share.baidu.com/static/js/shell_v2.js?cdnversion=" + new Date().getHours();
 </script><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
