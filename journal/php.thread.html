@@ -1,0 +1,1229 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>PHP 高级编程之多线程</title><link rel="stylesheet" type="text/css" href="docbook.css"/><link rel="stylesheet" type="text/css" href="/journal/journal.css"/><meta name="generator" content="DocBook XSL Stylesheets V1.78.1"/><meta name="description" content="2014-03-12 第一版 2014-05-15 第二版 2014-06-13 第三版 2014-07-24 第四版"/><meta name="keywords" content="PHP线程池, PHP多线程, PHP多进程, php pathreads, zeromq, "/></head><body><a xmlns="" href="http://netkiller.github.io/">Home</a> |
+        <a xmlns="" href="http://netkiller.sourceforge.net/">Mirror</a> |
+        <a xmlns="" href="/search.html">Search</a> | 
+		<a xmlns="" href="/journal/index.html">杂文</a> |
+        <a xmlns="" href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
+        <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+        <a xmlns="" href="http://rline.blog.51cto.com/">51CTO 博客</a> |
+        <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a><section xml:lang="zh-cn" class="article" id="idp56066592"><div class="titlepage"><div><div><h2 class="title">PHP 高级编程之多线程</h2></div><div><h3 class="subtitle"><em>http://netkiller.github.io/journal/php.thread.html</em></h3></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(netkiller)</span>, <span class="lineage">陈景峰(BG7NYT)</span></h3><div class="affiliation"><div class="address"><p><br/>
+				<span class="country">中国</span><span class="state">广东省</span><span class="city">深圳市</span><span class="street">龙华新区民治街道溪山美地</span><br/>
+				<span class="postcode">518131</span><br/>
+				<span class="phone">+86 13113668890</span><br/>
+				<span class="fax">+86 755 29812080</span><br/>
+				<code class="email">&lt;<a class="email" href="mailto:netkiller@msn.com">netkiller@msn.com</a>&gt;</code><br/>
+			</p></div></div></div></div><div><div class="legalnotice" id="legalnotice"><p class="legalnotice-title"><strong>版权声明</strong></p><p>转载请与作者联系，转载时请务必标明文章原始出处和作者信息及本声明。</p><table style="border: 0; " class="simplelist"><tr><td>
+		<a class="ulink" href="http://creativecommons.org/licenses/by/3.0/" target="_top">
+			<div><table style="border: 0; width: 180; cellpadding: 0; cellspacing: 0;"><tr><td><img src="/images/by-nc-sa.png" width="180"/></td></tr></table></div>
+		</a>
+		</td><td>
+			<table style="border: 0; " class="simplelist"><tr><td>
+					文档出处:
+				</td></tr><tr><td>
+					<a class="ulink" href="http://netkiller.github.io/" target="_top">http://netkiller.github.io</a>
+				</td></tr><tr><td>
+					<a class="ulink" href="http://netkiller.sourceforge.net/" target="_top">http://netkiller.sourceforge.net</a>
+				</td></tr></table>
+		</td></tr></table><p/></div></div><div><p class="pubdate">$Date$</p></div><div><div class="abstract"><div class="abstract-title">摘要</div>
+			<p>2014-03-12 第一版</p>
+			<p>2014-05-15 第二版</p>
+			<p>2014-06-13 第三版</p>
+			<p>2014-07-24 第四版</p>
+		</div></div><div><div class="abstract" id="abstract"><div class="abstract-title">我的系列文档</div><table style="border: 0; " class="simplelist"><tr><td>
+			<a class="ulink" href="../architect/index.html" target="_top">Netkiller Architect 手札</a>
+		</td><td>
+			<a class="ulink" href="../developer/index.html" target="_top">Netkiller Developer 手札</a>
+		</td><td>
+			<a class="ulink" href="../php/index.html" target="_top">Netkiller PHP 手札</a>
+		</td><td>
+			<a class="ulink" href="../python/index.html" target="_top">Netkiller Python 手札</a>
+		</td><td>
+			<a class="ulink" href="../testing/index.html" target="_top">Netkiller Testing 手札</a>
+		</td><td>
+			<a class="ulink" href="../cryptography/index.html" target="_top">Netkiller Cryptography 手札</a>
+		</td></tr><tr><td>
+			<a class="ulink" href="../linux/index.html" target="_top">Netkiller Linux 手札</a>
+		</td><td>
+			<a class="ulink" href="../debian/index.html" target="_top">Netkiller Debian 手札</a>
+		</td><td>
+			<a class="ulink" href="../centos/index.html" target="_top">Netkiller CentOS 手札</a>
+		</td><td>
+			<a class="ulink" href="../freebsd/index.html" target="_top">Netkiller FreeBSD 手札</a>
+		</td><td>
+			<a class="ulink" href="../shell/index.html" target="_top">Netkiller Shell 手札</a>
+		</td><td>
+			<a class="ulink" href="../security/index.html" target="_top">Netkiller Security 手札</a>
+		</td></tr><tr><td>
+			<a class="ulink" href="../www/index.html" target="_top">Netkiller Web 手札</a>
+		</td><td>
+			<a class="ulink" href="../monitoring/index.html" target="_top">Netkiller Monitoring 手札</a>
+		</td><td>
+			<a class="ulink" href="../storage/index.html" target="_top">Netkiller Storage 手札</a>
+		</td><td>
+			<a class="ulink" href="../mail/index.html" target="_top">Netkiller Mail 手札</a>
+		</td><td>
+			<a class="ulink" href="../docbook/index.html" target="_top">Netkiller Docbook 手札</a>
+		</td><td>
+			<a class="ulink" href="../version/index.html" target="_top">Netkiller Version 手札</a>
+		</td></tr><tr><td>
+			<a class="ulink" href="../database/index.html" target="_top">Netkiller Database 手札</a>
+		</td><td>
+			<a class="ulink" href="../postgresql/index.html" target="_top">Netkiller PostgreSQL 手札</a>
+		</td><td>
+			<a class="ulink" href="../mysql/index.html" target="_top">Netkiller MySQL 手札</a>
+		</td><td>
+			<a class="ulink" href="../nosql/index.html" target="_top">Netkiller NoSQL 手札</a>
+		</td><td>
+			<a class="ulink" href="../ldap/index.html" target="_top">Netkiller LDAP 手札</a>
+		</td><td>
+			<a class="ulink" href="../network/index.html" target="_top">Netkiller Network 手札</a>
+		</td></tr><tr><td>
+			<a class="ulink" href="../cisco/index.html" target="_top">Netkiller Cisco IOS 手札</a>
+		</td><td>
+			<a class="ulink" href="../h3c/index.html" target="_top">Netkiller H3C 手札</a>
+		</td><td>
+			<a class="ulink" href="../multimedia/index.html" target="_top">Netkiller Multimedia 手札</a>
+		</td><td>
+			<a class="ulink" href="../perl/index.html" target="_top">Netkiller Perl 手札</a>
+		</td><td>
+			<a class="ulink" href="../radio/index.html" target="_top">Netkiller Amateur Radio 手札</a>
+		</td><td>
+			<a class="ulink" href="../devops/index.html" target="_top">Netkiller DevOps 手札</a>
+		</td></tr></table></div></div></div><hr/></div><div class="toc"><div class="toc-title">目录</div><ul class="toc"><li><span class="section"><a href="#idp56020560">1. 多线程环境安装</a></span><ul><li><span class="section"><a href="#idp56125760">1.1. PHP 5.5.9</a></span></li><li><span class="section"><a href="#idp56129168">1.2. 安装 pthreads 扩展</a></span></li></ul></li><li><span class="section"><a href="#idp56132128">2. Thread</a></span></li><li><span class="section"><a href="#idp56134384">3. Worker 与 Stackable</a></span></li><li><span class="section"><a href="#idp56137424">4. 互斥锁</a></span><ul><li><span class="section"><a href="#idp56143152">4.1. 多线程与共享内存</a></span></li></ul></li><li><span class="section"><a href="#idp56145776">5. 线程同步</a></span></li><li><span class="section"><a href="#idp56149136">6. 线程池</a></span><ul><li><span class="section"><a href="#idp56149776">6.1. 线程池</a></span></li><li><span class="section"><a href="#idp56153616">6.2. 动态队列线程池</a></span></li><li><span class="section"><a href="#idp56157040">6.3. pthreads Pool类</a></span></li></ul></li><li><span class="section"><a href="#idp56160208">7. 多线程文件安全读写（文件锁）</a></span></li><li><span class="section"><a href="#idp56164896">8. 多线程与数据连接</a></span><ul><li><span class="section"><a href="#idp56166256">8.1. Worker 与 PDO</a></span></li><li><span class="section"><a href="#idp56168704">8.2. Pool 与 PDO</a></span></li><li><span class="section"><a href="#idp56178512">8.3. 多线程中操作数据库总结</a></span></li></ul></li><li><span class="section"><a href="#idp56181120">9. Thread And ZeroMQ</a></span><ul><li><span class="section"><a href="#idp56182272">9.1. 数据库端</a></span></li><li><span class="section"><a href="#idp56184960">9.2. 数据处理端</a></span></li></ul></li></ul></div>
+	
+
+	<section class="section" id="idp56020560"><div class="titlepage"><div><div><h2 class="title" style="clear: both">1. 多线程环境安装</h2></div></div></div>
+		
+		<section class="section" id="idp56125760"><div class="titlepage"><div><div><h3 class="title">1.1. PHP 5.5.9</h3></div></div></div>
+			
+			<p>安装PHP 5.5.9</p>
+			<p>https://github.com/oscm/shell/blob/master/php/5.5.9.sh</p>
+			<pre class="screen">
+./configure --prefix=/srv/php-5.5.9 \
+--with-config-file-path=/srv/php-5.5.9/etc \
+--with-config-file-scan-dir=/srv/php-5.5.9/etc/conf.d \
+--enable-fpm \
+--with-fpm-user=www \
+--with-fpm-group=www \
+--with-pear \
+--with-curl \
+--with-gd \
+--with-jpeg-dir \
+--with-png-dir \
+--with-freetype-dir \
+--with-zlib-dir \
+--with-iconv \
+--with-mcrypt \
+--with-mhash \
+--with-pdo-mysql \
+--with-mysql-sock=/var/lib/mysql/mysql.sock \
+--with-openssl \
+--with-xsl \
+--with-recode \
+--enable-sockets \
+--enable-soap \
+--enable-mbstring \
+--enable-gd-native-ttf \
+--enable-zip \
+--enable-xml \
+--enable-bcmath \
+--enable-calendar \
+--enable-shmop \
+--enable-dba \
+--enable-wddx \
+--enable-sysvsem \
+--enable-sysvshm \
+--enable-sysvmsg \
+--enable-opcache \
+--enable-pcntl \
+--enable-maintainer-zts \
+--disable-debug
+			</pre>
+			<p>编译必须启用zts支持否则无法安装 pthreads(--enable-maintainer-zts)</p>
+		</section>
+		<section class="section" id="idp56129168"><div class="titlepage"><div><div><h3 class="title">1.2. 安装 pthreads 扩展</h3></div></div></div>
+			
+			<p>安装https://github.com/oscm/shell/blob/master/php/pecl/pthreads.sh</p>
+			<pre class="screen">
+# curl -s https://raw.github.com/oscm/shell/master/php/pecl/pthreads.sh | bash
+			</pre>
+			<p>查看pthreads是否已经安装</p>
+			<pre class="screen">
+# php -m | grep pthreads
+			</pre>
+		</section>
+	</section>
+	<section class="section" id="idp56132128"><div class="titlepage"><div><div><h2 class="title" style="clear: both">2. Thread</h2></div></div></div>
+		
+		<pre class="programlisting">
+		
+&lt;?php
+class HelloWorld extends Thread {
+    public function __construct($world) {
+       $this-&gt;world = $world;
+    }
+
+    public function run() {
+        print_r(sprintf("Hello %s\n", $this-&gt;world));
+    }
+}
+
+$thread = new HelloWorld("World");
+
+if ($thread-&gt;start()) {
+    printf("Thread #%lu says: %s\n", $thread-&gt;getThreadId(), $thread-&gt;join());
+}
+?&gt;
+		
+		</pre>
+	</section>
+	<section class="section" id="idp56134384"><div class="titlepage"><div><div><h2 class="title" style="clear: both">3. Worker 与 Stackable</h2></div></div></div>
+		
+		<pre class="programlisting">
+		
+&lt;?php
+class SQLQuery extends Stackable {
+
+        public function __construct($sql) {
+                $this-&gt;sql = $sql;
+        }
+
+        public function run() {
+                $dbh  = $this-&gt;worker-&gt;getConnection();
+                $row = $dbh-&gt;query($this-&gt;sql);
+                while($member = $row-&gt;fetch(PDO::FETCH_ASSOC)){
+                        print_r($member);
+                }
+        }
+
+}
+
+class ExampleWorker extends Worker {
+        public static $dbh;
+        public function __construct($name) {
+        }
+
+        /*
+        * The run method should just prepare the environment for the work that is coming ...
+        */
+        public function run(){
+                self::$dbh = new PDO('mysql:host=192.168.2.1;dbname=example','www','123456');
+        }
+        public function getConnection(){
+                return self::$dbh;
+        }
+}
+
+$worker = new ExampleWorker("My Worker Thread");
+
+$work=new SQLQuery('select * from members order by id desc limit 5');
+$worker-&gt;stack($work);
+
+$table1 = new SQLQuery('select * from demousers limit 2');
+$worker-&gt;stack($table1);
+
+$worker-&gt;start();
+$worker-&gt;shutdown();
+?&gt;
+		
+		</pre>
+	</section>
+	<section class="section" id="idp56137424"><div class="titlepage"><div><div><h2 class="title" style="clear: both">4. 互斥锁</h2></div></div></div>
+		
+		<p>什么情况下会用到互斥锁？在你需要控制多个线程同一时刻只能有一个线程工作的情况下可以使用。</p>
+		<p>下面我们举一个例子，一个简单的计数器程序，说明有无互斥锁情况下的不同。</p>
+		<pre class="programlisting">
+		
+&lt;?php
+$counter = 0;
+//$handle=fopen("php://memory", "rw");
+//$handle=fopen("php://temp", "rw");
+$handle=fopen("/tmp/counter.txt", "w");
+fwrite($handle, $counter );
+fclose($handle);
+
+class CounterThread extends Thread {
+	public function __construct($mutex = null){
+		$this-&gt;mutex = $mutex;
+        $this-&gt;handle = fopen("/tmp/counter.txt", "w+");
+    }
+	public function __destruct(){
+		fclose($this-&gt;handle);
+	}
+    public function run() {
+		if($this-&gt;mutex)
+			$locked=Mutex::lock($this-&gt;mutex);
+
+		$counter = intval(fgets($this-&gt;handle));
+		$counter++;
+		rewind($this-&gt;handle);
+		fputs($this-&gt;handle, $counter );
+		printf("Thread #%lu says: %s\n", $this-&gt;getThreadId(),$counter);
+
+		if($this-&gt;mutex)
+			Mutex::unlock($this-&gt;mutex);
+    }
+}
+
+//没有互斥锁
+for ($i=0;$i&lt;50;$i++){
+	$threads[$i] = new CounterThread();
+	$threads[$i]-&gt;start();
+
+}
+
+//加入互斥锁
+$mutex = Mutex::create(true);
+for ($i=0;$i&lt;50;$i++){
+	$threads[$i] = new CounterThread($mutex);
+	$threads[$i]-&gt;start();
+
+}
+
+Mutex::unlock($mutex);
+for ($i=0;$i&lt;50;$i++){
+	$threads[$i]-&gt;join();
+}
+Mutex::destroy($mutex);
+
+?&gt;
+		
+		</pre>
+		<p>我们使用文件/tmp/counter.txt保存计数器值，每次打开该文件将数值加一，然后写回文件。当多个线程同时操作一个文件的时候，就会线程运行先后取到的数值不同，写回的数值也不同，最终计数器的数值会混乱。</p>
+		<p>没有加入锁的结果是计数始终被覆盖，最终结果是2</p>
+		<p>而加入互斥锁后，只有其中的一个进程完成加一工作并释放锁，其他线程才能得到解锁信号，最终顺利完成计数器累加操作</p>
+		<p>上面例子也可以通过对文件加锁实现，这里主要讲的是多线程锁，后面会涉及文件锁。</p>
+		<section class="section" id="idp56143152"><div class="titlepage"><div><div><h3 class="title">4.1. 多线程与共享内存</h3></div></div></div>
+			
+			<p>在共享内存的例子中，没有使用任何锁，仍然可能正常工作，可能工作内存操作本身具备锁的功能。</p>
+			<pre class="programlisting">
+			
+&lt;?php
+$tmp = tempnam(__FILE__, 'PHP');
+$key = ftok($tmp, 'a');
+
+$shmid = shm_attach($key);
+$counter = 0;
+shm_put_var( $shmid, 1, $counter );
+
+class CounterThread extends Thread {
+	public function __construct($shmid){
+        $this-&gt;shmid = $shmid;
+    }
+    public function run() {
+
+		$counter = shm_get_var( $this-&gt;shmid, 1 );
+		$counter++;
+		shm_put_var( $this-&gt;shmid, 1, $counter );
+
+		printf("Thread #%lu says: %s\n", $this-&gt;getThreadId(),$counter);
+    }
+}
+
+for ($i=0;$i&lt;100;$i++){
+	$threads[] = new CounterThread($shmid);
+}
+for ($i=0;$i&lt;100;$i++){
+	$threads[$i]-&gt;start();
+
+}
+
+for ($i=0;$i&lt;100;$i++){
+	$threads[$i]-&gt;join();
+}
+shm_remove( $shmid );
+shm_detach( $shmid );
+?&gt;
+			
+			</pre>
+		</section>
+	</section>
+	<section class="section" id="idp56145776"><div class="titlepage"><div><div><h2 class="title" style="clear: both">5. 线程同步</h2></div></div></div>
+		
+		<p>有些场景我们不希望  thread-&gt;start() 就开始运行程序，而是希望线程等待我们的命令。</p>
+		<p>$thread-&gt;wait();测作用是 thread-&gt;start()后线程并不会立即运行，只有收到 $thread-&gt;notify(); 发出的信号后才运行 </p>
+
+		<pre class="programlisting">
+		
+&lt;?php
+$tmp = tempnam(__FILE__, 'PHP');
+$key = ftok($tmp, 'a');
+
+$shmid = shm_attach($key);
+$counter = 0;
+shm_put_var( $shmid, 1, $counter );
+
+class CounterThread extends Thread {
+	public function __construct($shmid){
+        $this-&gt;shmid = $shmid;
+    }
+    public function run() {
+
+        $this-&gt;synchronized(function($thread){
+            $thread-&gt;wait();
+        }, $this);
+
+		$counter = shm_get_var( $this-&gt;shmid, 1 );
+		$counter++;
+		shm_put_var( $this-&gt;shmid, 1, $counter );
+
+		printf("Thread #%lu says: %s\n", $this-&gt;getThreadId(),$counter);
+    }
+}
+
+for ($i=0;$i&lt;100;$i++){
+	$threads[] = new CounterThread($shmid);
+}
+for ($i=0;$i&lt;100;$i++){
+	$threads[$i]-&gt;start();
+
+}
+
+for ($i=0;$i&lt;100;$i++){
+	$threads[$i]-&gt;synchronized(function($thread){
+		$thread-&gt;notify();
+	}, $threads[$i]);
+}
+
+for ($i=0;$i&lt;100;$i++){
+	$threads[$i]-&gt;join();
+}
+shm_remove( $shmid );
+shm_detach( $shmid );
+?&gt;
+		
+		</pre>
+	</section>
+	<section class="section" id="idp56149136"><div class="titlepage"><div><div><h2 class="title" style="clear: both">6. 线程池</h2></div></div></div>
+		
+		<section class="section" id="idp56149776"><div class="titlepage"><div><div><h3 class="title">6.1. 线程池</h3></div></div></div>
+			
+			<p>自行实现一个Pool类</p>
+			<pre class="programlisting">
+			
+&lt;?php
+class Update extends Thread {
+
+    public $running = false;
+    public $row = array();
+    public function __construct($row) {
+
+	$this-&gt;row = $row;
+        $this-&gt;sql = null;
+    }
+
+    public function run() {
+
+	if(strlen($this-&gt;row['bankno']) &gt; 100 ){
+		$bankno = safenet_decrypt($this-&gt;row['bankno']);
+	}else{
+		$error = sprintf("%s, %s\r\n",$this-&gt;row['id'], $this-&gt;row['bankno']);
+		file_put_contents("bankno_error.log", $error, FILE_APPEND);
+	}
+
+	if( strlen($bankno) &gt; 7 ){
+		$sql = sprintf("update members set bankno = '%s' where id = '%s';", $bankno, $this-&gt;row['id']);
+
+		$this-&gt;sql = $sql;
+	}
+
+	printf("%s\n",$this-&gt;sql);
+    }
+
+}
+
+class Pool {
+	public $pool = array();
+	public function __construct($count) {
+		$this-&gt;count = $count;
+	}
+	public function push($row){
+		if(count($this-&gt;pool) &lt; $this-&gt;count){
+			$this-&gt;pool[] = new Update($row);
+			return true;
+		}else{
+			return false;
+		}
+	}
+	public function start(){
+		foreach ( $this-&gt;pool as $id =&gt; $worker){
+			$this-&gt;pool[$id]-&gt;start();
+		}
+	}
+	public function join(){
+		foreach ( $this-&gt;pool as $id =&gt; $worker){
+               $this-&gt;pool[$id]-&gt;join();
+		}
+	}
+	public function clean(){
+		foreach ( $this-&gt;pool as $id =&gt; $worker){
+			if(! $worker-&gt;isRunning()){
+            	unset($this-&gt;pool[$id]);
+            }
+		}
+	}
+}
+
+try {
+	$dbh    = new PDO("mysql:host=" . str_replace(':', ';port=', $dbhost) . ";dbname=$dbname", $dbuser, $dbpw, array(
+		PDO::MYSQL_ATTR_INIT_COMMAND =&gt; 'SET NAMES \'UTF8\'',
+		PDO::MYSQL_ATTR_COMPRESS =&gt; true
+		)
+	);
+
+	$sql  = "select id,bankno from members order by id desc";
+	$row = $dbh-&gt;query($sql);
+	$pool = new Pool(5);
+	while($member = $row-&gt;fetch(PDO::FETCH_ASSOC))
+	{
+
+		while(true){
+			if($pool-&gt;push($member)){ //压入任务到池中
+				break;
+			}else{ //如果池已经满，就开始启动线程
+				$pool-&gt;start();
+				$pool-&gt;join();
+				$pool-&gt;clean();
+			}
+		}
+	}
+	$pool-&gt;start();
+    $pool-&gt;join();
+
+	$dbh = null;
+
+} catch (Exception $e) {
+    echo '[' , date('H:i:s') , ']', '系统错误', $e-&gt;getMessage(), "\n";
+}
+?&gt;
+			
+			</pre>
+		</section>
+		<section class="section" id="idp56153616"><div class="titlepage"><div><div><h3 class="title">6.2. 动态队列线程池</h3></div></div></div>
+			
+			<p>上面的例子是当线程池满后执行start统一启动，下面的例子是只要线程池中有空闲便立即创建新线程。</p>
+			<pre class="programlisting">
+			
+&lt;?php
+class Update extends Thread {
+
+    public $running = false;
+    public $row = array();
+    public function __construct($row) {
+
+	$this-&gt;row = $row;
+        $this-&gt;sql = null;
+	//print_r($this-&gt;row);
+    }
+
+    public function run() {
+
+	if(strlen($this-&gt;row['bankno']) &gt; 100 ){
+		$bankno = safenet_decrypt($this-&gt;row['bankno']);
+	}else{
+		$error = sprintf("%s, %s\r\n",$this-&gt;row['id'], $this-&gt;row['bankno']);
+		file_put_contents("bankno_error.log", $error, FILE_APPEND);
+	}
+
+	if( strlen($bankno) &gt; 7 ){
+		$sql = sprintf("update members set bankno = '%s' where id = '%s';", $bankno, $this-&gt;row['id']);
+
+		$this-&gt;sql = $sql;
+	}
+
+	printf("%s\n",$this-&gt;sql);
+    }
+
+}
+
+
+
+try {
+	$dbh    = new PDO("mysql:host=" . str_replace(':', ';port=', $dbhost) . ";dbname=$dbname", $dbuser, $dbpw, array(
+		PDO::MYSQL_ATTR_INIT_COMMAND =&gt; 'SET NAMES \'UTF8\'',
+		PDO::MYSQL_ATTR_COMPRESS =&gt; true
+		)
+	);
+
+	$sql     = "select id,bankno from members order by id desc limit 50";
+
+	$row = $dbh-&gt;query($sql);
+	$pool = array();
+	while($member = $row-&gt;fetch(PDO::FETCH_ASSOC))
+	{
+		$id 	= $member['id'];
+		while (true){
+			if(count($pool) &lt; 5){
+				$pool[$id] = new Update($member);
+				$pool[$id]-&gt;start();
+				break;
+			}else{
+				foreach ( $pool as $name =&gt; $worker){
+					if(! $worker-&gt;isRunning()){
+						unset($pool[$name]);
+					}
+				}
+			}
+		}
+
+	}
+
+	$dbh = null;
+
+} catch (Exception $e) {
+    echo '【' , date('H:i:s') , '】', '【系统错误】', $e-&gt;getMessage(), "\n";
+}
+?&gt;
+			
+			</pre>
+		</section>
+		<section class="section" id="idp56157040"><div class="titlepage"><div><div><h3 class="title">6.3. pthreads Pool类</h3></div></div></div>
+			
+<p>pthreads 提供的 Pool class 例子</p>
+			<pre class="programlisting">
+			
+&lt;?php
+
+class WebWorker extends Worker {
+
+	public function __construct(SafeLog $logger) {
+		$this-&gt;logger = $logger;
+	}
+
+	protected $loger;
+}
+
+class WebWork extends Stackable {
+
+	public function isComplete() {
+		return $this-&gt;complete;
+	}
+
+	public function run() {
+		$this-&gt;worker
+			-&gt;logger
+			-&gt;log("%s executing in Thread #%lu",
+				  __CLASS__, $this-&gt;worker-&gt;getThreadId());
+		$this-&gt;complete = true;
+	}
+
+	protected $complete;
+}
+
+class SafeLog extends Stackable {
+
+	protected function log($message, $args = []) {
+		$args = func_get_args();
+
+		if (($message = array_shift($args))) {
+			echo vsprintf(
+				"{$message}\n", $args);
+		}
+	}
+}
+
+
+$pool = new Pool(8, \WebWorker::class, [new SafeLog()]);
+
+$pool-&gt;submit($w=new WebWork());
+$pool-&gt;submit(new WebWork());
+$pool-&gt;submit(new WebWork());
+$pool-&gt;submit(new WebWork());
+$pool-&gt;submit(new WebWork());
+$pool-&gt;submit(new WebWork());
+$pool-&gt;submit(new WebWork());
+$pool-&gt;submit(new WebWork());
+$pool-&gt;submit(new WebWork());
+$pool-&gt;submit(new WebWork());
+$pool-&gt;submit(new WebWork());
+$pool-&gt;submit(new WebWork());
+$pool-&gt;submit(new WebWork());
+$pool-&gt;submit(new WebWork());
+$pool-&gt;shutdown();
+
+$pool-&gt;collect(function($work){
+	return $work-&gt;isComplete();
+});
+
+var_dump($pool);
+			
+			</pre>
+		</section>
+
+	</section>
+	<section class="section" id="idp56160208"><div class="titlepage"><div><div><h2 class="title" style="clear: both">7. 多线程文件安全读写（文件锁）</h2></div></div></div>
+		
+		<p>文件所种类。</p>
+		<pre class="screen">
+LOCK_SH 取得共享锁定（读取的程序）。
+LOCK_EX 取得独占锁定（写入的程序。
+LOCK_UN 释放锁定（无论共享或独占）。
+LOCK_NB 如果不希望 flock() 在锁定时堵塞
+		</pre>
+		<p>共享锁例子</p>
+		<pre class="programlisting">
+		
+&lt;?php
+
+$fp = fopen("/tmp/lock.txt", "r+");
+
+if (flock($fp, LOCK_EX)) {  // 进行排它型锁定
+    ftruncate($fp, 0);      // truncate file
+    fwrite($fp, "Write something here\n");
+    fflush($fp);            // flush output before releasing the lock
+    flock($fp, LOCK_UN);    // 释放锁定
+} else {
+    echo "Couldn't get the lock!";
+}
+
+fclose($fp);
+
+?&gt;
+		
+		</pre>
+		<p>共享锁例子2</p>
+		<pre class="programlisting">
+		
+&lt;?php
+$fp = fopen('/tmp/lock.txt', 'r+');
+
+/* Activate the LOCK_NB option on an LOCK_EX operation */
+if(!flock($fp, LOCK_EX | LOCK_NB)) {
+    echo 'Unable to obtain lock';
+    exit(-1);
+}
+
+/* ... */
+
+fclose($fp);
+?&gt;
+		
+		</pre>
+
+	</section>
+	<section class="section" id="idp56164896"><div class="titlepage"><div><div><h2 class="title" style="clear: both">8. 多线程与数据连接</h2></div></div></div>
+		
+		<p>pthreads 与 pdo 同时使用是，需要注意一点，需要静态声明public static $dbh;并且通过单例模式访问数据库连接。</p>
+		<section class="section" id="idp56166256"><div class="titlepage"><div><div><h3 class="title">8.1. Worker 与 PDO</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+&lt;?php
+class Work extends Stackable {
+
+        public function __construct() {
+        }
+
+        public function run() {
+                $dbh  = $this-&gt;worker-&gt;getConnection();
+                $sql     = "select id,name from members order by id desc limit 50";
+                $row = $dbh-&gt;query($sql);
+                while($member = $row-&gt;fetch(PDO::FETCH_ASSOC)){
+                        print_r($member);
+                }
+        }
+
+}
+
+class ExampleWorker extends Worker {
+        public static $dbh;
+        public function __construct($name) {
+        }
+
+        /*
+        * The run method should just prepare the environment for the work that is coming ...
+        */
+        public function run(){
+                self::$dbh = new PDO('mysql:host=192.168.2.1;dbname=example','www','123456');
+        }
+        public function getConnection(){
+                return self::$dbh;
+        }
+}
+
+$worker = new ExampleWorker("My Worker Thread");
+
+$work=new Work();
+$worker-&gt;stack($work);
+
+$worker-&gt;start();
+$worker-&gt;shutdown();
+?&gt;
+			
+			</pre>
+		</section>
+		<section class="section" id="idp56168704"><div class="titlepage"><div><div><h3 class="title">8.2. Pool 与 PDO</h3></div></div></div>
+			
+			<p>在线程池中链接数据库</p>
+			<pre class="programlisting">
+			
+# cat pool.php
+&lt;?php
+class ExampleWorker extends Worker {
+
+	public function __construct(Logging $logger) {
+		$this-&gt;logger = $logger;
+	}
+
+	protected $logger;
+}
+
+/* the collectable class implements machinery for Pool::collect */
+class Work extends Stackable {
+	public function __construct($number) {
+		$this-&gt;number = $number;
+	}
+	public function run() {
+                $dbhost = 'db.example.com';               // 数据库服务器
+                $dbuser = 'example.com';                 // 数据库用户名
+                $dbpw = 'password';                               // 数据库密码
+                $dbname = 'example_real';
+		$dbh  = new PDO("mysql:host=$dbhost;port=3306;dbname=$dbname", $dbuser, $dbpw, array(
+                        PDO::MYSQL_ATTR_INIT_COMMAND =&gt; 'SET NAMES \'UTF8\'',
+                        PDO::MYSQL_ATTR_COMPRESS =&gt; true,
+			PDO::ATTR_PERSISTENT =&gt; true
+                        )
+                );
+		$sql = "select OPEN_TIME, `COMMENT` from MT4_TRADES where LOGIN='".$this-&gt;number['name']."' and CMD='6' and `COMMENT` = '".$this-&gt;number['order'].":DEPOSIT'";
+		#echo $sql;
+		$row = $dbh-&gt;query($sql);
+		$mt4_trades  = $row-&gt;fetch(PDO::FETCH_ASSOC);
+		if($mt4_trades){
+
+			$row = null;
+
+			$sql = "UPDATE db_example.accounts SET paystatus='成功', deposit_time='".$mt4_trades['OPEN_TIME']."' where `order` = '".$this-&gt;number['order']."';";
+			$dbh-&gt;query($sql);
+			#printf("%s\n",$sql);
+		}
+		$dbh = null;
+		printf("runtime: %s, %s, %s\n", date('Y-m-d H:i:s'), $this-&gt;worker-&gt;getThreadId() ,$this-&gt;number['order']);
+
+	}
+}
+
+class Logging extends Stackable {
+	protected  static $dbh;
+	public function __construct() {
+		$dbhost = 'db.example.com';			// 数据库服务器
+	        $dbuser = 'example.com';                 // 数据库用户名
+        	$dbpw = 'password';                               // 数据库密码
+		$dbname = 'example_real';			// 数据库名
+
+		self::$dbh  = new PDO("mysql:host=$dbhost;port=3306;dbname=$dbname", $dbuser, $dbpw, array(
+			PDO::MYSQL_ATTR_INIT_COMMAND =&gt; 'SET NAMES \'UTF8\'',
+			PDO::MYSQL_ATTR_COMPRESS =&gt; true
+			)
+		);
+
+	}
+	protected function log($message, $args = []) {
+		$args = func_get_args();
+
+		if (($message = array_shift($args))) {
+			echo vsprintf("{$message}\n", $args);
+		}
+	}
+
+	protected function getConnection(){
+                return self::$dbh;
+        }
+}
+
+$pool = new Pool(200, \ExampleWorker::class, [new Logging()]);
+
+$dbhost = 'db.example.com';                      // 数据库服务器
+$dbuser = 'example.com';                 // 数据库用户名
+$dbpw = 'password';                               // 数据库密码
+$dbname = 'db_example';
+$dbh    = new PDO("mysql:host=$dbhost;port=3306;dbname=$dbname", $dbuser, $dbpw, array(
+                        PDO::MYSQL_ATTR_INIT_COMMAND =&gt; 'SET NAMES \'UTF8\'',
+                        PDO::MYSQL_ATTR_COMPRESS =&gt; true
+                        )
+                );
+$sql = "select `order`,name from accounts where deposit_time is null order by id desc";
+
+$row = $dbh-&gt;query($sql);
+while($account = $row-&gt;fetch(PDO::FETCH_ASSOC))
+{
+        $pool-&gt;submit(new Work($account));
+}
+
+$pool-&gt;shutdown();
+
+?&gt;
+			
+			</pre>
+			<p>进一步改进上面程序，我们使用单例模式 $this-&gt;worker-&gt;getInstance(); 全局仅仅做一次数据库连接，线程使用共享的数据库连接</p>
+			<pre class="programlisting">
+			
+&lt;?php
+class ExampleWorker extends Worker {
+
+	#public function __construct(Logging $logger) {
+	#	$this-&gt;logger = $logger;
+	#}
+
+	#protected $logger;
+	protected  static $dbh;
+	public function __construct() {
+
+	}
+	public function run(){
+		$dbhost = 'db.example.com';			// 数据库服务器
+	    $dbuser = 'example.com';        	// 数据库用户名
+        $dbpw = 'password';             	// 数据库密码
+		$dbname = 'example';				// 数据库名
+
+		self::$dbh  = new PDO("mysql:host=$dbhost;port=3306;dbname=$dbname", $dbuser, $dbpw, array(
+			PDO::MYSQL_ATTR_INIT_COMMAND =&gt; 'SET NAMES \'UTF8\'',
+			PDO::MYSQL_ATTR_COMPRESS =&gt; true,
+			PDO::ATTR_PERSISTENT =&gt; true
+			)
+		);
+
+	}
+	protected function getInstance(){
+        return self::$dbh;
+    }
+
+}
+
+/* the collectable class implements machinery for Pool::collect */
+class Work extends Stackable {
+	public function __construct($data) {
+		$this-&gt;data = $data;
+		#print_r($data);
+	}
+
+	public function run() {
+		#$this-&gt;worker-&gt;logger-&gt;log("%s executing in Thread #%lu", __CLASS__, $this-&gt;worker-&gt;getThreadId() );
+
+		try {
+			$dbh  = $this-&gt;worker-&gt;getInstance();
+			#print_r($dbh);
+               		$id = $this-&gt;data['id'];
+			$mobile = safenet_decrypt($this-&gt;data['mobile']);
+			#printf("%d, %s \n", $id, $mobile);
+			if(strlen($mobile) &gt; 11){
+				$mobile = substr($mobile, -11);
+			}
+			if($mobile == 'null'){
+			#	$sql = "UPDATE members_digest SET mobile = '".$mobile."' where id = '".$id."'";
+			#	printf("%s\n",$sql);
+			#	$dbh-&gt;query($sql);
+				$mobile = '';
+				$sql = "UPDATE members_digest SET mobile = :mobile where id = :id";
+			}else{
+				$sql = "UPDATE members_digest SET mobile = md5(:mobile) where id = :id";
+			}
+			$sth = $dbh-&gt;prepare($sql);
+			$sth-&gt;bindValue(':mobile', $mobile);
+			$sth-&gt;bindValue(':id', $id);
+			$sth-&gt;execute();
+			#echo $sth-&gt;debugDumpParams();
+		}
+		catch(PDOException $e) {
+			$error = sprintf("%s,%s\n", $mobile, $id );
+			file_put_contents("mobile_error.log", $error, FILE_APPEND);
+		}
+
+		#$dbh = null;
+		printf("runtime: %s, %s, %s, %s\n", date('Y-m-d H:i:s'), $this-&gt;worker-&gt;getThreadId() ,$mobile, $id);
+		#printf("runtime: %s, %s\n", date('Y-m-d H:i:s'), $this-&gt;number);
+	}
+}
+
+$pool = new Pool(100, \ExampleWorker::class, []);
+
+#foreach (range(0, 100) as $number) {
+#	$pool-&gt;submit(new Work($number));
+#}
+
+$dbhost = 'db.example.com';                     // 数据库服务器
+$dbuser = 'example.com';                 		// 数据库用户名
+$dbpw = 'password';                             // 数据库密码
+$dbname = 'example';
+$dbh    = new PDO("mysql:host=$dbhost;port=3307;dbname=$dbname", $dbuser, $dbpw, array(
+                        PDO::MYSQL_ATTR_INIT_COMMAND =&gt; 'SET NAMES \'UTF8\'',
+                        PDO::MYSQL_ATTR_COMPRESS =&gt; true
+                        )
+                );
+#print_r($dbh);
+
+#$sql = "select id, mobile from members where id &lt; :id";
+#$sth = $dbh-&gt;prepare($sql);
+#$sth-&gt;bindValue(':id',300);
+#$sth-&gt;execute();
+#$result = $sth-&gt;fetchAll();
+#print_r($result);
+#
+#$sql = "UPDATE members_digest SET mobile = :mobile where id = :id";
+#$sth = $dbh-&gt;prepare($sql);
+#$sth-&gt;bindValue(':mobile', 'aa');
+#$sth-&gt;bindValue(':id','272');
+#echo $sth-&gt;execute();
+#echo $sth-&gt;queryString;
+#echo $sth-&gt;debugDumpParams();
+
+
+$sql = "select id, mobile from members order by id asc"; // limit 1000";
+$row = $dbh-&gt;query($sql);
+while($members = $row-&gt;fetch(PDO::FETCH_ASSOC))
+{
+        #$order =  $account['order'];
+        #printf("%s\n",$order);
+        //print_r($members);
+        $pool-&gt;submit(new Work($members));
+		#unset($account['order']);
+}
+
+$pool-&gt;shutdown();
+
+?&gt;
+
+			
+			</pre>
+		</section>
+		<section class="section" id="idp56178512"><div class="titlepage"><div><div><h3 class="title">8.3. 多线程中操作数据库总结</h3></div></div></div>
+			
+			<p>总的来说 pthreads 仍然处在发展中，仍有一些不足的地方，我们也可以看到pthreads的git在不断改进这个项目</p>
+			<p>数据库持久链接很重要，否则每个线程都会开启一次数据库连接，然后关闭，会导致很多链接超时。</p>
+			<pre class="programlisting">
+			
+&lt;?php
+$dbh = new PDO('mysql:host=localhost;dbname=test', $user, $pass, array(
+    PDO::ATTR_PERSISTENT =&gt; true
+));
+?&gt;
+			
+			</pre>
+		</section>
+	</section>
+	<section class="section" id="idp56181120"><div class="titlepage"><div><div><h2 class="title" style="clear: both">9. Thread And ZeroMQ</h2></div></div></div>
+		
+		<p>应用场景，我使用触发器监控数据库某个表，一旦发现有改变就通知程序处理数据</p>
+		<section class="section" id="idp56182272"><div class="titlepage"><div><div><h3 class="title">9.1. 数据库端</h3></div></div></div>
+			
+			<p>首先安装ZeroMQ 与 MySQL UDF https://github.com/netkiller/mysql-zmq-plugin, 然后创建触发器。</p>
+			<pre class="programlisting">
+			
+CREATE DEFINER=`dba`@`192.168.%` PROCEDURE `Table_Example`(IN `TICKET` INT, IN `LOGIN` INT, IN `CMD` INT, IN `VOLUME` INT)
+	LANGUAGE SQL
+	NOT DETERMINISTIC
+	READS SQL DATA
+	SQL SECURITY DEFINER
+	COMMENT '交易监控'
+BEGIN
+	DECLARE Example CHAR(1) DEFAULT 'N';
+
+	IF CMD IN ('0','1') THEN
+		IF VOLUME &gt;=10 AND VOLUME &lt;=90 THEN
+			select coding into Example from example.members where username = LOGIN and coding = 'Y';
+			IF Example = 'Y' THEN
+				select zmq_client('tcp://192.168.2.15:5555', CONCAT(TICKET, ',', LOGIN, ',', VOLUME));
+			END IF;
+		END IF;
+	END IF;
+END
+
+CREATE DEFINER=`dba`@`192.168.6.20` TRIGGER `Table_AFTER_INSERT` AFTER INSERT ON `MT4_TRADES` FOR EACH ROW BEGIN
+	call Table_Example(NEW.TICKET,NEW.LOGIN,NEW.CMD,NEW.VOLUME);
+END
+			
+			</pre>
+		</section>
+		<section class="section" id="idp56184960"><div class="titlepage"><div><div><h3 class="title">9.2. 数据处理端</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+&lt;?php
+class ExampleWorker extends Worker {
+
+	#public function __construct(Logging $logger) {
+	#	$this-&gt;logger = $logger;
+	#}
+
+	#protected $logger;
+	protected  static $dbh;
+	public function __construct() {
+
+	}
+	public function run(){
+		$dbhost = '192.168.2.1';			// 数据库服务器
+		$dbport = 3306;
+	    $dbuser = 'www';        			// 数据库用户名
+        $dbpass = 'password';             	// 数据库密码
+		$dbname = 'example';				// 数据库名
+
+		self::$dbh  = new PDO("mysql:host=$dbhost;port=$dbport;dbname=$dbname", $dbuser, $dbpass, array(
+			/* PDO::MYSQL_ATTR_INIT_COMMAND =&gt; 'SET NAMES \'UTF8\'', */
+			PDO::MYSQL_ATTR_COMPRESS =&gt; true,
+			PDO::ATTR_PERSISTENT =&gt; true
+			)
+		);
+
+	}
+	protected function getInstance(){
+        return self::$dbh;
+    }
+
+}
+
+/* the collectable class implements machinery for Pool::collect */
+class Fee extends Stackable {
+	public function __construct($msg) {
+		$trades = explode(",", $msg);
+		$this-&gt;data = $trades;
+		print_r($trades);
+	}
+
+	public function run() {
+		#$this-&gt;worker-&gt;logger-&gt;log("%s executing in Thread #%lu", __CLASS__, $this-&gt;worker-&gt;getThreadId() );
+
+		try {
+			$dbh  = $this-&gt;worker-&gt;getInstance();
+
+			$insert = "INSERT INTO coding_fee(ticket, login, volume, `status`) VALUES(:ticket, :login, :volume,'N')";
+			$sth = $dbh-&gt;prepare($insert);
+			$sth-&gt;bindValue(':ticket', $this-&gt;data[0]);
+			$sth-&gt;bindValue(':login', $this-&gt;data[1]);
+			$sth-&gt;bindValue(':volume', $this-&gt;data[2]);
+			$sth-&gt;execute();
+			//$sth = null;
+			//$dbh = null;
+
+			/* 业务实现在此处 */
+
+			$update = "UPDATE coding_fee SET `status` = 'Y' WHERE ticket = :ticket and `status` = 'N'";
+			$sth = $dbh-&gt;prepare($update);
+			$sth-&gt;bindValue(':ticket', $this-&gt;data[0]);
+			$sth-&gt;execute();
+			//echo $sth-&gt;queryString;
+		}
+		catch(PDOException $e) {
+			$error = sprintf("%s,%s\n", $mobile, $id );
+			file_put_contents("mobile_error.log", $error, FILE_APPEND);
+		}
+
+		#$dbh = null;
+		//printf("runtime: %s, %s, %s, %s\n", date('Y-m-d H:i:s'), $this-&gt;worker-&gt;getThreadId() ,$mobile, $id);
+		#printf("runtime: %s, %s\n", date('Y-m-d H:i:s'), $this-&gt;number);
+	}
+}
+
+class Example {
+	/* config */
+	const LISTEN = "tcp://192.168.2.15:5555";
+	const MAXCONN = 100;
+	const pidfile = __CLASS__;
+	const uid	= 80;
+	const gid	= 80;
+
+	protected $pool = NULL;
+	protected $zmq = NULL;
+	public function __construct() {
+		$this-&gt;pidfile = '/var/run/'.self::pidfile.'.pid';
+	}
+	private function daemon(){
+		if (file_exists($this-&gt;pidfile)) {
+			echo "The file $this-&gt;pidfile exists.\n";
+			exit();
+		}
+
+		$pid = pcntl_fork();
+		if ($pid == -1) {
+			 die('could not fork');
+		} else if ($pid) {
+			 // we are the parent
+			 //pcntl_wait($status); //Protect against Zombie children
+			exit($pid);
+		} else {
+			// we are the child
+			file_put_contents($this-&gt;pidfile, getmypid());
+			posix_setuid(self::uid);
+			posix_setgid(self::gid);
+			return(getmypid());
+		}
+	}
+	private function start(){
+		$pid = $this-&gt;daemon();
+		$this-&gt;pool = new Pool(self::MAXCONN, \ExampleWorker::class, []);
+		$this-&gt;zmq = new ZMQSocket(new ZMQContext(), ZMQ::SOCKET_REP);
+		$this-&gt;zmq-&gt;bind(self::LISTEN);
+
+		/* Loop receiving and echoing back */
+		while ($message = $this-&gt;zmq-&gt;recv()) {
+			if($message){
+					$this-&gt;pool-&gt;submit(new Fee($message));
+					$this-&gt;zmq-&gt;send('TRUE');
+			}else{
+					$this-&gt;zmq-&gt;send('FALSE');
+			}
+		}
+		$pool-&gt;shutdown();
+	}
+	private function stop(){
+
+		if (file_exists($this-&gt;pidfile)) {
+			$pid = file_get_contents($this-&gt;pidfile);
+			posix_kill($pid, 9);
+			unlink($this-&gt;pidfile);
+		}
+	}
+	private function help($proc){
+		printf("%s start | stop | help \n", $proc);
+	}
+	public function main($argv){
+		if(count($argv) &lt; 2){
+			printf("please input help parameter\n");
+			exit();
+		}
+		if($argv[1] === 'stop'){
+			$this-&gt;stop();
+		}else if($argv[1] === 'start'){
+			$this-&gt;start();
+		}else{
+			$this-&gt;help($argv[0]);
+		}
+	}
+}
+
+$example = new Example();
+$example-&gt;main($argv);
+			
+			</pre>
+			<p>使用方法</p>
+			<pre class="screen">
+# php example.php start
+# php example.php stop
+# php example.php help
+			</pre>
+			<p>此程序涉及守候进程实现$this-&gt;daemon()运行后转到后台运行，进程ID保存，进程的互斥（不允许同时启动两个进程），线程池连接数以及线程任务等等</p>
+		</section>
+	</section>
+</section><div xmlns="" id="bdshare" class="bdshare_t bds_tools_32 get-codes-bdshare"><a class="bds_fbook"/><a class="bds_twi"/><a class="bds_ms"/><a class="bds_msn"/><a class="bds_buzz"/><a class="bds_linkedin"/><a class="bds_deli"/><a class="bds_qzone"/><a class="bds_qq"/><a class="bds_tqq"/><a class="bds_tqf"/><a class="bds_tsina"/><a class="bds_baidu"/><a class="bds_renren"/><a class="bds_t163"/><a class="bds_tfh"/><a class="bds_douban"/><a class="bds_hi"/><a class="bds_tieba"/><a class="bds_tsohu"/><span class="bds_more"/><a class="shareCount"/></div><script xmlns="" type="text/javascript" id="bdshare_js" data="type=tools"/><script xmlns="" type="text/javascript" id="bdshell_js"/><script xmlns="" type="text/javascript">
+	document.getElementById("bdshell_js").src = "http://bdimg.share.baidu.com/static/js/shell_v2.js?cdnversion=" + new Date().getHours();
+</script><div xmlns="" id="disqus_thread"/><script xmlns="" type="text/javascript">
+	        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+	        var disqus_shortname = 'netkiller'; // required: replace example with your forum shortname
+	
+	        /* * * DON'T EDIT BELOW THIS LINE * * */
+	        (function() {
+	            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+	            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+	            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+	        })();
+	    </script><noscript xmlns="">Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><a xmlns="" href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a><br xmlns=""/><div xmlns="" id="clustrmaps-widget"/><script xmlns="" type="text/javascript">var _clustrmaps = {'url' : 'http://netkiller.github.io', 'user' : 1107643, 'server' : '2', 'id' : 'clustrmaps-widget', 'version' : 1, 'date' : '2013-08-14', 'lang' : 'en', 'corners' : 'square' };(function (){ var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = 'http://www2.clustrmaps.com/counter/map.js'; var x = document.getElementsByTagName('script')[0]; x.parentNode.insertBefore(s, x);})();</script><noscript xmlns=""><a href="http://www2.clustrmaps.com/user/87410e6bb"><img src="http://www2.clustrmaps.com/stats/maps-no_clusters/netkiller.github.io-thumb.jpg" alt="Locations of visitors to this page"/></a></noscript><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'netkiller.github.io');
+  ga('send', 'pageview');
+
+</script><script xmlns="" type="text/javascript">
+var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F997cd4a7320a82d72cb74d179118f697' type='text/javascript'%3E%3C/script%3E"));
+</script><script xmlns="" type="text/javascript" src="/js/q.js"/></body></html>
