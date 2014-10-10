@@ -1,0 +1,292 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>17.2. IP / Mac Address</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.78.1" /><meta name="keywords" content="centos" /><meta name="keywords" content=", , , " /><link rel="home" href="../index.html" title="Netkiller DevOps 手札" /><link rel="up" href="linux.html" title="第 17 章 OS 安装与初始化" /><link rel="prev" href="linux.html" title="第 17 章 OS 安装与初始化" /><link rel="next" href="linux.limits.html" title="17.3. limits.conf" /></head><body><table xmlns="" width="100%" border="0"><tr><td align="left"><a href="http://netkiller.github.io/">Home</a> |
+        <a href="http://netkiller.sourceforge.net/">Mirror</a> |
+        <a href="/search.html">Search</a> | 
+		<a href="/journal/index.html">杂文</a> |
+        <a href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
+        <a href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+        <a href="http://rline.blog.51cto.com/">51CTO 博客</a> |
+        <a href="http://cn.linkedin.com/in/netkiller/">Linkedin</a></td><td align="right"></td></tr></table><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">17.2. IP / Mac Address</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="linux.html">上一页</a> </td><th width="60%" align="center">第 17 章 OS 安装与初始化</th><td width="20%" align="right"> <a accesskey="n" href="linux.limits.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.com&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.com&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="linux.ip"></a>17.2. IP / Mac Address</h2></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp59266528"></a>17.2.1. IP Address</h3></div></div></div>
+			
+			<pre class="screen">
+nmap -sP 172.16.1.0/24
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp59267680"></a>17.2.2. Mac Address</h3></div></div></div>
+			
+			<pre class="screen">
+nmap -sP -PI -PT -oN ipandmaclist.txt 172.16.1.0/24
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp59269152"></a>17.2.3. NIC</h3></div></div></div>
+			
+			<pre class="screen">
+DEVICE=eth0
+BOOTPROTO=static
+HWADDR=00:15:17:3E:90:90
+ONBOOT=yes
+NETMASK=255.255.255.0
+IPADDR=172.16.1.26
+GATEWAY=172.16.1.1
+TYPE=Ethernet
+USERCTL=no
+IPV6INIT=no
+PEERDNS=yes
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp59270656"></a>17.2.4. DNS</h3></div></div></div>
+			
+			<pre class="screen">
+			
+echo -ne "
+search example.com
+nameserver 208.67.222.222
+nameserver 202.67.220.220
+nameserver 8.8.8.8
+nameserver 4.4.4.4
+" &gt; /etc/resolv.conf
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="bonding"></a>17.2.5. bonding</h3></div></div></div>
+			
+			<p>http://www.kernel.org/pub/linux/kernel/people/marcelo/linux-2.4/Documentation/networking/bonding.txt</p>
+			<p>http://www.linuxfoundation.org/collaborate/workgroups/networking/bonding</p>
+			<p>http://blog.webdir.bg/ubuntu-linux-and-cisco-switch-link-aggregation-load-balancing-bonding/</p>
+			<pre class="screen">
+			
+cat &gt;&gt; /etc/modprobe.d/bonding.conf &lt;&lt;EOF
+alias bond0 bonding
+options bond0 miimon=100 mode=1  primary=eth0
+alias bond1 bonding
+options bond1 miimon=100 mode=1  primary=eth2
+EOF
+
+cat &gt;&gt; /etc/sysconfig/network-scripts/ifcfg-eth0 &lt;&lt;EOF
+DEVICE=eth0
+ONBOOT=yes
+MASTER=bond0
+SLAVE=yes
+BOOTPROTO=none
+USERCTL=no
+EOF
+
+cat &gt;&gt; /etc/sysconfig/network-scripts/ifcfg-eth1 &lt;&lt;EOF
+DEVICE=eth1
+ONBOOT=yes
+MASTER=bond0
+SLAVE=yes
+BOOTPROTO=none
+USERCTL=no
+EOF
+
+cat &gt;&gt; /etc/sysconfig/network-scripts/ifcfg-eth2 &lt;&lt;EOF
+DEVICE=eth2
+ONBOOT=yes
+MASTER=bond1
+SLAVE=yes
+BOOTPROTO=none
+USERCTL=no
+EOF
+
+cat &gt;&gt; /etc/sysconfig/network-scripts/ifcfg-eth3 &lt;&lt;EOF
+DEVICE=eth3
+ONBOOT=yes
+MASTER=bond1
+SLAVE=yes
+BOOTPROTO=none
+USERCTL=no
+EOF
+
+cat &gt;&gt; /etc/sysconfig/network-scripts/ifcfg-bond0 &lt;&lt;EOF
+DEVICE=bond0
+ONBOOT=yes
+IPADDR=192.168.80.1
+NETMASK=255.255.255.0
+NETWORK=192.168.80.0
+BOOTPROTO=none
+USERCTL=no
+EOF
+
+cat &gt;&gt; /etc/sysconfig/network-scripts/ifcfg-bond1 &lt;&lt;EOF
+DEVICE=bond1
+ONBOOT=yes
+IPADDR=192.168.80.2
+NETMASK=255.255.255.0
+NETWORK=192.168.80.0
+BOOTPROTO=none
+USERCTL=no
+EOF
+			
+			</pre>
+			<pre class="screen">
+			
+cp /etc/sysconfig/network-scripts/ifcfg-eth0{,.original}
+
+cat &gt;&gt; /etc/modprobe.d/bonding.conf &lt;&lt;EOF
+alias bond0 bonding
+options bond0 mode=balance-alb miimon=1000
+EOF
+
+cat &gt; /etc/sysconfig/network-scripts/ifcfg-eth0 &lt;&lt;EOF
+DEVICE=eth0
+ONBOOT=yes
+BOOTPROTO=none
+USERCTL=no
+EOF
+
+cat &gt; /etc/sysconfig/network-scripts/ifcfg-eth1 &lt;&lt;EOF
+DEVICE=eth1
+ONBOOT=yes
+BOOTPROTO=none
+USERCTL=no
+EOF
+
+cat &gt;&gt; /etc/sysconfig/network-scripts/ifcfg-eth2 &lt;&lt;EOF
+DEVICE=eth2
+ONBOOT=yes
+BOOTPROTO=none
+USERCTL=no
+EOF
+
+cat &gt;&gt; /etc/sysconfig/network-scripts/ifcfg-eth3 &lt;&lt;EOF
+DEVICE=eth3
+ONBOOT=yes
+BOOTPROTO=none
+USERCTL=no
+EOF
+
+cat &gt;&gt; /etc/sysconfig/network-scripts/ifcfg-bond0 &lt;&lt;EOF
+DEVICE=bond0
+ONBOOT=yes
+BOOTPROTO=none
+TYPE=Ethernet
+IPADDR=192.168.80.65
+NETMASK=255.255.255.0
+NETWORK=192.168.80.0
+USERCTL=no
+EOF
+			
+			</pre>
+			
+			
+			<pre class="screen">
+			
+modprobe bonding mode=balance-alb miimon=1000
+ifconfig bond0 up
+ifconfig bond0 192.168.80.1 netmask 255.255.255.0 up
+ifenslave bond0 eth0
+ifenslave bond0 eth1
+
+echo 1000 &gt; /sys/class/net/bond0/bonding/miimon
+echo 6 &gt; /sys/class/net/bond0/bonding/mode
+echo balance-alb &gt; /sys/class/net/bond0/bonding/mode
+
+
+BONDING_OPTS="mode=1 miimon=100"
+
+echo balance-rr &gt;/sys/class/net/bond0/bonding/mode
+modprobe bonding mode=balance-tlb miimon=1000
+
+ifenslave -d bond0 eth0 eth1
+ifenslave bond1 eth2 eth3
+			
+			</pre>
+			<pre class="screen">
+# ethtool eth0
+Settings for eth0:
+	Supported ports: [ TP ]
+	Supported link modes:   10baseT/Half 10baseT/Full
+	                        100baseT/Half 100baseT/Full
+	                        1000baseT/Full
+	Supports auto-negotiation: Yes
+	Advertised link modes:  10baseT/Half 10baseT/Full
+	                        100baseT/Half 100baseT/Full
+	                        1000baseT/Full
+	Advertised pause frame use: No
+	Advertised auto-negotiation: Yes
+	Speed: 100Mb/s
+	Duplex: Full
+	Port: Twisted Pair
+	PHYAD: 1
+	Transceiver: internal
+	Auto-negotiation: on
+	MDI-X: Unknown
+	Supports Wake-on: g
+	Wake-on: d
+	Link detected: yes
+
+# more /proc/net/bonding/bond0
+Ethernet Channel Bonding Driver: v3.5.0 (November 4, 2008)
+
+Bonding Mode: adaptive load balancing
+Primary Slave: None
+Currently Active Slave: None
+MII Status: down
+MII Polling Interval (ms): 1000
+Up Delay (ms): 0
+Down Delay (ms): 0
+
+[root@r610 ~]# ifconfig bond0 up
+[root@r610 ~]# ifenslave bond0 eth0 eth2
+
+# more /proc/net/bonding/bond0
+Ethernet Channel Bonding Driver: v3.5.0 (November 4, 2008)
+
+Bonding Mode: adaptive load balancing
+Primary Slave: None
+Currently Active Slave: eth0
+MII Status: up
+MII Polling Interval (ms): 1000
+Up Delay (ms): 0
+Down Delay (ms): 0
+
+Slave Interface: eth0
+MII Status: up
+Link Failure Count: 0
+Permanent HW addr: 14:fe:b5:dc:30:ee
+
+Slave Interface: eth1
+MII Status: up
+Link Failure Count: 0
+Permanent HW addr: 14:fe:b5:dc:30:f0
+
+[root@r610 network-scripts]# cat /sys/class/net/bond0/bonding/miimon
+1000
+[root@r610 network-scripts]# cat /sys/class/net/bonding_masters
+bond0
+[root@r610 network-scripts]# cat /sys/class/net/bond0/bonding/mode
+balance-alb 6
+
+	        </pre>
+		</div>
+	</div><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
+            /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+
+            //if(document.domain == 'netkiller.github.com'){
+            var disqus_shortname = 'netkiller'; // required: replace example with your forum shortname
+            //}else{
+			//var disqus_shortname = 'neochan';
+            //}
+
+            /* * * DON'T EDIT BELOW THIS LINE * * */
+            (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+            })();
+        </script><noscript xmlns="">Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><a xmlns="" href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a><br xmlns="" /><div xmlns="" id="clustrmaps-widget"></div><script xmlns="" type="text/javascript">var _clustrmaps = {'url' : 'http://netkiller.github.io', 'user' : 1107643, 'server' : '2', 'id' : 'clustrmaps-widget', 'version' : 1, 'date' : '2013-08-14', 'lang' : 'en', 'corners' : 'square' };(function (){ var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = 'http://www2.clustrmaps.com/counter/map.js'; var x = document.getElementsByTagName('script')[0]; x.parentNode.insertBefore(s, x);})();</script><noscript xmlns=""><a href="http://www2.clustrmaps.com/user/87410e6bb"><img src="http://www2.clustrmaps.com/stats/maps-no_clusters/netkiller.github.io-thumb.jpg" alt="Locations of visitors to this page" /></a></noscript><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="linux.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="linux.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="linux.limits.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 17 章 OS 安装与初始化 </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 17.3. limits.conf</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" type="text/javascript">
+var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F997cd4a7320a82d72cb74d179118f697' type='text/javascript'%3E%3C/script%3E"));
+</script><script xmlns="" type="text/javascript" src="/js/q.js"></script></body></html>
