@@ -19,7 +19,15 @@ Using /dev/sda
 Welcome to GNU Parted! Type 'help' to view a list of commands.
 (parted)
 		</pre>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="parted.print"></a>13.10.1. 查看分区</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp80456096"></a>13.10.1. 设置GTP磁盘</h3></div></div></div>
+			
+			<pre class="screen">
+(parted) mklabel gpt                                                      
+Warning: The existing disk label on /dev/xvdb will be destroyed and all data on this disk will be lost. Do you want to continue?
+Yes/No? Yes			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="parted.print"></a>13.10.2. 查看分区</h3></div></div></div>
 			
 			<pre class="screen">
 (parted) print
@@ -49,16 +57,50 @@ Number  Start   End     Size    File system     Name     Flags
         2498GB  2498GB  1032kB  Free Space
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="parted.mkpart"></a>13.10.2. 创建分区</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="parted.mkpart"></a>13.10.3. 创建分区</h3></div></div></div>
 			
+			<p>创建主分区</p>
+			<pre class="screen">
+(parted) mkpart primary
+File system type?  [ext2]?                                                
+Start? 0GB                                                                
+End? 280GB                                                                
+(parted) p                                                                
+Model: Xen Virtual Block Device (xvd)
+Disk /dev/xvdb: 784GB
+Sector size (logical/physical): 512B/512B
+Partition Table: gpt
+
+Number  Start   End    Size   File system  Name     Flags
+ 1      1049kB  280GB  280GB               primary			
+			</pre>
+			<p>创建扩展分区</p>
+			<pre class="screen">
+(parted) mkpart extended                                                 
+File system type?  [ext2]?                                                
+Start? 280GB                                                              
+End? 100%                                                                 
+(parted) p                                                                
+Model: Xen Virtual Block Device (xvd)
+Disk /dev/xvdb: 784GB
+Sector size (logical/physical): 512B/512B
+Partition Table: gpt
+
+Number  Start   End    Size   File system  Name      Flags
+ 1      1049kB  280GB  280GB               primary
+ 2      280GB   784GB  504GB               extended			
+			</pre>
+			
+			<p>创建分区</p>
 			<pre class="screen">
 (parted) mkpart
 Partition name?  []? /www
 File system type?  [ext2]?
 Start? 10GB
 End? 50GB
-			</pre>
-			<div class="example"><a id="idp72101248"></a><p class="title"><strong>例 13.1. GPT Example</strong></p><div class="example-contents">
+			</pre>			
+
+			<div class="example"><a id="idp80466064"></a><p class="title"><strong>例 13.1. GPT Example</strong></p><div class="example-contents">
 				
 				<pre class="screen">
 (parted) print devices
@@ -104,13 +146,53 @@ Number  Start   End     Size    File system     Name     Flags
 				</pre>
 			</div></div><br class="example-break" />
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="parted.quit"></a>13.10.3. 退出</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp80468304"></a>13.10.4. 删除分区</h3></div></div></div>
+			
+			<p>使用 rm 删除分区</p>
+			<pre class="screen">
+# parted /dev/xvdb
+GNU Parted 2.1
+Using /dev/xvdb
+Welcome to GNU Parted! Type 'help' to view a list of commands.
+(parted) p
+Model: Xen Virtual Block Device (xvd)
+Disk /dev/xvdb: 784GB
+Sector size (logical/physical): 512B/512B
+Partition Table: msdos
+
+Number  Start   End     Size    Type     File system  Flags
+ 1      32.3kB  4113MB  4113MB  primary  ext4
+ 2      4113MB  784GB   780GB   primary
+
+(parted) rm
+Partition number? 1
+
+(parted) p
+Model: Xen Virtual Block Device (xvd)
+Disk /dev/xvdb: 784GB
+Sector size (logical/physical): 512B/512B
+Partition Table: msdos
+
+Number  Start   End    Size   Type     File system  Flags
+ 2      4113MB  784GB  780GB  primary
+
+(parted) rm 2
+(parted) p
+Model: Xen Virtual Block Device (xvd)
+Disk /dev/xvdb: 784GB
+Sector size (logical/physical): 512B/512B
+Partition Table: msdos
+
+Number  Start  End  Size  Type  File system  Flags
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="parted.quit"></a>13.10.5. 退出</h3></div></div></div>
 			
 			<pre class="screen">
 (parted) quit
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="parted.uuid"></a>13.10.4. mount</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="parted.uuid"></a>13.10.6. mount</h3></div></div></div>
 			
 			<pre class="screen">
 neo@backup:~$ sudo blkid
