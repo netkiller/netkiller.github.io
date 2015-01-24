@@ -19,7 +19,7 @@ Using /dev/sda
 Welcome to GNU Parted! Type 'help' to view a list of commands.
 (parted)
 		</pre>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp80456096"></a>13.10.1. 设置GTP磁盘</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp105500704"></a>13.10.1. 设置GTP磁盘</h3></div></div></div>
 			
 			<pre class="screen">
 (parted) mklabel gpt                                                      
@@ -100,7 +100,7 @@ Start? 10GB
 End? 50GB
 			</pre>			
 
-			<div class="example"><a id="idp80466064"></a><p class="title"><strong>例 13.1. GPT Example</strong></p><div class="example-contents">
+			<div class="example"><a id="idp105510864"></a><p class="title"><strong>例 13.1. GPT Example</strong></p><div class="example-contents">
 				
 				<pre class="screen">
 (parted) print devices
@@ -145,8 +145,94 @@ Number  Start   End     Size    File system     Name     Flags
 (parted)
 				</pre>
 			</div></div><br class="example-break" />
+			<div class="example"><a id="idp105513232"></a><p class="title"><strong>例 13.2. 创建扩展分区</strong></p><div class="example-contents">
+				
+				<p>查看可用空间</p>
+				<pre class="screen">
+(parted) print free
+Model: HP LOGICAL VOLUME (scsi)
+Disk /dev/sda: 1200GB
+Sector size (logical/physical): 512B/512B
+Partition Table: msdos
+Disk Flags: 
+
+Number  Start   End     Size    Type     File system     Flags
+        32.3kB  1049kB  1016kB           Free Space
+ 1      1049kB  525MB   524MB   primary  ext4            boot
+ 2      525MB   105GB   105GB   primary  ext4
+ 3      105GB   139GB   33.6GB  primary  linux-swap(v1)
+        139GB   1200GB  1061GB           Free Space
+				</pre>
+				<p>创建扩展分区</p>
+				<pre class="screen">
+(parted) mkpart                                                           
+Partition type?  primary/extended? extended                               
+Start? 139GB                                                              
+End? 1200GB                                                               
+(parted) p                                                                
+Model: HP LOGICAL VOLUME (scsi)
+Disk /dev/sda: 1200GB
+Sector size (logical/physical): 512B/512B
+Partition Table: msdos
+Disk Flags: 
+
+Number  Start   End     Size    Type      File system     Flags
+ 1      1049kB  525MB   524MB   primary   ext4            boot
+ 2      525MB   105GB   105GB   primary   ext4
+ 3      105GB   139GB   33.6GB  primary   linux-swap(v1)
+ 4      139GB   1200GB  1061GB  extended                  lba				
+				</pre>
+				<p>创建逻辑卷</p>
+				<pre class="screen">
+(parted) mkpart                                                           
+Partition type?  [logical]? logical                                       
+File system type?  [ext2]?                                                
+Start? 139GB                                                              
+End? 200GB                                                                
+(parted) mkpart logical                                                   
+File system type?  [ext2]?                                                
+Start? 200GB                                                              
+End? 1200GB                                                               
+(parted) p                                                                
+Model: HP LOGICAL VOLUME (scsi)
+Disk /dev/sda: 1200GB
+Sector size (logical/physical): 512B/512B
+Partition Table: msdos
+Disk Flags: 
+
+Number  Start   End     Size    Type      File system     Flags
+ 1      1049kB  525MB   524MB   primary   ext4            boot
+ 2      525MB   105GB   105GB   primary   ext4
+ 3      105GB   139GB   33.6GB  primary   linux-swap(v1)
+ 4      139GB   1200GB  1061GB  extended                  lba
+ 5      139GB   200GB   61.1GB  logical
+ 6      200GB   1200GB  1000GB  logical
+ 
+(parted) quit                                                             
+Information: You may need to update /etc/fstab.
+				</pre>
+				<p>查看分区</p>
+				<pre class="screen">
+# fdisk -l
+
+Disk /dev/sda: 1199.9 GB, 1199865640960 bytes, 2343487580 sectors
+Units = sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disk label type: dos
+Disk identifier: 0x000c7511
+
+   Device Boot      Start         End      Blocks   Id  System
+/dev/sda1   *        2048     1026047      512000   83  Linux
+/dev/sda2         1026048   205826047   102400000   83  Linux
+/dev/sda3       205826048   271362047    32768000   82  Linux swap / Solaris
+/dev/sda4       271362048  2343487487  1036062720    f  W95 Ext'd (LBA)
+/dev/sda5       271364096   390625279    59630592   83  Linux
+/dev/sda6       390627328  2343487487   976430080   83  Linux				
+				</pre>
+			</div></div><br class="example-break" />
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp80468304"></a>13.10.4. 删除分区</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp105520944"></a>13.10.4. 删除分区</h3></div></div></div>
 			
 			<p>使用 rm 删除分区</p>
 			<pre class="screen">
@@ -185,6 +271,7 @@ Partition Table: msdos
 
 Number  Start  End  Size  Type  File system  Flags
 			</pre>
+			<p>删除扩展分区将自动删除逻辑卷</p>
 		</div>
 		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="parted.quit"></a>13.10.5. 退出</h3></div></div></div>
 			
