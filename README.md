@@ -34,3 +34,7 @@ Tip
     请不要pull request，因为这篇文档是Docbook生成的。如想参与贡献请联系我，我会你给docbook xml源码地址。
 
 
+
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/netkiller/netkiller.github.com/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+
