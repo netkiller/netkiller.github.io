@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>5.2. PHP</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.78.1" /><meta name="keywords" content="md5sum, openssl, openpgp, opengpg, md5, sha1, des, rsa, uuid, base64, quoted-printable, uuencode, x509,smime" /><link rel="home" href="../index.html" title="Netkiller Cryptography 手札" /><link rel="up" href="index.html" title="Chapter 5. AES" /><link rel="prev" href="index.html" title="Chapter 5. AES" /><link rel="next" href="../gpg/index.html" title="Chapter 6. OpenPGP/OpenGPG(GnuPG)" /></head><body><a xmlns="" href="http://netkiller.github.io/">Home</a> |
+		<a xmlns="" href="http://netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
+	    <a xmlns="" href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">5.2. PHP</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="index.html">Prev</a> </td><th width="60%" align="center">Chapter 5. AES</th><td width="20%" align="right"> <a accesskey="n" href="../gpg/index.html">Next</a></td></tr></table><hr /><table width="100%" border="0"><tr><td align="left"><a href="http://netkiller.sourceforge.net/">Home</a> | 
+		<a href="http://netkiller.github.com/">Mirror</a> |		
+		<a href="/search.html">Search</a></td><td align="right"></td></tr></table></div><table xmlns=""><tr><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.com&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.com&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp42452624"></a>5.2. PHP</h2></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp42453264"></a>5.2.1. AES/ECB/PKCS5Padding</h3></div></div></div>
+			
+			<div class="section"><div class="titlepage"></div>
+			
+&lt;?php
+class CryptAES
+{
+    protected $cipher     = MCRYPT_RIJNDAEL_128;
+    protected $mode       = MCRYPT_MODE_ECB;
+    protected $pad_method = NULL;
+    protected $secret_key = '';
+    protected $iv         = '';
+ 
+ 
+    public function set_cipher($cipher)
+    {
+        $this-&gt;cipher = $cipher; 
+    }
+ 
+    public function set_mode($mode)
+    {
+        $this-&gt;mode = $mode;
+    }
+ 
+    public function set_iv($iv)
+    {
+        $this-&gt;iv = $iv;
+    }
+ 
+    public function set_key($key)
+    {
+        $this-&gt;secret_key = $key;
+    }
+ 
+    public function require_pkcs5()
+    {
+        $this-&gt;pad_method = 'pkcs5';
+    }
+ 
+    protected function pad_or_unpad($str, $ext)
+    {
+        if ( is_null($this-&gt;pad_method) )
+        {
+            return $str;
+        }
+        else 
+        {
+            $func_name = __CLASS__ . '::' . $this-&gt;pad_method . '_' . $ext . 'pad';
+            if ( is_callable($func_name) )
+            {
+                $size = mcrypt_get_block_size($this-&gt;cipher, $this-&gt;mode);
+                return call_user_func($func_name, $str, $size);
+            }
+        }
+ 
+        return $str; 
+    }
+ 
+    protected function pad($str)
+    {
+        return $this-&gt;pad_or_unpad($str, ''); 
+    }
+ 
+    protected function unpad($str)
+    {
+        return $this-&gt;pad_or_unpad($str, 'un'); 
+    }
+ 
+ 
+    public function encrypt($str)
+    {
+        $str = $this-&gt;pad($str);
+        $td = mcrypt_module_open($this-&gt;cipher, '', $this-&gt;mode, '');
+ 
+        if ( empty($this-&gt;iv) )
+        {
+            $iv = @mcrypt_create_iv(mcrypt_enc_get_iv_size($td), MCRYPT_RAND);
+        }
+        else
+        {
+            $iv = $this-&gt;iv;
+        }
+ 
+        mcrypt_generic_init($td, $this-&gt;secret_key, $iv);
+        $cyper_text = mcrypt_generic($td, $str);
+        //$rt = bin2hex($cyper_text);
+        $rt = base64_encode($cyper_text);
+        mcrypt_generic_deinit($td);
+        mcrypt_module_close($td);
+ 
+        return $rt;
+    }
+ 
+ 
+    public function decrypt($str){
+        $td = mcrypt_module_open($this-&gt;cipher, '', $this-&gt;mode, '');
+ 
+        if ( empty($this-&gt;iv) )
+        {
+            $iv = @mcrypt_create_iv(mcrypt_enc_get_iv_size($td), MCRYPT_RAND);
+        }
+        else
+        {
+            $iv = $this-&gt;iv;
+        }
+ 
+        mcrypt_generic_init($td, $this-&gt;secret_key, $iv);
+        //$decrypted_text = mdecrypt_generic($td, self::hex2bin($str));
+        $decrypted_text = mdecrypt_generic($td, base64_decode($str));
+        $rt = $decrypted_text;
+        mcrypt_generic_deinit($td);
+        mcrypt_module_close($td);
+ 
+        return $this-&gt;unpad($rt);
+    }
+ 
+    public static function hex2bin($hexdata) {
+        $bindata = '';
+        $length = strlen($hexdata); 
+        for ($i=0; $i &lt; $length; $i += 2)
+        {
+            $bindata .= chr(hexdec(substr($hexdata, $i, 2)));
+        }
+        return $bindata;
+    }
+ 
+    public static function pkcs5_pad($text, $blocksize)
+    {
+        $pad = $blocksize - (strlen($text) % $blocksize);
+        return $text . str_repeat(chr($pad), $pad);
+    }
+ 
+    public static function pkcs5_unpad($text)
+    {
+        $pad = ord($text{strlen($text) - 1});
+        if ($pad &gt; strlen($text)) return false;
+        if (strspn($text, chr($pad), strlen($text) - $pad) != $pad) return false;
+        return substr($text, 0, -1 * $pad);
+    }
+}
+
+$aes = new CryptAES();
+$aes-&gt;set_key('NGjPs5cgNS497sdx');
+$aes-&gt;require_pkcs5();
+$rt = $aes-&gt;encrypt('ABC');
+echo $rt . '&lt;br/&gt;';
+echo $aes-&gt;decrypt($rt) . '&lt;br/&gt;';			
+			
+			</div>
+		</div>
+	</div><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
+            /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+
+            //if(document.domain == 'netkiller.github.com'){
+            var disqus_shortname = 'netkiller'; // required: replace example with your forum shortname
+            //}else{
+			//var disqus_shortname = 'neochan';
+            //}
+
+            /* * * DON'T EDIT BELOW THIS LINE * * */
+            (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+            })();
+        </script><noscript xmlns="">Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><a xmlns="" href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a><br xmlns="" /><div xmlns="" id="clustrmaps-widget"></div><script xmlns="" type="text/javascript">var _clustrmaps = {'url' : 'http://netkiller.github.io', 'user' : 1107643, 'server' : '2', 'id' : 'clustrmaps-widget', 'version' : 1, 'date' : '2013-08-14', 'lang' : 'en', 'corners' : 'square' };(function (){ var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = 'http://www2.clustrmaps.com/counter/map.js'; var x = document.getElementsByTagName('script')[0]; x.parentNode.insertBefore(s, x);})();</script><noscript xmlns=""><a href="http://www2.clustrmaps.com/user/87410e6bb"><img src="http://www2.clustrmaps.com/stats/maps-no_clusters/netkiller.github.io-thumb.jpg" alt="Locations of visitors to this page" /></a></noscript><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="index.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="../gpg/index.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">Chapter 5. AES </td><td width="20%" align="center"><a accesskey="h" href="../index.html">Home</a></td><td width="40%" align="right" valign="top"> Chapter 6. OpenPGP/OpenGPG(GnuPG)</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" type="text/javascript">
+var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F997cd4a7320a82d72cb74d179118f697' type='text/javascript'%3E%3C/script%3E"));
+</script><script xmlns="" type="text/javascript" src="/js/q.js"></script></body></html>
