@@ -8,7 +8,7 @@
 	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
 	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
 	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
-		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><section xml:lang="zh-cn" class="article" id="idp67735312"><div class="titlepage"><div><div><h2 class="title">PHP高级编程之守护进程</h2></div><div><h3 class="subtitle"><em>http://netkiller.github.io/journal/php.daemon.html</em></h3></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(陈景峰)</span>, <span class="lineage">netkiller, BG7NYT</span></h3><div class="affiliation"><div class="address"><p><br/>
+		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><section xml:lang="zh-cn" class="article" id="idp71504464"><div class="titlepage"><div><div><h2 class="title">PHP高级编程之守护进程</h2></div><div><h3 class="subtitle"><em>http://netkiller.github.io/journal/php.daemon.html</em></h3></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(陈景峰)</span>, <span class="lineage">netkiller, BG7NYT</span></h3><div class="affiliation"><div class="address"><p><br/>
 				<span class="country">中国</span><span class="state">广东省</span><span class="city">深圳市</span><span class="street">龙华新区民治街道溪山美地</span><br/>
 				<span class="postcode">518131</span><br/>
 				<span class="phone">+86 13113668890</span><br/>
@@ -63,7 +63,7 @@
 		</td><td>
 			<a class="ulink" href="../docbook/index.html" target="_top">Netkiller Docbook 手札</a>
 		</td><td>
-			<a class="ulink" href="../version/index.html" target="_top">Netkiller Version 手札</a>
+			<a class="ulink" href="../project/index.html" target="_top">Netkiller Project 手札</a>
 		</td><td>
 			<a class="ulink" href="../database/index.html" target="_top">Netkiller Database 手札</a>
 		</td><td>
@@ -88,7 +88,7 @@
 			<a class="ulink" href="../radio/index.html" target="_top">Netkiller Amateur Radio 手札</a>
 		</td><td>
 			<a class="ulink" href="../devops/index.html" target="_top">Netkiller DevOps 手札</a>
-		</td></tr></table></div></div></div><hr/></div><div class="toc"><div class="toc-title">目录</div><ul class="toc"><li><span class="section"><a href="#what">1. 什么是守护进程</a></span></li><li><span class="section"><a href="#why">2. 为什么开发守护进程</a></span></li><li><span class="section"><a href="#when">3. 何时采用守护进程开发应用程序</a></span></li><li><span class="section"><a href="#security">4. 守护进程的安全问题</a></span></li><li><span class="section"><a href="#how">5. 怎样开发守护进程</a></span><ul><li><span class="section"><a href="#idp67799984">5.1. 程序启动</a></span></li><li><span class="section"><a href="#idp67803472">5.2. 程序停止</a></span></li><li><span class="section"><a href="#idp67805824">5.3. 单例模式</a></span></li></ul></li></ul></div>
+		</td></tr></table></div></div></div><hr/></div><div class="toc"><div class="toc-title">目录</div><ul class="toc"><li><span class="section"><a href="#what">1. 什么是守护进程</a></span></li><li><span class="section"><a href="#why">2. 为什么开发守护进程</a></span></li><li><span class="section"><a href="#when">3. 何时采用守护进程开发应用程序</a></span></li><li><span class="section"><a href="#security">4. 守护进程的安全问题</a></span></li><li><span class="section"><a href="#how">5. 怎样开发守护进程</a></span><ul><li><span class="section"><a href="#idp71556384">5.1. 程序启动</a></span></li><li><span class="section"><a href="#idp71559872">5.2. 程序停止</a></span></li><li><span class="section"><a href="#idp71561952">5.3. 单例模式</a></span></li></ul></li></ul></div>
 	
 	<section class="section" id="what"><div class="titlepage"><div><div><h2 class="title" style="clear: both">1. 什么是守护进程</h2></div></div></div>
 		
@@ -112,7 +112,7 @@
 	
 	<section class="section" id="how"><div class="titlepage"><div><div><h2 class="title" style="clear: both">5. 怎样开发守护进程</h2></div></div></div>
 		
-		<div class="example" id="idp67794592"><div class="example-title">例 1. 守护进程例示</div><div class="example-contents">
+		<div class="example" id="idp71546016"><div class="example-title">例 1. 多线程守护进程例示</div><div class="example-contents">
 			
 			<pre class="programlisting">
 			
@@ -270,7 +270,138 @@ $cgse-&gt;main($argv);
 			
 			</pre>
 		</div></div><br class="example-break"/>
-		<section class="section" id="idp67799984"><div class="titlepage"><div><div><h3 class="title">5.1. 程序启动</h3></div></div></div>
+		<div class="example" id="idp71551184"><div class="example-title">例 2. 消息队列与守护进程</div><div class="example-contents">
+			
+			<pre class="programlisting">
+			
+&lt;?php
+declare(ticks = 1);
+require_once( __DIR__.'/autoload.class.php' );
+umask(077);	
+class EDM {
+	protected $queue;
+	public function __construct() {
+		global $argc, $argv;
+		$this-&gt;argc = $argc;
+		$this-&gt;argv = $argv;
+		$this-&gt;pidfile = $this-&gt;argv[0].".pid";
+		$this-&gt;config = new Config('mq');
+		$this-&gt;logging = new Logging(__DIR__.'/log/'.$this-&gt;argv[0].'.'.date('Y-m-d').'.log'); //.H:i:s
+		//print_r( $this-&gt;config-&gt;getArray('mq') );
+		//pcntl_signal(SIGHUP, array(&amp;$this,"restart"));
+	}
+	protected function msgqueue(){
+		$exchangeName = 'email'; //交换机名
+		$queueName = 'email'; //队列名
+		$routeKey = 'email'; //路由key
+		//创建连接和channel
+		$connection = new AMQPConnection($this-&gt;config-&gt;getArray('mq'));
+		if (!$connection-&gt;connect()) {
+			die("Cannot connect to the broker!\n");
+		}
+		$this-&gt;channel = new AMQPChannel($connection);
+		$this-&gt;exchange = new AMQPExchange($this-&gt;channel);
+		$this-&gt;exchange-&gt;setName($exchangeName);
+		$this-&gt;exchange-&gt;setType(AMQP_EX_TYPE_DIRECT); //direct类型
+		$this-&gt;exchange-&gt;setFlags(AMQP_DURABLE); //持久化
+		$this-&gt;exchange-&gt;declare();
+		//echo "Exchange Status:".$this-&gt;exchange-&gt;declare()."\n";
+		//创建队列
+		$this-&gt;queue = new AMQPQueue($this-&gt;channel);
+		$this-&gt;queue-&gt;setName($queueName);
+		$this-&gt;queue-&gt;setFlags(AMQP_DURABLE); //持久化
+		$this-&gt;queue-&gt;declare();
+		//echo "Message Total:".$this-&gt;queue-&gt;declare()."\n";
+		//绑定交换机与队列，并指定路由键
+		$bind = $this-&gt;queue-&gt;bind($exchangeName, $routeKey);
+		//echo 'Queue Bind: '.$bind."\n";
+		//阻塞模式接收消息
+		while(true){
+			//$this-&gt;queue-&gt;consume('processMessage', AMQP_AUTOACK); //自动ACK应答
+			$this-&gt;queue-&gt;consume(function($envelope, $queue) {
+				$msg = $envelope-&gt;getBody();
+				$queue-&gt;ack($envelope-&gt;getDeliveryTag()); //手动发送ACK应答
+				$this-&gt;logging-&gt;info('('.'+'.')'.$msg);
+				//$this-&gt;logging-&gt;debug("Message Total:".$this-&gt;queue-&gt;declare());
+			});
+			$this-&gt;channel-&gt;qos(0,1);
+			//echo "Message Total:".$this-&gt;queue-&gt;declare()."\n";
+		}
+		$conn-&gt;disconnect();
+	}
+	protected function start(){
+		if (file_exists($this-&gt;pidfile)) {
+			printf("%s already running\n", $this-&gt;argv[0]);
+			exit(0);
+		}
+		$this-&gt;logging-&gt;warning("start");
+		$pid = pcntl_fork();
+		if ($pid == -1) {
+			die('could not fork');
+		} else if ($pid) {
+			//pcntl_wait($status); //等待子进程中断，防止子进程成为僵尸进程。
+			exit(0);
+		} else {
+			posix_setsid();
+			//printf("pid: %s\n", posix_getpid());
+			file_put_contents($this-&gt;pidfile, posix_getpid());
+			
+			//posix_kill(posix_getpid(), SIGHUP);
+			
+			$this-&gt;msgqueue();
+		}
+	}
+	protected function stop(){
+		if (file_exists($this-&gt;pidfile)) {
+			$pid = file_get_contents($this-&gt;pidfile);
+			posix_kill($pid, SIGTERM);
+			//posix_kill($pid, SIGKILL);
+			unlink($this-&gt;pidfile);
+			$this-&gt;logging-&gt;warning("stop");
+		}else{
+			printf("%s haven't running\n", $this-&gt;argv[0]);
+		}
+	}
+	protected function restart(){
+		$this-&gt;stop();
+		$this-&gt;start();	
+	}
+	protected function status(){
+		if (file_exists($this-&gt;pidfile)) {
+			$pid = file_get_contents($this-&gt;pidfile);
+			printf("%s already running, pid = %s\n", $this-&gt;argv[0], $pid);
+		}else{
+			printf("%s haven't running\n", $this-&gt;argv[0]);
+		}
+	}
+	protected function usage(){
+		printf("Usage: %s {start | stop | restart | status}\n", $this-&gt;argv[0]);
+	}
+	public function main(){
+		//print_r($this-&gt;argv);
+		if($this-&gt;argc != 2){
+			$this-&gt;usage();
+		}else{
+			if($this-&gt;argv[1] == 'start'){
+				$this-&gt;start();
+			}else if($this-&gt;argv[1] == 'stop'){
+				$this-&gt;stop();
+			}else if($this-&gt;argv[1] == 'restart'){
+				$this-&gt;restart();
+			}else if($this-&gt;argv[1] == 'status'){
+				$this-&gt;status();
+			}else{
+				$this-&gt;usage();
+			}
+		}
+	}
+}
+$edm = New EDM();
+$edm-&gt;main();
+			
+			</pre>
+		</div></div><br class="example-break"/>
+		<section class="section" id="idp71556384"><div class="titlepage"><div><div><h3 class="title">5.1. 程序启动</h3></div></div></div>
 			
 			<p>下面是程序启动后进入后台的代码</p>
 			<p>通过进程ID文件来判断，当前进程状态，如果进程ID文件存在表示程序在运行中，通过代码file_exists($this-&gt;pidfile)实现，但而后进程被kill需要手工删除该文件才能运行</p>
@@ -301,7 +432,7 @@ $cgse-&gt;main($argv);
 			</pre>
 			<p>程序启动后，父进程会推出，子进程会在后台运行，子进程权限从root切换到指定用户，同时将pid写入进程ID文件。</p>
 		</section>
-		<section class="section" id="idp67803472"><div class="titlepage"><div><div><h3 class="title">5.2. 程序停止</h3></div></div></div>
+		<section class="section" id="idp71559872"><div class="titlepage"><div><div><h3 class="title">5.2. 程序停止</h3></div></div></div>
 			
 			<p>程序停止，只需读取pid文件，然后调用posix_kill($pid, 9); 最后将该文件删除。</p>
 			<pre class="programlisting">
@@ -317,7 +448,7 @@ $cgse-&gt;main($argv);
 			
 			</pre>
 		</section>
-		<section class="section" id="idp67805824"><div class="titlepage"><div><div><h3 class="title">5.3. 单例模式</h3></div></div></div>
+		<section class="section" id="idp71561952"><div class="titlepage"><div><div><h3 class="title">5.3. 单例模式</h3></div></div></div>
 			
 			<p>所有线程共用数据库连接，在多线程中这个非常重要，如果每个线程建立以此数据库连接在关闭，这对数据库的开销是巨大的。</p>
 			<pre class="screen">
