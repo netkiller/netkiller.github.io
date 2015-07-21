@@ -286,7 +286,7 @@ possible_keys: NULL
 
 		
 		</pre>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp51300608"></a>4.3.3.1. LINEAR HASH</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp65898624"></a>4.3.3.1. LINEAR HASH</h4></div></div></div>
 			
 			<pre class="programlisting">
 CREATE TABLE employees (
@@ -338,9 +338,9 @@ CREATE TABLE ts1 (id INT, purchased DATE)
     );
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp51310384"></a>4.3.6. 分区管理</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="alter.partition"></a>4.3.6. 分区管理</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp51311376"></a>4.3.6.1. 新增分区</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp65906368"></a>4.3.6.1. 新增分区</h4></div></div></div>
 			
 			<p>mysql 5.5+</p>
 			<p>为已经存在表添加分区</p>
@@ -440,14 +440,14 @@ Create Table: CREATE TABLE `t2` (
 			</pre>
 		</div>
 
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp51311632"></a>4.3.6.2. 删除分区</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp65906688"></a>4.3.6.2. 删除分区</h4></div></div></div>
 			
 			<p>删除分区 p0</p>
 			<pre class="programlisting">
 ALERT TABLE users DROP PARTITION p0;
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp51320752"></a>4.3.6.3. 重建分区</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp65915904"></a>4.3.6.3. 重建分区</h4></div></div></div>
 			
 			<p>使用  REORGANIZE 重建分区。</p>
 			<pre class="programlisting">
@@ -470,7 +470,7 @@ ALTER TABLE users REORGANIZE PARTITION COALESCE PARTITION 2;
 ALTER TABLE users ADD PARTITION PARTITIONS 8;
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp51324144"></a>4.3.6.4. 分区维护</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp65919296"></a>4.3.6.4. 分区维护</h4></div></div></div>
 			
 			<pre class="programlisting">
 重建分区: 这和先删除保存在分区中的所有记录，然后重新插入它们，具有同样的效果。它可用于整理分区碎片。
@@ -503,7 +503,7 @@ ALTER TABLE trb3 CHECK PARTITION (p1)；
 			</pre>
 		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp51326592"></a>4.3.7. EXPLAIN PARTITIONS</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="explain.partitions"></a>4.3.7. EXPLAIN PARTITIONS</h3></div></div></div>
 		
 		<p>EXPLAIN PARTITIONS</p>
 		<pre class="screen">
@@ -540,7 +540,7 @@ possible_keys: PRIMARY
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp51329136"></a>4.3.8. SHOW CREATE TABLE</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="show.partition"></a>4.3.8. SHOW CREATE TABLE</h3></div></div></div>
 		
 		<p>SHOW CREATE TABLE</p>
 		<pre class="screen">
@@ -561,7 +561,7 @@ PARTITIONS 7 */
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp51331360"></a>4.3.9. INFORMATION_SCHEMA.partitions 表</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="information_schema.partitions"></a>4.3.9. INFORMATION_SCHEMA.partitions 表</h3></div></div></div>
 		
 
 		<pre class="programlisting">
@@ -591,6 +591,33 @@ WHERE
     TABLE_SCHEMA = 'test'
     AND TABLE_NAME='t2';
 		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="sql.partition"></a>4.3.10. 分区数据操作</h3></div></div></div>
+		
+		<p>指定分区查询</p>
+		<pre class="programlisting">
+SELECT * FROM employees PARTITION (p0, p2);
+
+SELECT count(1) FROM employees PARTITION (p0);
+SELECT count(1) FROM employees PARTITION (p0, p2);
+SELECT count(1) FROM employees PARTITION (p0, p2, p1);
+		</pre>
+		<p>删除分区中的记录</p>
+		<pre class="programlisting">
+DELETE FROM employees PARTITION (p0, p1);		
+		</pre>
+		<p>更新指定分区</p>
+		<pre class="programlisting">
+UPDATE employees PARTITION (p0) SET store_id = 2 WHERE fname = 'Jill';		
+		</pre>
+		<p>指定分区连表查询</p>
+		<pre class="programlisting">
+SELECT e.id, s.city FROM employees AS e JOIN stores PARTITION (p1) AS s ...;		
+		</pre>
+		<p>将某个表迁移到分区上</p>
+		<pre class="programlisting">
+ALTER TABLE employees EXCHANGE PARTITION p0 WITH TABLE employees2;		
 		</pre>
 	</div>
 </div><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
