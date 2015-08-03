@@ -1,5 +1,7 @@
 Netkiller 系列免费电子书
 ======
+
+[![Join the chat at https://gitter.im/netkiller/netkiller.github.com](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/netkiller/netkiller.github.com?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 《Netkiller 系列 手札》是一套免费系列电子书，netkiller 是nickname 从1999 开使用至今，“手札” 是札记，手册的含义。
 
 2003年之前我还是以文章形式在BBS上发表各类技术文章，后来发现文章不够系统，便尝试写长篇技术文章加上章节目录等等。随着内容增加，不断修订，开始发布第一版，第二版......
