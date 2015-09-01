@@ -1,26 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<html xmlns="http://www.w3.org/1999/xhtml"><head><title>数据库进程间通信解决方案</title><link rel="stylesheet" type="text/css" href="docbook.css"/><link rel="stylesheet" type="text/css" href="journal.css"/><meta name="generator" content="DocBook XSL Stylesheets V1.78.1"/><meta name="description" content="你是否想过当数据库中的数据发生变化的时候出发某种操作？但因数据无法与其他进程通信（传递信号）让你放弃，而改用每隔一段时间查询一次数据变化的方法？下面的插件可以解决你的问题。 原文出处："/><meta name="keywords" content="mysql, plugin, udf, images"/><script xmlns="" type="text/javascript">
-
-  var _gaq = _gaq || [];
-  _gaq.push(['_setAccount', 'UA-11694057-1']);
-  _gaq.push(['_setDomainName', 'netkiller.sourceforge.net']);
-  _gaq.push(['_setAllowHash', 'false']);
-  _gaq.push(['_setAllowLinker', true]);
-  _gaq.push(['_trackPageview']);
-
-  (function() {
-    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-  })();
-
-</script></head><body><a xmlns="" href="http://netkiller.github.io/">Home</a> |
-        <a xmlns="" href="http://netkiller.sourceforge.net/">Mirror</a> |
-        <a xmlns="" href="/search.html">Search</a> | 
-		<a xmlns="" href="/journal/index.html">杂文</a> |
-        <a xmlns="" href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
-        <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
-        <a xmlns="" href="http://rline.blog.51cto.com/">51CTO 博客</a><section xml:lang="zh-cn" class="article" id="idp51612928"><div class="titlepage"><div><div><h2 class="title">数据库进程间通信解决方案</h2></div><div><h3 class="subtitle"><em>数据库与其他第三方应用程序进程间通信解决方案</em></h3></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(netkiller)</span>, <span class="lineage">陈景峰(BG7NYT)</span></h3><div class="affiliation">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>数据库进程间通信解决方案</title><link rel="stylesheet" type="text/css" href="docbook.css"/><link rel="stylesheet" type="text/css" href="/journal/journal.css"/><meta name="generator" content="DocBook XSL Stylesheets V1.78.1"/><meta name="description" content="你是否想过当数据库中的数据发生变化的时候出发某种操作？但因数据无法与其他进程通信（传递信号）让你放弃，而改用每隔一段时间查询一次数据变化的方法？下面的插件可以解决你的问题。 原文出处："/><meta name="keywords" content="mysql, plugin, udf, images"/></head><body><a xmlns="" href="http://netkiller.github.io/">Home</a> |
+		<a xmlns="" href="http://netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
+	    <a xmlns="" href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><section xml:lang="zh-cn" class="article" id="idp52051600"><div class="titlepage"><div><div><h2 class="title">数据库进程间通信解决方案</h2></div><div><h3 class="subtitle"><em>数据库与其他第三方应用程序进程间通信解决方案</em></h3></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(陈景峰)</span>, <span class="lineage">netkiller, BG7NYT</span></h3><div class="affiliation">
 			<div class="address"><p><br/>
 				<span class="country">中国</span><span class="state">广东省</span><span class="city">深圳市</span><span class="street">龙华新区民治街道溪山美地</span><br/>
 				<span class="postcode">518131</span><br/>
@@ -28,7 +16,7 @@
 				<span class="fax">+86 755 29812080</span><br/>
 				<code class="email">&lt;<a class="email" href="mailto:netkiller@msn.com">netkiller@msn.com</a>&gt;</code><br/>
 			</p></div>
-		</div></div></div><div><p class="releaseinfo">$Id: mysql-plugin.xml 587 2013-12-16 14:00:00Z netkiller $</p></div><div><p class="copyright">版权 © 2011, 2012, 2013, 2014 http://netkiller.github.io</p></div><div><div class="legalnotice" id="legalnotice">
+		</div></div></div><div><p class="releaseinfo">$Id: mysql-plugin.xml 587 2013-12-16 14:00:00Z netkiller </p></div><div><div class="legalnotice" id="legalnotice">
 	<p class="legalnotice-title"><strong>版权声明</strong></p>
 	<p>转载请与作者联系，转载时请务必标明文章原始出处和作者信息及本声明。</p>
 	<table style="border: 0; " class="simplelist"><tr><td>
@@ -43,9 +31,14 @@
 				</td></tr><tr><td>
 					<a class="ulink" href="http://netkiller.sourceforge.net/" target="_top">http://netkiller.sourceforge.net</a>
 				</td></tr></table>
+		</td><td>
+			<div><table style="border: 0; width: 80; cellpadding: 0; cellspacing: 0;"><tr><td><img src="/images/weixin.jpg" width="80"/></td></tr></table></div>
+		</td><td>
+			<p>微信扫描二维码进入 Netkiller 微信订阅号 </p>
+			<p>QQ群：128659835 请注明“读者”</p>
 		</td></tr></table>
 	<p/>
-</div></div><div><p class="pubdate">$Date: 2013-12-16 13:34:20 +0800 (Thu, 16 May 2013) $</p></div><div><div class="abstract"><div class="abstract-title">摘要</div>
+</div></div><div><p class="pubdate">2015-09-01: 2013-12-16 13:34:20 +0800 (Thu, 16 May 2013) </p></div><div><div class="abstract"><div class="abstract-title">摘要</div>
 			<p>你是否想过当数据库中的数据发生变化的时候出发某种操作？但因数据无法与其他进程通信（传递信号）让你放弃，而改用每隔一段时间查询一次数据变化的方法？下面的插件可以解决你的问题。</p>
 			<p>原文出处：<a class="ulink" href="http://netkiller.github.io/journal/mysql.plugin.fifo.html" target="_top">http://netkiller.github.io/journal/mysql.plugin.fifo.html</a></p>
 		</div></div><div><div class="abstract" id="abstract"><div class="abstract-title">我的系列文档</div>
@@ -60,9 +53,9 @@
 			<a class="ulink" href="../python/index.html" target="_top">Netkiller Python 手札</a>
 		</td><td>
 			<a class="ulink" href="../testing/index.html" target="_top">Netkiller Testing 手札</a>
-		</td><td>
-			<a class="ulink" href="../cryptography/index.html" target="_top">Netkiller Cryptography 手札</a>
 		</td></tr><tr><td>
+			<a class="ulink" href="../cryptography/index.html" target="_top">Netkiller Cryptography 手札</a>
+		</td><td>
 			<a class="ulink" href="../linux/index.html" target="_top">Netkiller Linux 手札</a>
 		</td><td>
 			<a class="ulink" href="../debian/index.html" target="_top">Netkiller Debian 手札</a>
@@ -70,27 +63,27 @@
 			<a class="ulink" href="../centos/index.html" target="_top">Netkiller CentOS 手札</a>
 		</td><td>
 			<a class="ulink" href="../freebsd/index.html" target="_top">Netkiller FreeBSD 手札</a>
-		</td><td>
+		</td></tr><tr><td>
 			<a class="ulink" href="../shell/index.html" target="_top">Netkiller Shell 手札</a>
 		</td><td>
 			<a class="ulink" href="../security/index.html" target="_top">Netkiller Security 手札</a>
-		</td></tr><tr><td>
+		</td><td>
 			<a class="ulink" href="../www/index.html" target="_top">Netkiller Web 手札</a>
 		</td><td>
 			<a class="ulink" href="../monitoring/index.html" target="_top">Netkiller Monitoring 手札</a>
 		</td><td>
 			<a class="ulink" href="../storage/index.html" target="_top">Netkiller Storage 手札</a>
-		</td><td>
+		</td></tr><tr><td>
 			<a class="ulink" href="../mail/index.html" target="_top">Netkiller Mail 手札</a>
 		</td><td>
 			<a class="ulink" href="../docbook/index.html" target="_top">Netkiller Docbook 手札</a>
 		</td><td>
-			<a class="ulink" href="../version/index.html" target="_top">Netkiller Version 手札</a>
-		</td></tr><tr><td>
+			<a class="ulink" href="../project/index.html" target="_top">Netkiller Project 手札</a>
+		</td><td>
 			<a class="ulink" href="../database/index.html" target="_top">Netkiller Database 手札</a>
 		</td><td>
 			<a class="ulink" href="../postgresql/index.html" target="_top">Netkiller PostgreSQL 手札</a>
-		</td><td>
+		</td></tr><tr><td>
 			<a class="ulink" href="../mysql/index.html" target="_top">Netkiller MySQL 手札</a>
 		</td><td>
 			<a class="ulink" href="../nosql/index.html" target="_top">Netkiller NoSQL 手札</a>
@@ -98,9 +91,9 @@
 			<a class="ulink" href="../ldap/index.html" target="_top">Netkiller LDAP 手札</a>
 		</td><td>
 			<a class="ulink" href="../network/index.html" target="_top">Netkiller Network 手札</a>
-		</td></tr><tr><td>
-			<a class="ulink" href="../cisco/index.html" target="_top">Netkiller Cisco IOS 手札</a>
 		</td><td>
+			<a class="ulink" href="../cisco/index.html" target="_top">Netkiller Cisco IOS 手札</a>
+		</td></tr><tr><td>
 			<a class="ulink" href="../h3c/index.html" target="_top">Netkiller H3C 手札</a>
 		</td><td>
 			<a class="ulink" href="../multimedia/index.html" target="_top">Netkiller Multimedia 手札</a>
@@ -108,13 +101,16 @@
 			<a class="ulink" href="../perl/index.html" target="_top">Netkiller Perl 手札</a>
 		</td><td>
 			<a class="ulink" href="../radio/index.html" target="_top">Netkiller Amateur Radio 手札</a>
-		</td><td> </td></tr></table>
+		</td><td>
+			<a class="ulink" href="../devops/index.html" target="_top">Netkiller DevOps 手札</a>
+		</td></tr></table>
+
+	<p>您可以使用<a class="ulink" href="ibook.epub" target="_top">iBook</a>阅读当前文档</p>
+
+</div></div></div><hr/></div><div class="toc"><div class="toc-title">目录</div><ul class="toc"><li><span class="section"><a href="#idp52056560">1. 背景</a></span></li><li><span class="section"><a href="#idp52428672">2. 解决思路</a></span></li><li><span class="section"><a href="#idp52432224">3. Mysql plugin</a></span></li><li><span class="section"><a href="#idp52441296">4. plugin 的开发与使用</a></span></li><li><span class="section"><a href="#idp52441552">5. 插件如何使用</a></span></li><li><span class="section"><a href="#idp52446864">6. 部署相关问题</a></span></li></ul></div>
 	
 
-</div></div></div><hr/></div><div class="toc"><div class="toc-title">目录</div><ul class="toc"><li><span class="section"><a href="#idp55344848">1. 背景</a></span></li><li><span class="section"><a href="#idp55437024">2. 解决思路</a></span></li><li><span class="section"><a href="#idp55440576">3. Mysql plugin</a></span></li><li><span class="section"><a href="#idp55449648">4. plugin 的开发与使用</a></span></li><li><span class="section"><a href="#idp55449904">5. 插件如何使用</a></span></li><li><span class="section"><a href="#idp55455216">6. 部署相关问题</a></span></li></ul></div>
-	
-
-	<section class="section" id="idp55344848"><div class="titlepage"><div><div><h2 class="title" style="clear: both">1. 背景</h2></div></div></div>
+	<section class="section" id="idp52056560"><div class="titlepage"><div><div><h2 class="title" style="clear: both">1. 背景</h2></div></div></div>
 		
 		<p>你是否有这样的需求：</p>
 		<p>你需要监控访问网站的IP，当同一个IP地址访问次数过多需要做出处理，例如拉黑，直接丢进iptables 防火墙规则连中。你的做法只能每个一段时间查询一次数据库，并且判断是否满足拉黑需求？</p>
@@ -122,7 +118,7 @@
 		<p>你使用数据库做队列，例如发送邮件，短信等等。你要通知发送程序对那些手机或者短线发送数据</p>
 		<p/>
 	</section>
-	<section class="section" id="idp55437024"><div class="titlepage"><div><div><h2 class="title" style="clear: both">2. 解决思路</h2></div></div></div>
+	<section class="section" id="idp52428672"><div class="titlepage"><div><div><h2 class="title" style="clear: both">2. 解决思路</h2></div></div></div>
 		
 		<p>需要让数据库与其他进程通信，传递信号</p>
 		<p>例如，发送短信这个需求，你只要告诉发短信的机器人发送的手机号码即可，机器人永远守候那哪里，只要命令一下立即工作。</p>
@@ -130,7 +126,7 @@
 		<p>这里所提的方案是采用fifo(First In First Out)方案，通过管道相互传递信号，使两个进程协同工作，这样的效率远比定时任务高许多。fifo是用于操作系统内部进程间通信，如果跨越操作系统需要使用Socket，还有一个新名词MQ(Message queue).</p>
 		<p>这里只做fifo演示, 将本程序改为Socket方案，或者直接集成成熟的MQ也是分分钟可以实现。</p>
 	</section>
-	<section class="section" id="idp55440576"><div class="titlepage"><div><div><h2 class="title" style="clear: both">3. Mysql plugin</h2></div></div></div>
+	<section class="section" id="idp52432224"><div class="titlepage"><div><div><h2 class="title" style="clear: both">3. Mysql plugin</h2></div></div></div>
 		
 		<p> 我开发了几个 UDF, 共4个 function</p>
 		<div class="variablelist"><div class="variablelist-title">UDF</div><dl class="variablelist"><dt><span class="term">fifo_create(pipename)</span></dt><dd>
@@ -144,7 +140,7 @@
 				</dd></dl></div>
 		<p>有了上面的function后你就可以在begin,commit,rollback 直接穿插使用，实现在事物处理期间做你爱做的事。也可以用在触发器与EVENT定时任务中。</p>
 	</section>
-	<section class="section" id="idp55449648"><div class="titlepage"><div><div><h2 class="title" style="clear: both">4. plugin 的开发与使用</h2></div></div></div>
+	<section class="section" id="idp52441296"><div class="titlepage"><div><div><h2 class="title" style="clear: both">4. plugin 的开发与使用</h2></div></div></div>
 		
 		<p>编译UDF你需要安装下面的软件包</p>
 		<pre class="screen">
@@ -177,7 +173,7 @@ drop function fifo_read;
 drop function fifo_write;
 		</pre>
 	</section>
-	<section class="section" id="idp55449904"><div class="titlepage"><div><div><h2 class="title" style="clear: both">5. 插件如何使用</h2></div></div></div>
+	<section class="section" id="idp52441552"><div class="titlepage"><div><div><h2 class="title" style="clear: both">5. 插件如何使用</h2></div></div></div>
 		
 		<p>插件有很多种用法，这里仅仅一个例</p>
 		<pre class="screen">
@@ -321,36 +317,29 @@ $ tail -f /tmp/demo.log
 [2013-12-16 14:55:48] [OK] 13322993040
 		</pre>
 	</section>
-	<section class="section" id="idp55455216"><div class="titlepage"><div><div><h2 class="title" style="clear: both">6. 部署相关问题</h2></div></div></div>
+	<section class="section" id="idp52446864"><div class="titlepage"><div><div><h2 class="title" style="clear: both">6. 部署相关问题</h2></div></div></div>
 		
 		<p>我们可以采用主从数据库，将任务放在专用的从库上执行</p>
 		<p>我们可以创建很多个管道，用于做不同的工作，例如插入一个任务，更新一个任务，发短信一个任务，处理模板与静态化一个任务等等。</p>
 	</section>
-</section><div xmlns="" id="bdshare" class="bdshare_t bds_tools_32 get-codes-bdshare"><a class="bds_fbook"/><a class="bds_twi"/><a class="bds_ms"/><a class="bds_msn"/><a class="bds_buzz"/><a class="bds_linkedin"/><a class="bds_deli"/><a class="bds_qzone"/><a class="bds_qq"/><a class="bds_tqq"/><a class="bds_tqf"/><a class="bds_tsina"/><a class="bds_baidu"/><a class="bds_renren"/><a class="bds_t163"/><a class="bds_tfh"/><a class="bds_douban"/><a class="bds_hi"/><a class="bds_tieba"/><a class="bds_tsohu"/><span class="bds_more"/><a class="shareCount"/></div><script xmlns="" type="text/javascript" id="bdshare_js" data="type=tools"/><script xmlns="" type="text/javascript" id="bdshell_js"/><script xmlns="" type="text/javascript">
-	document.getElementById("bdshell_js").src = "http://bdimg.share.baidu.com/static/js/shell_v2.js?cdnversion=" + new Date().getHours();
-</script><div xmlns="" id="disqus_thread"/><script xmlns="" type="text/javascript">
+</section><div xmlns="" id="disqus_thread"/><script xmlns="" type="text/javascript">
 	        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
 	        var disqus_shortname = 'netkiller'; // required: replace example with your forum shortname
-	
+
 	        /* * * DON'T EDIT BELOW THIS LINE * * */
 	        (function() {
 	            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
 	            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
 	            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
 	        })();
-	    </script><noscript xmlns="">Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><a xmlns="" href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a><br xmlns=""/><div xmlns="" id="clustrmaps-widget"/><script xmlns="" type="text/javascript">var _clustrmaps = {'url' : 'http://netkiller.github.io', 'user' : 1107643, 'server' : '2', 'id' : 'clustrmaps-widget', 'version' : 1, 'date' : '2013-08-14', 'lang' : 'en', 'corners' : 'square' };(function (){ var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = 'http://www2.clustrmaps.com/counter/map.js'; var x = document.getElementsByTagName('script')[0]; x.parentNode.insertBefore(s, x);})();</script><noscript xmlns=""><a href="http://www2.clustrmaps.com/user/87410e6bb"><img src="http://www2.clustrmaps.com/stats/maps-no_clusters/netkiller.github.io-thumb.jpg" alt="Locations of visitors to this page"/></a></noscript><script xmlns="" type="text/javascript">
+	    </script><noscript xmlns="">Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><a xmlns="" href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a><br xmlns=""/><div xmlns="" id="clustrmaps-widget"/><script xmlns="" type="text/javascript">var _clustrmaps = {'url' : 'http://netkiller.github.io', 'user' : 1107643, 'server' : '2', 'id' : 'clustrmaps-widget', 'version' : 1, 'date' : '2013-08-14', 'lang' : 'en', 'corners' : 'square' };(function (){ var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = 'http://www2.clustrmaps.com/counter/map.js'; var x = document.getElementsByTagName('script')[0]; x.parentNode.insertBefore(s, x);})();</script><noscript xmlns=""><a href="http://www2.clustrmaps.com/user/87410e6bb"><img src="http://www2.clustrmaps.com/stats/maps-no_clusters/netkiller.github.io-thumb.jpg" alt="Locations of visitors to this page"/></a></noscript><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
 
-  var _gaq = _gaq || [];
-  _gaq.push(['_setAccount', 'UA-11694057-1']);
-  _gaq.push(['_setDomainName', 'netkiller.github.io']);
-  _gaq.push(['_setAllowLinker', true]);
-  _gaq.push(['_trackPageview']);
-
-  (function() {
-    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-  })();
+  ga('create', 'UA-11694057-1', 'netkiller.github.io');
+  ga('send', 'pageview');
 
 </script><script xmlns="" type="text/javascript">
 var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
