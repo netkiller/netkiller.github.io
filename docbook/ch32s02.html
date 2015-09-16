@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>32.2. Subversion 版本控制</title><link rel="stylesheet" type="text/css" href="/docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.78.1" /><meta name="keywords" content="docbook, latex, epub" /><link rel="home" href="index.html" title="Netkiller Docbook 手札" /><link rel="up" href="editor.html" title="第 32 章 写作团队的运作" /><link rel="prev" href="editor.html" title="第 32 章 写作团队的运作" /><link rel="next" href="ch32s03.html" title="32.3. GIT" /></head><body><a xmlns="" href="http://netkiller.github.io/">Home</a> |
+		<a xmlns="" href="http://netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
+	    <a xmlns="" href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">32.2. Subversion 版本控制</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="editor.html">上一页</a> </td><th width="60%" align="center">第 32 章 写作团队的运作</th><td width="20%" align="right"> <a accesskey="n" href="ch32s03.html">下一页</a></td></tr></table><hr /><table width="100%" border="0"><tr><td align="left"><a href="http://netkiller.sourceforge.net/">Home</a> | 
+		<a href="http://netkiller.github.com/">Mirror</a> |		
+		<a href="/search.html">Search</a></td><td align="right"></td></tr></table></div><table xmlns=""><tr><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.com&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.com&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp49621504"></a>32.2. Subversion 版本控制</h2></div></div></div>
+		
+
+		<div class="procedure"><ol class="procedure" type="1"><li class="step">
+		    	<p>subversion 初始化</p>
+		    	<div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>trunk</p></li><li class="listitem"><p>branches</p></li><li class="listitem"><p>releases</p></li><li class="listitem"><p>tags</p></li></ol></div>
+				<pre class="screen">
+svn co svn://127.0.0.1/document
+cd project
+mkdir trunk
+mkdir tags
+mkdir branches
+mkdir releases
+svn ci -m "Initialized empty subversion repository in your_project"
+				</pre>
+			</li><li class="step">
+		    	<p>创建docbook文档，安排章节</p>
+		    	<p>将章节拆分成独立文件，并在主文档头部声明</p>
+		    	<pre class="programlisting">
+		    	
+	&lt;!ENTITY chapter.system SYSTEM "chapter.system.xml"&gt;
+	&lt;!ENTITY chapter.system.harddisk SYSTEM "chapter.system.harddisk.xml"&gt;
+	&lt;!ENTITY chapter.network SYSTEM "chapter.network.xml"&gt;
+		    	
+		    	</pre>
+		    	<p>完成后导入subversion的trunk中</p>
+			</li><li class="step">
+				<p>创建版本分支</p>
+				<pre class="screen">
+$ svn copy svn://netkiller.8800.org/document/trunk svn://netkiller.8800.org/document/branches/system
+$ svn copy svn://netkiller.8800.org/document/trunk svn://netkiller.8800.org/document/branches/network
+				</pre>
+			</li><li class="step">
+				<p>开始写作</p>
+				<p>我们假设jam负责system章节</p>
+				<div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>checkout</p>
+						<pre class="screen">
+$ svn checkout svn://netkiller.8800.org/document/branches/system
+						</pre>
+					</li><li class="listitem"><p>编辑文件</p>
+						<pre class="screen">
+vim chapter.system.xml
+						</pre>
+					</li><li class="listitem"><p>校验XML</p>
+						<pre class="screen">
+$ export DSSSL=/usr/share/xml/docbook/stylesheet/nwalsh/xhtml/chunk.xsl
+$ xsltproc --stringparam html.stylesheet docbook.css ${DSSSL} book.xml
+						</pre>
+					</li><li class="listitem"><p>提交文件</p>
+						<pre class="screen">
+$ svn ci -m "I have finished this chapter."
+						</pre>
+					</li></ol></div>
+				<p>其他编辑人员操作类似checkout自己branche上的network章节等等</p>
+			</li><li class="step">
+				<p>tags运作</p>
+				<p>当jam完成了指派的任务的第一个阶段后，可以创建一个tags</p>
+				<pre class="screen">
+svn copy svn://netkiller.8800.org/document/branches/system svn://netkiller.8800.org/document/tags/system_phase_I
+				</pre>
+				<p>tags 一旦建立，以后不会在更改</p>
+				<p>然后jam可以在/document/branches/system继续写作</p>
+			</li><li class="step">
+				<p>合并tags到主干</p>
+				<p>当tags完成后主编将其合并到trunk</p>
+				<pre class="screen">
+svn merge svn://netkiller.8800.org/document/tags/system_phase_I
+				</pre>
+				<p>然后发行unstable版本，你也可以每天产生一个快照。等待用户反馈。</p>
+				<p>反馈结果由负责人在/document/branches/system上修改，等待下一次发布在下一个阶段。</p>
+			</li><li class="step">
+				<p>发行文档</p>
+				<p>当一切OK时,我就可以把trunk 复制到 releases 中，随你怎命名。</p>
+				<pre class="screen">
+$ svn copy svn://netkiller.8800.org/document/trunk svn://netkiller.8800.org/document/release/document_v1.0
+				</pre>
+				<p>这个版本/document/release/document_v1.0就可以提供给读者了。</p>
+			</li></ol></div>
+	</div><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
+            /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+
+            //if(document.domain == 'netkiller.github.com'){
+            var disqus_shortname = 'netkiller'; // required: replace example with your forum shortname
+            //}else{
+			//var disqus_shortname = 'neochan';
+            //}
+
+            /* * * DON'T EDIT BELOW THIS LINE * * */
+            (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+            })();
+        </script><noscript xmlns="">Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><a xmlns="" href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a><br xmlns="" /><div xmlns="" id="clustrmaps-widget"></div><script xmlns="" type="text/javascript">var _clustrmaps = {'url' : 'http://netkiller.github.io', 'user' : 1107643, 'server' : '2', 'id' : 'clustrmaps-widget', 'version' : 1, 'date' : '2013-08-14', 'lang' : 'en', 'corners' : 'square' };(function (){ var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = 'http://www2.clustrmaps.com/counter/map.js'; var x = document.getElementsByTagName('script')[0]; x.parentNode.insertBefore(s, x);})();</script><noscript xmlns=""><a href="http://www2.clustrmaps.com/user/87410e6bb"><img src="http://www2.clustrmaps.com/stats/maps-no_clusters/netkiller.github.io-thumb.jpg" alt="Locations of visitors to this page" /></a></noscript><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="editor.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="editor.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ch32s03.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 32 章 写作团队的运作 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 32.3. GIT</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" type="text/javascript">
+var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F997cd4a7320a82d72cb74d179118f697' type='text/javascript'%3E%3C/script%3E"));
+</script><script xmlns="" type="text/javascript" src="/js/q.js"></script></body></html>
