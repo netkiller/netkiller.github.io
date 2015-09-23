@@ -12,12 +12,16 @@
 		<a href="http://netkiller.github.com/">Mirror</a> |		
 		<a href="/search.html">Search</a></td><td align="right"></td></tr></table></div><table xmlns=""><tr><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.com&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.com&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="vsftpd"></a>3.4. vsftpd - The Very Secure FTP Daemon</h2></div></div></div>
 		
-		<pre class="screen">
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp73623872"></a>3.4.1. 安装 vsftpd</h3></div></div></div>
+			
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp73624512"></a>3.4.1.1. Ubuntu 环境安装</h4></div></div></div>
+				
+				<pre class="screen">
 $ sudo apt-get install vsftpd
-		</pre>
-		<p>test</p>
-		<pre class="screen">
-		
+				</pre>
+				<p>test</p>
+				<pre class="screen">
+				
 [08:25:37 jobs:0] $ ncftp ftp://127.0.0.1
 NcFTP 3.2.1 (Jul 29, 2007) by Mike Gleason (http://www.NcFTP.com/contact/).
 Connecting to 127.0.0.1...
@@ -27,10 +31,10 @@ Login successful.
 Logged in to 127.0.0.1.
 Current remote directory is /.
 ncftp / &gt;
-		
-		</pre>
-		<p>enable local user</p>
-		<pre class="screen">
+				
+				</pre>
+				<p>enable local user</p>
+				<pre class="screen">
 $ sudo vim /etc/vsftpd.conf
 
 # Uncomment this to allow local users to log in.
@@ -38,10 +42,10 @@ local_enable=YES
 chroot_local_user=YES
 
 $ sudo /etc/init.d/vsftpd reload
-		</pre>
-		<p>testing for local user</p>
-		<pre class="screen">
-		
+				</pre>
+				<p>testing for local user</p>
+				<pre class="screen">
+				
 $ ncftp ftp://neo@127.0.0.1/
 NcFTP 3.2.1 (Jul 29, 2007) by Mike Gleason (http://www.NcFTP.com/contact/).
 Connecting to 127.0.0.1...
@@ -57,18 +61,53 @@ Login successful.
 Logged in to 127.0.0.1.
 Current remote directory is /home/neo.
 ncftp /home/neo &gt;
-		
-		</pre>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp73751216"></a>3.4.1. ftp 帐号的shell权限</h3></div></div></div>
+				
+				</pre>				
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp73629312"></a>3.4.1.2. CentOS 7 环境安装</h4></div></div></div>
+				
+				<pre class="screen">
+				
+yum install -y vsftpd
+
+systemctl enable vsftpd
+
+cp /etc/vsftpd/vsftpd.conf{,.original}
+
+sed -i 's/anonymous_enable=YES/anonymous_enable=NO/' /etc/vsftpd/vsftpd.conf
+sed -i 's/#chroot_local_user=YES/chroot_local_user=YES/' /etc/vsftpd/vsftpd.conf
+sed -i 's/listen=NO/listen=YES/' /etc/vsftpd/vsftpd.conf
+sed -i 's/listen_ipv6=YES/listen_ipv6=NO/' /etc/vsftpd/vsftpd.conf
+
+echo "allow_writeable_chroot=YES" &gt;&gt; /etc/vsftpd/vsftpd.conf
+
+systemctl start vsftpd
+				
+				</pre>
+				<p>firewalld 防火墙</p>
+				<pre class="screen">
+# firewall-cmd --permanent --add-port=21/tcp				
+				</pre>
+				<p>iptables</p>
+				<pre class="screen">
+sed -i 's/IPTABLES_MODULES=""/IPTABLES_MODULES="ip_conntrack_ftp"/' /etc/sysconfig/iptables-config
+
+# vim /etc/sysconfig/iptables
+-A INPUT -m state --state NEW -m tcp -p tcp --dport 20 -j ACCEPT
+-A INPUT -m state --state NEW -m tcp -p tcp --dport 21 -j ACCEPT
+				</pre>
+			</div>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp73633360"></a>3.4.2. ftp 帐号的shell权限</h3></div></div></div>
 			
 			<p>我们不想让FTP用户通过shell登录系统, 可以将用户的Shell改为/sbin/nologin</p>
 			<pre class="screen">
 neo:x:1000:1000:neo,,,:/home/neo:/sbin/nologin
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp73753600"></a>3.4.2. vsftpd 认证模块</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp73635248"></a>3.4.3. vsftpd 认证模块</h3></div></div></div>
 			
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp73754368"></a>3.4.2.1. pam_shells.so</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp73636016"></a>3.4.3.1. pam_shells.so</h4></div></div></div>
 				
 				<pre class="screen">
 # cat /etc/pam.d/vsftpd
@@ -83,7 +122,7 @@ session    required     pam_loginuid.so
 				</pre>
 				<p>/etc/vsftpd/ftpusers 列表中的用户将不能登录ftp服务器</p>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp73756592"></a>3.4.2.2. virtual user</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp73638304"></a>3.4.3.2. virtual user</h4></div></div></div>
 				
 				<p>创建明文密码文件，一行用户名后回车跟一行密码</p>
 				<pre class="screen">
@@ -136,7 +175,7 @@ local_umask=022
 # chown ftp:ftp /var/www/virtual/mary
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp73762608"></a>3.4.2.3. 虚拟用户权限</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp73644368"></a>3.4.3.3. 虚拟用户权限</h4></div></div></div>
 				
 				<pre class="screen">
 vim /etc/vsftpd.conf
@@ -161,16 +200,16 @@ echo "write_enable=YES" &gt;&gt; /etc/vsftpd/conf.d/jam
 				</pre>
 			</div>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp73766144"></a>3.4.3. chroot</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp73648016"></a>3.4.4. chroot</h3></div></div></div>
 			
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp73767216"></a>3.4.3.1. local user</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp73648832"></a>3.4.4.1. local user</h4></div></div></div>
 				
 				<p>chroot 所有本地用户</p>
 				<pre class="screen">
 chroot_local_user=YES
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp73768976"></a>3.4.3.2. /etc/vsftpd/chroot_list</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp73650688"></a>3.4.4.2. /etc/vsftpd/chroot_list</h4></div></div></div>
 				
 				<p>受限用户用户添加到文件vsftpd.chroot_list</p>
 				<pre class="screen">
@@ -180,7 +219,7 @@ chroot_list_file=/etc/vsftpd/chroot_list
 				<p>注意：每行一个用户名</p>
 			</div>
 			
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp73772544"></a>3.4.3.3. test</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp73654128"></a>3.4.4.3. test</h4></div></div></div>
 				
 				<pre class="screen">
 adduser -o --home /www --shell /sbin/nologin --uid 99 --gid 99 --group nobody www
@@ -190,7 +229,17 @@ ncftp ftp://www:chen@172.16.0.1
 				</pre>
 			</div>
 		</div>
-
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp73655792"></a>3.4.5. FAT</h3></div></div></div>
+			
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp73656432"></a>3.4.5.1. vsftpd: refusing to run with writable root inside chroot()</h4></div></div></div>
+				
+				<p>添加 allow_writeable_chroot=YES 项到 /etc/vsftpd/vsftpd.conf 配置文件</p>
+				<pre class="screen">
+echo "allow_writeable_chroot=YES" &gt;&gt; /etc/vsftpd/vsftpd.conf
+				</pre>
+				<pre class="screen">重启 vsftpd </pre>
+			</div>
+		</div>
 	</div><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
             /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
 

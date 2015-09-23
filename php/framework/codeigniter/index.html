@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>第 10 章 CodeIgniter - Open source PHP web application framework</title><link rel="stylesheet" type="text/css" href="../..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.78.1" /><meta name="keywords" content="php, pear, pecl, phar" /><link rel="home" href="../../index.html" title="Netkiller PHP 手札" /><link rel="up" href="../index.html" title="部分 I. Frameworks" /><link rel="prev" href="../phalcon/cache.html" title="9.4. cache" /><link rel="next" href="PHP_CodeSniffer.html" title="10.2. PHP_CodeSniffer" /></head><body><a xmlns="" href="http://netkiller.github.io/">Home</a> |
+		<a xmlns="" href="http://netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
+	    <a xmlns="" href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">第 10 章 CodeIgniter - Open source PHP web application framework</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="../phalcon/cache.html">上一页</a> </td><th width="60%" align="center">部分 I. Frameworks</th><td width="20%" align="right"> <a accesskey="n" href="PHP_CodeSniffer.html">下一页</a></td></tr></table><hr /><table width="100%" border="0"><tr><td align="left"><a href="http://netkiller.sourceforge.net/">Home</a> | 
+		<a href="http://netkiller.github.com/">Mirror</a> |		
+		<a href="/search.html">Search</a></td><td align="right"></td></tr></table></div><table xmlns=""><tr><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.com&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.com&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="chapter"><div class="titlepage"><div><div><h2 class="title"><a id="index"></a>第 10 章 CodeIgniter - Open source PHP web application framework</h2></div></div></div><div class="toc"><p><strong>目录</strong></p><dl class="toc"><dt><span class="section"><a href="index.html#codeigniter.nginx">10.1. Nginx</a></span></dt><dt><span class="section"><a href="PHP_CodeSniffer.html">10.2. PHP_CodeSniffer</a></span></dt></dl></div>
+	
+	<p>homepage: http://www.codeigniter.com/</p>
+	<p>下载解压后复制到 /usr/share/php/</p>
+	<pre class="screen">
+	
+$ chmod 755 -R /usr/share/php/CodeIgniter_2.0.0
+$ ln -s /usr/share/php/CodeIgniter_2.0.0 /usr/share/php/CodeIgniter
+$ ls /usr/share/php
+CodeIgniter Smarty
+	
+	</pre>
+	<p>rewrite</p>
+	<p>lighttpd 为例</p>
+	<pre class="screen">
+	
+url.rewrite = ( "^/(.+)" =&gt; "/index.php/$1"
+	
+	</pre>
+	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="codeigniter.nginx"></a>10.1. Nginx</h2></div></div></div>
+		
+		<pre class="screen">
+		
+	location / {
+        root   /www/mydomain.com/report.mydomain.com/htdocs;
+        index  index.php index.html;
+
+        if ($request_filename !~ (js|css|images|robots/.txt|index/.php) ) {
+                rewrite ^/(.*)$ /index.php/$1 last;
+                break;
+        }
+
+    }
+
+    location ~* ^.+.(jpg|jpeg|gif|css|png|js|ico|xml)$ {
+        access_log        off;
+        expires           7d;
+    }
+
+    location ~ \.php$ {
+        if ($request_filename !~ (index/.php) ) {
+                return 404;
+        }
+    }
+
+	location ~ /index.php/ {
+        root           html;
+        fastcgi_pass   127.0.0.1:9000;
+        fastcgi_index  index.php;
+        fastcgi_param  SCRIPT_FILENAME  /www/mydomain.com/report.mydomain.com/htdocs/index.php;
+        include        fastcgi_params;
+    }
+		
+		</pre>
+
+		<pre class="screen">
+		
+	location / {
+
+        root  /www/www.example.com/public;
+        index  index.php;
+
+        # this serves static files that exist without running other rewrite tests
+        if (-f $request_filename) {
+            expires 30d;
+            break;
+        }
+
+        # this sends all non-existing file or directory requests to index.php
+        if (!-e $request_filename) {
+                rewrite ^(.+)$ /index.php?$1 last;
+        }
+    }
+
+    location ~* ^.+.(jpg|jpeg|gif|css|png|js|ico|xml)$ {
+        access_log        off;
+        expires           30d;
+        root /www/www.example.com/public;
+    }
+
+
+
+    # pass the *.php scripts to php5-fpm listening on tcp port 9000 #
+    location ~ \.php$ {
+        root  /www/www.example.com/public;
+        index  index.php;
+        fastcgi_pass   127.0.0.1:9000;
+        fastcgi_index  index.php;
+
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_param SERVER_NAME $http_host;
+        fastcgi_param PATH_INFO $fastcgi_script_name;
+        fastcgi_ignore_client_abort on;
+    }
+
+    ## Disable viewing .htaccess &amp; .htpassword
+    location ~ /\.ht {
+        deny  all;
+    }
+		
+		</pre>
+	</div>
+	
+</div><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
+            /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+
+            //if(document.domain == 'netkiller.github.com'){
+            var disqus_shortname = 'netkiller'; // required: replace example with your forum shortname
+            //}else{
+			//var disqus_shortname = 'neochan';
+            //}
+
+            /* * * DON'T EDIT BELOW THIS LINE * * */
+            (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+            })();
+        </script><noscript xmlns="">Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><a xmlns="" href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a><br xmlns="" /><div xmlns="" id="clustrmaps-widget"></div><script xmlns="" type="text/javascript">var _clustrmaps = {'url' : 'http://netkiller.github.io', 'user' : 1107643, 'server' : '2', 'id' : 'clustrmaps-widget', 'version' : 1, 'date' : '2013-08-14', 'lang' : 'en', 'corners' : 'square' };(function (){ var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = 'http://www2.clustrmaps.com/counter/map.js'; var x = document.getElementsByTagName('script')[0]; x.parentNode.insertBefore(s, x);})();</script><noscript xmlns=""><a href="http://www2.clustrmaps.com/user/87410e6bb"><img src="http://www2.clustrmaps.com/stats/maps-no_clusters/netkiller.github.io-thumb.jpg" alt="Locations of visitors to this page" /></a></noscript><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="../phalcon/cache.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="../index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="PHP_CodeSniffer.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">9.4. cache </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 10.2. PHP_CodeSniffer</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" type="text/javascript">
+var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F997cd4a7320a82d72cb74d179118f697' type='text/javascript'%3E%3C/script%3E"));
+</script><script xmlns="" type="text/javascript" src="/js/q.js"></script></body></html>

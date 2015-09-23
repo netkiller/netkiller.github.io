@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>14.6. Smarty</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.78.1" /><meta name="keywords" content="php, pear, pecl, phar" /><link rel="home" href="../index.html" title="Netkiller PHP 手札" /><link rel="up" href="zend_framework.html" title="第 14 章 Zend Framework" /><link rel="prev" href="ch14s05.html" title="14.5. zf.sh" /><link rel="next" href="propel.html" title="第 15 章 Propel" /></head><body><a xmlns="" href="http://netkiller.github.io/">Home</a> |
+		<a xmlns="" href="http://netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
+	    <a xmlns="" href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">14.6. Smarty</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ch14s05.html">上一页</a> </td><th width="60%" align="center">第 14 章 Zend Framework</th><td width="20%" align="right"> <a accesskey="n" href="propel.html">下一页</a></td></tr></table><hr /><table width="100%" border="0"><tr><td align="left"><a href="http://netkiller.sourceforge.net/">Home</a> | 
+		<a href="http://netkiller.github.com/">Mirror</a> |		
+		<a href="/search.html">Search</a></td><td align="right"></td></tr></table></div><table xmlns=""><tr><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.com&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.com&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp47388048"></a>14.6. Smarty</h2></div></div></div>
+			
+			<pre class="screen">
+			
+&lt;?php
+
+//打开错误提示
+
+error_reporting(E_ALL|E_STRICT);
+
+//设定时区
+
+date_default_timezone_set("Asia/Shanghai");
+
+//指明引用文件的路径
+
+set_include_path('.'.PATH_SEPARATOR.'./library'.PATH_SEPARATOR.'./app/model/'.PATH_SEPARATOR.get_include_path());
+
+//必须手动加载Loader.php
+
+include "Zend/Loader.php";
+
+//自动加载类，使用时，直接实例化使用
+
+function __autoload($class){
+
+    Zend_Loader::loadClass($class);
+
+}
+
+   //getInstance()方法用来获取前端控制器实例
+
+   $frontController = Zend_Controller_Front::getInstance();
+
+   //设定前端路由器的工作目录，即cotroller
+
+   $frontController-&gt;setControllerDirectory(array("default"=&gt;"app/controller"));
+
+   //抛出异常
+
+   $frontController-&gt;throwExceptions(true);
+
+   //设置基地址,方便以后url的跳转用户,注意，区分大小写！
+
+   $frontController-&gt;setBaseUrl("/phpzend");
+
+//使用smarty模版需关闭本身的视图助手.
+
+$frontController-&gt;setParam("noViewRenderer", true);
+
+       // 关闭错误提示，发生请求错误时候，转到ErrorController的errorAction控制器
+
+//$frontController-&gt;throwExceptions(false);
+
+//对。。进行注册
+
+Zend_Registry::set("font", $frontController);
+
+//------------配置Smarty模版 ----------------
+
+include "smarty/Smarty.class.php";
+
+/**
+
+* 对smarty模版进行初始化
+
+**/
+
+$views = new Smarty();
+
+//$views-&gt;left_delimiter = "{{";
+
+//$views-&gt;right_delimiter = "}}";
+
+$views-&gt;compile_dir = "app/template_c";
+$views-&gt;cache_dir = "app/template_c/cache_c";
+$views-&gt;template_dir = "app/template";
+function smarty_block_dynamic($param,$content,&amp;$views)
+{
+      return $content;
+}
+
+$views-&gt;register_block("dynamic","smarty_block_dynamic",false);
+
+Zend_Registry::set("views", $views);
+
+//开始运行程序
+
+$frontController-&gt;dispatch();
+			
+			</pre>
+			<p></p>
+			<pre class="screen">
+			
+&lt;?php
+
+   //控制器层
+
+   class IndexController extends Zend_Controller_Action{
+
+     var $views;   /*模板对象*/
+
+     var $data;    /*传递模版变量的对象*/
+
+      function init()
+
+      {
+
+             //拿回注册过的对象
+
+             $this-&gt;views = Zend_Registry::get("views");
+
+    }
+
+      function indexAction()
+
+      {
+
+             //定义模版显示的变量
+
+             $data['title']="hello world";
+
+             //传递变量到模版
+
+             $this-&gt;views-&gt;assign($data);
+
+             //显示模版
+
+             $this-&gt;views-&gt;display("index/index.tpl");
+
+                       echo "&lt;p&gt;in IndexController::indexAction()&lt;/p&gt;";
+
+    }
+
+      function addAction()
+
+      {
+
+      }
+
+}
+			
+			</pre>
+		</div><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
+            /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+
+            //if(document.domain == 'netkiller.github.com'){
+            var disqus_shortname = 'netkiller'; // required: replace example with your forum shortname
+            //}else{
+			//var disqus_shortname = 'neochan';
+            //}
+
+            /* * * DON'T EDIT BELOW THIS LINE * * */
+            (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+            })();
+        </script><noscript xmlns="">Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><a xmlns="" href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a><br xmlns="" /><div xmlns="" id="clustrmaps-widget"></div><script xmlns="" type="text/javascript">var _clustrmaps = {'url' : 'http://netkiller.github.io', 'user' : 1107643, 'server' : '2', 'id' : 'clustrmaps-widget', 'version' : 1, 'date' : '2013-08-14', 'lang' : 'en', 'corners' : 'square' };(function (){ var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = 'http://www2.clustrmaps.com/counter/map.js'; var x = document.getElementsByTagName('script')[0]; x.parentNode.insertBefore(s, x);})();</script><noscript xmlns=""><a href="http://www2.clustrmaps.com/user/87410e6bb"><img src="http://www2.clustrmaps.com/stats/maps-no_clusters/netkiller.github.io-thumb.jpg" alt="Locations of visitors to this page" /></a></noscript><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ch14s05.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="zend_framework.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="propel.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">14.5. zf.sh </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 15 章 Propel</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" type="text/javascript">
+var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F997cd4a7320a82d72cb74d179118f697' type='text/javascript'%3E%3C/script%3E"));
+</script><script xmlns="" type="text/javascript" src="/js/q.js"></script></body></html>
