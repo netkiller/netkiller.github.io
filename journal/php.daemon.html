@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<html xmlns="http://www.w3.org/1999/xhtml"><head><title>PHP高级编程之守护进程</title><link rel="stylesheet" type="text/css" href="docbook.css"/><link rel="stylesheet" type="text/css" href="/journal/journal.css"/><meta name="generator" content="DocBook XSL Stylesheets V1.78.1"/><meta name="description" content="2014-09-01 发表 2015-08-31 更新"/><meta name="keywords" content="PHP守护进程, PHP多线程, PHP多进程, "/></head><body><a xmlns="" href="http://netkiller.github.io/">Home</a> |
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>PHP高级编程之守护进程</title><link rel="stylesheet" type="text/css" href="docbook.css"/><link rel="stylesheet" type="text/css" href="/journal/journal.css"/><meta name="generator" content="DocBook XSL Stylesheets V1.78.1"/><meta name="description" content="2014-09-01 发表 2015-08-31 更新 2015-10-20 更新，增加优雅重启"/><meta name="keywords" content="PHP守护进程, PHP多线程, PHP多进程, "/></head><body><a xmlns="" href="http://netkiller.github.io/">Home</a> |
 		<a xmlns="" href="http://netkiller.github.io/">简体中文</a> |
 	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
 	    <a xmlns="" href="/journal/index.html">杂文</a> |
@@ -8,7 +8,7 @@
 	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
 	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
 	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
-		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><section xml:lang="zh-cn" class="article" id="idp61406000"><div class="titlepage"><div><div><h2 class="title">PHP高级编程之守护进程</h2></div><div><h3 class="subtitle"><em>http://netkiller.github.io/journal/php.daemon.html</em></h3></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(陈景峰)</span>, <span class="lineage">netkiller, BG7NYT</span></h3><div class="affiliation">
+		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><section xml:lang="zh-cn" class="article" id="idp50227344"><div class="titlepage"><div><div><h2 class="title">PHP高级编程之守护进程</h2></div><div><h3 class="subtitle"><em>http://netkiller.github.io/journal/php.daemon.html</em></h3></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(陈景峰)</span>, <span class="lineage">netkiller, BG7NYT</span></h3><div class="affiliation">
 			<div class="address"><p><br/>
 				<span class="country">中国</span><span class="state">广东省</span><span class="city">深圳市</span><span class="street">龙华新区民治街道溪山美地</span><br/>
 				<span class="postcode">518131</span><br/>
@@ -41,6 +41,7 @@
 </div></div><div><p class="pubdate">2014-09-01</p></div><div><div class="abstract"><div class="abstract-title">摘要</div>
 			<p>2014-09-01 发表</p>
 			<p>2015-08-31 更新</p>
+			<p>2015-10-20 更新，增加优雅重启</p>
 		</div></div><div><div class="abstract" id="abstract"><div class="abstract-title">我的系列文档</div>
 	
 	<table style="border: 0; " class="simplelist"><tr><td>
@@ -107,7 +108,7 @@
 
 	<p>您可以使用<a class="ulink" href="ibook.epub" target="_top">iBook</a>阅读当前文档</p>
 
-</div></div></div><hr/></div><div class="toc"><div class="toc-title">目录</div><ul class="toc"><li><span class="section"><a href="#what">1. 什么是守护进程</a></span></li><li><span class="section"><a href="#why">2. 为什么开发守护进程</a></span></li><li><span class="section"><a href="#when">3. 何时采用守护进程开发应用程序</a></span></li><li><span class="section"><a href="#security">4. 守护进程的安全问题</a></span></li><li><span class="section"><a href="#how">5. 怎样开发守护进程</a></span><ul><li><span class="section"><a href="#idp62080128">5.1. 程序启动</a></span></li><li><span class="section"><a href="#idp62083376">5.2. 程序停止</a></span></li><li><span class="section"><a href="#idp62085216">5.3. 单例模式</a></span></li></ul></li><li><span class="section"><a href="#proc">6. 进程意外退出解决方案</a></span></li></ul></div>
+</div></div></div><hr/></div><div class="toc"><div class="toc-title">目录</div><ul class="toc"><li><span class="section"><a href="#what">1. 什么是守护进程</a></span></li><li><span class="section"><a href="#why">2. 为什么开发守护进程</a></span></li><li><span class="section"><a href="#when">3. 何时采用守护进程开发应用程序</a></span></li><li><span class="section"><a href="#security">4. 守护进程的安全问题</a></span></li><li><span class="section"><a href="#how">5. 怎样开发守护进程</a></span><ul><li><span class="section"><a href="#idp50305792">5.1. 程序启动</a></span></li><li><span class="section"><a href="#idp50309040">5.2. 程序停止</a></span></li><li><span class="section"><a href="#idp50310880">5.3. 单例模式</a></span></li><li><span class="section"><a href="#idp50312608">5.4. 实现优雅重启</a></span></li></ul></li><li><span class="section"><a href="#proc">6. 进程意外退出解决方案</a></span></li></ul></div>
 	
 	<section class="section" id="what"><div class="titlepage"><div><div><h2 class="title" style="clear: both">1. 什么是守护进程</h2></div></div></div>
 		
@@ -131,7 +132,7 @@
 	
 	<section class="section" id="how"><div class="titlepage"><div><div><h2 class="title" style="clear: both">5. 怎样开发守护进程</h2></div></div></div>
 		
-		<div class="example" id="idp62070240"><div class="example-title">例 1. 多线程守护进程例示</div><div class="example-contents">
+		<div class="example" id="idp50295904"><div class="example-title">例 1. 多线程守护进程例示</div><div class="example-contents">
 			
 			<pre class="programlisting">
 			
@@ -289,7 +290,7 @@ $cgse-&gt;main($argv);
 			
 			</pre>
 		</div></div><br class="example-break"/>
-		<div class="example" id="idp62075168"><div class="example-title">例 2. 消息队列与守护进程</div><div class="example-contents">
+		<div class="example" id="idp50300832"><div class="example-title">例 2. 消息队列与守护进程</div><div class="example-contents">
 			
 			<pre class="programlisting">
 			
@@ -420,7 +421,7 @@ $edm-&gt;main();
 			
 			</pre>
 		</div></div><br class="example-break"/>
-		<section class="section" id="idp62080128"><div class="titlepage"><div><div><h3 class="title">5.1. 程序启动</h3></div></div></div>
+		<section class="section" id="idp50305792"><div class="titlepage"><div><div><h3 class="title">5.1. 程序启动</h3></div></div></div>
 			
 			<p>下面是程序启动后进入后台的代码</p>
 			<p>通过进程ID文件来判断，当前进程状态，如果进程ID文件存在表示程序在运行中，通过代码file_exists($this-&gt;pidfile)实现，但而后进程被kill需要手工删除该文件才能运行</p>
@@ -451,7 +452,7 @@ $edm-&gt;main();
 			</pre>
 			<p>程序启动后，父进程会推出，子进程会在后台运行，子进程权限从root切换到指定用户，同时将pid写入进程ID文件。</p>
 		</section>
-		<section class="section" id="idp62083376"><div class="titlepage"><div><div><h3 class="title">5.2. 程序停止</h3></div></div></div>
+		<section class="section" id="idp50309040"><div class="titlepage"><div><div><h3 class="title">5.2. 程序停止</h3></div></div></div>
 			
 			<p>程序停止，只需读取pid文件，然后调用posix_kill($pid, 9); 最后将该文件删除。</p>
 			<pre class="programlisting">
@@ -467,7 +468,7 @@ $edm-&gt;main();
 			
 			</pre>
 		</section>
-		<section class="section" id="idp62085216"><div class="titlepage"><div><div><h3 class="title">5.3. 单例模式</h3></div></div></div>
+		<section class="section" id="idp50310880"><div class="titlepage"><div><div><h3 class="title">5.3. 单例模式</h3></div></div></div>
 			
 			<p>所有线程共用数据库连接，在多线程中这个非常重要，如果每个线程建立以此数据库连接在关闭，这对数据库的开销是巨大的。</p>
 			<pre class="screen">
@@ -475,6 +476,118 @@ protected function getInstance(){
 	return self::$dbh;
 }			
 			</pre>
+		</section>
+		<section class="section" id="idp50312608"><div class="titlepage"><div><div><h3 class="title">5.4. 实现优雅重启</h3></div></div></div>
+			
+			<p>所谓优雅重启是指进程不退出的情况加实现重新载入包含重置变量，刷新配置文件，重置日志等等</p>
+			<p>stop/start 或者 restart都会退出进程，重新启动，导致进程ID改变，同时瞬间退出导致业务闪断。所以很多守护进程都会提供一个reload功能，者就是所谓的优雅重启。</p>
+			<p>reload 实现原理是给进程发送SIGHUP信号，可以通过kill命令发送 kill -s SIGHUP 64881，也可以通过库函数实现 posix_kill(posix_getpid(), SIGUSR1);</p>
+			<pre class="screen">
+			
+&lt;?php
+pcntl_signal(SIGTERM,  function($signo) {
+    echo "\n This signal is called. [$signo] \n";
+    Status::$state = -1;
+});
+
+pcntl_signal(SIGHUP,  function($signo) {
+    echo "\n This signal is called. [$signo] \n";
+    Status::$state = 1;
+	Status::$ini = parse_ini_file('test.ini');
+});
+
+class Status{
+    public static $state = 0;
+	public static $ini = null;
+}
+
+$pid = pcntl_fork();
+if ($pid == -1) {
+    die('could not fork');
+}
+
+if($pid) {
+    // parent
+} else {
+	$loop = true;
+	Status::$ini = parse_ini_file('test.ini');
+    while($loop) {
+		print_r(Status::$ini);
+        while(true) {
+			// Dispatching... 
+			pcntl_signal_dispatch();
+			if(Status::$state == -1) {
+				// Do something and end loop.
+				$loop = false;
+				break;
+			}
+			
+			if(Status::$state == 1) {
+				printf("This program is reload.\r\n");
+				Status::$state = 0;
+				break;
+			}
+            echo '.';
+            sleep(1);
+        }
+        echo "\n";
+    }
+    
+    echo "Finish \n";
+    exit();
+}
+			
+			</pre>
+			<p>创建配置文件</p>
+			<pre class="screen">
+[root@netkiller pcntl]# cat test.ini 
+[db]
+host=192.168.0.1
+port=3306
+			</pre>
+			<p>测试方法，首先运行该守护进程</p>
+			<pre class="screen">
+# php signal.reload.php 
+Array
+(
+    [host] =&gt; 192.168.0.1
+    [port] =&gt; 3306
+)
+			</pre>
+			<p>现在修改配置文件，增加user=test配置项</p>
+			<pre class="screen">
+[root@netkiller pcntl]# cat test.ini 
+[db]
+host=192.168.0.1
+port=3306
+user=test
+			</pre>
+			<p>发送信号，在另一个终端窗口，通过ps命令找到该进程的PID，然后使用kill命令发送SIGHUP信号，然后再通过ps查看进程，你会发现进程PID没有改变</p>
+			<pre class="screen">
+[root@netkiller pcntl]# ps ax | grep reload
+64881 pts/0    S      0:00 php -c /srv/php/etc/php-cli.ini signal.reload.php
+65073 pts/1    S+     0:00 grep --color=auto reload
+
+[root@netkiller pcntl]# kill -s SIGHUP 64881
+
+[root@netkiller pcntl]# ps ax | grep reload
+64881 pts/0    S      0:00 php -c /srv/php/etc/php-cli.ini signal.reload.php
+65093 pts/1    S+     0:00 grep --color=auto reload
+
+			</pre>
+			<p>配置文件被重新载入</p>
+			<pre class="screen">
+This signal is called. [1] 
+This program is reload.
+
+Array
+(
+    [host] =&gt; 192.168.0.1
+    [port] =&gt; 3306
+    [user] =&gt; test
+)			
+			</pre>
+			<p>优雅重启完成。</p>
 		</section>
 	</section>
 	<section class="section" id="proc"><div class="titlepage"><div><div><h2 class="title" style="clear: both">6. 进程意外退出解决方案</h2></div></div></div>
