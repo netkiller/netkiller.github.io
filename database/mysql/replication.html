@@ -8,19 +8,7 @@
 	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
 	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
 	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
-		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">8.3. Replication</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="my.cnf.html">上一页</a> </td><th width="60%" align="center">第 8 章 MySQL Server</th><td width="20%" align="right"> <a accesskey="n" href="cluster.html">下一页</a></td></tr></table><hr /><table width="100%" border="0"><tr><td align="left"><a href="http://netkiller.sourceforge.net/">Home</a> | 
-		<a href="http://netkiller.github.com/">Mirror</a> |		
-		<a href="/search.html">Search</a></td><td align="right"></td></tr></table></div><table xmlns=""><tr><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.com&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.com&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="replication"></a>8.3. Replication</h2></div></div></div>
-	
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="master.slave"></a>8.3.1. Master Slave</h3></div></div></div>
-		
-
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="replication.master"></a>8.3.1.1. Master</h4></div></div></div>
-			
-			<div class="procedure"><a id="idp74912336"></a><p class="title"><strong>过程 8.1. Master 设置步骤</strong></p><ol class="procedure" type="1"><li class="step">
-					<p>配置 my.cnf 文件</p>
-					<p>确保主服务器主机上my.cnf文件的[mysqld]部分包括一个log-bin选项。该部分还应有一个server-id=Master_id选项</p>
-					<pre class="screen">
+		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">8.3. Replication</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="my.cnf.html">上一页</a> </td><th width="60%" align="center">第 8 章 MySQL Server</th><td width="20%" align="right"> <a accesskey="n" href="cluster.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.com&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.com&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="replication"></a>8.3. Replication</h2></div></div></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="master.slave"></a>8.3.1. Master Slave</h3></div></div></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="replication.master"></a>8.3.1.1. Master</h4></div></div></div><div class="procedure"><a id="idm45780526391824"></a><p class="title"><strong>过程 8.1. Master 设置步骤</strong></p><ol class="procedure" type="1"><li class="step"><p>配置 my.cnf 文件</p><p>确保主服务器主机上my.cnf文件的[mysqld]部分包括一个log-bin选项。该部分还应有一个server-id=Master_id选项</p><pre class="screen">
 # vim /etc/mysql/my.cnf
 
 server-id               = 1
@@ -29,21 +17,13 @@ expire_logs_days        = 10
 max_binlog_size         = 100M
 binlog_do_db            = test
 binlog_ignore_db        = mysql
-					</pre>
-					<p>bind-address默认是127.0.0.1你必须更改它，否则Slave将无法链接到 Master</p>
-					<pre class="screen">
+					</pre><p>bind-address默认是127.0.0.1你必须更改它，否则Slave将无法链接到 Master</p><pre class="screen">
 #bind-address		= 127.0.0.1
 bind-address		= 0.0.0.0
-					</pre>
-					<p>重启服务器</p>
-					<pre class="screen">
+					</pre><p>重启服务器</p><pre class="screen">
 neo@netkiller:~$ sudo /etc/init.d/mysql reload
  * Reloading MySQL database server mysqld          [ OK ]
-					</pre>
-					<p>建议使用reload,如果不起作用再用restart</p>
-				</li><li class="step">
-					<p>登录slave服务器，测试主库3306工作情况，如果看到下面相关信息表示工作正常。</p>
-					<pre class="screen">
+					</pre><p>建议使用reload,如果不起作用再用restart</p></li><li class="step"><p>登录slave服务器，测试主库3306工作情况，如果看到下面相关信息表示工作正常。</p><pre class="screen">
 					
 # telnet 192.168.1.246 3306
 Trying 192.168.1.246...
@@ -52,27 +32,16 @@ Escape character is '^]'.
 I
 5.1.61-0ubuntu0.11.10.1-log1W&lt;gs/*'#}p&lt;u[J=5//:
 					
-					</pre>
-				</li><li class="step">
-					<p>创建账户并授予REPLICATION SLAVE权限</p>
-					<pre class="screen">
+					</pre></li><li class="step"><p>创建账户并授予REPLICATION SLAVE权限</p><pre class="screen">
 					
 mysql&gt; GRANT REPLICATION SLAVE ON *.* TO 'replication'@'%.mydomain.com' IDENTIFIED BY 'slavepass';
 mysql&gt; FLUSH PRIVILEGES;
 					
-					</pre>
-					<p>GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO replication@'192.168.245.131' IDENTIFIED BY 'slavepass'</p>
-
-				</li><li class="step">
-					<p>锁表禁止写入新数据</p>
-					<pre class="screen">
+					</pre><p>GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO replication@'192.168.245.131' IDENTIFIED BY 'slavepass'</p></li><li class="step"><p>锁表禁止写入新数据</p><pre class="screen">
 					
 mysql&gt; FLUSH TABLES WITH READ LOCK;
 					
-					</pre>
-				</li><li class="step">
-					<p>查看Master 工作状态</p>
-					<pre class="screen">
+					</pre></li><li class="step"><p>查看Master 工作状态</p><pre class="screen">
 					
 mysql&gt; SHOW MASTER STATUS;
 +------------------+----------+--------------+------------------+
@@ -82,44 +51,25 @@ mysql&gt; SHOW MASTER STATUS;
 +------------------+----------+--------------+------------------+
 1 row in set (0.00 sec)
 					
-					</pre>
-					<p>如果显示下面内容表示，配置不正确</p>
-					<pre class="screen">
+					</pre><p>如果显示下面内容表示，配置不正确</p><pre class="screen">
 					
 
 mysql&gt; SHOW MASTER STATUS;
 Empty set (0.02 sec)
 					
-					</pre>
-
-					<p>取得快照并记录日志名和偏移量后，可以在主服务器上重新启用写活动</p>
-					<pre class="screen">
+					</pre><p>取得快照并记录日志名和偏移量后，可以在主服务器上重新启用写活动</p><pre class="screen">
 					
 mysql&gt; UNLOCK TABLES;
 					
-					</pre>
-				</li></ol></div>
-		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="replication.slave"></a>8.3.1.2. Slave</h4></div></div></div>
-			
-			<div class="procedure"><a id="idp74927968"></a><p class="title"><strong>过程 8.2. Slave 设置步骤</strong></p><ol class="procedure" type="1"><li class="step">
-					<p>配置my.cnf</p>
-					<p>从服务器的ID必须与主服务器的ID不相同,如果设置多个从服务器，每个从服务器必须有一个唯一的server-id值，必须与主服务器的以及其它从服务器的不相同。</p>
-					<pre class="screen">
+					</pre></li></ol></div></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="replication.slave"></a>8.3.1.2. Slave</h4></div></div></div><div class="procedure"><a id="idm45780526382160"></a><p class="title"><strong>过程 8.2. Slave 设置步骤</strong></p><ol class="procedure" type="1"><li class="step"><p>配置my.cnf</p><p>从服务器的ID必须与主服务器的ID不相同,如果设置多个从服务器，每个从服务器必须有一个唯一的server-id值，必须与主服务器的以及其它从服务器的不相同。</p><pre class="screen">
 # vim /etc/mysql/my.cnf
 
 [mysqld]
 server-id               = 2
-					</pre>
-				</li><li class="step">
-					<pre class="screen">
+					</pre></li><li class="step"><pre class="screen">
 # service mysql restart
 mysql start/running, process 22893
-					</pre>
-				</li><li class="step">
-					<p>指定  master 相关参数</p>
-					<p>在从服务器上执行下面的语句，用你的系统的实际值替换选项值</p>
-					<pre class="screen">
+					</pre></li><li class="step"><p>指定  master 相关参数</p><p>在从服务器上执行下面的语句，用你的系统的实际值替换选项值</p><pre class="screen">
 					
 mysql&gt; CHANGE MASTER TO
 	-&gt;     MASTER_HOST='master_host_name',
@@ -128,25 +78,17 @@ mysql&gt; CHANGE MASTER TO
     -&gt;     MASTER_LOG_FILE='recorded_log_file_name',
     -&gt;     MASTER_LOG_POS=recorded_log_position;
 	   				
-					</pre>
-					<p>CHANGE MASTER TO MASTER_HOST='192.168.245.129', MASTER_USER='replication', MASTER_PASSWORD='slavepass';</p>
-					<pre class="screen">
+					</pre><p>CHANGE MASTER TO MASTER_HOST='192.168.245.129', MASTER_USER='replication', MASTER_PASSWORD='slavepass';</p><pre class="screen">
 					
 mysql&gt; CHANGE MASTER TO MASTER_HOST='192.168.245.129', MASTER_USER='repl', MASTER_PASSWORD='slavepass';
 Query OK, 0 rows affected (0.14 sec)
 					
-					</pre>
-				</li><li class="step">
-					<p>启动从服务器线程</p>
-					<pre class="screen">
+					</pre></li><li class="step"><p>启动从服务器线程</p><pre class="screen">
 					
 mysql&gt; START SLAVE;
 Query OK, 0 rows affected (0.00 sec)
 					
-					</pre>
-				</li><li class="step">
-					<p>SLAVE STATUS</p>
-					<pre class="screen">
+					</pre></li><li class="step"><p>SLAVE STATUS</p><pre class="screen">
 					
 mysql&gt; SHOW SLAVE STATUS\G
 *************************** 1. row ***************************
@@ -185,16 +127,7 @@ Replicate_Wild_Ignore_Table:
       Seconds_Behind_Master: NULL
 1 row in set (0.00 sec)
 					
-					</pre>
-				</li></ol></div>
-		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="replication.testing"></a>8.3.1.3. Testing</h4></div></div></div>
-			
-			<div class="procedure"><ol class="procedure" type="1"><li class="step">
-					<p>登录 master</p>
-					<p>复制进程的信息</p>
-					<p>SHOW PROCESSLIST语句可以提供在主服务器上和从服务器上发生的关于复制的信息</p>
-					<pre class="screen">
+					</pre></li></ol></div></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="replication.testing"></a>8.3.1.3. Testing</h4></div></div></div><div class="procedure"><ol class="procedure" type="1"><li class="step"><p>登录 master</p><p>复制进程的信息</p><p>SHOW PROCESSLIST语句可以提供在主服务器上和从服务器上发生的关于复制的信息</p><pre class="screen">
 mysql&gt; SHOW PROCESSLIST\G
 *************************** 1. row ***************************
      Id: 62
@@ -216,10 +149,7 @@ Command: Query
    Info: SHOW PROCESSLIST
 2 rows in set (0.00 sec)
 
-					</pre>
-				</li><li class="step">
-					<p>登录从库，查看复制线程</p>
-					<pre class="screen">
+					</pre></li><li class="step"><p>登录从库，查看复制线程</p><pre class="screen">
 					
 mysql&gt; SHOW PROCESSLIST\G
 *************************** 1. row ***************************
@@ -251,9 +181,7 @@ Command: Connect
    Info: NULL
 3 rows in set (0.00 sec)
 					
-					</pre>
-					<p>如果没有复制进程，请使用start slave;启动</p>
-					<pre class="screen">
+					</pre><p>如果没有复制进程，请使用start slave;启动</p><pre class="screen">
 					
 mysql&gt; SHOW PROCESSLIST\G
 *************************** 1. row ***************************
@@ -270,134 +198,65 @@ Command: Query
 mysql&gt; start slave;
 Query OK, 0 rows affected (0.00 sec)
 					
-					</pre>
-				</li><li class="step">
-					<p>登录 master</p>
-					<pre class="screen">
+					</pre></li><li class="step"><p>登录 master</p><pre class="screen">
 					
 mysql&gt; insert into foo(id,data) values(2,'Hello world!!!');
 Query OK, 1 row affected (0.00 sec)
 					
-					</pre>
-				</li><li class="step">
-					<p>登录 slave</p>
-					<pre class="screen">
+					</pre></li><li class="step"><p>登录 slave</p><pre class="screen">
 					
 mysql&gt; select * from foo;
 					
-					</pre>
-					<p>在master服务器上插入一条记录，你可以立刻在slave服务器上看到变化。</p>
-				</li></ol></div>
-		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="replication.db"></a>8.3.1.4. 将现有数据库迁移到主从结构数据库</h4></div></div></div>
-			
-			<p>数据库已经存在的情况下怎么迁移</p>
-			<div class="procedure"><ol class="procedure" type="1"><li class="step">
-					<p>Master 锁表禁止写入新数据</p>
-					<pre class="screen">
+					</pre><p>在master服务器上插入一条记录，你可以立刻在slave服务器上看到变化。</p></li></ol></div></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="replication.db"></a>8.3.1.4. 将现有数据库迁移到主从结构数据库</h4></div></div></div><p>数据库已经存在的情况下怎么迁移</p><div class="procedure"><ol class="procedure" type="1"><li class="step"><p>Master 锁表禁止写入新数据</p><pre class="screen">
 					
 mysql&gt; FLUSH TABLES WITH READ LOCK;
 					
-					</pre>
-				</li><li class="step">
-					<p>Slave 停止复制进程</p>
-					<pre class="screen">
+					</pre></li><li class="step"><p>Slave 停止复制进程</p><pre class="screen">
 					
 mysql&gt; stop slave;
 					
-					</pre>
-				</li><li class="step">
-					<p>备份Master数据库</p>
-					<pre class="screen">
+					</pre></li><li class="step"><p>备份Master数据库</p><pre class="screen">
 					
 mysqldump yourdb | gzip &gt; yourdb.sql.gz
 					
-					</pre>
-				</li><li class="step">
-					<p>恢复数据库</p>
-					<p>如果使用mysqldump备份主服务器的数据，将转储文件装载到从服务器</p>
-					<pre class="screen">
+					</pre></li><li class="step"><p>恢复数据库</p><p>如果使用mysqldump备份主服务器的数据，将转储文件装载到从服务器</p><pre class="screen">
 					
 # zcat yourdb.sql.gz | mysql -u root -p yourdb
 					
-					</pre>
-				</li><li class="step">
-					<p>启动 Slave 复制进程</p>
-					<pre class="screen">
+					</pre></li><li class="step"><p>启动 Slave 复制进程</p><pre class="screen">
 					
 mysql&gt; start slave;
 					
-					</pre>
-				</li><li class="step">
-					<p>解除 Master 表锁定</p>
-					<pre class="screen">
+					</pre></li><li class="step"><p>解除 Master 表锁定</p><pre class="screen">
 					
 mysql&gt; UNLOCK TABLES;
 					
-					</pre>
-				</li></ol></div>
-			<p>MyIASM引擎可以采用下面方法</p>
-			<p>备份数据库</p>
-			<pre class="screen">
+					</pre></li></ol></div><p>MyIASM引擎可以采用下面方法</p><p>备份数据库</p><pre class="screen">
 # tar zcvf mysql-snapshot.tar.gz /var/lib/mysql/neo
-			</pre>
-			<p>复制给从数据库</p>
-			<pre class="screen">
+			</pre><p>复制给从数据库</p><pre class="screen">
 scp mysql-snapshot.tar.gz  neo@192.168.245.131:/tmp
-			</pre>
-
-			<p>snapshot 恢复</p>
-			<pre class="screen">
+			</pre><p>snapshot 恢复</p><pre class="screen">
 $ tar zxvf mysql-snapshot.tar.gz
 $ cd /var/lib/mysql
 
 $ mv /tmp/var/lib/mysql/neo .
 $ sudo chown mysql.mysql -R neo
-			</pre>
-			<p>重新启动Mysql</p>
-			<pre class="screen">
+			</pre><p>重新启动Mysql</p><pre class="screen">
 $ sudo /etc/init.d/mysql restart
-			</pre>
-			<p>有兴趣可以看看mysqlhotcopy</p>
-		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="replication.privi"></a>8.3.1.5. 主从复制安全问题</h4></div></div></div>
-			
-			<p>复制帐号权限</p>
-			<pre class="screen">
+			</pre><p>有兴趣可以看看mysqlhotcopy</p></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="replication.privi"></a>8.3.1.5. 主从复制安全问题</h4></div></div></div><p>复制帐号权限</p><pre class="screen">
 grant replication slave on *.* to 'replication'@'192.168.1.%' identified by '000000';
-			</pre>
-			<p>主库数据库操作帐号权限</p>
-			<pre class="screen">
+			</pre><p>主库数据库操作帐号权限</p><pre class="screen">
 grant DELETE, INSERT, SELECT, UPDATE ON your_user.* to yourdb@'your_host' identified by 'password' with grant option;
-			</pre>
-			<p>从库数据库操作帐号权限</p>
-			<pre class="screen">
+			</pre><p>从库数据库操作帐号权限</p><pre class="screen">
 grant SELECT ON your_user.* to yourdb@'your_host' identified by 'password' with grant option;
-			</pre>
-			<p>从库必须收回写操作</p>
-		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="replication.error"></a>8.3.1.6. 主从不同步问题</h4></div></div></div>
-			
-			<p>执行下面语句</p>
-			<pre class="screen">
+			</pre><p>从库必须收回写操作</p></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="replication.error"></a>8.3.1.6. 主从不同步问题</h4></div></div></div><p>执行下面语句</p><pre class="screen">
 stop slave;
 set global sql_slave_skip_counter =1 ;
 start slave;
-			</pre>
-			<p>Seconds_Behind_Master 值从NULL变为大于等于0是表示已经同步</p>
-			<pre class="screen">
+			</pre><p>Seconds_Behind_Master 值从NULL变为大于等于0是表示已经同步</p><pre class="screen">
 Seconds_Behind_Master: NULL
 Seconds_Behind_Master: 8893
-			</pre>
-		</div>
-	</div>
-
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="master.master"></a>8.3.2. Master Master(主主)</h3></div></div></div>
-		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp74974640"></a>8.3.2.1. Master A</h4></div></div></div>
-			
-			<p>my.cnf 文件加入下面的内容</p>
-			<pre class="screen">
+			</pre></div></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="master.master"></a>8.3.2. Master Master(主主)</h3></div></div></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm45780526353712"></a>8.3.2.1. Master A</h4></div></div></div><p>my.cnf 文件加入下面的内容</p><pre class="screen">
 cp /etc/mysql/my.cnf /etc/mysql/my.cnf.old
 vim /etc/mysql/my.cnf
 
@@ -413,13 +272,10 @@ auto_increment_offset=1
 auto_increment_increment=2
 replicate-do-db = test
 replicate-ignore-db = mysql,information_schema
-			</pre>
-			<p>创建复制权限</p>
-			<pre class="screen">
+			</pre><p>创建复制权限</p><pre class="screen">
 grant replication slave on *.* to 'replication'@'192.168.1.%' identified by '000000';
 flush privileges;
-			</pre>
-			<pre class="screen">
+			</pre><pre class="screen">
 			
 mysql&gt;flush tables with read lock;
 
@@ -431,18 +287,10 @@ Binlog_Do_DB: test
 Binlog_Ignore_DB: mysql
 1 row in set (0.00 sec)
 			
-			</pre>
-
-		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp74978384"></a>8.3.2.2. Master B</h4></div></div></div>
-			
-			<p>创建复制权限</p>
-			<pre class="screen">
+			</pre></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm45780526351184"></a>8.3.2.2. Master B</h4></div></div></div><p>创建复制权限</p><pre class="screen">
 grant replication slave on *.* to 'replication'@'192.168.1.%' identified by '000000';
 flush privileges;
-			</pre>
-			<p>my.cnf 文件加入下面的内容</p>
-			<pre class="screen">
+			</pre><p>my.cnf 文件加入下面的内容</p><pre class="screen">
 [mysqld]
 server-id = 2
 log-bin = /data/mysql/binlog/binlog
@@ -455,13 +303,10 @@ log-slave-updates
 sync_binlog=1
 auto_increment_offset=2
 auto_increment_increment=2
-			</pre>
-			<p>B 与 A 配置文件不同的两处。</p>
-			<pre class="screen">
+			</pre><p>B 与 A 配置文件不同的两处。</p><pre class="screen">
 server-id = 2
 auto_increment_offset=2
-			</pre>
-			<pre class="screen">
+			</pre><pre class="screen">
 			
 mysql&gt; show master status\G
 *************************** 1. row ***************************
@@ -471,18 +316,11 @@ Binlog_Do_DB: test
 Binlog_Ignore_DB: mysql
 1 row in set (0.00 sec)
 			
-			</pre>
-		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp74982896"></a>8.3.2.3. 将Master A 数据库 同步到 Master B 两端数据库内容保持一致</h4></div></div></div>
-			
-			<p>Master A，首先锁表为只读状态</p>
-			<pre class="screen">
+			</pre></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm45780526348160"></a>8.3.2.3. 将Master A 数据库 同步到 Master B 两端数据库内容保持一致</h4></div></div></div><p>Master A，首先锁表为只读状态</p><pre class="screen">
 			
 mysqldump --databases test &gt; /tmp/test.sql
 			
-			</pre>
-			<p>Master B 创建一个与Master A同名的空数据库,然后将备份文件恢复到数据库中</p>
-			<pre class="screen">
+			</pre><p>Master B 创建一个与Master A同名的空数据库,然后将备份文件恢复到数据库中</p><pre class="screen">
 			
 # mysql
 mysql&gt; CREATE DATABASE test;
@@ -491,65 +329,32 @@ mysql&gt;\q
 # scp 192.168.1.1:/tmp/test.sql ./
 # mysql -uroot -p test &lt; /tmp/test.sql
   			
-			</pre>
-		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp74985936"></a>8.3.2.4. Master A - B 同步两端数据库</h4></div></div></div>
-			
-			<p>master-A</p>
-			<pre class="screen">
+			</pre></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm45780526346288"></a>8.3.2.4. Master A - B 同步两端数据库</h4></div></div></div><p>master-A</p><pre class="screen">
 			
 mysql&gt;change master to master_host='192.168.1.2', master_user='replication', master_password='000000', master_log_file='binlog.000005', master_log_pos=107;
 			
-			</pre>
-			<p>master-B</p>
-			<pre class="screen">
+			</pre><p>master-B</p><pre class="screen">
 			
 mysql&gt;change master to master_host='192.168.1.1', master_user='replication', master_password='000000', master_log_file='binlog.000007', master_log_pos=107;
 			
-			</pre>
-		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp74988960"></a>8.3.2.5. Master A 数据库解除只读权限</h4></div></div></div>
-			
-			<p>Master A 解锁</p>
-			<pre class="screen">
+			</pre></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm45780526344384"></a>8.3.2.5. Master A 数据库解除只读权限</h4></div></div></div><p>Master A 解锁</p><pre class="screen">
 			
 mysql&gt; UNLOCK TABLES;
 			
-			</pre>
-		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp74990848"></a>8.3.2.6. 查看主主的工作状态</h4></div></div></div>
-			
-			<p>分别在Master A与B 上运行</p>
-			<pre class="screen">
+			</pre></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm45780526343360"></a>8.3.2.6. 查看主主的工作状态</h4></div></div></div><p>分别在Master A与B 上运行</p><pre class="screen">
 			
 mysql&gt;show slave status\G;
 
 Slave_IO_Running: Yes
 Slave_SQL_Running: Yes
 			
-			</pre>
-		</div>
-	</div>
-
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="replication.error"></a>8.3.3. 与复制有关的问题</h3></div></div></div>
-		
-
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="replication.expire-logs-days"></a>8.3.3.1. mysql-bin 清理问题</h4></div></div></div>
-			
-			<p>缺省expire-logs-days为30天。这里设为7天，可根据自己情况调整。</p>
-			<pre class="screen">
+			</pre></div></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="replication.error"></a>8.3.3. 与复制有关的问题</h3></div></div></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="replication.expire-logs-days"></a>8.3.3.1. mysql-bin 清理问题</h4></div></div></div><p>缺省expire-logs-days为30天。这里设为7天，可根据自己情况调整。</p><pre class="screen">
 [mysqld]
 expire-logs-days = 7
-			</pre>
-			<p>通过SQL删除</p>
-			<pre class="screen">
+			</pre><p>通过SQL删除</p><pre class="screen">
 删除某个日志：	mysql&gt;PURGE MASTER LOGS TO ‘mysql-bin.015′;
 删除某天前的日志：	mysql&gt;PURGE MASTER LOGS BEFORE ’2010-10-25  14:00:00′;
-			</pre>
-		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp74997056"></a>8.3.3.2. Semisynchronous Replication</h4></div></div></div>
-			
-			<pre class="screen">
+			</pre></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm45780526339488"></a>8.3.3.2. Semisynchronous Replication</h4></div></div></div><pre class="screen">
 			
 mysql&gt; SHOW VARIABLES LIKE "have_dynamic_loading";
 +----------------------+-------+
@@ -561,32 +366,23 @@ mysql&gt; SHOW VARIABLES LIKE "have_dynamic_loading";
 
 mysql&gt;
 			
-			</pre>
-			<pre class="screen">
+			</pre><pre class="screen">
 master  &gt; INSTALL PLUGIN rpl_semi_sync_master SONAME ‘libsemisync_master.so’;
 slave-x &gt; INSTALL PLUGIN rpl_semi_sync_slave SONAME ‘libsemisync_slave.so’;
 master  &gt; SET GLOBAL rpl_semi_sync_master_enabled=1;
 slave-x &gt; SET GLOBAL rpl_semi_sync_slave_enabled=1;
-			</pre>
-			<pre class="screen">
+			</pre><pre class="screen">
 CREATE USER 'replication'@'192.168.1.%' IDENTIFIED BY 'password';
 GRANT ALL PRIVILEGES ON *.* TO 'replication'@'192.168.1.%' IDENTIFIED BY 'password' WITH GRANT OPTION MAX_QUERIES_PER_HOUR 0 MAX_CONNECTIONS_PER_HOUR 0 MAX_UPDATES_PER_HOUR 0 MAX_USER_CONNECTIONS 0 ;
-			</pre>
-			<p>master_heartbeat_period</p>
-			<pre class="screen">
+			</pre><p>master_heartbeat_period</p><pre class="screen">
 STOP SLAVE;
 CHANGE MASTER TO master_heartbeat_period= milliseconds;
 START SLAVE;
-			</pre>
-			<pre class="screen">
+			</pre><pre class="screen">
 mysql&gt; CHANGE MASTER TO MASTER_HOST='xxx.xxx.xxx.xxx', MASTER_USER='root', MASTER_PASSWORD='password', MASTER_PORT=3306, MASTER_CONNECT_RETRY=10, MASTER_LOG_FILE='mysql-bin.000004', MASTER_LOG_POS=107;
-			</pre>
-			<p>跳过出问题的MySQL实例</p>
-			<pre class="screen">
+			</pre><p>跳过出问题的MySQL实例</p><pre class="screen">
 CHANGE MASTER TO MASTER_HOST=xxx.xxx.xxx.xxx IGNORE_SERVER_IDS=y
-			</pre>
-			<p>编辑my.cnf加入</p>
-			<pre class="screen">
+			</pre><p>编辑my.cnf加入</p><pre class="screen">
 # On Master
 [mysqld]
 rpl_semi_sync_master_enabled=1
@@ -595,10 +391,7 @@ rpl_semi_sync_master_timeout=1000 # 1 second
 # On Slave
 [mysqld]
 rpl_semi_sync_slave_enabled=1
-			</pre>
-		</div>
-	</div>
-</div><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
+			</pre></div></div></div><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
             /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
 
             //if(document.domain == 'netkiller.github.com'){
@@ -613,7 +406,7 @@ rpl_semi_sync_slave_enabled=1
                 dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
                 (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
             })();
-        </script><noscript xmlns="">Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><a xmlns="" href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a><br xmlns="" /><div xmlns="" id="clustrmaps-widget"></div><script xmlns="" type="text/javascript">var _clustrmaps = {'url' : 'http://netkiller.github.io', 'user' : 1107643, 'server' : '2', 'id' : 'clustrmaps-widget', 'version' : 1, 'date' : '2013-08-14', 'lang' : 'en', 'corners' : 'square' };(function (){ var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = 'http://www2.clustrmaps.com/counter/map.js'; var x = document.getElementsByTagName('script')[0]; x.parentNode.insertBefore(s, x);})();</script><noscript xmlns=""><a href="http://www2.clustrmaps.com/user/87410e6bb"><img src="http://www2.clustrmaps.com/stats/maps-no_clusters/netkiller.github.io-thumb.jpg" alt="Locations of visitors to this page" /></a></noscript><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="my.cnf.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="server.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="cluster.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">8.2. my.cnf </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 8.4. MySQL Custer</td></tr></table></div><script xmlns="">
+        </script><noscript xmlns="">Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><a xmlns="" href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=I4PGSAlBx_RjcBKmpZgR4WuU1yHy-Q10AKQe4quwDk4"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="my.cnf.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="server.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="cluster.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">8.2. my.cnf </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 8.4. MySQL Custer</td></tr></table></div><script xmlns="">
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
   (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
   m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
