@@ -1,0 +1,517 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Apache Ant 实现自动化部署</title><link rel="stylesheet" type="text/css" href="docbook.css"/><link rel="stylesheet" type="text/css" href="/journal/journal.css"/><meta name="generator" content="DocBook XSL Stylesheets V1.78.1"/><meta name="description" content="这篇文章帮你解决下列问题: 源码获取，源码编译，处理配置文件，应用部署，远程备份，部署回撤，启动，服务器状态，停止"/><meta name="keywords" content="Java, JDK, JRE, javac, ant, build.xml, devops, "/></head><body><a xmlns="" href="http://www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="http://netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
+	    <a xmlns="" href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><section xml:lang="zh-cn" class="article" id="idm45023248831728"><div class="titlepage"><div><div><h2 class="title">Apache Ant 实现自动化部署</h2></div><div><h3 class="subtitle"><em>http://www.netkiller.cn/journal/java.ant.html</em></h3></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(陈景峯)</span>, <span class="lineage">netkiller, BG7NYT</span></h3><div class="affiliation"><div class="address"><p><br/>
+				<span class="country">中国</span><span class="state">广东省</span><span class="city">深圳市</span><span class="street">龙华新区民治街道溪山美地</span><br/>
+				<span class="postcode">518131</span><br/>
+				<span class="phone">+86 13113668890</span><br/>
+				<br/>
+				<code class="email">&lt;<a class="email" href="mailto:netkiller@msn.com">netkiller@msn.com</a>&gt;</code><br/>
+			</p></div></div></div></div><div><div class="legalnotice" id="legalnotice"><p class="legalnotice-title"><strong>版权声明</strong></p><p>转载请与作者联系，转载时请务必标明文章原始出处和作者信息及本声明。</p><table style="border: 0; " class="simplelist"><tr><td>
+		<a class="ulink" href="http://creativecommons.org/licenses/by/3.0/" target="_top">
+			<div><table style="border: 0; width: 180; cellpadding: 0; cellspacing: 0;"><tr><td><img src="/images/by-nc-sa.png" width="180"/></td></tr></table></div>
+		</a>
+		</td><td>
+			<table style="border: 0; " class="simplelist"><tr><td>
+					文档出处:
+				</td></tr><tr><td>
+					<a class="ulink" href="http://netkiller.github.io/" target="_top">http://netkiller.github.io</a>
+				</td></tr><tr><td>
+					<a class="ulink" href="http://netkiller.sourceforge.net/" target="_top">http://netkiller.sourceforge.net</a>
+				</td></tr></table>
+		</td><td>
+			<div><table style="border: 0; width: 80; cellpadding: 0; cellspacing: 0;"><tr><td><img src="/images/weixin.jpg" width="80"/></td></tr></table></div>
+		</td><td>
+			<p>微信扫描二维码进入 Netkiller 微信订阅号 </p>
+			<p>QQ群：128659835 请注明“读者”</p>
+		</td></tr></table><p/></div></div><div><p class="pubdate">2015-12-10</p></div><div><div class="abstract"><div class="abstract-title">这篇文章帮你解决下列问题:</div>
+			
+			<p>源码获取，源码编译，处理配置文件，应用部署，远程备份，部署回撤，启动，服务器状态，停止</p>
+		</div></div><div><div class="abstract" id="abstract"><div class="abstract-title">我的系列文档</div><p>编程语言</p><table style="border: 0; " class="simplelist"><tr><td>
+			<a class="ulink" href="../architect/index.html" target="_top">Netkiller Architect 手札</a>
+		</td><td>
+			<a class="ulink" href="../developer/index.html" target="_top">Netkiller Developer 手札</a>
+		</td><td>
+			<a class="ulink" href="../php/index.html" target="_top">Netkiller PHP 手札</a>
+		</td><td>
+			<a class="ulink" href="../python/index.html" target="_top">Netkiller Python 手札</a>
+		</td><td>
+			<a class="ulink" href="../testing/index.html" target="_top">Netkiller Testing 手札</a>
+		</td><td>
+			<a class="ulink" href="../cryptography/index.html" target="_top">Netkiller Cryptography 手札</a>
+		</td></tr><tr><td>
+			<a class="ulink" href="../perl/index.html" target="_top">Netkiller Perl 手札</a>
+		</td><td>
+			<a class="ulink" href="../docbook/index.html" target="_top">Netkiller Docbook 手札</a>
+		</td><td>
+			<a class="ulink" href="../project/index.html" target="_top">Netkiller Project 手札</a>
+		</td><td>
+				<a class="ulink" href="../java/index.html" target="_top">Netkiller Java 手札</a>
+			</td><td>
+			<a class="ulink" href="../devops/index.html" target="_top">Netkiller DevOps 手札</a>
+		</td><td> </td></tr></table><p>操作系统</p><table style="border: 0; " class="simplelist"><tr><td>
+			<a class="ulink" href="../linux/index.html" target="_top">Netkiller Linux 手札</a>
+		</td><td>
+			<a class="ulink" href="../debian/index.html" target="_top">Netkiller Debian 手札</a>
+		</td><td>
+			<a class="ulink" href="../centos/index.html" target="_top">Netkiller CentOS 手札</a>
+		</td><td>
+			<a class="ulink" href="../freebsd/index.html" target="_top">Netkiller FreeBSD 手札</a>
+		</td><td>
+			<a class="ulink" href="../shell/index.html" target="_top">Netkiller Shell 手札</a>
+		</td><td>
+			<a class="ulink" href="../security/index.html" target="_top">Netkiller Security 手札</a>
+		</td></tr><tr><td>
+			<a class="ulink" href="../www/index.html" target="_top">Netkiller Web 手札</a>
+		</td><td>
+			<a class="ulink" href="../monitoring/index.html" target="_top">Netkiller Monitoring 手札</a>
+		</td><td>
+			<a class="ulink" href="../storage/index.html" target="_top">Netkiller Storage 手札</a>
+		</td><td>
+			<a class="ulink" href="../mail/index.html" target="_top">Netkiller Mail 手札</a>
+		</td><td>
+			<a class="ulink" href="../multimedia/index.html" target="_top">Netkiller Multimedia 手札</a>
+		</td><td> </td></tr></table><p>数据库</p><table style="border: 0; " class="simplelist"><tr><td>
+			<a class="ulink" href="../database/index.html" target="_top">Netkiller Database 手札</a>
+		</td><td>
+			<a class="ulink" href="../postgresql/index.html" target="_top">Netkiller PostgreSQL 手札</a>
+		</td><td>
+			<a class="ulink" href="../mysql/index.html" target="_top">Netkiller MySQL 手札</a>
+		</td><td>
+			<a class="ulink" href="../nosql/index.html" target="_top">Netkiller NoSQL 手札</a>
+		</td><td>
+			<a class="ulink" href="../ldap/index.html" target="_top">Netkiller LDAP 手札</a>
+		</td><td> </td></tr></table><p>网络设备及其他</p><table style="border: 0; " class="simplelist"><tr><td>
+			<a class="ulink" href="../network/index.html" target="_top">Netkiller Network 手札</a>
+		</td><td>
+			<a class="ulink" href="../cisco/index.html" target="_top">Netkiller Cisco IOS 手札</a>
+		</td><td>
+			<a class="ulink" href="../h3c/index.html" target="_top">Netkiller H3C 手札</a>
+		</td><td>
+			<a class="ulink" href="../radio/index.html" target="_top">Netkiller Amateur Radio 手札</a>
+		</td><td> </td><td> </td></tr></table><p>您可以使用<a class="ulink" href="ibook.epub" target="_top">iBook</a>阅读当前文档</p></div></div></div><hr/></div><div class="toc"><div class="toc-title">目录</div><ul class="toc"><li><span class="section"><a href="#background">1. 背景</a></span></li><li><span class="section"><a href="#overview">2. 我们需要什么样的流程</a></span></li><li><span class="section"><a href="#workflow">3. 怎样实现自动部署</a></span><ul><li><span class="section"><a href="#idm45023248714656">3.1. 操作系统</a></span></li><li><span class="section"><a href="#idm45023248708080">3.2. 程序部署</a></span></li><li><span class="section"><a href="#idm45023248694848">3.3. 自动部署程序</a></span></li></ul></li><li><span class="section"><a href="#ant">4. Apache Ant 实现自动化部署</a></span><ul><li><span class="section"><a href="#idm45023248690688">4.1. 运行环境</a></span></li><li><span class="section"><a href="#idm45023248684960">4.2. 部署机</a></span></li></ul></li><li><span class="section"><a href="#summary">5. 延伸阅读</a></span></li></ul></div>
+	
+	<section class="section" id="background"><div class="titlepage"><div><div><h2 class="title" style="clear: both">1. 背景</h2></div></div></div>
+		
+		<p>在你的企业中是怎样完成从开发，测试到运维的？</p>
+		<p>很多企业的升级是这样做的，写完代码后编译打包，放到FTP上，同时发送一个升级邮件。然后让运维按照升级文档，一步一步操作。</p>
+
+		<p>这样的流程有很多问题</p>
+		<div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem">
+				<p>开发者通常是在Windows系统上完成开发与编译，而服务器通常是Linux操作系统，操作系统的差异可能导致编译后的程序运行不了。</p>
+			</li><li class="listitem">
+				<p>安全角度，源码可以审查，但编译文件无法审查，打包过程可能被植入恶意代码</p>
+			</li><li class="listitem">
+				<p>经常出现生产环境与本地开发环境不一致，运行有差异</p>
+			</li><li class="listitem">
+				<p>浪费人力，理论上代码写完，就跟开发人员一点关系都没有了，但实际上每次升级过程开发与测试都需要在场</p>
+			</li></ol></div>
+		<p>稍先进一点做法是使用Subversion/Git，开发将代码放到版本库中，运维直接使用 svn up / git pull
+			升级，这样做法也有很多问题存在</p>
+		<div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem">
+				首次升级非常慢，svn 还好些，svn只取最后一次提交的版本；git 将所有的版本克隆到本地。
+			</li><li class="listitem">
+				如果修改了本地文件，更新会产生冲突
+			</li><li class="listitem">
+				配置文件无法个性化配置
+			</li></ol></div>
+	</section>
+	<section class="section" id="overview"><div class="titlepage"><div><div><h2 class="title" style="clear: both">2. 我们需要什么样的流程</h2></div></div></div>
+		
+		<p>我们需要什么样的流程或者什么样的流程才是最理想流程？</p>
+		<div class="orderedlist"><div class="orderedlist-title">我认为:</div><ol class="orderedlist" type="1"><li class="listitem">
+				<p>开发人员不要做与开发无关的事情，代码写完就与开发没有半点关系了。通知测试人员，代码已经完成。</p>
+			</li><li class="listitem">
+				<p>测试人员自己部署测试环境，不依赖开发人员，测试完成，通知运维人员可能升级了</p>
+			</li><li class="listitem">
+				<p>运维人员不接受任何部门提供的打包或补丁程序，代码只能在配置管理服务器上完成编译打包以及部署。</p>
+			</li><li class="listitem">
+				<p>升级应该由自动化工具完成，而不是人工操作。</p>
+			</li></ol></div>
+		<p>开发，测试，运维各司其职，这就是DevOps。</p>
+	</section>
+	<section class="section" id="workflow"><div class="titlepage"><div><div><h2 class="title" style="clear: both">3. 怎样实现自动部署</h2></div></div></div>
+		
+		<p>实现自动化部署有很多方法，很多年前笔者就开始研究总结，下面是一些经验分享。</p>
+		<section class="section" id="idm45023248714656"><div class="titlepage"><div><div><h3 class="title">3.1. 操作系统</h3></div></div></div>
+			
+			<p>开发，测试，生产三个环境的配置如果出自同一个模板会减少很多由于环境差异带来的困扰。</p>
+			<div class="procedure" id="idm45023248713360"><div class="procedure-title">过程 1. 操作系统部署</div><ol class="procedure" type="1"><li class="step">
+					<p>无人值守安装</p>
+					<p>通过无人值守脚本安装操作系统，减少人为安装造成的差异</p>
+				</li><li class="step">
+					<p>运行环境</p>
+					<p>统一配置运行环境，开发库以及版本统一</p>
+				</li><li class="step">
+					<p>应用服务器统一</p>
+					<p>应用服务器版本，安装标准，配置文件都需要统一，减少差异</p>
+				</li></ol></div>
+		</section>
+		<section class="section" id="idm45023248708080"><div class="titlepage"><div><div><h3 class="title">3.2. 程序部署</h3></div></div></div>
+			
+
+			<p>实现应用程序自动部署，首先你要清楚自动部署所需要的流程，部署一个流程通常是这样的：</p>
+			<div class="procedure" id="idm45023248706816"><div class="procedure-title">过程 2. 自动部署步骤</div><ol class="procedure" type="1"><li class="step">
+					<p>初始化</p>
+					<p>建立工作环境，例如目录，检查所需环境</p>
+				</li><li class="step">
+					<p>获取</p>
+					<p>从版本库指定分支中获取代码并保存到本地</p>
+				</li><li class="step">
+					<p>编译</p>
+					<p>编译可执行代码</p>
+				</li><li class="step">
+					<p>配置</p>
+					<p>处理配置文件</p>
+				</li><li class="step">
+					<p>备份</p>
+					<p>备份应用程序</p>
+				</li><li class="step">
+					<p>停止</p>
+					<p>服务服务</p>
+				</li><li class="step">
+					<p>部署</p>
+					<p>部署应用程序到目的主机，如果已存在需要覆盖原来的程序</p>
+				</li><li class="step">
+					<p>启动</p>
+					<p>启动服务</p>
+				</li></ol></div>
+
+		</section>
+		<section class="section" id="idm45023248694848"><div class="titlepage"><div><div><h3 class="title">3.3. 自动部署程序</h3></div></div></div>
+			
+			<p>自动部署程序完成上面的部署，还需要做下面一些事情。</p>
+			<div class="orderedlist"><div class="orderedlist-title">日志功能</div><ol class="orderedlist" type="1"><li class="listitem">记录什么时间点做过部署</li><li class="listitem">部署了那些文件</li></ol></div>
+		</section>
+	</section>
+	<section class="section" id="ant"><div class="titlepage"><div><div><h2 class="title" style="clear: both">4. Apache Ant 实现自动化部署</h2></div></div></div>
+		
+		<section class="section" id="idm45023248690688"><div class="titlepage"><div><div><h3 class="title">4.1. 运行环境</h3></div></div></div>
+			
+			<p>准备一个全新的的服务器，最小化安装CentOS 7操作系统，然后运行下面脚本初始化</p>
+			<pre class="screen">
+			
+curl -s https://raw.githubusercontent.com/oscm/shell/master/os/centos7.sh | bash
+curl -s https://raw.githubusercontent.com/oscm/shell/master/os/selinux.sh | bash
+curl -s https://raw.githubusercontent.com/oscm/shell/master/os/iptables/iptables.sh | bash
+curl -s	https://raw.githubusercontent.com/oscm/shell/master/os/ntpd/ntp.sh |	bash
+curl -s	https://raw.githubusercontent.com/oscm/shell/master/os/ssh/sshd_config.sh	| bash
+curl -s	https://raw.githubusercontent.com/oscm/shell/master/os/user/www.sh |	bash
+curl -s	https://raw.githubusercontent.com/oscm/shell/master/lang/gcc/gcc.sh	| bash
+			
+			</pre>
+			<p>安装 server-jre 与 apache-tomcat </p>
+			<pre class="screen">
+			
+curl -s	https://raw.githubusercontent.com/oscm/shell/master/lang/java/server-jre-8u40.sh	| bash
+curl -s	https://raw.githubusercontent.com/oscm/shell/master/web/tomcat/apache-tomcat-8.0.26.sh	| bash
+curl -s	https://raw.githubusercontent.com/oscm/shell/master/web/tomcat/systemctl.sh	| bash
+			
+			</pre>
+			<p>请使用systemctl 启动与停止 Tomcat</p>
+			<pre class="screen">
+			
+systemctl start tomcat
+systemctl stop tomcat
+			
+			</pre>
+			<p>Infrastructure Management Shell <a class="ulink" href="https://github.com/oscm/shell" target="_top">https://github.com/oscm/shell</a></p>
+		</section>
+		<section class="section" id="idm45023248684960"><div class="titlepage"><div><div><h3 class="title">4.2. 部署机</h3></div></div></div>
+			
+			<p>安装Ant</p>
+			<pre class="screen">
+			
+curl -s	https://raw.githubusercontent.com/oscm/shell/master/lang/java/ant.sh | bash
+			
+			</pre>
+			<p>
+				下载build.xml文件
+				<a class="ulink" href="https://github.com/oscm/build/tree/master/Ant" target="_top">https://github.com/oscm/build/tree/master/Ant</a>
+			</p>
+			<pre class="screen">
+			
+wget https://raw.githubusercontent.com/oscm/build/master/Ant/build.xml			
+			
+			</pre>
+			<p>打开 build.xml 文件	</p>
+			<pre class="screen">
+			
+&lt;?xml version="1.0" encoding="UTF-8" ?&gt;
+&lt;!--
+Homepage: http://www.netkiller.cn
+Author: neo &lt;netkiller@msn.com&gt;
+Date: 2015-12-07
+--&gt;
+&lt;project name="admin.example.com" default="compile" basedir="."&gt;
+
+	&lt;property name="repository" value="git@58.96.11.18:example.com/admin.example.com.git" /&gt;
+	&lt;property name="branch" value="master" /&gt;
+
+	&lt;property name="remote" value="www@23.25.22.72" /&gt;
+	&lt;property name="destination" value="/www/example.com/admin.example.com" /&gt;
+
+	&lt;property name="project.dir" value="repository" /&gt;
+	&lt;property name="project.src" value="${project.dir}/src" /&gt;
+	&lt;property name="project.build" value="build" /&gt;
+	&lt;property name="project.config" value="config" /&gt;
+	&lt;property name="project.log" value="log" /&gt;
+
+	&lt;property name="pkg" value="example-1.0.0.jar" /&gt;
+
+	&lt;property name="backup.dir" value="backup" /&gt;
+	&lt;property name="receive.timepoint" value="2015-12-04.17:46:35" /&gt;
+
+	&lt;property name="build.sysclasspath" value="last" /&gt;
+	&lt;property environment="env" /&gt;
+	&lt;echo message="JAVA_HOME is set to = ${env.JAVA_HOME}" /&gt;
+	&lt;echo message="CATALINA_HOME is set to = ${env.CATALINA_HOME}" /&gt;
+
+	&lt;path id="classpath"&gt;
+		&lt;fileset dir="${env.JAVA_HOME}/lib"&gt;
+			&lt;include name="*.jar" /&gt;
+		&lt;/fileset&gt;
+		&lt;fileset dir="${env.CATALINA_HOME}/lib"&gt;
+			&lt;include name="*.jar" /&gt;
+		&lt;/fileset&gt;
+		&lt;fileset dir="${project.dir}/WebRoot/WEB-INF/lib" includes="*.jar" /&gt;
+	&lt;/path&gt;
+
+	&lt;macrodef name="git"&gt;
+		&lt;attribute name="command" /&gt;
+		&lt;attribute name="dir" default="" /&gt;
+		&lt;element name="args" optional="true" /&gt;
+		&lt;sequential&gt;
+			&lt;!-- echo message="git @{command}" / --&gt;
+			&lt;exec executable="git" dir="@{dir}"&gt;
+				&lt;arg value="@{command}" /&gt;
+				&lt;args /&gt;
+			&lt;/exec&gt;
+		&lt;/sequential&gt;
+	&lt;/macrodef&gt;
+
+	&lt;macrodef name="rsync"&gt;
+		&lt;attribute name="option" default="auzv" /&gt;
+		&lt;attribute name="src" default="" /&gt;
+		&lt;attribute name="dest" default="" /&gt;
+		&lt;element name="args" optional="true" /&gt;
+		&lt;sequential&gt;
+			&lt;!-- echo message="rsync @{option} ${src} ${dest}" / --&gt;
+			&lt;exec executable="rsync"&gt;
+				&lt;arg value="@{option}" /&gt;
+				&lt;args /&gt;
+				&lt;arg value="@{src}" /&gt;
+				&lt;arg value="@{dest}" /&gt;
+			&lt;/exec&gt;
+		&lt;/sequential&gt;
+	&lt;/macrodef&gt;
+
+	&lt;macrodef name="ssh"&gt;
+		&lt;attribute name="host" /&gt;
+		&lt;attribute name="command" /&gt;
+		&lt;attribute name="keyfile" default="~/.ssh/id_rsa" /&gt;
+		&lt;element name="args" optional="true" /&gt;
+		&lt;sequential&gt;
+			&lt;exec executable="ssh"&gt;
+				&lt;arg value="@{host}" /&gt;
+				&lt;!-- arg value="-i @{keyfile}" / --&gt;
+				&lt;args /&gt;
+				&lt;arg value="@{command}" /&gt;
+			&lt;/exec&gt;
+		&lt;/sequential&gt;
+	&lt;/macrodef&gt;
+
+	&lt;target name="dir.check"&gt;
+		&lt;condition property="dir.exists"&gt;
+			&lt;available file="${project.dir}" type="dir" /&gt;
+		&lt;/condition&gt;
+	&lt;/target&gt;
+
+	&lt;target name="clone" depends="dir.check" unless="dir.exists"&gt;
+		&lt;echo&gt;clone&lt;/echo&gt;
+		&lt;git command="clone"&gt;
+			&lt;args&gt;
+				&lt;arg value="${repository}" /&gt;
+				&lt;arg value="${project.dir}" /&gt;
+			&lt;/args&gt;
+		&lt;/git&gt;
+	&lt;/target&gt;
+
+	&lt;target name="pull" depends="clone" if="dir.exists"&gt;
+		&lt;echo&gt;${project.dir} exists&lt;/echo&gt;
+		&lt;git command="pull" dir="${project.dir}" /&gt;
+		&lt;git command="clean" dir="${project.dir}"&gt;
+			&lt;args&gt;
+				&lt;arg value="-df" /&gt;
+			&lt;/args&gt;
+		&lt;/git&gt;
+
+		&lt;git command="reset" dir="${project.dir}"&gt;
+			&lt;args&gt;
+				&lt;arg value="HEAD" /&gt;
+				&lt;arg value="--hard" /&gt;
+			&lt;/args&gt;
+		&lt;/git&gt;
+	&lt;/target&gt;
+
+	&lt;target name="branch" depends="pull" if="dir.exists"&gt;
+		&lt;echo&gt;${project.dir} exists&lt;/echo&gt;
+		&lt;git command="checkout" dir="${project.dir}"&gt;
+			&lt;args&gt;
+				&lt;arg value="-f" /&gt;
+				&lt;arg value="${branch}" /&gt;
+			&lt;/args&gt;
+		&lt;/git&gt;
+	&lt;/target&gt;
+
+	&lt;target name="init" depends="branch"&gt;
+
+		&lt;mkdir dir="${project.build}" /&gt;
+		&lt;mkdir dir="${project.log}" /&gt;
+
+		&lt;copy todir="${project.build}"&gt;
+			&lt;fileset dir="${project.dir}/WebRoot" includes="**/*" /&gt;
+		&lt;/copy&gt;
+
+		&lt;copy todir="${project.build}/WEB-INF/classes"&gt;
+			&lt;fileset dir="${project.src}"&gt;
+				&lt;include name="**/*.xml" /&gt;
+				&lt;include name="**/*.properties" /&gt;
+			&lt;/fileset&gt;
+		&lt;/copy&gt;
+
+	&lt;/target&gt;
+	&lt;target name="compile" depends="init"&gt;
+		&lt;javac srcdir="${project.src}" destdir="${project.build}/WEB-INF/classes"&gt;
+			&lt;classpath refid="classpath" /&gt;
+		&lt;/javac&gt;
+	&lt;/target&gt;
+
+	&lt;target name="config" depends="compile"&gt;
+		&lt;copy todir="${project.build}" overwrite="true"&gt;
+			&lt;fileset dir="${project.config}" includes="**/*" /&gt;
+		&lt;/copy&gt;
+	&lt;/target&gt;
+
+	&lt;target name="deploy" depends="config"&gt;
+		&lt;tstamp&gt;
+			&lt;format property="timepoint" pattern="yyyy-MM-dd.HH:mm:ss" locale="cn,CN" /&gt;
+		&lt;/tstamp&gt;
+		&lt;rsync option="-auzv" src="${project.build}/" dest="${remote}:${destination}"&gt;
+			&lt;args&gt;
+				&lt;arg value="--exclude=.git" /&gt;
+				&lt;arg value="--exclude=.svn" /&gt;
+				&lt;arg value="--exclude=.gitignore" /&gt;
+				&lt;arg value="--backup" /&gt;
+				&lt;arg value="--backup-dir=~/${backup.dir}/${timepoint}" /&gt;
+				&lt;arg value="--log-file=log/${ant.project.name}.${timepoint}.log" /&gt;
+			&lt;/args&gt;
+		&lt;/rsync&gt;
+	&lt;/target&gt;
+
+	&lt;target name="pkg" depends="compile"&gt;
+		&lt;jar jarfile="${pkg}" basedir="${project.build}" /&gt;
+	&lt;/target&gt;
+
+	&lt;target name="backup" depends=""&gt;
+		&lt;tstamp&gt;
+			&lt;format property="TIMEPOINT" pattern="yyyy-MM-dd.HH:mm:ss" locale="cn,CN" /&gt;
+		&lt;/tstamp&gt;
+		&lt;echo&gt;the backup directory is ${TIMEPOINT}.&lt;/echo&gt;
+		&lt;mkdir dir="${backup.dir}/${TIMEPOINT}" /&gt;
+		&lt;rsync option="-auzv" src="${remote}:${destination}" dest="${backup.dir}/${TIMEPOINT}"&gt;
+		&lt;/rsync&gt;
+	&lt;/target&gt;
+
+	&lt;target name="receive" depends=""&gt;
+		&lt;echo&gt;the receive directory is ${receive.timepoint}.&lt;/echo&gt;
+		&lt;rsync option="-auzv" src="${backup.dir}/${receive.timepoint}" dest="${remote}:${destination}" /&gt;
+	&lt;/target&gt;
+
+	&lt;target name="fetch"&gt;
+		&lt;ant target="pull" /&gt;
+		&lt;ant target="branch" /&gt;
+	&lt;/target&gt;
+
+	&lt;target name="stop" depends=""&gt;
+		&lt;!-- ssh host="${remote}" command="/srv/apache-tomcat/bin/catalina.sh stop -force" keyfile="~/.ssh/id_rsa" / --&gt;
+		&lt;ssh host="${remote}" command="/srv/apache-tomcat/bin/shutdown.sh" /&gt;
+		&lt;ant target="status" /&gt;
+	&lt;/target&gt;
+	&lt;target name="start" depends=""&gt;
+		&lt;ssh host="${remote}" command="/srv/apache-tomcat/bin/startup.sh" keyfile="~/.ssh/id_rsa" /&gt;
+		&lt;ant target="status" /&gt;
+	&lt;/target&gt;
+	&lt;target name="status" depends=""&gt;
+		&lt;ssh host="${remote}" command="ps ax | grep tomcat | grep -v grep" /&gt;
+	&lt;/target&gt;
+	&lt;target name="kill" depends=""&gt;
+		&lt;ssh host="${remote}" command="pkill -9 -f tomcat" /&gt;
+		&lt;ant target="status" /&gt;
+	&lt;/target&gt;
+	&lt;target name="run" depends=""&gt;
+		&lt;java classname="test.ant.HelloWorld" classpath="${hello}" /&gt;
+	&lt;/target&gt;
+	&lt;target name="clean"&gt;
+		&lt;delete dir="${project.build}" /&gt;
+		&lt;delete file="${hello}" /&gt;
+	&lt;/target&gt;
+&lt;/project&gt;
+
+			
+			</pre>
+			<p>修改下面几处定义</p>
+			<pre class="screen">
+			
+&lt;property name="repository" value="版本库地址" /&gt;
+&lt;property name="branch" value="部署分支" /&gt;
+&lt;property name="remote" value="远程服务器" /&gt;
+&lt;property name="destination" value="远程目录" /&gt;		
+			
+			</pre>
+			<p>开始部署代码</p>
+			<pre class="screen">
+			
+ant backup
+ant stop
+ant deploy
+ant start
+			
+			</pre>
+		</section>
+	</section>
+	<section class="section" id="summary"><div class="titlepage"><div><div><h2 class="title" style="clear: both">5. 延伸阅读</h2></div></div></div>
+		
+		<p>如果你想学习制作部署工具，还可以看看笔者早期的作品<a class="ulink" href="https://github.com/oscm/deployment" target="_top">https://github.com/oscm/deployment</a>这个工具使用Bash开发，写这个工具仅仅半天时间，后面小改过几次，这个工具伴随笔者很多年。</p>
+		<p>第一个版本因为很多缺陷存在，笔者使用Python重新开发 <a class="ulink" href="https://github.com/oscm/devops" target="_top">https://github.com/oscm/devops</a> 这个工具更适合PHP项目部署</p>
+	</section>
+</section><div xmlns="" id="disqus_thread"/><script xmlns="" type="text/javascript">
+	        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+	        var disqus_shortname = 'netkiller'; // required: replace example with your forum shortname
+
+	        /* * * DON'T EDIT BELOW THIS LINE * * */
+	        (function() {
+	            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+	            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+	            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+	        })();
+	    </script><noscript xmlns="">Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><a xmlns="" href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a><br xmlns=""/><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"/><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'netkiller.github.io');
+  ga('send', 'pageview');
+
+</script><script xmlns="" type="text/javascript">
+var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F997cd4a7320a82d72cb74d179118f697' type='text/javascript'%3E%3C/script%3E"));
+</script><script xmlns="" type="text/javascript" src="/js/q.js"/></body></html>
