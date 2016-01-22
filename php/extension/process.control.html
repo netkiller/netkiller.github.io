@@ -1,0 +1,596 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>5.13. Process Control Extensions</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.78.1" /><meta name="keywords" content="php, pear, pecl, phar" /><link rel="home" href="../index.html" title="Netkiller PHP 手札" /><link rel="up" href="index.html" title="第 5 章 PECL :: The PHP Extension Community Library" /><link rel="prev" href="zip.html" title="5.12. zip" /><link rel="next" href="mbstring.html" title="5.14. mbstring" /></head><body><a xmlns="" href="http://www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="http://netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
+	    <a xmlns="" href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">5.13. Process Control Extensions</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="zip.html">上一页</a> </td><th width="60%" align="center">第 5 章 PECL :: The PHP Extension Community Library</th><td width="20%" align="right"> <a accesskey="n" href="mbstring.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.com&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.com&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="process.control"></a>5.13. Process Control Extensions</h2></div></div></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="pcntl"></a>5.13.1. pcntl</h3></div></div></div><p>编译的时候没有带--enable-pcntl参数的补救办法</p><pre class="screen">
+		
+cd php-5.2.17/ext/pcntl
+
+/srv/php-5.2.17/bin/phpsize
+./configure --with-php-config=/srv/php-5.2.17/bin/php-config
+make &amp;&amp; make install
+		
+		</pre><p>加入到php.ini</p><pre class="screen">
+		
+cat &gt; /srv/php-5.2.17/etc/conf.d/pcntl.ini &lt;&lt;EOF
+extension=pcntl.so
+EOF
+		
+		</pre><p></p><pre class="screen">
+php -m | grep pcntl
+		</pre><pre class="screen">
+SIGHUP     终止进程     终端线路挂断
+SIGINT     终止进程     中断进程
+SIGQUIT    建立CORE文件终止进程，并且生成core文件
+SIGILL   建立CORE文件       非法指令
+SIGTRAP    建立CORE文件       跟踪自陷
+SIGBUS   建立CORE文件       总线错误
+SIGSEGV   建立CORE文件        段非法错误
+SIGFPE   建立CORE文件       浮点异常
+SIGIOT   建立CORE文件        执行I/O自陷
+SIGKILL   终止进程     杀死进程
+SIGPIPE   终止进程      向一个没有读进程的管道写数据
+SIGALARM   终止进程     计时器到时
+SIGTERM   终止进程      软件终止信号
+SIGSTOP   停止进程     非终端来的停止信号
+SIGTSTP   停止进程      终端来的停止信号
+SIGCONT   忽略信号     继续执行一个停止的进程
+SIGURG   忽略信号      I/O紧急信号
+SIGIO     忽略信号     描述符上可以进行I/O
+SIGCHLD   忽略信号      当子进程停止或退出时通知父进程
+SIGTTOU   停止进程     后台进程写终端
+SIGTTIN   停止进程      后台进程读终端
+SIGXGPU   终止进程     CPU时限超时
+SIGXFSZ   终止进程     文件长度过长
+SIGWINCH    忽略信号     窗口大小发生变化
+SIGPROF   终止进程     统计分布图用计时器到时
+SIGUSR1   终止进程      用户定义信号1
+SIGUSR2   终止进程     用户定义信号2
+SIGVTALRM 终止进程     虚拟计时器到时
+ 
+1)  SIGHUP 本信号在用户终端连接(正常或非正常)结束时发出, 通常是在终端的控 
+制进程结束时, 通知同一session内的各个作业,  这时它们与控制终端 
+不再关联. 
+2) SIGINT 程序终止(interrupt)信号, 在用户键入INTR字符(通常是Ctrl-C)时发出  
+3) SIGQUIT 和SIGINT类似, 但由QUIT字符(通常是Ctrl-)来控制. 进程在因收到 
+SIGQUIT退出时会产生core文件,  在这个意义上类似于一个程序错误信 
+号. 
+4) SIGILL 执行了非法指令. 通常是因为可执行文件本身出现错误, 或者试图执行 
+数据段.  堆栈溢出时也有可能产生这个信号. 
+5) SIGTRAP 由断点指令或其它trap指令产生. 由debugger使用. 
+6) SIGABRT  程序自己发现错误并调用abort时产生. 
+6) SIGIOT 在PDP-11上由iot指令产生, 在其它机器上和SIGABRT一样. 
+7)  SIGBUS 非法地址, 包括内存地址对齐(alignment)出错. eg: 访问一个四个字长 
+的整数, 但其地址不是4的倍数. 
+8)  SIGFPE 在发生致命的算术运算错误时发出. 不仅包括浮点运算错误, 还包括溢 
+出及除数为0等其它所有的算术的错误. 
+9) SIGKILL  用来立即结束程序的运行. 本信号不能被阻塞, 处理和忽略. 
+10) SIGUSR1 留给用户使用 
+11) SIGSEGV  试图访问未分配给自己的内存, 或试图往没有写权限的内存地址写数据. 
+12) SIGUSR2 留给用户使用 
+13) SIGPIPE Broken  pipe 
+14) SIGALRM 时钟定时信号, 计算的是实际的时间或时钟时间. alarm函数使用该 
+信号. 
+15) SIGTERM  程序结束(terminate)信号, 与SIGKILL不同的是该信号可以被阻塞和 
+处理. 通常用来要求程序自己正常退出.  shell命令kill缺省产生这 
+个信号. 
+17) SIGCHLD 子进程结束时, 父进程会收到这个信号. 
+18) SIGCONT  让一个停止(stopped)的进程继续执行. 本信号不能被阻塞. 可以用 
+一个handler来让程序在由stopped状态变为继续执行时完成特定的  
+工作. 例如, 重新显示提示符 
+19) SIGSTOP 停止(stopped)进程的执行.  注意它和terminate以及interrupt的区别: 
+该进程还未结束, 只是暂停执行. 本信号不能被阻塞, 处理或忽略. 
+20)  SIGTSTP 停止进程的运行, 但该信号可以被处理和忽略. 用户键入SUSP字符时 
+(通常是Ctrl-Z)发出这个信号 
+21) SIGTTIN  当后台作业要从用户终端读数据时, 该作业中的所有进程会收到SIGTTIN 
+信号. 缺省时这些进程会停止执行. 
+22) SIGTTOU  类似于SIGTTIN, 但在写终端(或修改终端模式)时收到. 
+23) SIGURG 有"紧急"数据或out-of-band数据到达socket时产生.  
+24) SIGXCPU 超过CPU时间资源限制. 这个限制可以由getrlimit/setrlimit来读取/ 
+改变 
+25)  SIGXFSZ 超过文件大小资源限制. 
+26) SIGVTALRM 虚拟时钟信号. 类似于SIGALRM, 但是计算的是该进程占用的CPU时间.  
+27) SIGPROF 类似于SIGALRM/SIGVTALRM, 但包括该进程用的CPU时间以及系统调用的 
+时间. 
+28)  SIGWINCH 窗口大小改变时发出. 
+29) SIGIO 文件描述符准备就绪, 可以开始进行输入/输出操作. 
+30) SIGPWR Power  failure 
+ 
+有 两个信号可以停止进程:SIGTERM和SIGKILL。  SIGTERM比较友好，进程能捕捉这个信号，根据您的需要来关闭程序。在关闭程序之前，您 可以结束打开的记录文件和完成正在做的任务。在某些情况下，假  如进程正在进行作业而且不能中断，那么进程可以忽略这个SIGTERM信号。
+ 
+对于SIGKILL信号，进程是不能忽略的。这是一个  “我不管您在做什么,立刻停止”的信号。假如您发送SIGKILL信号给进程，Linux就将进程停止在那里。		
+		</pre><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm46302633709824"></a>5.13.1.1. </h4></div></div></div><pre class="screen">
+			
+&lt;?php
+declare(ticks = 1);
+
+pcntl_signal(SIGHUP, function ($signal) {
+	echo 'HANDLE SIGNAL ' . $signal . PHP_EOL;
+});
+pcntl_signal(SIGTERM, function ($signal) {
+	echo 'HANDLE SIGNAL ' . $signal . PHP_EOL;
+	exit(1);
+});
+
+posix_kill(posix_getpid(), SIGHUP);			
+			
+			</pre><p>在class中使用pcntl_signal</p><pre class="screen">
+			
+&lt;?php
+declare(ticks = 1);
+
+class SignalHandler
+{
+   function __construct() {
+       $this-&gt;_init();
+   }
+   function _init() {
+       pcntl_signal(SIGTERM, array(&amp;$this,"handleSignals"));
+   }
+   function handleSignals($signal)
+   {
+       echo "$signal\n";
+   }
+
+}
+$o = new SignalHandler();
+posix_kill(getmypid(),SIGTERM);
+// prints 15
+?&gt;			
+			
+			</pre></div></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="index"></a>5.13.2. pthreads</h3></div></div></div><p>编译PHP时需要加入 --enable-maintainer-zts 选项才能安装pthreads</p><pre class="screen">
+# pecl install pthread
+	</pre><p>配置文件</p><pre class="screen">
+	
+cat &gt; /srv/php-5.5.7/etc/conf.d/pthreads.ini &lt;&lt;EOF
+extension=pthreads.so
+EOF
+	
+	</pre><pre class="screen">
+$ php -m |grep pthreads
+pthreads
+	</pre><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm46302633705568"></a>5.13.2.1. pecl/pthreads requires PHP (version &gt;= 7.0.0RC5), installed version is 5.6.16</h4></div></div></div><p>pthreads 3.0.0 之后不再支持5.6.x，PHP 版本大于等于 7.0.0 </p><pre class="screen">
+			
+# pecl install pthreads
+pecl/pthreads requires PHP (version &gt;= 7.0.0RC5), installed version is 5.6.16
+No valid packages found
+install failed
+			
+			</pre><p>解决方法是安装较低版本的pthreads-2.0.10</p><pre class="screen">
+# pecl install pthreads-2.0.10
+			</pre></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="thread"></a>5.13.2.2. Thread</h4></div></div></div><pre class="programlisting">
+		
+&lt;?php
+
+class test extends Thread {
+
+    public $name   = '';
+    public $runing = false;
+
+    public function __construct($name) {
+
+        $this-&gt;name   = $name;
+        $this-&gt;runing = true;
+    }
+
+    public function run() {
+	$n = 0;
+        while ($this-&gt;runing) {
+		printf("name: %s %s\n",$this-&gt;name, $n);
+		$n++;
+                sleep(1);
+        }
+    }
+
+}
+
+$pool[] = new test('a');
+$pool[] = new test('b');
+$pool[] = new test('c');
+
+foreach ($pool as $w) {
+    $w-&gt;start();
+}
+		
+		</pre><p>线程池实现方法</p><pre class="programlisting">
+		
+	$pool = array();
+	while($member = $row-&gt;fetch(PDO::FETCH_ASSOC))
+	{
+
+		while ( true ){
+			if(count($pool) &lt; 2000){ //定义线程池数量，小于线程池数量则开启新的线程直到小于2000为止
+				$pool[$id] = new Update($member);
+				$pool[$id]-&gt;start();
+				break;
+			}else{
+				foreach ( $pool as $name =&gt; $worker){
+					//如果线程已经运行结束，销毁线程，给新的任务使用
+					if(! $worker-&gt;isRunning()){
+						unset($pool[$name]);
+					}
+				}
+			}
+
+		}
+
+	}
+		
+		</pre></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="pool"></a>5.13.2.3. Pool</h4></div></div></div><pre class="screen">
+		
+&lt;?php
+class ExampleWork extends Stackable {
+        public function __construct($data) {
+                $this-&gt;local = $data;
+        }
+        public function run() {
+	//	print_r($this-&gt;local);echo "\r\n";
+	echo '------------------- '. $this-&gt;local . " -----------------\r\n";
+	sleep(1);
+        }
+}
+class ExampleWorker extends Worker {
+
+        public function __construct($name) {
+                $this-&gt;name = $name;
+                $this-&gt;data = array();
+        }
+        public function run(){
+                $this-&gt;name = sprintf("(%lu)", $this-&gt;getThreadId());
+        }
+}
+/* Dead simple pthreads pool */
+class Pool {
+        /* to hold worker threads */
+        public $workers;
+        /* to hold exit statuses */
+        public $status;
+        /* prepare $size workers */
+        public function __construct($size = 10) {
+                $this-&gt;size = $size;
+        }
+        /* submit Stackable to Worker */
+        public function submit(Stackable $stackable) {
+            if (count($this-&gt;workers)&lt;$this-&gt;size) {
+                    $id = count($this-&gt;workers);
+                    $this-&gt;workers[$id] = new ExampleWorker(sprintf("Worker [%d]", $id));
+                    $this-&gt;workers[$id]-&gt;start(PTHREADS_INHERIT_NONE);
+
+                    if ($this-&gt;workers[$id]-&gt;stack($stackable)) {
+                           return $stackable;
+                    } else trigger_error(sprintf("failed to push Stackable onto %s", $this-&gt;workers[$id]-&gt;getName()), E_USER_WARNING);
+            }else{
+				for ($i=0;$i&lt;count($this-&gt;workers);$i++){
+                	if( ! $this-&gt;workers[$i]-&gt;isWorking()){
+						$this-&gt;workers[$i]-&gt;stack($stackable);
+						return $stackable;
+				}
+        	}
+		}
+
+                return false;
+        }
+	public function status(){
+		for ($i=0;$i&lt;count($this-&gt;workers);$i++){
+		printf("(%s:%s)\r\n",$i, $this-&gt;workers[$i]-&gt;isWorking());
+		}
+		printf("\r\n");
+
+	}
+        /* Shutdown the pool of threads cleanly, retaining exit status locally */
+        public function shutdown() {
+                foreach($this-&gt;workers as $worker) {
+                        $this-&gt;status[$worker-&gt;getThreadId()]=$worker-&gt;shutdown();
+                }
+        }
+}
+/* Create a pool of ten threads */
+$pool = new Pool(100);
+/* Create and submit an array of Stackables */
+$work = array();
+for ($target = 0; $target &lt; 1000; $target++){
+
+    $work[$target]=$pool-&gt;submit(new ExampleWork($target));
+
+	if($work[$target] == false){
+		$target--;
+		sleep(1);
+		continue;
+	}
+	for ($i=0;$i&lt;count($work);$i++){
+		if($work[$i]-&gt;isRunning()){
+			printf("cell: %s, status: %s\r\n",$i, $work[$i]-&gt;isRunning());
+		}
+	}
+	printf("\r\n");
+}
+$pool-&gt;shutdown();
+exit();
+		
+		</pre><p>pthreads 自带 Pool</p><pre class="programlisting">
+		
+&lt;?php
+class ExampleWorker extends Worker {
+ 
+	public function __construct(Logging $logger) {
+		$this-&gt;logger = $logger;
+	}
+ 
+	protected $logger;	
+}
+ 
+/* the collectable class implements machinery for Pool::collect */
+class Work extends Stackable {
+	public function __construct($number) {
+		$this-&gt;number = $number;
+	}
+	public function run() {
+		$this-&gt;worker
+			-&gt;logger
+			-&gt;log("%s executing in Thread #%lu",
+				  __CLASS__, $this-&gt;worker-&gt;getThreadId());
+		sleep(1);
+		printf("runtime: %s, %d\n", date('Y-m-d H:i:s'), $this-&gt;number);
+		$this-&gt;status = "OK";
+	}
+}
+ 
+class Logging extends Stackable {
+ 
+	protected function log($message, $args = []) {
+		$args = func_get_args();	
+ 
+		if (($message = array_shift($args))) {
+			echo vsprintf("{$message}\n", $args);
+		}
+	}
+}
+ 
+$pool = new Pool(5, \ExampleWorker::class, [new Logging()]);
+ 
+foreach (range(0, 100) as $number) {
+	$pool-&gt;submit(new Work($number));
+}
+ 
+ 
+$pool-&gt;shutdown();
+ 
+var_dump($pool);
+?&gt;
+		
+		</pre><div class="example"><a id="idm46302633695872"></a><p class="title"><strong>例 5.7. Threads - Pool</strong></p><div class="example-contents"><pre class="screen">
+			
+# cat pool.php 
+&lt;?php
+
+class MyWork extends Stackable {
+
+    public $name;
+
+    public function __construct($name) {
+        echo "Stackable executed  $name\n";
+        $this-&gt;name = $name;
+    }
+
+    public function run() {
+        echo "Stackable $this-&gt;name start running\n";
+        for ($i = 1; $i &lt;= 5; $i++) {
+            echo "Run $this-&gt;name : $i\n";
+            sleep(1);
+        }
+    }
+
+}
+
+class MyWorker extends Worker {
+    public function __construct($name) {
+	$this-&gt;name = $name;
+    }
+    public function run() {
+        echo "Worker started $this-&gt;name\n";
+    }
+}
+
+$pool = new Pool(3, \MyWorker::class, array("pthreads"));
+$pool-&gt;submit(new MyWork("A"));
+$pool-&gt;submit(new MyWork("B"));
+$pool-&gt;submit(new MyWork("C"));
+$pool-&gt;shutdown();
+			
+			</pre></div></div><br class="example-break" /></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="faq"></a>5.13.2.4. FAQ</h4></div></div></div><div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm46302633693632"></a>5.13.2.4.1. You cannot serialize or unserialize PDO instances</h5></div></div></div><pre class="screen">
+			
+PHP Fatal error:  Uncaught exception 'PDOException' with message 'You cannot serialize or unserialize PDO instances' in /home/www/threads.php:38
+Stack trace:
+#0 /home/www/threads.php(38): PDO-&gt;__sleep()
+#1 [internal function]: SQLWorker-&gt;run()
+#2 {main}
+  thrown in /home/www/threads.php on line 38
+ not ready
+ 			
+			</pre><pre class="screen">
+			
+&lt;?php
+class MyWorker extends Worker{
+    public static $pdo;
+
+    function __construct($conf){
+        $this-&gt;conf = $conf;
+    }
+
+    function run(){
+        self::$pdo = new PDO(
+            'mysql:host=localhost;dbname=test');
+    }
+
+    function get_connection(){
+        return self::$pdo;
+    }
+}
+?&gt;
+			
+			</pre></div></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="mutex"></a>5.13.2.5. 互斥锁</h4></div></div></div><p>什么情况下会用到互斥锁？在你需要控制多个线程同一时刻只能有一个线程工作的情况下可以使用。</p><p>下面我们举一个例子，一个简单的计数器程序，说明有无互斥锁情况下的不同。</p><pre class="programlisting">
+		
+&lt;?php
+$counter = 0;
+//$handle=fopen("php://memory", "rw"); 
+//$handle=fopen("php://temp", "rw"); 
+$handle=fopen("/tmp/counter.txt", "w"); 
+fwrite($handle, $counter ); 
+fclose($handle);
+
+class CounterThread extends Thread {
+	public function __construct($mutex = null){
+		$this-&gt;mutex = $mutex;
+        $this-&gt;handle = fopen("/tmp/counter.txt", "w+");
+    }
+	public function __destruct(){
+		fclose($this-&gt;handle);
+	}
+    public function run() {
+		if($this-&gt;mutex)
+			$locked=Mutex::lock($this-&gt;mutex);
+
+		$counter = intval(fgets($this-&gt;handle));
+		$counter++;
+		rewind($this-&gt;handle);
+		fputs($this-&gt;handle, $counter ); 
+		printf("Thread #%lu says: %s\n", $this-&gt;getThreadId(),$counter);
+		
+		if($this-&gt;mutex)
+			Mutex::unlock($this-&gt;mutex);
+    }
+}
+
+//没有互斥锁
+for ($i=0;$i&lt;50;$i++){
+	$threads[$i] = new CounterThread();
+	$threads[$i]-&gt;start();
+
+}
+
+//加入互斥锁
+$mutex = Mutex::create(true);
+for ($i=0;$i&lt;50;$i++){
+	$threads[$i] = new CounterThread($mutex);
+	$threads[$i]-&gt;start();
+
+}
+
+Mutex::unlock($mutex);
+for ($i=0;$i&lt;50;$i++){
+	$threads[$i]-&gt;join();
+}
+Mutex::destroy($mutex);
+
+?&gt;
+		
+		</pre><p>我们使用文件/tmp/counter.txt保存计数器值，每次打开该文件将数值加一，然后写回文件。当多个线程同时操作一个文件的时候，就会线程运行先后取到的数值不同，写回的数值也不同，最终计数器的数值会混乱。</p><p>没有加入锁的结果是计数始终被覆盖，最终结果是2</p><p>而加入互斥锁后，只有其中的一个进程完成加一工作并释放锁，其他线程才能得到解锁信号，最终顺利完成计数器累加操作</p><p>上面例子也可以通过对文件加锁实现，这里主要讲的是多线程锁，后面会涉及文件锁。</p></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="faq"></a>5.13.2.6. FAQ</h4></div></div></div><div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm46302633686848"></a>5.13.2.6.1. configure: error: pthreads requires ZTS, please re-compile PHP with ZTS enabled</h5></div></div></div><p>重新编译加入 --enable-maintainer-zts</p></div><div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm46302633685920"></a>5.13.2.6.2. pecl/pthreads requires PHP (version &gt;= 7.0.0RC2), installed version is 5.6.13</h5></div></div></div><pre class="screen">
+[root@localhost src]# pecl search pthreads
+Retrieving data...0%
+Matched packages, channel pecl.php.net:
+=======================================
+Package  Stable/(Latest) Local
+pthreads 3.0.7 (stable)        Threading API
+			
+			</pre><pre class="screen">
+[root@localhost src]# pecl install pthreads
+pecl/pthreads requires PHP (version &gt;= 7.0.0RC2), installed version is 5.6.13
+No valid packages found
+install failed
+			</pre><p>解决方法，手工编译旧的安装包</p><pre class="screen">
+			
+[root@localhost src]# wget https://pecl.php.net/get/pthreads-3.0.6.tgz
+[root@localhost src]# tar zxvf pthreads-3.0.6.tgz 		
+[root@localhost src]# cd pthreads-3.0.6
+[root@localhost pthreads-3.0.6]# phpize
+[root@localhost pthreads-3.0.6]# ./configure --enable-pthreads --with-php-config=/srv/php/bin/php-config
+[root@localhost pthreads-3.0.6]# make &amp;&amp; make install
+			
+			</pre></div></div></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="index"></a>5.13.3. libevent</h3></div></div></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm46302633682928"></a>5.13.3.1. event_base_loop</h4></div></div></div><p>永远循环</p><pre class="screen">
+		
+&lt;?php
+$timeouts = 10000000;
+//callback function
+function func($fd, $event,$arg) {
+$time = time();
+for($i=0;$i&lt;2;$i++) {
+    echo "Timer-$arg: $time : out-$i\n";
+    sleep(3);
+}
+}
+//create base and event 
+$base = event_base_new();
+for($i=0;$i&lt;2;$i++) {
+$event[$i] = event_new();
+//set event flags
+event_set($event[$i], $i , EV_PERSIST, 'func', "$i");
+//set event base
+event_base_set($event[$i], $base);
+//enable event
+event_add($event[$i], $timeouts);
+}
+//start event loop
+event_base_loop($base);
+		
+		</pre><p>运行一次然后退出</p><pre class="screen">
+event_base_loop($base, EVLOOP_ONCE );
+		</pre><pre class="screen">
+		
+&lt;?php
+$timeouts = 10;
+//callback function
+function func($fd, $event,$arg) {
+$time = time();
+    echo "Timer-$arg: $time\n";
+}
+//create base and event 
+$base = event_base_new();
+for($i=0;$i&lt;10;$i++) {
+$event[$i] = event_new();
+//set event flags
+event_set($event[$i], $i , EV_PERSIST, 'func', "$i");
+//set event base
+event_base_set($event[$i], $base);
+//enable event
+event_add($event[$i], $timeouts);
+}
+//start event loop
+event_base_loop($base, EVLOOP_ONCE );
+event_base_loop($base, EVLOOP_ONCE );
+event_base_loop($base, EVLOOP_ONCE );
+event_base_loop($base, EVLOOP_ONCE );		
+		
+		</pre></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm46302633679936"></a>5.13.3.2. </h4></div></div></div></div></div></div><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
+            /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+
+            //if(document.domain == 'netkiller.github.com'){
+            var disqus_shortname = 'netkiller'; // required: replace example with your forum shortname
+            //}else{
+			//var disqus_shortname = 'neochan';
+            //}
+
+            /* * * DON'T EDIT BELOW THIS LINE * * */
+            (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+            })();
+        </script><noscript xmlns="">Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><a xmlns="" href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="zip.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="mbstring.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">5.12. zip </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 5.14. mbstring</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" type="text/javascript">
+var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F997cd4a7320a82d72cb74d179118f697' type='text/javascript'%3E%3C/script%3E"));
+</script><script xmlns="" type="text/javascript" src="/js/q.js"></script></body></html>
