@@ -10,19 +10,42 @@
 	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
 		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">35.3. expdp/impdp</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="exp.imp.html">上一页</a> </td><th width="60%" align="center">第 35 章 CLI</th><td width="20%" align="right"> <a accesskey="n" href="rman.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.com&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.com&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="expdp.impdp"></a>35.3. expdp/impdp</h2></div></div></div><p>创建 dump 目录与用户</p><pre class="screen">
 create directory mydump as '/u01/oracle';
-
+		</pre><pre class="screen">
 grant read, write on directory mydump to dumpuser
+grant read,write on directory backup to finance;		
 		</pre><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="expdp"></a>35.3.1. expdp</h3></div></div></div><p>导出用户的数据</p><pre class="screen">
 expdp dumpuser/password directory=mydump dumpfile=user.dmp
-			</pre><p>导出表数据</p><pre class="screen">
+			</pre><p>导出指定表数据</p><pre class="screen">
 expdp dumpuser/password directory=mydump dumpfile=table.dmp tables=test1,test2
+			</pre><p>按用户导</p><pre class="screen">
+expdp scott/tiger@orcl schemas=scott dumpfile=expdp.dmp DIRECTORY=backup;			
+			</pre><p>并行进程进程数</p><pre class="screen">
+expdp scott/tiger@orcl directory=backup dumpfile=scott3.dmp parallel=40 job_name=scott3			
+			</pre><p>指定查询条件</p><pre class="screen">
+expdp scott/tiger@orcl directory=backup dumpfile=expdp.dmp Tables=emp query='WHERE age=20';			
+			</pre><p>按表空间导</p><pre class="screen">
+expdp system/manager DIRECTORY=backup DUMPFILE=tablespace.dmp TABLESPACES=temp,example;			
+			</pre><p>导整个数据库</p><pre class="screen">
+expdp system/manager DIRECTORY=backup DUMPFILE=full.dmp FULL=y;			
+			</pre><p></p><pre class="screen">
+			</pre><p></p><pre class="screen">			
 			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="impdp"></a>35.3.2. impdp</h3></div></div></div><p>导入该用户数据</p><pre class="screen">
 impdp dumpuser/password directory=mydump dumpfile=user.dmp
 			</pre><p>导出表数据</p><pre class="screen">
 impdp dumpuser/password directory=mydump dumpfile=table.dmp
 			</pre><pre class="screen">
 $ impdp  \'/ as sysdba\' directory=backup dumpfile=user.dmp logfile=user.log tablespaces=dave,bl table_exists_action=replace;			
-			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm45801270553376"></a>35.3.3. 数据泵演示</h3></div></div></div><p>创建目录</p><pre class="screen">
+			</pre><p>导到指定Schemas下</p><pre class="screen">
+impdp scott/tiger DIRECTORY=backup DUMPFILE=expdp.dmp SCHEMAS=scott;
+			</pre><p>改变表的所有者</p><pre class="screen">
+impdp system/manager DIRECTORY=backup DUMPFILE=expdp.dmp TABLES=scott.dept REMAP_SCHEMA=scott:system;
+			</pre><p>导入表空间</p><pre class="screen">
+impdp system/manager DIRECTORY=backup DUMPFILE=tablespace.dmp TABLESPACES=example;
+			</pre><p>导入数据库</p><pre class="screen">
+impdb system/manager DIRECTORY=dump_dir DUMPFILE=full.dmp FULL=y;			
+			</pre><p>追加数据</p><pre class="screen">
+impdp system/manager DIRECTORY=backup DUMPFILE=expdp.dmp SCHEMAS=system TABLE_EXISTS_ACTION			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm45140003221440"></a>35.3.3. 数据泵演示</h3></div></div></div><p>创建目录</p><pre class="screen">
 mkdir  /opt/oracle/backup			
 			</pre><p>创建用户</p><pre class="screen">
 create user backup identified by passw0rd;
@@ -31,7 +54,7 @@ GRANT resource,connect,CREATE SESSION,CREATE TABLE,SELECT ANY TABLE,UPDATE ANY T
 
 create directory backup as '/opt/oracle/backup';
 grant read,write on directory backup to backup;		
-			</pre><div class="example"><a id="idm45801270551504"></a><p class="title"><strong>例 35.1. expdp</strong></p><div class="example-contents"><pre class="screen">
+			</pre><div class="example"><a id="idm45140003214416"></a><p class="title"><strong>例 35.1. expdp</strong></p><div class="example-contents"><pre class="screen">
 				
 $ expdp backup/passw0rd dumpfile=backup.dmp directory=backup
 
@@ -57,7 +80,7 @@ Dump file set for BACKUP.SYS_EXPORT_SCHEMA_01 is:
   /opt/oracle/backup/backup.dmp
 Job "BACKUP"."SYS_EXPORT_SCHEMA_01" successfully completed at 16:20:28
 				
-				</pre><p>运行完成后会在/opt/oracle/backup/目录生成backup.dmp文件</p></div></div><br class="example-break" /><div class="example"><a id="idm45801270549056"></a><p class="title"><strong>例 35.2. </strong></p><div class="example-contents"><p>首先将dmp文件复制到恢复目录中，确认oracle用户有权限访问该文件。</p><pre class="screen">
+				</pre><p>运行完成后会在/opt/oracle/backup/目录生成backup.dmp文件</p></div></div><br class="example-break" /><div class="example"><a id="idm45140003211968"></a><p class="title"><strong>例 35.2. </strong></p><div class="example-contents"><p>首先将dmp文件复制到恢复目录中，确认oracle用户有权限访问该文件。</p><pre class="screen">
 mv backup.dmp /opt/oracle/backup/
 chown oracle:oinstall /opt/oracle/backup/backup.dmp
 				</pre><p>如果不知道目录可以使用下面语句查看</p><pre class="screen">
@@ -87,7 +110,15 @@ Master table "BACKUP"."SYS_IMPORT_FULL_01" successfully loaded/unloaded
 Starting "BACKUP"."SYS_IMPORT_FULL_01":  backup/******** directory=backup dumpfile=backup.dmp 
 Job "BACKUP"."SYS_IMPORT_FULL_01" successfully completed at 16:32:36
 				
-				</pre></div></div><br class="example-break" /></div></div><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
+				</pre></div></div><br class="example-break" /></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm45140003209136"></a>35.3.4. 查看dmp文件的表空间</h3></div></div></div><pre class="screen">
+impdp \'/ as sysdba\' dumpfile=backup:expdp.dmp sqlfile=backup:expdp.sql
+
+grep 'TABLESPACE' /opt/oracle/backup/expdp.sql | awk '{print $2}' | sort -u
+TABLESPACE
+"TS_DATA_DEF"
+"TS_DATA_IDX"
+UNLIMITED
+			</pre></div></div><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
             /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
 
             //if(document.domain == 'netkiller.github.com'){
