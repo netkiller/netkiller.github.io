@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>8.7. MySQL Custer</title><link rel="stylesheet" type="text/css" href="../..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.78.1" /><meta name="keywords" content="MySQL, PostgreSQL, Oracle, NoSQL, ER, TokyoCabinet/Tyrant, Memcache, Membase, Redis, Flare, Voldemort, LevelDB, MongoDB, GreenSQL, RDBMS, ORDBMS" /><link rel="home" href="../../index.html" title="Netkiller Database 手札" /><link rel="up" href="index.html" title="第 8 章 MySQL Server" /><link rel="prev" href="replication.html" title="8.6. Replication" /><link rel="next" href="mysql-proxy.html" title="8.8. MySQL Proxy" /></head><body><a xmlns="" href="http://www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="http://netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
+	    <a xmlns="" href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">8.7. MySQL Custer</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="replication.html">上一页</a> </td><th width="60%" align="center">第 8 章 MySQL Server</th><td width="20%" align="right"> <a accesskey="n" href="mysql-proxy.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.com&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.com&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="cluster"></a>8.7. MySQL Custer</h2></div></div></div><p>The cluster need a lot of server for experiments, if you haven't any server for one, I have a good idea that using Vmware for you.</p><p>at first, let's create lots of virtual machine(You MUST have a third server). and then follow me step by step learning how to set up a mysql cluster on your virtual machine.</p><div><img src="images/database/mysql/cluster-components-1.png" /></div><div><img src="images/database/mysql/multi-comp-1.png" /></div><pre class="screen">
+mgm 		192.168.0.1		# Management
+data 		192.168.0.2		# Ndbd Node
+data 		192.168.0.3		# Ndbd Node
+sql			192.168.0.4		# SQL Node
+sql			192.168.0.5		# SQL Node
+	</pre><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="cluster.mgm"></a>8.7.1. Management node (MGM node)</h3></div></div></div><pre class="screen">
+neo@mgm:~$ sudo vim /var/lib/mysql-cluster/config.ini
+
+[NDBD DEFAULT]
+NoOfReplicas=2
+DataMemory=80M
+IndexMemory=18M
+
+[MYSQLD DEFAULT]
+
+[NDB_MGMD DEFAULT]
+
+[TCP DEFAULT]
+portnumber=2202
+
+[NDB_MGMD]
+hostname=192.168.0.1
+datadir=/var/lib/mysql-cluster
+
+[NDBD]
+hostname=192.168.0.2
+datadir=/var/lib/mysql-cluster
+
+[NDBD]
+hostname=192.168.0.3
+datadir=/var/lib/mysql-cluster
+
+[MYSQLD]
+hostname=192.168.0.4
+
+[MYSQLD]
+hostname=192.168.0.5
+		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="cluster.data"></a>8.7.2. Data node</h3></div></div></div><p>my.cnf</p><pre class="screen">
+neo@data:~$ sudo vim /etc/mysql/my.cnf
+
+[mysqld]
+ndbcluster
+ndb-connectstring=192.168.0.1	# the IP of the MANAGMENT SERVER
+[mysql_cluster]
+ndb-connectstring=192.168.0.1	# the IP of the MANAGMENT SERVER
+
+		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="cluster.sql"></a>8.7.3. SQL node</h3></div></div></div><p>my.cnf</p><pre class="screen">
+neo@sql:~$ sudo vim /etc/mysql/my.cnf
+
+[mysqld]
+ndbcluster
+ndb-connectstring=192.168.0.1	# the IP of the MANAGMENT SERVER
+[mysql_cluster]
+ndb-connectstring=192.168.0.1	# the IP of the MANAGMENT SERVER
+		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="cluster.start"></a>8.7.4. Starting</h3></div></div></div><div class="procedure"><ol class="procedure" type="1"><li class="step"><p>starting mgm</p><pre class="screen">
+neo@mgm:~$ sudo ndb_mgmd -f /var/lib/mysql-cluster/config.ini
+				</pre></li><li class="step"><p>initial ndbd</p><pre class="screen">
+neo@data:~$ sudo ndbd --initial
+				</pre><p>首次运行需要 --initial 参数，以后不需要。</p></li></ol></div></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="cluster.shut"></a>8.7.5. Shutdown</h3></div></div></div><p>MGM</p><pre class="screen">
+$ sudo ndb_mgm -e shutdown
+		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="cluster.testing"></a>8.7.6. Testing</h3></div></div></div><pre class="screen">
+		
+neo@mgm:~$ ndb_mgm
+-- NDB Cluster -- Management Client --
+ndb_mgm&gt; show
+Connected to Management Server at: localhost:1186
+Cluster Configuration
+---------------------
+[ndbd(NDB)]     2 node(s)
+id=2    @192.168.0.2  (Version: 5.0.51, Nodegroup: 0)
+id=3    @192.168.0.3  (Version: 5.0.51, Nodegroup: 0, Master)
+
+[ndb_mgmd(MGM)] 1 node(s)
+id=1    @192.168.0.1  (Version: 5.0.51)
+
+[mysqld(API)]   2 node(s)
+id=4    @192.168.0.4  (Version: 5.0.51)
+id=5    @192.168.0.5  (Version: 5.0.51)
+
+ndb_mgm&gt;
+
+		
+		</pre><div class="tip" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Tip: 与没有使用簇的MySQL相比，在MySQL簇内操作数据的方式没有太大的区别。"><tr><td rowspan="2" align="center" valign="top" width="25"><img alt="[提示]" src="/graphics/tip.png" /></td><th align="left">与没有使用簇的MySQL相比，在MySQL簇内操作数据的方式没有太大的区别。</th></tr><tr><td align="left" valign="top"><div class="orderedlist"><p class="title"><strong>执行这类操作时应记住三点</strong></p><ol class="orderedlist" type="1"><li class="listitem"><p>表必须用ENGINE=NDB或ENGINE=NDBCLUSTER选项创建，或用ALTER TABLE选项更改，以使用NDB Cluster存储引擎在 Cluster内复制它们。如果使用mysqldump的输出从已有数据库导入表，可在文本编辑器中打开SQL脚本，并将该选项添加到任何表创建语句，或用这类选项之一替换任何已有的ENGINE（或TYPE）选项。</p></li><li class="listitem"><p>另外还请记住，每个NDB表必须有一个主键。如果在创建表时用户未定义主键，NDB Cluster存储引擎将自动生成隐含的主键。（注释：该隐含 键也将占用空间，就像任何其他的表索引一样。由于没有足够的内存来容纳这些自动创建的键，出现问题并不罕见）。</p></li><li class="listitem"><p>当你在一个节点上运行create database mydb;你去其他sql node上执行show databases;将不能看到mydb,你需要创建它，然后use mydb; show tables;你将看到同步的表。</p></li></ol></div></td></tr></table></div><p>SQL Node 1</p><pre class="screen">
+		
+neo@sql:~$ mysql -uroot -p
+Enter password:
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 7
+Server version: 5.0.51a-3ubuntu5.1 (Ubuntu)
+
+Type 'help;' or '\h' for help. Type '\c' to clear the buffer.
+
+mysql&gt; create database cluster;
+Query OK, 1 row affected (0.00 sec)
+
+mysql&gt; use cluster
+Database changed
+mysql&gt; create table city( id mediumint unsigned not null auto_increment primary key, name varchar(20) not null default '' ) engine = ndbcluster default charset utf8;
+Query OK, 0 rows affected (1.07 sec)
+
+mysql&gt; insert into city values(1, 'Shenzhen');
+Query OK, 1 row affected (0.12 sec)
+
+mysql&gt; insert into city values(2, 'Guangdong');
+Query OK, 1 row affected (0.00 sec)
+
+		
+		</pre><p>SQL Node 2</p><pre class="screen">
+		
+neo@sql:~$ mysql -uroot -p
+Enter password:
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 7
+Server version: 5.0.51a-3ubuntu5.1 (Ubuntu)
+
+Type 'help;' or '\h' for help. Type '\c' to clear the buffer.
+
+mysql&gt; show databases;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| example            |
+| mydb               |
+| mysql              |
+| neo                |
++--------------------+
+6 rows in set (0.13 sec)
+
+mysql&gt; create database cluster;
+Query OK, 1 row affected (0.00 sec)
+
+mysql&gt; show databases;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| cluster            |
+| example            |
+| mydb               |
+| mysql              |
+| neo                |
++--------------------+
+6 rows in set (0.13 sec)
+
+mysql&gt; use cluster;
+Reading table information for completion of table and column names
+You can turn off this feature to get a quicker startup with -A
+
+Database changed
+mysql&gt; show tables;
++-------------------+
+| Tables_in_cluster |
++-------------------+
+| city              |
++-------------------+
+1 row in set (0.01 sec)
+
+mysql&gt; select * from city;
++----+-----------+
+| id | name      |
++----+-----------+
+|  1 | Shenzhen  |
+|  2 | Guangdong |
++----+-----------+
+2 rows in set (0.03 sec)
+
+mysql&gt;
+		
+		</pre></div></div><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
+            /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+
+            //if(document.domain == 'netkiller.github.com'){
+            var disqus_shortname = 'netkiller'; // required: replace example with your forum shortname
+            //}else{
+			//var disqus_shortname = 'neochan';
+            //}
+
+            /* * * DON'T EDIT BELOW THIS LINE * * */
+            (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+            })();
+        </script><noscript xmlns="">Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><a xmlns="" href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="replication.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="mysql-proxy.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">8.6. Replication </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 8.8. MySQL Proxy</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" type="text/javascript">
+var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F997cd4a7320a82d72cb74d179118f697' type='text/javascript'%3E%3C/script%3E"));
+</script><script xmlns="" type="text/javascript" src="/js/q.js"></script></body></html>

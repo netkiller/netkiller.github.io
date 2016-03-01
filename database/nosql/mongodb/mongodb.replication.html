@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>38.3. Replication</title><link rel="stylesheet" type="text/css" href="../..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.78.1" /><meta name="keywords" content="MySQL, PostgreSQL, Oracle, NoSQL, ER, TokyoCabinet/Tyrant, Memcache, Membase, Redis, Flare, Voldemort, LevelDB, MongoDB, GreenSQL, RDBMS, ORDBMS" /><link rel="home" href="../../index.html" title="Netkiller Database 手札" /><link rel="up" href="index.html" title="第 38 章 MongoDB" /><link rel="prev" href="mongodb.security.html" title="38.2. Security and Authentication" /><link rel="next" href="mongodb.drivers.html" title="38.4. Drivers" /></head><body><a xmlns="" href="http://www.netkiller.cn/">Home</a> |
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>45.3. Replication</title><link rel="stylesheet" type="text/css" href="../..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.78.1" /><meta name="keywords" content="mongodb, mongo" /><meta name="keywords" content="MySQL, PostgreSQL, Oracle, NoSQL, ER, TokyoCabinet/Tyrant, Memcache, Membase, Redis, Flare, Voldemort, LevelDB, MongoDB, GreenSQL, RDBMS, ORDBMS" /><link rel="home" href="../../index.html" title="Netkiller Database 手札" /><link rel="up" href="index.html" title="第 45 章 MongoDB" /><link rel="prev" href="mongodb.security.html" title="45.2. Security and Authentication" /><link rel="next" href="mongodb.drivers.html" title="45.4. Drivers" /></head><body><a xmlns="" href="http://www.netkiller.cn/">Home</a> |
 		<a xmlns="" href="http://netkiller.github.io/">简体中文</a> |
 	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
 	    <a xmlns="" href="/journal/index.html">杂文</a> |
@@ -8,16 +8,68 @@
 	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
 	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
 	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
-		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">38.3. Replication</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="mongodb.security.html">上一页</a> </td><th width="60%" align="center">第 38 章 MongoDB</th><td width="20%" align="right"> <a accesskey="n" href="mongodb.drivers.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.com&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.com&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="mongodb.replication"></a>38.3. Replication</h2></div></div></div><pre class="screen">
+		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">45.3. Replication</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="mongodb.security.html">上一页</a> </td><th width="60%" align="center">第 45 章 MongoDB</th><td width="20%" align="right"> <a accesskey="n" href="mongodb.drivers.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.com&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.com&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="mongodb.replication"></a>45.3. Replication</h2></div></div></div><p>很多教程上面采用手工配置主从复制，我不建议你这样启动，请采用修改/etc/mongod.conf配置文件的方案。</p><pre class="screen">
 创建主：
 
-Mongod –port 28018 –dbpath /var/mongodb/master –master
+mongod –port 27017 –dbpath /var/lib/mongodb –master
 
  创建从：
 
-Mongod –port 28019 –dbpath /var/mongodb/slave –slave –source localhost:28018
+mongod –port 27017 –dbpath /var/lib/mongodb –slave –source master_ip_address:27017
+		</pre><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm45534905576304"></a>45.3.1. Master</h3></div></div></div><pre class="screen">
+sed -i "s/#master = true/master = true/" /etc/mongod.conf
 
-		</pre></div><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
+systemctl restart  mongod
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm45534905575488"></a>45.3.2. Slave</h3></div></div></div><pre class="screen">
+sed -i "s/#slave = true/slave = true/" /etc/mongod.conf
+sed -i "s/#source = arg/source = mongodb.master.example.com/" /etc/mongod.conf
+
+systemctl restart  mongod
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm45534905574640"></a>45.3.3. 测试</h3></div></div></div><p>进入 Master</p><pre class="screen">
+			
+[root@localhost ~]# mongo
+MongoDB shell version: 2.6.11
+connecting to: test
+Welcome to the MongoDB shell.
+For interactive help, type "help".
+For more comprehensive documentation, see
+	http://docs.mongodb.org/
+Questions? Try the support group
+	http://groups.google.com/group/mongodb-user
+Server has startup warnings:
+2015-11-14T15:51:21.215+0800 [initandlisten]
+2015-11-14T15:51:21.215+0800 [initandlisten] ** WARNING: Readahead for /var/lib/mongodb is set to 4096KB
+2015-11-14T15:51:21.215+0800 [initandlisten] **          We suggest setting it to 256KB (512 sectors) or less
+2015-11-14T15:51:21.215+0800 [initandlisten] **          http://dochub.mongodb.org/core/readahead
+&gt;
+&gt;
+&gt; db.foo.save({'name':'neo','address':{'city':'shenzhen','post':518000},'phone':[13113668890,13322993040]})
+WriteResult({ "nInserted" : 1 })
+&gt; db.foo.find();
+{ "_id" : ObjectId("5646e881a11081d5998bf70c"), "name" : "neo", "address" : { "city" : "shenzhen", "post" : 518000 }, "phone" : [ 13113668890, 13322993040 ] }
+&gt;
+			
+			</pre><p>进入 Slave</p><pre class="screen">
+			
+[root@localhost ~]# mongo
+MongoDB shell version: 2.6.11
+connecting to: test
+Welcome to the MongoDB shell.
+For interactive help, type "help".
+For more comprehensive documentation, see
+	http://docs.mongodb.org/
+Questions? Try the support group
+	http://groups.google.com/group/mongodb-user
+Server has startup warnings:
+2015-11-14T15:51:23.668+0800 [initandlisten]
+2015-11-14T15:51:23.668+0800 [initandlisten] ** WARNING: Readahead for /var/lib/mongodb is set to 4096KB
+2015-11-14T15:51:23.668+0800 [initandlisten] **          We suggest setting it to 256KB (512 sectors) or less
+2015-11-14T15:51:23.668+0800 [initandlisten] **          http://dochub.mongodb.org/core/readahead
+&gt; db.foo.find();
+{ "_id" : ObjectId("5646e881a11081d5998bf70c"), "name" : "neo", "address" : { "city" : "shenzhen", "post" : 518000 }, "phone" : [ 13113668890, 13322993040 ] }
+&gt;
+			
+			</pre></div></div><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
             /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
 
             //if(document.domain == 'netkiller.github.com'){
@@ -32,7 +84,7 @@ Mongod –port 28019 –dbpath /var/mongodb/slave –slave –source localhost:2
                 dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
                 (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
             })();
-        </script><noscript xmlns="">Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><a xmlns="" href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="mongodb.security.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="mongodb.drivers.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">38.2. Security and Authentication </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 38.4. Drivers</td></tr></table></div><script xmlns="">
+        </script><noscript xmlns="">Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><a xmlns="" href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="mongodb.security.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="mongodb.drivers.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">45.2. Security and Authentication </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 45.4. Drivers</td></tr></table></div><script xmlns="">
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
   (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
   m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)

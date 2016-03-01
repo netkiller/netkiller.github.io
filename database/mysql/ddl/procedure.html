@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>11.7. 存储过程(PROCEDURE)</title><link rel="stylesheet" type="text/css" href="../..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.78.1" /><meta name="keywords" content="MySQL, PostgreSQL, Oracle, NoSQL, ER, TokyoCabinet/Tyrant, Memcache, Membase, Redis, Flare, Voldemort, LevelDB, MongoDB, GreenSQL, RDBMS, ORDBMS" /><link rel="home" href="../../index.html" title="Netkiller Database 手札" /><link rel="up" href="index.html" title="第 11 章 DDL - Data Definition Language" /><link rel="prev" href="view.html" title="11.6. 视图(View)" /><link rel="next" href="trigger.html" title="11.8. 触发器(Trigger)" /></head><body><a xmlns="" href="http://www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="http://netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
+	    <a xmlns="" href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">11.7. 存储过程(PROCEDURE)</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="view.html">上一页</a> </td><th width="60%" align="center">第 11 章 DDL - Data Definition Language</th><td width="20%" align="right"> <a accesskey="n" href="trigger.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.com&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.com&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="procedure"></a>11.7. 存储过程(PROCEDURE)</h2></div></div></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm45534906657264"></a>11.7.1. 存储程序</h3></div></div></div><p>存储过程没有返回数据，需使用call proc()调用</p><pre class="programlisting">
+CREATE DEFINER=`neo`@`%` PROCEDURE `angelfund`(IN `puid` VARCHAR(50), IN `ptime` DATETIME)
+	LANGUAGE SQL
+	NOT DETERMINISTIC
+	CONTAINS SQL
+	SQL SECURITY DEFINER
+	COMMENT ''
+BEGIN
+
+	DECLARE fusername VARCHAR(16) DEFAULT NULL;
+	DECLARE fname VARCHAR(16) DEFAULT NULL;
+	DECLARE fmembers_date VARCHAR(20) DEFAULT NULL;
+
+	SELECT username,name,FROM_UNIXTIME(createtime) INTO fusername,fname,fmembers_date FROM members WHERE username = puid;
+
+	IF fusername IS NOT NULL THEN
+		INSERT IGNORE INTO angelfund(username,name,members_date,accounts_date,endtime,`status`,op,operator,`description`) value(fusername,fname,fmembers_date,ptime,DATE_ADD(ptime, INTERVAL +1 MONTH),'N','N','computer','');
+	END IF;
+
+END			
+			</pre><p>调用过程</p><pre class="screen">
+call angelfund('100','2013-10-10 10:10:10');			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm45534906654896"></a>11.7.2. 函数</h3></div></div></div><p>函数会返回数据，调用函数使用 select fun(),不能使用call调用，否则提示</p><pre class="screen">
+			
+mysql&gt; call myfun();
+ERROR 1305 (42000): PROCEDURE test.myfun does not exist			
+			
+			</pre><p>下面做一个实验</p><pre class="programlisting">
+CREATE TABLE `t` (
+	`id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+	`n` INT(11) UNSIGNED NULL DEFAULT '0',
+	PRIMARY KEY (`id`)
+)
+COLLATE='utf8_general_ci'
+ENGINE=InnoDB
+AUTO_INCREMENT=5;
+
+CREATE DEFINER=`neo`@`%` FUNCTION `myfun`()
+	RETURNS int(11)
+	LANGUAGE SQL
+	NOT DETERMINISTIC
+	READS SQL DATA
+	SQL SECURITY DEFINER
+	COMMENT ''
+BEGIN
+	INSERT INTO t (n) VALUES(rand()*100);
+	RETURN LAST_INSERT_ID();
+END			
+			</pre><pre class="screen">
+			
+mysql&gt; select myfun();
++---------+
+| myfun() |
++---------+
+|       9 |
++---------+
+1 row in set, 2 warnings (0.07 sec)
+			
+			</pre></div></div><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
+            /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+
+            //if(document.domain == 'netkiller.github.com'){
+            var disqus_shortname = 'netkiller'; // required: replace example with your forum shortname
+            //}else{
+			//var disqus_shortname = 'neochan';
+            //}
+
+            /* * * DON'T EDIT BELOW THIS LINE * * */
+            (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+            })();
+        </script><noscript xmlns="">Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><a xmlns="" href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="view.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="trigger.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">11.6. 视图(View) </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 11.8. 触发器(Trigger)</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" type="text/javascript">
+var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F997cd4a7320a82d72cb74d179118f697' type='text/javascript'%3E%3C/script%3E"));
+</script><script xmlns="" type="text/javascript" src="/js/q.js"></script></body></html>
