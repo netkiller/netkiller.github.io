@@ -1,20 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<html xmlns="http://www.w3.org/1999/xhtml"><head><title>数据库恢复方案</title><link rel="stylesheet" type="text/css" href="docbook.css"/><link rel="stylesheet" type="text/css" href="/journal/journal.css"/><meta name="generator" content="DocBook XSL Stylesheets V1.78.1"/><meta name="description" content="这里所谈的内容是对备份数据的恢复，不是对损坏数据表的恢复，或者说灾难恢复。"/><meta name="keywords" content="mysql, plugin, udf, images"/></head><body><a xmlns="" href="http://netkiller.github.io/">Home</a> |
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>数据库恢复方案</title><link rel="stylesheet" type="text/css" href="docbook.css"/><link rel="stylesheet" type="text/css" href="/journal/journal.css"/><meta name="generator" content="DocBook XSL Stylesheets V1.78.1"/><meta name="description" content="这里所谈的内容是对备份数据的恢复，不是对损坏数据表的恢复，或者说灾难恢复。"/><meta name="keywords" content="mysql, plugin, udf, images"/><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-69658182-1', 'auto');
+  ga('send', 'pageview');
+
+</script></head><body><a xmlns="" href="http://www.netkiller.cn/">Home</a> |
 		<a xmlns="" href="http://netkiller.github.io/">简体中文</a> |
 	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
-	    <a xmlns="" href="/journal/index.html">杂文</a> |
-	    <a xmlns="" href="/search.html">Search</a> |
+	    <a xmlns="" href="http://www.netkiller.cn/journal/index.html">杂文</a> |
+	    <a xmlns="" href="http://www.netkiller.cn/search.html">Search</a> |
 	    <a xmlns="" href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
 	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
 	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
 	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
-		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><section xml:lang="zh-cn" class="article" id="idm45387708727792"><div class="titlepage"><div><div><h2 class="title">数据库恢复方案</h2></div><div><h3 class="subtitle"><em>http://netkiller.github.io/journal/db.restore.html</em></h3></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(陈景峰)</span>, <span class="lineage">netkiller, BG7NYT</span></h3><div class="affiliation"><div class="address"><p><br/>
+	    <a xmlns="" href="https://zb.oschina.net/profile/725072/market">作品与服务</a> |
+		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><section xml:lang="zh-cn" class="article" id="idm45309256530400"><div class="titlepage"><div><div><h2 class="title">数据库恢复方案</h2></div><div><h3 class="subtitle"><em>http://netkiller.github.io/journal/db.restore.html</em></h3></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(陈景峯)</span>, <span class="lineage">netkiller, BG7NYT</span></h3><div class="affiliation"><div class="address"><p><br/>
 				<span class="country">中国</span><span class="state">广东省</span><span class="city">深圳市</span><span class="street">龙华新区民治街道溪山美地</span><br/>
 				<span class="postcode">518131</span><br/>
 				<span class="phone">+86 13113668890</span><br/>
-				<span class="fax">+86 755 29812080</span><br/>
+				<br/>
 				<code class="email">&lt;<a class="email" href="mailto:netkiller@msn.com">netkiller@msn.com</a>&gt;</code><br/>
-			</p></div></div></div></div><div><p class="releaseinfo">$Id</p></div><div><div class="legalnotice" id="legalnotice"><p class="legalnotice-title"><strong>版权声明</strong></p><p>转载请与作者联系，转载时请务必标明文章原始出处和作者信息及本声明。</p><table style="border: 0; " class="simplelist"><tr><td>
+			</p></div></div></div></div><div><p class="releaseinfo">$Id: b4ba1e8a4e7c23f60300b43f75864bc0fb30d85f </p></div><div><div class="legalnotice" id="legalnotice"><p class="legalnotice-title"><strong>版权声明</strong></p><p>转载请与作者联系，转载时请务必标明文章原始出处和作者信息及本声明。</p><table style="border: 0; " class="simplelist"><tr><td>
 		<a class="ulink" href="http://creativecommons.org/licenses/by/3.0/" target="_top">
 			<div><table style="border: 0; width: 180; cellpadding: 0; cellspacing: 0;"><tr><td><img src="/images/by-nc-sa.png" width="180"/></td></tr></table></div>
 		</a>
@@ -31,9 +41,9 @@
 		</td><td>
 			<p>微信扫描二维码进入 Netkiller 微信订阅号 </p>
 			<p>QQ群：128659835 请注明“读者”</p>
-		</td></tr></table><p/></div></div><div><p class="pubdate">2015-11-02</p></div><div><div class="abstract"><div class="abstract-title">摘要</div>
+		</td></tr></table><p/></div></div><div><p class="pubdate">2016-03-02</p></div><div><div class="abstract"><div class="abstract-title">摘要</div>
 			<p>这里所谈的内容是对备份数据的恢复，不是对损坏数据表的恢复，或者说灾难恢复。 </p>
-		</div></div><div><div class="abstract" id="abstract"><div class="abstract-title">我的系列文档</div><table style="border: 0; " class="simplelist"><tr><td>
+		</div></div><div><div class="abstract" id="abstract"><div class="abstract-title">我的系列文档</div><p>编程语言</p><table style="border: 0; " class="simplelist"><tr><td>
 			<a class="ulink" href="../architect/index.html" target="_top">Netkiller Architect 手札</a>
 		</td><td>
 			<a class="ulink" href="../developer/index.html" target="_top">Netkiller Developer 手札</a>
@@ -43,9 +53,19 @@
 			<a class="ulink" href="../python/index.html" target="_top">Netkiller Python 手札</a>
 		</td><td>
 			<a class="ulink" href="../testing/index.html" target="_top">Netkiller Testing 手札</a>
-		</td></tr><tr><td>
-			<a class="ulink" href="../cryptography/index.html" target="_top">Netkiller Cryptography 手札</a>
 		</td><td>
+			<a class="ulink" href="../cryptography/index.html" target="_top">Netkiller Cryptography 手札</a>
+		</td></tr><tr><td>
+			<a class="ulink" href="../perl/index.html" target="_top">Netkiller Perl 手札</a>
+		</td><td>
+			<a class="ulink" href="../docbook/index.html" target="_top">Netkiller Docbook 手札</a>
+		</td><td>
+			<a class="ulink" href="../project/index.html" target="_top">Netkiller Project 手札</a>
+		</td><td>
+				<a class="ulink" href="../java/index.html" target="_top">Netkiller Java 手札</a>
+			</td><td>
+			<a class="ulink" href="../devops/index.html" target="_top">Netkiller DevOps 手札</a>
+		</td><td> </td></tr></table><p>操作系统</p><table style="border: 0; " class="simplelist"><tr><td>
 			<a class="ulink" href="../linux/index.html" target="_top">Netkiller Linux 手札</a>
 		</td><td>
 			<a class="ulink" href="../debian/index.html" target="_top">Netkiller Debian 手札</a>
@@ -53,50 +73,42 @@
 			<a class="ulink" href="../centos/index.html" target="_top">Netkiller CentOS 手札</a>
 		</td><td>
 			<a class="ulink" href="../freebsd/index.html" target="_top">Netkiller FreeBSD 手札</a>
-		</td></tr><tr><td>
+		</td><td>
 			<a class="ulink" href="../shell/index.html" target="_top">Netkiller Shell 手札</a>
 		</td><td>
 			<a class="ulink" href="../security/index.html" target="_top">Netkiller Security 手札</a>
-		</td><td>
+		</td></tr><tr><td>
 			<a class="ulink" href="../www/index.html" target="_top">Netkiller Web 手札</a>
 		</td><td>
 			<a class="ulink" href="../monitoring/index.html" target="_top">Netkiller Monitoring 手札</a>
 		</td><td>
 			<a class="ulink" href="../storage/index.html" target="_top">Netkiller Storage 手札</a>
-		</td></tr><tr><td>
+		</td><td>
 			<a class="ulink" href="../mail/index.html" target="_top">Netkiller Mail 手札</a>
 		</td><td>
-			<a class="ulink" href="../docbook/index.html" target="_top">Netkiller Docbook 手札</a>
-		</td><td>
-			<a class="ulink" href="../project/index.html" target="_top">Netkiller Project 手札</a>
-		</td><td>
+			<a class="ulink" href="../multimedia/index.html" target="_top">Netkiller Multimedia 手札</a>
+		</td><td> </td></tr></table><p>数据库</p><table style="border: 0; " class="simplelist"><tr><td>
 			<a class="ulink" href="../database/index.html" target="_top">Netkiller Database 手札</a>
 		</td><td>
 			<a class="ulink" href="../postgresql/index.html" target="_top">Netkiller PostgreSQL 手札</a>
-		</td></tr><tr><td>
+		</td><td>
 			<a class="ulink" href="../mysql/index.html" target="_top">Netkiller MySQL 手札</a>
 		</td><td>
 			<a class="ulink" href="../nosql/index.html" target="_top">Netkiller NoSQL 手札</a>
 		</td><td>
 			<a class="ulink" href="../ldap/index.html" target="_top">Netkiller LDAP 手札</a>
-		</td><td>
+		</td><td> </td></tr></table><p>网络设备及其他</p><table style="border: 0; " class="simplelist"><tr><td>
 			<a class="ulink" href="../network/index.html" target="_top">Netkiller Network 手札</a>
 		</td><td>
 			<a class="ulink" href="../cisco/index.html" target="_top">Netkiller Cisco IOS 手札</a>
-		</td></tr><tr><td>
+		</td><td>
 			<a class="ulink" href="../h3c/index.html" target="_top">Netkiller H3C 手札</a>
 		</td><td>
-			<a class="ulink" href="../multimedia/index.html" target="_top">Netkiller Multimedia 手札</a>
-		</td><td>
-			<a class="ulink" href="../perl/index.html" target="_top">Netkiller Perl 手札</a>
-		</td><td>
 			<a class="ulink" href="../radio/index.html" target="_top">Netkiller Amateur Radio 手札</a>
-		</td><td>
-			<a class="ulink" href="../devops/index.html" target="_top">Netkiller DevOps 手札</a>
-		</td></tr></table><p>您可以使用<a class="ulink" href="ibook.epub" target="_top">iBook</a>阅读当前文档</p></div></div></div><hr/></div><div class="toc"><div class="toc-title">目录</div><ul class="toc"><li><span class="section"><a href="#idm45387708724720">1. 背景</a></span></li><li><span class="section"><a href="#idm45387708625424">2. 备份方式分析</a></span></li><li><span class="section"><a href="#idm45387708625104">3. 恢复方案</a></span><ul><li><span class="section"><a href="#idm45387708606672">3.1. 第一种</a></span></li><li><span class="section"><a href="#idm45387708600864">3.2. 第二种</a></span></li><li><span class="section"><a href="#idm45387708596192">3.3. 第三种</a></span></li><li><span class="section"><a href="#idm45387708587360">3.4. 第四种</a></span></li></ul></li><li><span class="section"><a href="#idm45387708583296">4. 手工恢复</a></span></li></ul></div>
+		</td><td> </td><td> </td></tr></table><p>您可以使用<a class="ulink" href="ibook.epub" target="_top">iBook</a>阅读当前文档</p></div></div></div><hr/></div><div class="toc"><div class="toc-title">目录</div><ul class="toc"><li><span class="section"><a href="#idm45309256529136">1. 背景</a></span></li><li><span class="section"><a href="#idm45309256230928">2. 备份方式分析</a></span></li><li><span class="section"><a href="#idm45309256230672">3. 恢复方案</a></span><ul><li><span class="section"><a href="#idm45309256214960">3.1. 第一种</a></span></li><li><span class="section"><a href="#idm45309256209904">3.2. 第二种</a></span></li><li><span class="section"><a href="#idm45309256205568">3.3. 第三种</a></span></li><li><span class="section"><a href="#idm45309256197568">3.4. 第四种</a></span></li></ul></li><li><span class="section"><a href="#idm45309256193680">4. 手工恢复</a></span></li></ul></div>
 	
 
-	<section class="section" id="idm45387708724720"><div class="titlepage"><div><div><h2 class="title" style="clear: both">1. 背景</h2></div></div></div>
+	<section class="section" id="idm45309256529136"><div class="titlepage"><div><div><h2 class="title" style="clear: both">1. 背景</h2></div></div></div>
 		
 		<p>我们来假设一个场景。</p>
 		<p>你是否适用 mysqldump 每隔一段时间备份一次数据库，每个备份一个数据文件。</p>
@@ -104,7 +116,7 @@
 		<p>有时公司突然说要恢复历史数据，有可能全补回复，有可能部分恢复。</p>
 		<p>你将怎么做？</p>
 	</section>
-	<section class="section" id="idm45387708625424"><div class="titlepage"><div><div><h2 class="title" style="clear: both">2. 备份方式分析</h2></div></div></div>
+	<section class="section" id="idm45309256230928"><div class="titlepage"><div><div><h2 class="title" style="clear: both">2. 备份方式分析</h2></div></div></div>
 		
 		<p>首先看看备份方式，你是不是采用这种方法备份</p>
 		<p>我使用一串数字表述数据库数据递增情况，数据的增长变化</p>
@@ -152,7 +164,7 @@
 		</pre>
 		<p>我用'o' 表示与上次备份中有差异的部分。</p>
 	</section>
-	<section class="section" id="idm45387708625104"><div class="titlepage"><div><div><h2 class="title" style="clear: both">3. 恢复方案</h2></div></div></div>
+	<section class="section" id="idm45309256230672"><div class="titlepage"><div><div><h2 class="title" style="clear: both">3. 恢复方案</h2></div></div></div>
 		
 		<p>，最好恢复，第二种。</p>
 		<div class="variablelist"><div class="variablelist-title">上面所提三种备份方式</div><dl class="variablelist"><dt><span class="term">第一种</span></dt><dd>
@@ -164,7 +176,7 @@
 				</dd><dt><span class="term">第四种</span></dt><dd>
 					<p>最复杂，看似复杂，其实也不复杂，跟第三种差不多.</p>
 				</dd></dl></div>
- 		<section class="section" id="idm45387708606672"><div class="titlepage"><div><div><h3 class="title">3.1. 第一种</h3></div></div></div>
+ 		<section class="section" id="idm45309256214960"><div class="titlepage"><div><div><h3 class="title">3.1. 第一种</h3></div></div></div>
  			
  			<p>这种备份非常简单，菜鸟也搞搞定</p>
  			<p>文本格式回复</p>
@@ -185,7 +197,7 @@ cat dbname.sql | mysql -u user -p pass -h localhost yourdb
 				<p>仅使用gzip压缩，可以方便使用zcat直接操作文件。</p>
 			</div>
  		</section>
-		<section class="section" id="idm45387708600864"><div class="titlepage"><div><div><h3 class="title">3.2. 第二种</h3></div></div></div>
+		<section class="section" id="idm45309256209904"><div class="titlepage"><div><div><h3 class="title">3.2. 第二种</h3></div></div></div>
 			
 			<p>这种备份是连续有规律的，只要依次按顺序恢复即可。</p>
 			<pre class="screen">
@@ -212,7 +224,7 @@ zcat dbname1.sql.gz | mysql -u user -p pass -h localhost yourdb
 			</pre>
 			<p>总之怎么恢复都可以</p>
 		</section>
-		<section class="section" id="idm45387708596192"><div class="titlepage"><div><div><h3 class="title">3.3. 第三种</h3></div></div></div>
+		<section class="section" id="idm45309256205568"><div class="titlepage"><div><div><h3 class="title">3.3. 第三种</h3></div></div></div>
 			
 			<p>这种恢复建议按照顺序进行，因为重叠数据没有变化，所以即可以顺时间轴恢复也可以逆时间轴，条件是表结构需要有主键(PK)</p>
 			<div class="note"><h3 class="title">insert 方式有要求</h3>
@@ -247,7 +259,7 @@ zcat dbname1.sql.gz | sed 's/^INSERT INTO/INSERT IGNORE INTO/' | mysql -u user -
 			</pre>			
 			<p>因为有主键，所以已存在的重复记录不会被重复插入。</p>			
 		</section>
-		<section class="section" id="idm45387708587360"><div class="titlepage"><div><div><h3 class="title">3.4. 第四种</h3></div></div></div>
+		<section class="section" id="idm45309256197568"><div class="titlepage"><div><div><h3 class="title">3.4. 第四种</h3></div></div></div>
 			
 			<p>这种恢复必须按照顺序进行，即可以顺时间轴恢复也可以逆时间轴，但处理上稍有不同.一旦操作错误数据就会损坏，同时也有很多条件。</p>
 			<p>顺时序恢复数据， 只需将 insert 替换为 replace 即可 </p>
@@ -261,7 +273,7 @@ replace into dbtable(f1, f2, f3...) value (v1, v2, v3);
 			<p>操作要十分谨慎，理解正向与逆向的不同，方能操作。</p>
 		</section>
 	</section>
-	<section class="section" id="idm45387708583296"><div class="titlepage"><div><div><h2 class="title" style="clear: both">4. 手工恢复</h2></div></div></div>
+	<section class="section" id="idm45309256193680"><div class="titlepage"><div><div><h2 class="title" style="clear: both">4. 手工恢复</h2></div></div></div>
 		
 		<p>有时上面所讲的四种恢复方法不能满足你需求，我们模拟一个场景，假如你需要恢复一个时间段的数据，或者ID字段去一个范围等等，上面所举例子均为一刀切。该怎么办呢？</p>
 		<p>不用担心方法总是有的</p>
@@ -280,7 +292,7 @@ REPLACE [LOW_PRIORITY | DELAYED]
     [(col_name,...)]
     SELECT ...		
 		</pre>
-		<div class="example" id="idm45387708579024"><div class="example-title">例 1. INSERT ... SELECT</div><div class="example-contents">
+		<div class="example" id="idm45309256190000"><div class="example-title">例 1. INSERT ... SELECT</div><div class="example-contents">
 			
 			<pre class="screen">
 INSERT IGNORE INTO tbl_name_new SELECT * FROM tbl_name_old WHERE name = 'netkiller';
@@ -300,16 +312,7 @@ INSERT IGNORE INTO db_new.tbl_name SELECT * FROM db_old.tbl_name WHERE id &gt; '
 	            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
 	            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
 	        })();
-	    </script><noscript xmlns="">Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><a xmlns="" href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a><br xmlns=""/><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=I4PGSAlBx_RjcBKmpZgR4WuU1yHy-Q10AKQe4quwDk4"/><script xmlns="">
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-
-  ga('create', 'UA-11694057-1', 'netkiller.github.io');
-  ga('send', 'pageview');
-
-</script><script xmlns="" type="text/javascript">
+	    </script><noscript xmlns="">Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><a xmlns="" href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a><br xmlns=""/><a xmlns="" href="http://www.clustrmaps.com/map/Netkiller.cn" title="Visitor Map for Netkiller.cn"><img src="//www.clustrmaps.com/map_v2.png?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"/></a><script xmlns="" type="text/javascript">
 var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
 document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F997cd4a7320a82d72cb74d179118f697' type='text/javascript'%3E%3C/script%3E"));
 </script><script xmlns="" type="text/javascript" src="/js/q.js"/></body></html>
