@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<html xmlns="http://www.w3.org/1999/xhtml"><head><title>交易服务器设计</title><link rel="stylesheet" type="text/css" href="docbook.css"/><link rel="stylesheet" type="text/css" href="/journal/journal.css"/><meta name="generator" content="DocBook XSL Stylesheets V1.79.1"/><meta name="description" content=""/><meta name="keywords" content=", , , "/><script xmlns="">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>金融交易系统设计思路与经验分享</title><link rel="stylesheet" type="text/css" href="docbook.css"/><link rel="stylesheet" type="text/css" href="/journal/journal.css"/><meta name="generator" content="DocBook XSL Stylesheets V1.79.1"/><meta name="description" content="相关文章 《金融交易系统异地灾备方案》 《金融交易系统设计思路与经验分享》"/><meta name="keywords" content=", , , "/><script xmlns="">
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
   (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
   m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
@@ -18,7 +18,7 @@
 	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
 	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
 	    <a xmlns="" href="https://zb.oschina.net/profile/725072/market">作品与服务</a> |
-		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><section xml:lang="zh-cn" class="article" id="idm45819389162208"><div class="titlepage"><div><div><h2 class="title">交易服务器设计</h2></div><div><h3 class="subtitle"><em/></h3></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(陈景峯)</span>, <span class="lineage">netkiller, BG7NYT</span></h3><div class="affiliation">
+		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><section xml:lang="zh-cn" class="article" id="idm45120786171232"><div class="titlepage"><div><div><h2 class="title">金融交易系统设计思路与经验分享</h2></div><div><h3 class="subtitle"><em/></h3></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(陈景峯)</span>, <span class="lineage">netkiller, BG7NYT</span></h3><div class="affiliation">
 			<div class="address"><p><br/>
 				<span class="country">中国</span><span class="state">广东省</span><span class="city">深圳市</span><span class="street">龙华新区民治街道溪山美地</span><br/>
 				<span class="postcode">518131</span><br/>
@@ -48,8 +48,10 @@
 			<p>QQ群：128659835 请注明“读者”</p>
 		</td></tr></table>
 	<p/>
-</div></div><div><p class="pubdate">2016-06-23</p></div><div><div class="abstract"><div class="abstract-title">摘要</div>
-
+</div></div><div><p class="pubdate">2016-06-28</p></div><div><div class="abstract"><div class="abstract-title">相关文章</div>
+			
+			<p><a class="ulink" href="http://www.netkiller.cn/journal/trader.html" target="_top">《金融交易系统异地灾备方案》</a></p>
+			<p><a class="ulink" href="http://www.netkiller.cn/journal/trader.architect.html" target="_top">《金融交易系统设计思路与经验分享》</a></p>
 		</div></div><div><div class="abstract" id="abstract"><div class="abstract-title">我的系列文档</div>
 	
 	<p>编程语言</p>
@@ -132,30 +134,30 @@
 		阅读当前文档
 	</p>
 
-</div></div></div><hr/></div><div class="toc"><div class="toc-title">目录</div><ul class="toc"><li><span class="section"><a href="#overview">1. 架构纵览</a></span><ul><li><span class="section"><a href="#idm45819384730016">1.1. 网站部分</a></span><ul><li><span class="section"><a href="#idm45819384729120">1.1.1. 网站前端</a></span></li><li><span class="section"><a href="#idm45819384728352">1.1.2. 网站后台</a></span></li></ul></li><li><span class="section"><a href="#idm45819384727456">1.2. 交易服务器部分</a></span></li></ul></li><li><span class="section"><a href="#firewall">2. 应用层防火墙</a></span></li><li><span class="section"><a href="#Datafeed">3. Data feed 报价系统的设计</a></span></li><li><span class="section"><a href="#summary">4. 总结</a></span></li></ul></div>
+</div></div></div><hr/></div><div class="toc"><div class="toc-title">目录</div><ul class="toc"><li><span class="section"><a href="#overview">1. 架构纵览</a></span><ul><li><span class="section"><a href="#idm45120786107952">1.1. 网站部分</a></span><ul><li><span class="section"><a href="#idm45120786107056">1.1.1. 网站前端</a></span></li><li><span class="section"><a href="#idm45120786106288">1.1.2. 网站后台</a></span></li></ul></li><li><span class="section"><a href="#idm45120786105392">1.2. 交易服务器部分</a></span></li></ul></li><li><span class="section"><a href="#firewall">2. 应用层防火墙</a></span></li><li><span class="section"><a href="#idm45120786092896">3. 集群实现</a></span></li><li><span class="section"><a href="#Datafeed">4. Data feed 报价系统的设计</a></span></li><li><span class="section"><a href="#idm45120786079840">5. 核心交易系统的设计</a></span><ul><li><span class="section"><a href="#idm45120786076992">5.1. 协议部分</a></span></li><li><span class="section"><a href="#idm45120786076736">5.2. 订单处理</a></span></li></ul></li><li><span class="section"><a href="#idm45120786065744">6. 管理员控制台的设计</a></span></li><li><span class="section"><a href="#summary">7. 总结</a></span></li></ul></div>
 	
 	<section class="section" id="overview"><div class="titlepage"><div><div><h2 class="title" style="clear: both">1. 架构纵览</h2></div></div></div>
 		
-		<section class="section" id="idm45819384730016"><div class="titlepage"><div><div><h3 class="title">1.1. 网站部分</h3></div></div></div>
+		<section class="section" id="idm45120786107952"><div class="titlepage"><div><div><h3 class="title">1.1. 网站部分</h3></div></div></div>
 			
 			<p/>
-			<section class="section" id="idm45819384729120"><div class="titlepage"><div><div><h4 class="title">1.1.1. 网站前端</h4></div></div></div>
+			<section class="section" id="idm45120786107056"><div class="titlepage"><div><div><h4 class="title">1.1.1. 网站前端</h4></div></div></div>
 				
 
 			</section>
-			<section class="section" id="idm45819384728352"><div class="titlepage"><div><div><h4 class="title">1.1.2. 网站后台</h4></div></div></div>
+			<section class="section" id="idm45120786106288"><div class="titlepage"><div><div><h4 class="title">1.1.2. 网站后台</h4></div></div></div>
 				
 			</section>
 
 		</section>
-		<section class="section" id="idm45819384727456"><div class="titlepage"><div><div><h3 class="title">1.2. 交易服务器部分</h3></div></div></div>
+		<section class="section" id="idm45120786105392"><div class="titlepage"><div><div><h3 class="title">1.2. 交易服务器部分</h3></div></div></div>
 			
-			<div class="figure" id="idm45819384726816"><div class="figure-title">图 1. 交易服务器架构蓝图</div><div class="figure-contents">
+			<div class="figure" id="idm45120786104752"><div class="figure-title">图 1. 交易服务器架构蓝图</div><div class="figure-contents">
 				
 				<div><table style="border: 0; width: 1280px; cellpadding: 0; cellspacing: 0;"><tr><td><img src="images/trader/design/trader.overview.png" width="1280" alt="交易服务器架构蓝图"/></td></tr></table></div>
 			</div></div><br class="figure-break"/>
 			<p>可以简单的讲交易服务器分为三大块：报价，交易，管理。</p>
-			<div class="figure" id="idm45819384724688"><div class="figure-title">图 2. 交易服务器设计</div><div class="figure-contents">
+			<div class="figure" id="idm45120786102624"><div class="figure-title">图 2. 交易服务器设计</div><div class="figure-contents">
 				
 				<div><table style="border: 0; width: 1280px; cellpadding: 0; cellspacing: 0;"><tr><td><img src="images/trader/design/trader.server.png" width="1280" alt="交易服务器设计"/></td></tr></table></div>
 			</div></div><br class="figure-break"/>
@@ -165,17 +167,25 @@
 	<section class="section" id="firewall"><div class="titlepage"><div><div><h2 class="title" style="clear: both">2. 应用层防火墙</h2></div></div></div>
 		
 		<p>什么是七层防火墙，7层防火墙是在应用层工作的防火墙,它实时监控保护系统各个方面的行为。保护系统的安全运行,有效的保证系统的正常运行,有网络系统安全中有良好的表现.</p>
-		<div class="figure" id="idm45819384720992"><div class="figure-title">图 3. Firewall</div><div class="figure-contents">
+		<div class="figure" id="idm45120786098928"><div class="figure-title">图 3. Firewall</div><div class="figure-contents">
 			
 			<div><img src="images/trader/design/trader.firewall.png" alt="Firewall"/></div>
 		</div></div><br class="figure-break"/>
 		<p>这里设计应用层防火墙是用来弥补3/4层防火墙的不足，我们的目的是保护我们服务器安全。</p>
 		<div class="orderedlist"><div class="orderedlist-title">应用层防火墙提供下面几个特性</div><ol class="orderedlist" type="1"><li class="listitem">IP地址黑白名单，地域区域封锁，用于阻止某些IP地址访问我们的服务器</li><li class="listitem">协议匹配，如果与应用服务器建立连接后，发送的协议是错误的，我们视为嗅探行为</li><li class="listitem">交易频率控制，例如禁止机器人高频交易</li><li class="listitem">成交范围，当用户送出的订单，价格不再我们的报价范围，视为虚假交易</li><li class="listitem">Token 验证，针对RESTFul等接口</li><li class="listitem">数据收集（TCP/IP，在线人数，各种协议操作人数，状态...）收集这些数据用于服务器监控。</li><li class="listitem">扩展插件，我们希望这个防火墙能够通过编写插件扩展功能。</li></ol></div>
 	</section>
-	<section class="section" id="Datafeed"><div class="titlepage"><div><div><h2 class="title" style="clear: both">3. Data feed 报价系统的设计</h2></div></div></div>
+	<section class="section" id="idm45120786092896"><div class="titlepage"><div><div><h2 class="title" style="clear: both">3. 集群实现</h2></div></div></div>
+		
+		<p>引入集群与分布式概念，传统C/S服务器软件设计都是运行在一台服务器上的，只能通过垂直扩展（升级硬件，如中央处理器，内存，硬盘），无法实现水平扩展（横向增加节点扩展服务器的并行处理性能）。</p>
+		<p>另外一个问题是传统软件任何更新都需要重启，重启已经不适合互联网时代。所以软件升级，配置文件变更，我们要从设计的角度解决重启的问题，最终我们要实现7*24小时不间断运行。</p>
+		<p>最后是异构系统的支持与多语言支持，互联网云时代，任何一个系统不可能采用一种语言开发，通常是多个语言混合使用，取各种语言的有点。所以设计交易系统我们要考虑不同操作系统的差异与不同语言的通信。</p>
+		<div class="orderedlist"><div class="orderedlist-title">分布式交易系统</div><ol class="orderedlist" type="1"><li class="listitem">负载均衡</li><li class="listitem">横向扩展，在不停机，不影响在线用户的情况下，动态增加或移除节点</li><li class="listitem">节点健康状态检查</li><li class="listitem">故障转移</li><li class="listitem">双活，多活支持</li></ol></div>
+		<span style="color: red">&lt;listitem&gt;这样的系统很容易实现多机房异地灾备与多房链路负载均衡。&lt;/listitem&gt;</span>
+	</section>
+	<section class="section" id="Datafeed"><div class="titlepage"><div><div><h2 class="title" style="clear: both">4. Data feed 报价系统的设计</h2></div></div></div>
 		
 		<p>Data feed 是报价系统，主要的功能是为用户提供实时报价。</p>
-		<div class="figure" id="idm45819384713520"><div class="figure-title">图 4. Data Feed</div><div class="figure-contents">
+		<div class="figure" id="idm45120786085408"><div class="figure-title">图 4. Data Feed</div><div class="figure-contents">
 			
 			<div><img src="images/trader/design/trader.datafeed.png" alt="Data Feed"/></div>
 		</div></div><br class="figure-break"/>
@@ -184,8 +194,67 @@
 		<p>第二步是数据处理，为此我们需要创建一个分组，每个组中可以独立设置产品种类，报价频率，价格范围，点差以及条件过滤。因为来自多个插件的数据报价速度不同，产品也可能存在重复，所以我们需要合并/拆分的功能，以满足我们需要的数据，例如A、B、F、K几个产品在来自某个插件，C、D、E 产品来自另一个插件。</p>
 		<p>第三步数据送出，将整理好的数据发送给用户，展示在用户的交易终端中。我们提供多种数据格式，以满足异构系统与各种编程语言。</p>
 	</section>
+	<section class="section" id="idm45120786079840"><div class="titlepage"><div><div><h2 class="title" style="clear: both">5. 核心交易系统的设计</h2></div></div></div>
+		
+		<p>交易系统的核心就是处理订单，开仓，平仓，挂单等等。下图展示了订单处理的内部模型。</p>
+		<div class="figure" id="idm45120786078496"><div class="figure-title">图 5. Trade Core</div><div class="figure-contents">
+			
+			<div><img src="images/trader/design/trader.core.png" alt="Trade Core"/></div>
+		</div></div><br class="figure-break"/>
+		<section class="section" id="idm45120786076992"><div class="titlepage"><div><div><h3 class="title">5.1. 协议部分</h3></div></div></div>
+			
+		
+			<p>客户端需要与服务器端交互，就需要通信协议，通信方式有两种，一种是二进制协议，另一种是纯文本协议。</p>
+			<p>互联网早期主要使用二进制协议，因为二进制协议体积小，占用带宽少，传输效率高。二进制协议通常使用C/C++结构体作为数据结构，这种方式的有点是开发简单，缺点是不能直接阅读协议，并且与其他语言通信不灵活。</p>
+			<p>随着网络提速，解决了带宽问题，于是出现了纯文本的协议，例如 HTTP、FTP、SMTP、POP3。这种协议可直接阅读，大大提高了开发效率与开发难度，调试起来也极为方便，使用telnet就可以完成复杂也些的调试。</p>
+			<p>互联网云计算与大数据的提出，大家有意识到文本协议的开销，于是二进制协议回归，同时纯文本协议也在减肥。为了解决开发难度，同事保证开发效率，序列化诞生了，序列化分为两派，一派是二进制，另一派是纯文本。</p>
+			<p>无论是二进制还是纯文本序列化，操作十分简单只有encode/decode两种操作方式，可以在任何语言中完成encode或decode操作，真正实现了跨语言，跨平台，所以交易通信协议这块我们采用序列化替代结构体。 </p>
+			<p>我们提供了多种协议供用户选择，协议转换后对应后面的Trade Service</p>
+			<p>通过文本协议访问</p>
+			<pre class="screen">
+			
+{"status":true, "error":0}		
+			
+			</pre>
+			<p>通过二进制协议访问</p>
+			<pre class="screen">
+			
+82 A6 status C3 A6 error 00
+			
+			</pre>
+			<p>通过XML协议访问</p>
+			<pre class="screen">
+			
+&lt;xml&gt;
+	&lt;status&gt;true&lt;status&gt;
+	&lt;error&gt;0&lt;error&gt;
+&lt;/xml&gt;
+			
+			</pre>
+			<p>协议与服务是关系对象映射，例如上面的协议对应Class文件</p>
+			<pre class="screen">
+			
+class Status {
+	private status;
+	private error;
+}
+			
+			</pre>
+		</section>
+		<section class="section" id="idm45120786076736"><div class="titlepage"><div><div><h3 class="title">5.2. 订单处理</h3></div></div></div>
+			
+			<p>这里开始涉及分布式软件的开发，分布式软件开发核心就是集中配置，分布式锁，节点分配，健康检查。</p>
+			<p>为了实现双活，负载均衡，我们首先要将订单持久化，这样掉电，死机，崩溃等故障，能保证其他节点上的服务器订单是同步的。</p>
+			<p>为了同意调配所有节点，我们的系统配置是集中管理的。</p>
+			<p>订单处理需要使用分布式锁，流程是申请锁，操作订单，释放锁。锁必须设置一个超时时间，这样一旦某个节点申请了锁，同时这个节点挂了，那么锁就一直不释放，其他节点就无法操作该订单，所以需要一个超时时间用于锁的自释放。注意：锁是针对订单的，可以称为行级锁。</p>
+			<p>定点采用事件触发的方式，满足条件即出发操作。</p>
+		</section>
+	</section>
+	<section class="section" id="idm45120786065744"><div class="titlepage"><div><div><h2 class="title" style="clear: both">6. 管理员控制台的设计</h2></div></div></div>
+		
+	</section>
 
-	<section class="section" id="summary"><div class="titlepage"><div><div><h2 class="title" style="clear: both">4. 总结</h2></div></div></div>
+	<section class="section" id="summary"><div class="titlepage"><div><div><h2 class="title" style="clear: both">7. 总结</h2></div></div></div>
 		
 	</section>
 </section><div xmlns="" id="disqus_thread"/><script xmlns="" type="text/javascript">
