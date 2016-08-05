@@ -111,7 +111,7 @@ public class Application {
 		
 		</pre>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm46051637886128"></a>11.12.2.1. @SpringBootApplication</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm45749405710640"></a>11.12.2.1. @SpringBootApplication</h4></div></div></div>
 			
 			<p>@SpringBootApplication 是 @Configuration, @EnableAutoConfiguration 跟 @ComponentScan 的集合。</p>
 			<pre class="programlisting">
@@ -120,7 +120,7 @@ public class Application {
 			
 			</pre>
 		</div>		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm46051637884480"></a>11.12.2.2. @EnableAutoConfiguration</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm45749405708832"></a>11.12.2.2. @EnableAutoConfiguration</h4></div></div></div>
 			
 			<p>exclude 排除配置，下面例子是排除 DataSource配置</p>
 			<pre class="programlisting">
@@ -129,7 +129,7 @@ public class Application {
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm46051637882592"></a>11.12.2.3. @ComponentScan</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm45749405707200"></a>11.12.2.3. @ComponentScan</h4></div></div></div>
 			
 			<p>@ComponentScan 注入会扫描 @Controller 与 @RestController</p>
 			<pre class="programlisting">
@@ -178,8 +178,8 @@ public class Application {
 	
 	@SuppressWarnings("deprecation")
 	public @Bean MongoDbFactory mongoDbFactory() throws Exception {
-		UserCredentials userCredentials = new UserCredentials("finance", "XQ8owzedjbEn7d0l0wss82I0pFoZBMd4");
-		return new SimpleMongoDbFactory(new Mongo("www.chuangfu24.net"), "finance", userCredentials);
+		UserCredentials userCredentials = new UserCredentials("finance", "your_password");
+		return new SimpleMongoDbFactory(new Mongo("mdb.netkiller.cn"), "finance", userCredentials);
 	}
 
 	public @Bean MongoTemplate mongoTemplate() throws Exception {
@@ -293,7 +293,142 @@ netkiller.home=http://www.netkiller.cn
 @EnableConfigurationProperties({NetkillerProperties.class, NeoProperties.class})
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="ViewResolver"></a>11.12.4. ViewResolver</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="service"></a>11.12.4. Service</h3></div></div></div>
+		
+		<p>@ComponentScan({ "web", "rest","service" }) 一定要包含 Service 目录。否则无法实现 @Autowired自动装配。你可以直接@ComponentScan扫描所有目录。</p>
+		<pre class="programlisting">
+		
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.authentication.UserCredentials;
+import org.springframework.data.mongodb.MongoDbFactory;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.SimpleMongoDbFactory;
+import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
+
+import com.mongodb.Mongo;
+
+import pojo.ApplicationConfiguration;
+
+@Configuration
+@SpringBootApplication
+@EnableConfigurationProperties(ApplicationConfiguration.class)
+@EnableAutoConfiguration(exclude = { DataSourceAutoConfiguration.class })
+@ComponentScan({ "web", "rest","service" })
+@EnableMongoRepositories
+public class Application {
+	
+	@SuppressWarnings("deprecation")
+	public @Bean MongoDbFactory mongoDbFactory() throws Exception {
+		UserCredentials userCredentials = new UserCredentials("finance", "your_password");
+		return new SimpleMongoDbFactory(new Mongo("mdb.netkiller.cn"), "finance", userCredentials);
+	}
+
+	public @Bean MongoTemplate mongoTemplate() throws Exception {
+		return new MongoTemplate(mongoDbFactory());
+	}
+
+	public static void main(String[] args) {
+		SpringApplication.run(Application.class, args);
+	}
+
+}
+		
+		</pre>
+		<p>TestService 接口</p>
+		<pre class="programlisting">
+		
+package service;
+
+public interface TestService {
+
+	public String getName();
+	public String toString();
+	public String helloUser(String user);
+}
+
+		
+		</pre>
+		<p>实现 TestService 接口</p>
+		<pre class="programlisting">
+		
+package service.impl;
+
+import org.springframework.stereotype.Component;
+
+import service.TestService;
+
+@Component
+public class TestServiceImpl implements TestService {
+
+	public String name = "Test";
+
+	public void TestService() {
+
+	}
+
+	@Override
+	public String helloUser(String user) {
+		return "hello " + user;
+	}
+
+	public String getName() {
+		return this.name;
+	}
+
+	@Override
+	public String toString() {
+		return "TestServiceImpl [config=" + this.name + "]";
+	}
+
+}
+
+		
+		</pre>
+		<p>控制器中调用 Service</p>
+		<pre class="programlisting">
+		
+package web;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import domain.City;
+import pojo.ApplicationConfiguration;
+import repository.CityRepository;
+import service.TestService;
+
+@Controller
+public class IndexController {
+	
+	@Autowired
+	private CityRepository repository;
+
+	@Autowired
+    private TestService testService;
+	
+	@Autowired
+	private ApplicationConfiguration propertie;
+	
+	@RequestMapping("/service")
+	@ResponseBody
+	public String service() {
+		return testService.helloUser("Neo");
+	}
+
+}
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="ViewResolver"></a>11.12.5. ViewResolver</h3></div></div></div>
 		
 		<pre class="programlisting">
 		
@@ -317,9 +452,9 @@ public class WebConfiguration {
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="mongodb"></a>11.12.5. Spring boot mongodb</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="mongodb"></a>11.12.6. Spring boot mongodb</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="MongoTemplate"></a>11.12.5.1. MongoTemplate</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="MongoTemplate"></a>11.12.6.1. MongoTemplate</h4></div></div></div>
 			
 			<p>pom.xml</p>
 			<pre class="programlisting">
@@ -476,7 +611,7 @@ public class Application {
 			</pre>
 					
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="Repository"></a>11.12.5.2. Repository</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="Repository"></a>11.12.6.2. Repository</h4></div></div></div>
 			
 			<p>在上一节 MongoTemplate 中，继续添加下面代码。</p>
 			<p>CityRepository.java</p>
@@ -605,9 +740,9 @@ public class IndexController {
 		
 	</div>
 
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="faq"></a>11.12.6. FAQ</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="faq"></a>11.12.7. FAQ</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm46051637850416"></a>11.12.6.1. properties</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm45749405666864"></a>11.12.7.1. properties</h4></div></div></div>
 			
 			<p>http://docs.spring.io/spring-boot/docs/current/reference/html/common-application-properties.html</p>
 			<pre class="screen">
