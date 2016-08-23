@@ -12,6 +12,7 @@
 		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">5.3. 时间一致性</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="column.html">上一页</a> </td><th width="60%" align="center">第 5 章 数据库安全</th><td width="20%" align="right"> <a accesskey="n" href="db.grant.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="time"></a>5.3. 时间一致性</h2></div></div></div>
 		
 		<p>经常会因为每个服务器的时间不同，导致插入数据有问题，虽然可以采用ntp服务同步时间，但由于各种因素仍然会出问题，怎么解决？我建议以数据库时间为准。</p>
+		<p>MySQL 5.6 之前的版本</p>
 		<p>默认值为当前时间</p>
 		<pre class="programlisting">
 CREATE TABLE `tdate` (
@@ -35,6 +36,19 @@ COLLATE='utf8_general_ci'
 ENGINE=InnoDB;
 		</pre>
 		<p>插入创建时间 insert into tdate(ctime) values(CURRENT_TIMESTAMP); 不要采用 insert into tdate(ctime) values('2013-12-02 08:20:06');这种方法，尽量让数据库处理时间。</p>
+		<p>MySQL 5.6 之后版本，可以实现创建时间为系统默认，修改时间创建的时候默认为空，当修改数据的时候更新时间。</p>
+		<pre class="programlisting">
+		
+CREATE TABLE `tdate` (
+	`id` INT(11) NOT NULL AUTO_INCREMENT,
+	`ctime` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+	`mtime` TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+	PRIMARY KEY (`id`)
+)
+COLLATE='utf8_general_ci'
+ENGINE=InnoDB;
+		
+		</pre>
 	</div><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
             /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
 
