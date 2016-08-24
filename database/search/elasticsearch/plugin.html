@@ -11,7 +11,7 @@
 	    <a xmlns="" href="https://zb.oschina.net/profile/725072/market">作品与服务</a> |
 		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">61.4. Plugin 插件管理</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="search.html">上一页</a> </td><th width="60%" align="center">第 61 章 Elasticsearch</th><td width="20%" align="right"> <a accesskey="n" href="mapping.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="plugin"></a>61.4. Plugin 插件管理</h2></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm45845511290736"></a>61.4.1. 手工安装插件</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm46049437232432"></a>61.4.1. 手工安装插件</h3></div></div></div>
 			
 			<pre class="screen">
 cd /usr/local/src/
@@ -24,13 +24,13 @@ unzip /usr/local/src/elasticsearch-analysis-ik-1.9.4.zip
 /etc/init.d/elasticsearch restart
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm45845511288976"></a>61.4.2. plugin 命令</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm46049437230656"></a>61.4.2. plugin 命令</h3></div></div></div>
 			
 			<pre class="screen">
 plugin -install medcl/elasticsearch-analysis-ik/1.9.0 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm45845511287824"></a>61.4.3. 插件测试</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm46049437229280"></a>61.4.3. 插件测试</h3></div></div></div>
 			
 			<pre class="screen">
 			
@@ -91,6 +91,89 @@ curl -XPOST http://localhost:9200/information/news/_search  -d'
         }
     }
 }'	
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm46049437225792"></a>61.4.4. 新闻资讯应用案例</h3></div></div></div>
+			
+			<pre class="screen">
+			
+curl -XDELETE http://so.netkiller.cn:9200/information/news/_mapping?pretty
+curl -XDELETE http://so.netkiller.cn:9200/information/?pretty
+
+curl -XPUT http://so.netkiller.cn:9200/information
+
+curl -XPOST http://so.netkiller.cn:9200/information/news/_mapping?pretty -d'
+{
+    "news": {
+            "_all": {
+            "analyzer": "ik_max_word",
+            "search_analyzer": "ik_max_word",
+            "term_vector": "no",
+            "store": "false"
+        },
+        "properties": {
+		"title": {
+                "type": "string",
+                "store": "no",
+                "term_vector": "with_positions_offsets",
+                "analyzer": "ik_max_word",
+                "search_analyzer": "ik_max_word",
+                "include_in_all": "true",
+                "boost": 8
+            },
+            "content": {
+                "type": "string",
+                "store": "no",
+                "term_vector": "with_positions_offsets",
+                "analyzer": "ik_max_word",
+                "search_analyzer": "ik_max_word",
+                "include_in_all": "true",
+                "boost": 8
+            },
+	"tag": {
+                "type": "string",
+                "store": "no",
+                "term_vector": "with_positions_offsets",
+                "analyzer": "ik_max_word",
+                "search_analyzer": "ik_max_word",
+                "include_in_all": "true",
+                "boost": 8
+            }
+        }
+    }
+}'
+
+curl -XPOST 'http://so.netkiller.cn:9200/information/news/5?pretty' -d '{
+  "title":"新闻标题",
+  "content":"新闻内容",
+  "tag":"新闻标签"
+}'
+
+curl -XPOST http://so.netkiller.cn:9200/information/news/_search  -d'
+{
+    "query" : { "term" : { "content" : "王宝强" }},
+    "highlight" : {
+        "pre_tags" : ["&lt;b&gt;", "&lt;b&gt;"],
+        "post_tags" : ["&lt;/b&gt;", "&lt;/b&gt;"],
+        "fields" : {
+            "content" : {}
+        }
+    }
+}'
+
+
+curl -XPOST http://so.netkiller.cn:9200/information/news/_search  -d'
+{
+    "query" : { "term" : { "tag" : "娱乐" }},
+    "highlight" : {
+        "pre_tags" : ["&lt;b&gt;", "&lt;b&gt;"],
+        "post_tags" : ["&lt;/b&gt;", "&lt;/b&gt;"],
+        "fields" : {
+            "tag" : {}
+        }
+    }
+}'
 			
 			</pre>
 		</div>
