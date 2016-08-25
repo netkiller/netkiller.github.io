@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>4.4. dkim</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="home" href="../index.html" title="Netkiller Mail Server 手札" /><link rel="up" href="index.html" title="Chapter 4. postfix - High-performance mail transport agent" /><link rel="prev" href="smtpd_recipient_restrictions.html" title="4.3. 拒收垃圾邮件" /><link rel="next" href="rspamd.html" title="4.5. Rspamd" /></head><body><a xmlns="" href="http://www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="http://netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
+	    <a xmlns="" href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://zb.oschina.net/profile/725072/market">作品与服务</a> |
+		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">4.4. dkim</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="smtpd_recipient_restrictions.html">Prev</a> </td><th width="60%" align="center">Chapter 4. postfix - High-performance mail transport agent</th><td width="20%" align="right"> <a accesskey="n" href="rspamd.html">Next</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="dkim"></a>4.4. dkim</h2></div></div></div>
+		
+		<p>DKIM(DomainKeys Identified Mail) 是一种电子邮件的验证技术，使用密码学的基础提供了签名与验证的功能。DKIM 能增加你邮件的信任度。</p>
+		<p>安装 OpenDKIM 环境是CentOS 7</p>
+		<pre class="screen">
+yum install -y opendkim
+		</pre>
+		<p>查看配置文件</p>
+		<pre class="screen">
+[root@mail.netkiller.cn ~]# cat /etc/opendkim.conf | egrep -v "^#|^$"
+PidFile	/var/run/opendkim/opendkim.pid
+Mode	v
+Syslog	yes
+SyslogSuccess	yes
+LogWhy	yes
+UserID	opendkim:opendkim
+Socket	inet:8891@localhost
+Umask	002
+SendReports	yes
+SoftwareHeader	yes
+Canonicalization	relaxed/relaxed
+Selector	default
+MinimumKeyBits	1024
+KeyFile	/etc/opendkim/keys/default.private
+OversignHeaders	From
+		</pre>
+		<p>生成公钥和私钥example.com 替换成你的域名</p>
+		<pre class="screen">
+mkdir /etc/opendkim/keys/example.com
+opendkim-genkey -D /etc/opendkim/keys/example.com/ -d example.com -s default
+chown -R opendkim: /etc/opendkim/keys/example.com
+ln -s /etc/opendkim/keys/example.com/default.private /etc/opendkim/keys/default.private
+		</pre>
+		<p>将你域名example.com添加到/etc/opendkim/KeyTable格式如下：</p>
+		<pre class="screen">
+default._domainkey.example.com example.com:default:/etc/opendkim/keys/example.com/default.private
+		</pre>
+		<p>接下来修改 /etc/opendkim/SigningTable 并添加如下记录</p>
+		<pre class="screen">
+*@example.com default._domainkey.example.com
+		</pre>
+		<p>添加信任主机到/etc/opendkim/TrustedHosts，通常是 example.com / mail.example.com</p>
+		<pre class="screen">
+example.com
+mail.example.com	
+		</pre>
+		<p>至此 opendkim 已经配置完毕。</p>
+		<p>现在需要配置域名TXT记录解析，开打文件 /etc/opendkim/keys/example.com/default.txt 参照下面配置</p>
+		<pre class="screen">
+cat /etc/opendkim/keys/example.com/default.txt 
+default._domainkey	IN	TXT	( "v=DKIM1; k=rsa; "
+	  "p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC5anjIUkTgJT8DSBL2tiydi6DZLIMnPnveFBcyKshwIuGeRzIN2PwQW5F/bvQWdatPLGuw0w5mKXtATJtarbWXy89BgjcJgAGrPSr8GdzsNH0RXRqTy1A21BQyGER3Mx2Fbr6J62reTG2i7jY0w3/cxzuFIGlSn/RP/KrlMze4zQIDAQAB" )  ; ----- DKIM key default for example.com		
+		</pre>
+		<p>接下来配置postfix把OpenDKIM整合到Postfix修改/etc/postfix/main.cf</p>
+		<pre class="screen">
+smtpd_milters           = inet:127.0.0.1:8891
+non_smtpd_milters       = $smtpd_milters
+milter_default_action   = accept
+milter_protocol         = 2
+		</pre>
+		<p>启动 opendkim，重启 postfix</p>
+		<pre class="screen">
+systemctl enable opendkim.service
+systemctl start opendkim.service		
+systemctl restart postfix.service
+		</pre>
+		<p>检查opendkim状态与端口</p>		
+		<pre class="screen">
+# systemctl status opendkim.service
+● opendkim.service - DomainKeys Identified Mail (DKIM) Milter
+   Loaded: loaded (/usr/lib/systemd/system/opendkim.service; enabled; vendor preset: disabled)
+   Active: active (running) since Thu 2016-08-25 02:07:42 EDT; 6s ago
+     Docs: man:opendkim(8)
+           man:opendkim.conf(5)
+           man:opendkim-genkey(8)
+           man:opendkim-genzone(8)
+           man:opendkim-testadsp(8)
+           man:opendkim-testkey
+           http://www.opendkim.org/docs.html
+  Process: 12577 ExecStart=/usr/sbin/opendkim $OPTIONS (code=exited, status=0/SUCCESS)
+ Main PID: 12578 (opendkim)
+   CGroup: /system.slice/opendkim.service
+           └─12578 /usr/sbin/opendkim -x /etc/opendkim.conf -P /var/run/opendkim/opendkim.pid
+
+Aug 25 02:07:42 localhost.localdomain systemd[1]: Starting DomainKeys Identified Mail (DKIM) Milter...
+Aug 25 02:07:42 localhost.localdomain systemd[1]: Started DomainKeys Identified Mail (DKIM) Milter.
+Aug 25 02:07:42 localhost.localdomain opendkim[12578]: OpenDKIM Filter v2.10.3 starting (args: -x /etc/opendkim.conf -P /var/run/opendkim/opendkim.pid)
+
+
+# ss -lnt | grep 8891
+LISTEN     0      128    127.0.0.1:8891                     *:*		
+		</pre>
+		<p>如果无法启动请查看启动日志</p>
+		<pre class="screen">
+# grep opendkim  /var/log/messages
+Aug 25 01:24:57 localhost yum[10052]: Installed: libopendkim-2.10.3-7.el7.x86_64
+Aug 25 01:25:00 localhost yum[10052]: Installed: opendkim-2.10.3-7.el7.x86_64
+Aug 25 01:55:08 localhost opendkim: /etc/opendkim/keys/default.private: open(): No such file or directory
+Aug 25 01:55:08 localhost opendkim: opendkim: /etc/opendkim.conf: /etc/opendkim/keys/default.private: open(): No such file or directory
+Aug 25 01:55:08 localhost systemd: opendkim.service: control process exited, code=exited status=78
+Aug 25 01:55:08 localhost systemd: Unit opendkim.service entered failed state.
+Aug 25 01:55:08 localhost systemd: opendkim.service failed.
+Aug 25 01:56:10 localhost opendkim: /etc/opendkim/keys/default.private: open(): No such file or directory
+Aug 25 01:56:10 localhost opendkim: opendkim: /etc/opendkim.conf: /etc/opendkim/keys/default.private: open(): No such file or directory
+Aug 25 01:56:10 localhost systemd: opendkim.service: control process exited, code=exited status=78
+Aug 25 01:56:10 localhost systemd: Unit opendkim.service entered failed state.
+Aug 25 01:56:10 localhost systemd: opendkim.service failed.		
+		</pre>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm46004150072848"></a>4.4.1. 增加域名</h3></div></div></div>
+			
+			<p>创建证书</p>
+			<pre class="screen">
+mkdir /etc/opendkim/keys/mydomain.com
+opendkim-genkey -D /etc/opendkim/keys/mydomain.com/ -r -d mydomain.com
+chown -R opendkim: /etc/opendkim/keys/mydomain.com
+			</pre>
+			<p>配置 KeyTable</p>
+			<pre class="screen">
+default._domainkey.mydomain.com mydomain.com:default:/etc/opendkim/keys/mydomain.com/default.private
+			</pre>
+			<p>配置 SigningTable</p>
+			<pre class="screen">
+*@mydomain.com default._domainkey.mydomain.com			
+			</pre>
+		</div>
+	</div><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
+            /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+
+            //if(document.domain == 'netkiller.github.io'){
+            var disqus_shortname = 'netkiller'; // required: replace example with your forum shortname
+            //}else{
+			//var disqus_shortname = 'neochan';
+            //}
+
+            /* * * DON'T EDIT BELOW THIS LINE * * */
+            (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+            })();
+        </script><noscript xmlns="">Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><a xmlns="" href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="smtpd_recipient_restrictions.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="rspamd.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">4.3. 拒收垃圾邮件 </td><td width="20%" align="center"><a accesskey="h" href="../index.html">Home</a></td><td width="40%" align="right" valign="top"> 4.5. Rspamd</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" type="text/javascript">
+var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F997cd4a7320a82d72cb74d179118f697' type='text/javascript'%3E%3C/script%3E"));
+</script><script xmlns="" type="text/javascript" src="/js/q.js"></script></body></html>
