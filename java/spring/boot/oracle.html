@@ -11,7 +11,7 @@
 	    <a xmlns="" href="https://zb.oschina.net/profile/725072/market">作品与服务</a> |
 		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">10.11. Spring boot with Oracle</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="mysql.html">上一页</a> </td><th width="60%" align="center">第 10 章 Spring Boot</th><td width="20%" align="right"> <a accesskey="n" href="email.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="oracle"></a>10.11. Spring boot with Oracle</h2></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm45421221392944"></a>10.11.1. Maven</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm45467617810176"></a>10.11.1. Maven</h3></div></div></div>
 			
 			<p>首先到oracle官网，根据你的Oracle数据库，下载ojdbc6.jar(Oracle 11) 或者 ojdbc7.jar (Oracle 12)</p>
 			<pre class="programlisting">
@@ -24,7 +24,8 @@
 			
 			</pre>
 			<pre class="screen">
-mvn install:install-file -Dfile=ojdbc7.jar  -DgroupId=com.oracle -DartifactId=ojdbc7 -Dversion=12.1.0.1 -Dpackaging=jar			
+mvn install:install-file -DgroupId=com.oracle -DartifactId=ojdbc6 -Dversion=11.2.0.3 -Dpackaging=jar -Dfile=ojdbc6.jar -DgeneratePom=true
+mvn install:install-file -Dfile=ojdbc7.jar  -DgroupId=com.oracle -DartifactId=ojdbc7 -Dversion=12.1.0.1 -Dpackaging=jar
 			</pre>
 			<p>另一种方案是在项目根目录下创建一个/lib文件夹，将下载的驱动放入该文件夹中。然后pom.xml 加入下面代码</p>
 			<p>ojdbc6.jar 例子</p>
@@ -51,7 +52,7 @@ mvn install:install-file -Dfile=ojdbc7.jar  -DgroupId=com.oracle -DartifactId=oj
         &lt;/dependency&gt;
 			
 			</pre>
-			<div class="example"><a id="idm45421221387168"></a><p class="title"><strong>例 10.1. Example Spring boot with Oracle </strong></p><div class="example-contents">
+			<div class="example"><a id="idm45467617804240"></a><p class="title"><strong>例 10.1. Example Spring boot with Oracle </strong></p><div class="example-contents">
 				
 				<pre class="programlisting">
 				
@@ -184,7 +185,7 @@ mvn install:install-file -Dfile=ojdbc7.jar  -DgroupId=com.oracle -DartifactId=oj
 				</pre>
 			</div></div><br class="example-break" />
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm45421221392560"></a>10.11.2. application.properties</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm45467617809792"></a>10.11.2. application.properties</h3></div></div></div>
 			
 			<pre class="programlisting">
 			
@@ -198,9 +199,34 @@ spring.jpa.show-sql=true
 #spring.jpa.hibernate.ddl-auto=update
 spring.jpa.hibernate.ddl-auto=create-drop
 			
+			</pre>
+			<p>其他配置</p>
+			<pre class="screen">
+spring.datasource.connection-test-query="SELECT 1 FROM DUAL"
+spring.datasource.test-while-idle=true
+spring.datasource.test-on-borrow=true
+			</pre>
+			<p>Oracle RAC</p>
+			<pre class="screen">
+jdbc:oracle:thin@(DESCRIPTION=
+   (LOAD_BALANCE=on)
+   (ADDRESS=(PROTOCOL=TCP)(HOST=racnode1) (PORT=1521))
+   (ADDRESS=(PROTOCOL=TCP)(HOST=racnode2) (PORT=1521))
+   (CONNECT_DATA=(SERVICE_NAME=service_name)))
+   
+jdbc:oracle:thin:@(DESCRIPTION=
+	(ADDRESS=(PROTOCOL=TCP)(HOST=125.22.42.68)(PORT=1521))
+	(LOAD_BALANCE=on)
+	(FAILOVER=ON)
+	(CONNECT_DATA=
+		(SERVER=DEDICATED)
+		(SERVICE_NAME=service_name)
+		(FAILOVER_MODE=(TYPE=SESSION)(METHOD=BASIC))
+		)
+	)
 			</pre>			
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm45421221380624"></a>10.11.3. Application</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm45467617795952"></a>10.11.3. Application</h3></div></div></div>
 			
 			<pre class="programlisting">
 			
@@ -245,7 +271,7 @@ public class Application {
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm45421221378064"></a>10.11.4. CrudRepository</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm45467617792592"></a>10.11.4. CrudRepository</h3></div></div></div>
 			
 			<pre class="programlisting">
 			
@@ -343,7 +369,7 @@ public class Article implements Serializable {
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm45421221374176"></a>10.11.5. JdbcTemplate</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm45467617788800"></a>10.11.5. JdbcTemplate</h3></div></div></div>
 			
 			<pre class="programlisting">
 			
@@ -363,7 +389,7 @@ public class Article implements Serializable {
 			</pre>
 		</div>
 		
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm45421221372496"></a>10.11.6. Controller</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm45467617786928"></a>10.11.6. Controller</h3></div></div></div>
 			
 			<pre class="programlisting">
 			
