@@ -11,7 +11,9 @@
 	    <a xmlns="" href="https://zb.oschina.net/profile/725072/market">作品与服务</a> |
 		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">38.2. pptpd</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><th width="60%" align="center">第 38 章 VPN (Virtual Private Network)</th><td width="20%" align="right"> <a accesskey="n" href="l2tp.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="pptpd"></a>38.2. pptpd</h2></div></div></div>
 	
-	<div class="procedure"><a id="idm45366448424080"></a><p class="title"><strong>过程 38.11. pptpd 安装步骤</strong></p><ol class="procedure" type="1"><li class="step">
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="pptpd.server"></a>38.2.1. Server 服务端</h3></div></div></div>
+		
+	<div class="procedure"><a id="idm44858169588000"></a><p class="title"><strong>过程 38.11. pptpd 安装步骤</strong></p><ol class="procedure" type="1"><li class="step">
 			<p>install</p>
 			<p>Ubuntu</p>
 			<pre class="screen">
@@ -102,11 +104,100 @@ $ sudo vim /etc/ppp/ip-up.local
 
 /sbin/ifconfig $1 mtu 1496
 	</pre>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm45366448406384"></a>38.2.1. FAQ</h3></div></div></div>
-		
-		<p>错误：800</p>
-		<p>运行 ipconfig /flushdns 后，再试</p>
 	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="pppd.client"></a>38.2.2. Client 客户端</h3></div></div></div>
+		
+		<p>按照pptp客户端</p>
+		<pre class="screen">
+yum install -y pptp pptp-setup
+		</pre>
+		<p></p>
+		<pre class="screen">
+pptpsetup --create vpn --server vpn.netkiller.cn \
+--username cf4 --password cf@Gold1234
+		</pre>
+		<p>查看vpn配置文件</p>
+		<pre class="screen">
+# cat /etc/ppp/peers/vpn 
+# written by pptpsetup
+pty "pptp vpn.netkiller.cn --nolaunchpppd"
+lock
+noauth
+nobsdcomp
+nodeflate
+name cf4
+remotename vpn
+ipparam vpn
+		</pre>
+		<p>链接vpn</p>
+		<pre class="screen">
+pppd call vpn
+		</pre>
+		<p>查看日志</p>
+		<pre class="screen">
+# tail -f /var/log/messages | grep pppd
+Sep  9 19:09:19 iZ621r6pk9aZ pppd[21801]: pppd 2.4.5 started by root, uid 0
+Sep  9 19:09:19 iZ621r6pk9aZ pppd[21801]: Using interface ppp0
+		</pre>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm44858169561536"></a>38.2.2.1. 加密传输</h4></div></div></div>
+			
+			<pre class="screen">
+pptpsetup --create vpn0 --server vpn.netkiller.cn \
+--username neo --password netkiller --encrypt
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm44858169560032"></a>38.2.2.2. 内核模块安装</h4></div></div></div>
+			
+			<pre class="screen">
+for module in nf_nat_pptp nf_conntrack_pptp nf_conntrack_proto_gre
+do
+    modprobe $module
+done
+			</pre>
+		</div>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="faq"></a>38.2.3. FAQ</h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm44858169557792"></a>38.2.3.1. 800 错误</h4></div></div></div>
+			
+			<p>错误：800</p>
+			<p>运行 ipconfig /flushdns 后，再试</p>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm44858169555936"></a>38.2.3.2. 测试 PPTP 端口</h4></div></div></div>
+			
+			<pre class="screen">
+telnet vpn.netkiller.cn 1723			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm44858169554688"></a>38.2.3.3. debug</h4></div></div></div>
+			
+			<pre class="screen">
+			
+# pppd call vpn debug dump logfd 2 updetach
+pppd options in effect:
+debug		# (from command line)
+updetach		# (from command line)
+logfd 2		# (from command line)
+dump		# (from command line)
+noauth		# (from /etc/ppp/peers/vpn)
+name cf4		# (from /etc/ppp/peers/vpn)
+remotename vpn		# (from /etc/ppp/peers/vpn)
+		# (from /etc/ppp/peers/vpn)
+pty pptp vpn.netkiller.cn --nolaunchpppd		# (from /etc/ppp/peers/vpn)
+ipparam vpn		# (from /etc/ppp/peers/vpn)
+nobsdcomp		# (from /etc/ppp/peers/vpn)
+nodeflate		# (from /etc/ppp/peers/vpn)
+using channel 4
+Using interface ppp0
+Connect: ppp0 &lt;--&gt; /dev/pts/6
+sent [LCP ConfReq id=0x1 &lt;asyncmap 0x0&gt; &lt;magic 0xf6887c7c&gt; &lt;pcomp&gt; &lt;accomp&gt;]
+sent [LCP ConfReq id=0x1 &lt;asyncmap 0x0&gt; &lt;magic 0xf6887c7c&gt; &lt;pcomp&gt; &lt;accomp&gt;]
+			
+			</pre>
+			
+		</div>
+	</div>
+	
 </div><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
             /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
 
