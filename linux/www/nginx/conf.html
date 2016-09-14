@@ -354,7 +354,7 @@ server {
 		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="expires"></a>42.2.3.6. expires</h4></div></div></div>
 			
 			<p>expires 格式</p>
-			<div class="example"><a id="idm44858169046448"></a><p class="title"><strong>例 42.1. Expires Examples</strong></p><div class="example-contents">
+			<div class="example"><a id="idm46018543348656"></a><p class="title"><strong>例 42.1. Expires Examples</strong></p><div class="example-contents">
 				
 				<pre class="screen">
 expires 1 January, 1970, 00:00:01 GMT;
@@ -429,7 +429,7 @@ location / {
 }
 			</pre>
 
-			<div class="example"><a id="idm44858169040848"></a><p class="title"><strong>例 42.2. nginx expires</strong></p><div class="example-contents">
+			<div class="example"><a id="idm46018543343296"></a><p class="title"><strong>例 42.2. nginx expires</strong></p><div class="example-contents">
 				
 				<pre class="screen">
 location ~ .*\.(gif|jpg|jpeg|png|bmp|swf|ico)$ {
@@ -669,7 +669,7 @@ add_header     Nginx-Cache     "$upstream_cache_status  from  www.example.com";
 				
 				</pre>
 			</div>			
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm44858169010528"></a>42.2.3.12.2. Access-Control-Allow</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm46018543312960"></a>42.2.3.12.2. Access-Control-Allow</h5></div></div></div>
 				
 				<pre class="screen">
 location ~* \.(eot|ttf|woff)$ {
@@ -699,7 +699,7 @@ location / {
 		</div>
 		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="valid_referers"></a>42.2.3.13. valid_referers</h4></div></div></div>
 			
-			<div class="example"><a id="idm44858169007104"></a><p class="title"><strong>例 42.3. Example: valid_referers</strong></p><div class="example-contents">
+			<div class="example"><a id="idm46018543309520"></a><p class="title"><strong>例 42.3. Example: valid_referers</strong></p><div class="example-contents">
 				
 				<pre class="screen">
 location /photos/ {
@@ -731,8 +731,77 @@ location /images/ {
 			</div></div><br class="example-break" />
 		</div>
 	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="server.ssl"></a>42.2.4. HTTPS 配置 SSL证书</h3></div></div></div>
+		
+		<p>创建证书</p>
+		<pre class="screen">
+		
+mkdir /etc/nginx/ssl
+cd /etc/nginx/ssl
+openssl req -x509 -nodes -days 365 -newkey rsa:4096 -keyout /etc/nginx/ssl/api.netkiller.cn.key -out /etc/nginx/ssl/api.netkiller.cn.crt
 
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="rewrite"></a>42.2.4. rewrite</h3></div></div></div>
+Generating a 4096 bit RSA private key
+..........++
+..............................................++
+writing new private key to '/etc/nginx/ssl/api.netkiller.cn.key'
+-----
+You are about to be asked to enter information that will be incorporated
+into your certificate request.
+What you are about to enter is what is called a Distinguished Name or a DN.
+There are quite a few fields but you can leave some blank
+For some fields there will be a default value,
+If you enter '.', the field will be left blank.
+-----
+Country Name (2 letter code) [XX]:CN
+State or Province Name (full name) []:Guangdong
+Locality Name (eg, city) [Default City]:Shenzhen
+Organization Name (eg, company) [Default Company Ltd]:CF
+Organizational Unit Name (eg, section) []:CF
+Common Name (eg, your name or your server's hostname) []:api.netkiller.cn
+Email Address []:netkiller@msn.com
+
+		
+		</pre>
+		<p>注意: Common Name (eg, your name or your server's hostname) []:api.netkiller.cn 要跟你的 nginx server_name api.netkiller.cn 一样。</p>
+		<p>Nginx 配置</p>
+		<pre class="screen">
+upstream api.netkiller.cn {
+    #server api1.netkiller.cn:7000;
+    #server api2.netkiller.cn backup;
+}
+
+server {
+    listen 443 ssl spdy;
+    server_name api.netkiller.cn;
+
+    ssl_certificate /etc/nginx/ssl/api.netkiller.cn.crt;
+    ssl_certificate_key /etc/nginx/ssl/api.netkiller.cn.key;
+    ssl_session_cache shared:SSL:20m;
+    ssl_session_timeout 60m;
+    ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+
+    charset utf-8;
+    access_log  /var/log/nginx/api.netkiller.cn.access.log;
+    error_log  /var/log/nginx/api.netkiller.cn.error.log;
+
+    location / {  
+        proxy_pass http://api.netkiller.cn;
+        proxy_http_version 1.1;
+        proxy_set_header    Host    $host;
+        proxy_set_header    X-Real-IP   $remote_addr;
+        proxy_set_header    X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_ignore_client_abort  on;
+    }
+
+    #location / {
+    #    proxy_pass      http://127.0.0.1:7000;
+    #}
+
+}
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="rewrite"></a>42.2.5. rewrite</h3></div></div></div>
 		
 		<pre class="screen">
 Rewrite Flags
@@ -782,7 +851,7 @@ if ($host ~ '(.*)\.static\.example\.com' ) {
     rewrite  "^/(.*)$"  /$subdomain/$1;
 }
 		</pre>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm44858169000288"></a>42.2.4.1. http get 参数处理</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm46018543297712"></a>42.2.5.1. http get 参数处理</h4></div></div></div>
 			
 			<p>需求如下</p>
 			<pre class="screen">
@@ -838,7 +907,7 @@ Connection: keep-alive
 			</pre>
 		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="upstream"></a>42.2.5. upstream 负载均衡</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="upstream"></a>42.2.6. upstream 负载均衡</h3></div></div></div>
 		
 		<pre class="screen">
 http {
@@ -857,7 +926,7 @@ http {
     }
 }		
 		</pre>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm44858168992672"></a>42.2.5.1. weight 权重配置</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm46018543289968"></a>42.2.6.1. weight 权重配置</h4></div></div></div>
 			
 			<pre class="screen">
     upstream myapp1 {
@@ -869,9 +938,9 @@ http {
 		</div>
 	</div>
 	
-<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="fastcgi"></a>42.2.6. fastcgi</h3></div></div></div>
+<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="fastcgi"></a>42.2.7. fastcgi</h3></div></div></div>
 	
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="fastcgi.spawn-fcgi"></a>42.2.6.1. spawn-fcgi</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="fastcgi.spawn-fcgi"></a>42.2.7.1. spawn-fcgi</h4></div></div></div>
 		
 		<p>config php fastcgi</p>
 		<pre class="screen">
@@ -945,9 +1014,9 @@ sudo vim /var/www/nginx-default/index.php
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="fastcgi.php-fpm"></a>42.2.6.2. php-fpm</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="fastcgi.php-fpm"></a>42.2.7.2. php-fpm</h4></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm44858168982080"></a>42.2.6.2.1. php5-fpm</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm46018543278960"></a>42.2.7.2.1. php5-fpm</h5></div></div></div>
 			
 			<pre class="screen">
 sudo apt-get install php5-cli php5-cgi php5-fpm
@@ -956,7 +1025,7 @@ sudo apt-get install php5-cli php5-cgi php5-fpm
 /etc/init.d/php5-fpm start
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="php-fpm"></a>42.2.6.2.2. 编译 php-fpm</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="php-fpm"></a>42.2.7.2.2. 编译 php-fpm</h5></div></div></div>
 			
 			<pre class="screen">
 			
@@ -1043,7 +1112,7 @@ pm.max_requests = 500
 			<pre class="screen">
 chkconfig --add php-fpm
 			</pre>
-			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm44858168974288"></a>42.2.6.2.2.1. php-fpm 状态</h6></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm46018543271360"></a>42.2.7.2.2.1. php-fpm 状态</h6></div></div></div>
 				
 				<pre class="screen">
     location /nginx_status {
@@ -1063,7 +1132,7 @@ chkconfig --add php-fpm
 				</pre>
 			</div>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="fastcgi_pass"></a>42.2.6.2.3. fastcgi_pass</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="fastcgi_pass"></a>42.2.7.2.3. fastcgi_pass</h5></div></div></div>
 			
 			<pre class="screen">
    location ~ ^(.+\.php)(.*)$
@@ -1090,7 +1159,7 @@ location ~ .*\.(php|php5)?$  {
 	</div>
 </div>
 	
-<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="proxy"></a>42.2.7. Proxy</h3></div></div></div>
+<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="proxy"></a>42.2.8. Proxy</h3></div></div></div>
 	
 	<pre class="screen">
 # cat /etc/nginx/nginx.conf
@@ -1201,7 +1270,7 @@ upstream backend{
 
 }
 	</pre>
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="proxy.proxy_cache"></a>42.2.7.1. proxy_cache</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="proxy.proxy_cache"></a>42.2.8.1. proxy_cache</h4></div></div></div>
 		
 		<p>/etc/nginx/conf.d/</p>
 		<pre class="screen">
@@ -1281,7 +1350,7 @@ server {
 		</pre>
 		
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="proxy.rewrite"></a>42.2.7.2. rewrite + proxy_pass</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="proxy.rewrite"></a>42.2.8.2. rewrite + proxy_pass</h4></div></div></div>
 		
 		<p>需求如下</p>
 		<pre class="screen">
@@ -1298,7 +1367,7 @@ http://www.example.com/images/logo.jpg	=&gt; http://images.example.com/logo.jpg
     }
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="proxy.request_filename"></a>42.2.7.3. request_filename + proxy_pass</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="proxy.request_filename"></a>42.2.8.3. request_filename + proxy_pass</h4></div></div></div>
 		
 		<p>如果文件不存在，那么去指定的节点上寻找</p>
 		<pre class="screen">
@@ -1321,7 +1390,7 @@ http://www.example.com/images/logo.jpg	=&gt; http://images.example.com/logo.jpg
 		</pre>
 	</div>
 
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="proxy.request_uri"></a>42.2.7.4. $request_uri 与  proxy_pass 联合使用</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="proxy.request_uri"></a>42.2.8.4. $request_uri 与  proxy_pass 联合使用</h4></div></div></div>
 		
 		<pre class="screen">
 server {
@@ -1385,7 +1454,7 @@ server {
 }
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="proxy.try_files"></a>42.2.7.5. try_files 与 proxy_pass 共用</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="proxy.try_files"></a>42.2.8.5. try_files 与 proxy_pass 共用</h4></div></div></div>
 		
 		<p>需求，在web目录下索引静态，如果不存在便进入proxy处理，通常proxy后面是tomcat等应用服务器。</p>
 		<p>我们可以使用 try_files 与 proxy_pass 实现我们的需求</p>
@@ -1454,7 +1523,7 @@ server {
 		</pre>
 	</div>
 	
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="proxy.ssi"></a>42.2.7.6. Proxy 与 SSI</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="proxy.ssi"></a>42.2.8.6. Proxy 与 SSI</h4></div></div></div>
 		
 		<p>背景：nginx + tomcat 模式，nginx 开启 SSI , Tomcat 动态页面中输出 SSI 标签</p>
 		<pre class="screen">
@@ -1536,7 +1605,7 @@ server {
 		<p>再次测试，你将看不到SSI标签，只能看到文本输出Hello netkiller!</p>
 	</div>
 	
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="proxy.host"></a>42.2.7.7. Host</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="proxy.host"></a>42.2.8.7. Host</h4></div></div></div>
 		
 		<p>Proxy 通过IP地址访问目的主机，如果目的主机是虚拟主机，你就需要告诉目的主机是那个域名。</p>
 		<p>proxy_set_header   Host www.example.com;</p>
@@ -1568,7 +1637,7 @@ server {
 	</div>
 	
 
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="proxy.expires"></a>42.2.7.8. expires</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="proxy.expires"></a>42.2.8.8. expires</h4></div></div></div>
 		
 		<pre class="screen">
 location / {
@@ -1597,15 +1666,15 @@ location / {
 		</pre>
 	</div>	
 	
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="proxy.xsendfile"></a>42.2.7.9. X-Sendfile</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="proxy.xsendfile"></a>42.2.8.9. X-Sendfile</h4></div></div></div>
 		
 		<p>http://wiki.nginx.org/NginxXSendfile</p>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="proxy_http_version"></a>42.2.7.10. proxy_http_version</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="proxy_http_version"></a>42.2.8.10. proxy_http_version</h4></div></div></div>
 		
 		<p>proxy_http_version 1.0 | 1.1;</p>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="proxy_set_header"></a>42.2.7.11. proxy_set_header</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="proxy_set_header"></a>42.2.8.11. proxy_set_header</h4></div></div></div>
 		
 		<pre class="screen">
 proxy_set_header    Host    $host;
@@ -1615,7 +1684,7 @@ proxy_set_header User-Agent "Mozilla/5.0 (compatible; MSIE 10.6; Windows NT 6.1;
 proxy_set_header X-Forwarded-URI $request_uri;
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="proxy_set_header"></a>42.2.7.12. timeout 超时时间</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="proxy_set_header"></a>42.2.8.12. timeout 超时时间</h4></div></div></div>
 		
 		<p>proxy_connect_timeout: 链接超时设置，后端服务器连接的超时时间，发起握手等候响应超时时间。</p>
 		<p>proxy_read_timeout: 连接成功后，等候后端服务器响应时间，其实已经进入后端的排队之中等候处理，也可以说是后端服务器处理请求的时间。</p>
@@ -1634,9 +1703,9 @@ proxy_set_header X-Forwarded-URI $request_uri;
 
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="proxy.example"></a>42.2.7.13. example</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="proxy.example"></a>42.2.8.13. example</h4></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm44858168923696"></a>42.2.7.13.1. upstream 实例</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm46018543220160"></a>42.2.8.13.1. upstream 实例</h5></div></div></div>
 			
 			<pre class="screen">
 127.0.0.1 		api.example.com
@@ -1681,7 +1750,7 @@ server {
 }
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm44858168921120"></a>42.2.7.13.2. Tomcat 实例</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm46018543217264"></a>42.2.8.13.2. Tomcat 实例</h5></div></div></div>
 			
 			<pre class="screen">
 server {
@@ -1752,7 +1821,7 @@ server {
 	</div>
 </div>
 
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="return"></a>42.2.8. return</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="return"></a>42.2.9. return</h3></div></div></div>
 		
 		<p>301 跳转</p>
 		<pre class="screen">
@@ -1773,7 +1842,7 @@ server {
 }		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="ngx_http_flv_module"></a>42.2.9. ngx_http_flv_module</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="ngx_http_flv_module"></a>42.2.10. ngx_http_flv_module</h3></div></div></div>
 		
 		<pre class="screen">
 location ~ \.flv$ {
@@ -1782,7 +1851,7 @@ location ~ \.flv$ {
 		</pre>
 	</div>
 
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="ngx_http_mp4_module"></a>42.2.10. ngx_http_mp4_module</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="ngx_http_mp4_module"></a>42.2.11. ngx_http_mp4_module</h3></div></div></div>
 		
 		<pre class="screen">
 location /video/ {
@@ -1794,7 +1863,7 @@ location /video/ {
 }
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="limit_zone"></a>42.2.11. limit_zone</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="limit_zone"></a>42.2.12. limit_zone</h3></div></div></div>
 		
 		<pre class="screen">
 limit_zone   one  $binary_remote_addr  10m;
@@ -1808,7 +1877,7 @@ server {
 
 	
 
-<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="var"></a>42.2.12. Nginx 变量</h3></div></div></div>
+<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="var"></a>42.2.13. Nginx 变量</h3></div></div></div>
 	
 	<p>可用的全局变量</p>
 	<pre class="screen">
@@ -1837,7 +1906,7 @@ $server_name
 $server_port
 $uri
 	</pre>
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="http_user_agent"></a>42.2.12.1. http_user_agent</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="http_user_agent"></a>42.2.13.1. http_user_agent</h4></div></div></div>
 		
 		<pre class="screen">
 ## Block http user agent - wget ##
@@ -1860,7 +1929,7 @@ if ($http_user_agent ~ (Spider|Robot) ) {
 }
 
 		</pre>
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm44858168905616"></a>42.2.12.1.1. 禁止非浏览器访问</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm46018543202288"></a>42.2.13.1.1. 禁止非浏览器访问</h5></div></div></div>
 			
 			<p>禁止非浏览器访问</p>
 			<pre class="screen">
@@ -1878,7 +1947,7 @@ GET /index.html HTTP/1.0
 Host: www.mydomain.com
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm44858168902592"></a>42.2.12.1.2. http_user_agent 没有设置不允许访问</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm46018543199264"></a>42.2.13.1.2. http_user_agent 没有设置不允许访问</h5></div></div></div>
 			
 			<pre class="screen">
 	if ($http_user_agent = "") { return 403; }
@@ -1899,12 +1968,12 @@ curl -A ""  http://www.example.com/xml/data.json
 			</pre>
 		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="http_referer"></a>42.2.12.2. http_referer</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="http_referer"></a>42.2.13.2. http_referer</h4></div></div></div>
 		
 		<pre class="screen">
 if ($http_referer ~* "PHP/5.2.14"){return 403;}
 		</pre>
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm44858168898192"></a>42.2.12.2.1. valid_referers/invalid_referer</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm46018543194736"></a>42.2.13.2.1. valid_referers/invalid_referer</h5></div></div></div>
 			
 			<pre class="screen">
 valid_referers none blocked *.example.com example.com;
@@ -1915,7 +1984,7 @@ if ($invalid_referer) {
 			</pre>
 		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="request_filename"></a>42.2.12.3. request_filename</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="request_filename"></a>42.2.13.3. request_filename</h4></div></div></div>
 		
 		<pre class="screen">
     location / {
@@ -1942,7 +2011,7 @@ if ($invalid_referer) {
     }
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="request_uri"></a>42.2.12.4. request_uri</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="request_uri"></a>42.2.13.4. request_uri</h4></div></div></div>
 		
 		<pre class="screen">
 server {
@@ -2015,7 +2084,7 @@ server {
 #end for yiiframework
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="remote_addr"></a>42.2.12.5. remote_addr</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="remote_addr"></a>42.2.13.5. remote_addr</h4></div></div></div>
 		
 		<pre class="screen">
 location /name/(match) {
@@ -2044,7 +2113,7 @@ $ curl 192.168.0.1/134
 192
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="set"></a>42.2.12.6. 自定义变量</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="set"></a>42.2.13.6. 自定义变量</h4></div></div></div>
 		
 		<pre class="screen">
 if ( $host ~* (.*)\.(.*)\.(.*)) {
@@ -2066,7 +2135,7 @@ location / {
 }
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="if"></a>42.2.12.7. if 条件判断</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="if"></a>42.2.13.7. if 条件判断</h4></div></div></div>
 		
 		<p>判断相等</p>
 		<pre class="screen">

@@ -13,45 +13,45 @@
 	
 	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="pptpd.server"></a>38.2.1. Server 服务端</h3></div></div></div>
 		
-	<div class="procedure"><a id="idm44858169588000"></a><p class="title"><strong>过程 38.11. pptpd 安装步骤</strong></p><ol class="procedure" type="1"><li class="step">
-			<p>install</p>
-			<p>Ubuntu</p>
-			<pre class="screen">
+		<div class="procedure"><a id="idm46018543901552"></a><p class="title"><strong>过程 38.11. pptpd 安装步骤</strong></p><ol class="procedure" type="1"><li class="step">
+				<p>install</p>
+				<p>Ubuntu</p>
+				<pre class="screen">
 $ sudo apt-get install pptpd
-			</pre>
-			<p>CentOS</p>
-			<pre class="screen">
+				</pre>
+				<p>CentOS</p>
+				<pre class="screen">
 # yum install pptp pptp-setup
-			</pre>
-		</li><li class="step">
-			<p>$ sudo vim /etc/pptpd.conf</p>
-			<pre class="screen">
+				</pre>
+			</li><li class="step">
+				<p>$ sudo vim /etc/pptpd.conf</p>
+				<pre class="screen">
 localip 172.16.0.1
 remoteip 172.16.0.50-100
-			</pre>
-		</li><li class="step">
-			<p>$ sudo vim /etc/ppp/pptpd-options</p>
-			<pre class="screen">
+				</pre>
+			</li><li class="step">
+				<p>$ sudo vim /etc/ppp/pptpd-options</p>
+				<pre class="screen">
 ms-dns 208.67.222.222
 ms-dns 208.67.220.220
-			</pre>
-		</li><li class="step">
-			<p>$ sudo vim /etc/ppp/chap-secrets</p>
-			<pre class="screen">
+				</pre>
+			</li><li class="step">
+				<p>$ sudo vim /etc/ppp/chap-secrets</p>
+				<pre class="screen">
 # Secrets for authentication using CHAP
 # client        server  secret                  IP addresses
 neo pptpd chen *
-			</pre>
-		</li><li class="step">
-			<p>restart</p>
-			<pre class="screen">
+				</pre>
+			</li><li class="step">
+				<p>restart</p>
+				<pre class="screen">
 sudo /etc/init.d/pptpd restart
 Restarting PPTP:
 Stopping PPTP: pptpd.
 Starting PPTP Daemon: pptpd.
-			</pre>
-		</li><li class="step">
-			<pre class="screen">
+				</pre>
+			</li><li class="step">
+				<pre class="screen">
 # ifconfig ppp0
 ppp0      Link encap:Point-to-Point Protocol
           inet addr:192.168.3.9  P-t-P:192.168.3.15  Mask:255.255.255.255
@@ -60,41 +60,41 @@ ppp0      Link encap:Point-to-Point Protocol
           TX packets:1008 errors:0 dropped:0 overruns:0 carrier:0
           collisions:0 txqueuelen:3
           RX bytes:342505 (334.4 KiB)  TX bytes:239324 (233.7 KiB)
-			</pre>
-		</li><li class="step">
-			<p>$ sudo vim /etc/sysctl.conf</p>
-			<pre class="screen">
+				</pre>
+			</li><li class="step">
+				<p>$ sudo vim /etc/sysctl.conf</p>
+				<pre class="screen">
 # Uncomment the next line to enable packet forwarding for IPv4
 net.ipv4.ip_forward=1
-			</pre>
-			<p>refresh status</p>
-			<pre class="screen">
+				</pre>
+				<p>refresh status</p>
+				<pre class="screen">
 $ sudo sysctl -p
 net.ipv4.ip_forward = 1
-			</pre>
-		</li><li class="step">
-			<p>NAT</p>
-			<pre class="screen">
-			
+				</pre>
+			</li><li class="step">
+				<p>NAT</p>
+				<pre class="screen">
+				
 $ sudo iptables -t nat -A POSTROUTING -s 172.16.0.0/24 -o eth0 -j MASQUERADE
 $ sudo iptables-save &gt; /etc/iptables-rules
-			
-			</pre>
-			<p>$ sudo vim /etc/network/interfaces</p>
-			<pre class="screen">
 				
+				</pre>
+				<p>$ sudo vim /etc/network/interfaces</p>
+				<pre class="screen">
+					
 pre-up iptables-restore &lt; /etc/iptables-rules
-				
-			</pre>
-		</li><li class="step">
-			<p>firewall</p>
-			<pre class="screen">
+					
+				</pre>
+			</li><li class="step">
+				<p>firewall</p>
+				<pre class="screen">
 $ sudo ufw allow 1723
 Rules updated
-			</pre>
-		</li></ol></div>
-	<p>MTU</p>
-	<pre class="screen">
+				</pre>
+			</li></ol></div>
+		<p>MTU</p>
+		<pre class="screen">
 $ sudo iptables -A FORWARD -s 10.100.0.0/24 -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1200
 
 还有一个最简单的修改mtu的办法：
@@ -103,21 +103,29 @@ $ sudo vim /etc/ppp/ip-up.local
 !/bin/bash
 
 /sbin/ifconfig $1 mtu 1496
-	</pre>
+		</pre>
 	</div>
 	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="pppd.client"></a>38.2.2. Client 客户端</h3></div></div></div>
 		
-		<p>按照pptp客户端</p>
+		<p>安装pptp客户端</p>
 		<pre class="screen">
 yum install -y pptp pptp-setup
 		</pre>
-		<p></p>
-		<pre class="screen">
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm46018543881408"></a>38.2.2.1. 创建账号</h4></div></div></div>
+			
+			<p>普通账号</p>
+			<pre class="screen">
 pptpsetup --create vpn --server vpn.netkiller.cn \
---username cf4 --password cf@Gold1234
-		</pre>
-		<p>查看vpn配置文件</p>
-		<pre class="screen">
+--username neo --password netkiller
+			</pre>
+			<p>加密账号</p>
+			<pre class="screen">
+pptpsetup --create vpn0 --server vpn.netkiller.cn \
+--username neo --password netkiller --encrypt
+			</pre>
+			
+			<p>查看vpn配置文件</p>
+			<pre class="screen">
 # cat /etc/ppp/peers/vpn 
 # written by pptpsetup
 pty "pptp vpn.netkiller.cn --nolaunchpppd"
@@ -125,28 +133,12 @@ lock
 noauth
 nobsdcomp
 nodeflate
-name cf4
+name neo
 remotename vpn
 ipparam vpn
-		</pre>
-		<p>链接vpn</p>
-		<pre class="screen">
-pppd call vpn
-		</pre>
-		<p>查看日志</p>
-		<pre class="screen">
-# tail -f /var/log/messages | grep pppd
-Sep  9 19:09:19 iZ621r6pk9aZ pppd[21801]: pppd 2.4.5 started by root, uid 0
-Sep  9 19:09:19 iZ621r6pk9aZ pppd[21801]: Using interface ppp0
-		</pre>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm44858169561536"></a>38.2.2.1. 加密传输</h4></div></div></div>
-			
-			<pre class="screen">
-pptpsetup --create vpn0 --server vpn.netkiller.cn \
---username neo --password netkiller --encrypt
-			</pre>
+			</pre>	
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm44858169560032"></a>38.2.2.2. 内核模块安装</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm46018543877696"></a>38.2.2.2. 内核模块安装</h4></div></div></div>
 			
 			<pre class="screen">
 for module in nf_nat_pptp nf_conntrack_pptp nf_conntrack_proto_gre
@@ -155,21 +147,84 @@ do
 done
 			</pre>
 		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm46018543876112"></a>38.2.2.3. 拨入VPN</h4></div></div></div>
+			
+			<p>链接vpn</p>
+			<pre class="screen">
+pppd call vpn
+			</pre>
+			<p>查看日志</p>
+			<pre class="screen">
+# tail -f /var/log/messages | grep pppd
+Sep  9 19:09:19 iZ621r6pk9aZ pppd[21801]: pppd 2.4.5 started by root, uid 0
+Sep  9 19:09:19 iZ621r6pk9aZ pppd[21801]: Using interface ppp0
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm46018543873312"></a>38.2.2.4. 路由配置</h4></div></div></div>
+			
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm46018543872576"></a>38.2.2.4.1. 自动配置路由</h5></div></div></div>
+				
+				<p>创建文件/etc/ppp/ip-up.local，写入添加路由命令，然后赋予可执行权限。</p>
+				<pre class="screen">
+[neo@netkiller ppp]# cat /etc/ppp/ip-up.local 
+ip route add 192.168.0.0/24 dev ppp0  scope link
+
+[neo@netkiller ppp]# chmod +x /etc/ppp/ip-up.local 
+				</pre>
+				<p>创建文件 /etc/ppp/ip-down.local 写入删除路由命令，然后赋予可执行权限</p>
+				<pre class="screen">
+# cat /etc/ppp/ip-down.local
+ip route del 192.168.0.0/24 dev ppp0
+
+chmod +x /etc/ppp/ip-down.local
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm46018543869216"></a>38.2.2.4.2. 手工配置路由</h5></div></div></div>
+				
+				<p>添加路由</p>
+				<pre class="screen">
+ip route add 192.168.0.0/24 dev ppp0  scope link			
+				</pre>
+				<p>查看路由表</p>
+				<pre class="screen">
+[neo@netkiller ppp]# ip route 
+default via 47.19.19.27 dev eth1 
+1.2.2.2 dev ppp0  proto kernel  scope link  src 2.0.1.8 
+10.0.0.0/8 via 10.47.47.247 dev eth0 
+10.47.40.0/21 dev eth0  proto kernel  scope link  src 10.47.40.190 
+47.89.36.0/22 dev eth1  proto kernel  scope link  src 47.89.36.254 
+100.64.0.0/10 via 10.47.47.247 dev eth0 
+118.142.17.226 via 47.89.39.247 dev eth1  src 47.89.36.254 
+169.254.0.0/16 dev eth0  scope link  metric 1002 
+169.254.0.0/16 dev eth1  scope link  metric 1003 
+172.16.0.0/12 via 10.47.47.247 dev eth0  
+192.168.0.0/24 dev ppp0  scope link			
+				</pre>
+				<p>删除路由</p>
+				<pre class="screen">
+ip route del 192.168.0.0/24 dev ppp0
+				</pre>
+				<p>FreeBSD 等老系统</p>
+				<pre class="screen">
+route add -net 192.168.0.0/24 dev ppp0
+				</pre>
+			</div>
+		</div>
 	</div>
 	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="faq"></a>38.2.3. FAQ</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm44858169557792"></a>38.2.3.1. 800 错误</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm46018543862528"></a>38.2.3.1. 800 错误</h4></div></div></div>
 			
 			<p>错误：800</p>
 			<p>运行 ipconfig /flushdns 后，再试</p>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm44858169555936"></a>38.2.3.2. 测试 PPTP 端口</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm46018543861120"></a>38.2.3.2. 测试 PPTP 端口</h4></div></div></div>
 			
 			<pre class="screen">
 telnet vpn.netkiller.cn 1723			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm44858169554688"></a>38.2.3.3. debug</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm46018543859872"></a>38.2.3.3. debug</h4></div></div></div>
 			
 			<pre class="screen">
 			
