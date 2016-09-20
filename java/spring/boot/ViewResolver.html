@@ -11,27 +11,130 @@
 	    <a xmlns="" href="https://zb.oschina.net/profile/725072/market">作品与服务</a> |
 		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">11.8. ViewResolver</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="service.html">上一页</a> </td><th width="60%" align="center">第 11 章 Spring Boot</th><td width="20%" align="right"> <a accesskey="n" href="mongodb.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="ViewResolver"></a>11.8. ViewResolver</h2></div></div></div>
 		
-		<pre class="programlisting">
-		
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm45391976866352"></a>11.8.1. application.properties</h3></div></div></div>
+			
+			<pre class="programlisting">
+spring.mvc.view.prefix=/WEB-INF/jsp/
+spring.mvc.view.suffix=.jsp			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm45391976865328"></a>11.8.2. Application</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+package cn.netkiller;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.scheduling.annotation.EnableScheduling;
+
+@SpringBootApplication
+@EnableAutoConfiguration
+@ComponentScan
+@EnableScheduling
+public class Application {
+
+	public static void main(String[] args) {
+		SpringApplication.run(Application.class, args);
+	}
+}
+						
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm45391976863248"></a>11.8.3. IndexController</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+package cn.netkiller.web;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.servlet.ModelAndView;
+
+@Controller
+public class IndexController {
+
+	@RequestMapping("/welcome")
+	@ResponseBody
+	public String welcome() {
+		String message = "Welcome";
+		return message;
+	}
+	
+	@RequestMapping("/index")
+	public ModelAndView index() {
+		String message = "Helloworld";
+		return new ModelAndView("index").addObject("message", message);
+	}
+}
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm45391976861008"></a>11.8.4. src/main/webapp/WEB-INF/jsp/index.jsp</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+&lt;%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%&gt;
+&lt;!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd"&gt;
+&lt;html&gt;
+&lt;head&gt;
+&lt;meta http-equiv="Content-Type" content="text/html; charset=UTF-8"&gt;
+&lt;title&gt;Home&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+${message}
+&lt;/body&gt;
+&lt;/html&gt;
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm45391976859392"></a>11.8.5. 集成模板引擎</h3></div></div></div>
+			
+			<p>如果你需要使用其他模板引擎可以采用 Bean 注解方式。</p>
+			<pre class="programlisting">
+			
+package cn.netkiller.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.DefaultServletHandlerConfigurer;
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
+import org.springframework.web.servlet.view.InternalResourceViewResolver;
+
 @Configuration
 @EnableWebMvc
-@ComponentScan(basePackages = "hello")
-@EnableAutoConfiguration
-@EnableConfigurationProperties(ApplicationConfiguration.class)
-public class WebConfiguration {
+public class WebMvcConfig extends WebMvcConfigurerAdapter {
 
-    @Bean
-    public ViewResolver viewResolver() {
-        InternalResourceViewResolver viewResolver = new InternalResourceViewResolver();
-        viewResolver.setViewClass(JstlView.class);
-        viewResolver.setPrefix("/WEB-INF/views/");
-        viewResolver.setSuffix(".jsp");
+	@Override
+	public void configureDefaultServletHandling(DefaultServletHandlerConfigurer configurer) {
+		configurer.enable();
+	}
 
-        return viewResolver;
-    }
-}		
-		
-		</pre>
+	@Bean
+	public InternalResourceViewResolver viewResolver() {
+		InternalResourceViewResolver resolver = new InternalResourceViewResolver();
+		resolver.setPrefix("WEB-INF/jsp/");
+		resolver.setSuffix(".jsp");
+		return resolver;
+	}
+
+}
+			
+			</pre>
+		</div>
+				
 	</div><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
             /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
 
