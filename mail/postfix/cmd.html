@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>4.6. Post 命令</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="home" href="../index.html" title="Netkiller Mail Server 手札" /><link rel="up" href="index.html" title="Chapter 4. postfix - High-performance mail transport agent" /><link rel="prev" href="maillog.html" title="4.5. /var/log/maillog" /><link rel="next" href="example.html" title="4.7. Example" /></head><body><a xmlns="" href="http://www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="http://netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
+	    <a xmlns="" href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://zb.oschina.net/profile/725072/market">作品与服务</a> |
+		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">4.6. Post 命令</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="maillog.html">Prev</a> </td><th width="60%" align="center">Chapter 4. postfix - High-performance mail transport agent</th><td width="20%" align="right"> <a accesskey="n" href="example.html">Next</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="cmd"></a>4.6. Post 命令</h2></div></div></div>
+		
+	
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="postconf"></a>4.6.1. postconf - Postfix configuration utility</h3></div></div></div>
+ 			
+ 			<p>Postfix 提供了postconf配置工具,配置Postfix有两种方法，第一种方法是使用文本编辑工具修改 main.cf和master.cf两个配置文件，第二种方法就是使用postconf命令</p>
+ 			<p>修改配置项</p>
+ 			<pre class="screen">
+postconf -e "myhostname=mail.netkiller.cn"
+			</pre>
+		</div>
+	
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="postmulti"></a>4.6.2. postmulti - Postfix multi-instance manager</h3></div></div></div>
+			
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm45842632167136"></a>4.6.2.1. 绑定IP地址</h4></div></div></div>
+				
+				<p>将所有IP地址绑定到服务器上</p>
+				<pre class="screen">
+cd /etc/sysconfig/network-scripts
+
+vim ifcfg-enp2s0
+				</pre>
+				<pre class="screen">
+# cat ifcfg-enp2s0  
+TYPE="Ethernet"
+BOOTPROTO="none"
+DEFROUTE="yes"
+IPV4_FAILURE_FATAL="no"
+IPV6INIT="yes"
+IPV6_AUTOCONF="yes"
+IPV6_DEFROUTE="yes"
+IPV6_FAILURE_FATAL="no"
+NAME="enp2s0"
+UUID="c27c6ef8-ab82-4019-af0a-9f3a70b2d230"
+DEVICE="enp2s0"
+ONBOOT="yes"
+DNS1="8.8.8.8"
+IPADDR="192.168.0.1"
+...
+...
+IPADDR247="192.168.0.250"
+PREFIX="26"
+PERFIX0="24"
+GATEWAY="192.168.0.254"
+IPV6_PEERDNS="yes"
+IPV6_PEERROUTES="yes"
+IPV6_PRIVACY="no"
+				</pre>
+				<p>IP范围 192.168.0.1-192.168.0.250，接口是enp2s0，enp2s0:1 ~ enp2s0:250 </p>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm45842632164320"></a>4.6.2.2. postfix 多实例配置</h4></div></div></div>
+				
+				<p>初始化postfix 多实例</p>
+				<pre class="screen">
+postmulti -e init			
+				</pre>
+				<p>创建postfix实例</p>
+				<pre class="screen">
+postmulti -I postfix-1 -G mta -e create
+...
+...
+postmulti -I postfix-250 -G mta -e create			
+				</pre>
+				<p>启用postfix 实例</p>
+				<pre class="screen">
+postmulti -i postfix-1 -e enable
+...
+...
+postmulti -i postfix-250 -e enable
+				</pre>
+				<p>配置postfix实例</p>
+				<pre class="screen">
+postmulti -i postfix-1 -x postconf -e "master_service_disable =" "authorized_submit_users = root" "minimal_backoff_time= 30d" "maximal_backoff_time = 300d" "mynetworks = 127.0.0.0/8,192.168.0.0/24" "inet_interfaces = \$myhostname" "mailbox_size_limit = 0" "message_size_limit = 0" "myhostname =  mail.example.com" "myorigin =  mail.example.com" "mydomain =  example.com" "smtp_bind_address =  192.168.0.1"
+...
+...
+postmulti -i postfix-250 -x postconf -e "master_service_disable =" "authorized_submit_users = root" "minimal_backoff_time= 30d" "maximal_backoff_time = 300d" "mynetworks = 127.0.0.0/8,192.168.0.0/24" "inet_interfaces = \$myhostname" "mailbox_size_limit = 0" "message_size_limit = 0" "myhostname =  mail.example.com" "myorigin =  mail.example.com" "mydomain =  example.com" "smtp_bind_address =  192.168.0.250"
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm45842632159472"></a>4.6.2.3. 配置 iptables 让SMTPD发送邮件时依次轮询外发IP地址，这样就不会被封锁。</h4></div></div></div>
+				
+				<pre class="screen">
+iptables -t nat -I POSTROUTING -m state --state NEW -p tcp --dport 25 -o eth0 -m statistic --mode nth --every 250 -j SNAT --to-source 192.168.0.1
+...
+...
+iptables -t nat -I POSTROUTING -m state --state NEW -p tcp --dport 25 -o eth0 -m statistic --mode nth --every 250 -j SNAT --to-source 192.168.0.250
+				</pre>
+				<p>注意，不要使用下面的方式配置iptables，经过测试这种192.168.0.1-192.168.0.250方式，不会轮换IP地址。</p>
+				<pre class="screen">
+iptables -t nat -I POSTROUTING -o enp2s0f0 -p tcp -m state --state NEW -m tcp -m statistic --mode nth --every 5 --packet 0 -j SNAT --to-source 192.168.0.1-192.168.0.250
+				</pre>
+				<p>测试 iptables使用 curl每次请求你将看到一个全新的IP地址。</p>
+				<pre class="screen">
+[root@www.netkiller.cn ~]# curl http://ip.cn
+当前 IP：173.254.223.57 来自：美国 QuadraNet
+[root@www.netkiller.cn ~]# curl http://ip.cn
+当前 IP：173.254.223.54 来自：美国 QuadraNet
+[root@www.netkiller.cn ~]# curl http://ip.cn
+当前 IP：107.167.40.137 来自：美国 
+[root@www.netkiller.cn ~]# curl http://ip.cn
+当前 IP：173.254.223.55 来自：美国 QuadraNet
+[root@www.netkiller.cn ~]# curl http://ip.cn
+当前 IP：107.167.40.134 来自：美国 
+[root@www.netkiller.cn ~]# curl http://ip.cn
+当前 IP：173.254.223.56 来自：美国 QuadraNet
+[root@www.netkiller.cn ~]# curl http://ip.cn
+当前 IP：173.254.223.54 来自：美国 QuadraNet
+[root@www.netkiller.cn ~]# curl http://ip.cn
+当前 IP：107.167.40.132 来自：美国 
+[root@www.netkiller.cn ~]# curl http://ip.cn
+当前 IP：173.254.223.53 来自：美国 QuadraNet
+				</pre>
+				<p>使用netkiller-firewall 替代原来的iptables，传统的iptables规则不容易书写，也不容易阅读。</p>
+				<pre class="screen">
+# unzip firewall-master.zip
+# yum install -y python34
+# bash install.sh
+# /etc/init.d/firewall 
+Usage: /etc/init.d/firewall {start|stop|status|restart}
+				</pre>
+				<pre class="screen">
+				
+RULE=www
+改为
+RULE=smtp
+
+# cat /etc/init.d/firewall | grep RULE
+RULE=smtp
+
+
+# cat /etc/sysconfig/firewall
+LIBEXEC=/srv/firewall/libexec
+RULE=smtp
+				
+				</pre>
+				<p>编辑ACL规则</p>
+				<pre class="screen">
+				
+# vim /srv/firewall/libexec/smtp.py
+
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+#
+#  example.py
+#  
+#  Copyright 2013 neo &lt;netkiller@msn.com&gt;
+#  
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#  
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#  
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+#  MA 02110-1301, USA.
+#  
+#  
+
+from firewall import * 
+
+######################################## 
+# Web Application
+######################################## 
+
+smtp = Firewall()
+smtp.flush()
+smtp.policy(smtp.INPUT,smtp.ACCEPT)
+smtp.policy(smtp.OUTPUT,smtp.ACCEPT)
+smtp.policy(smtp.FORWARD,smtp.ACCEPT)
+smtp.policy(smtp.POSTROUTING,smtp.ACCEPT)
+smtp.input().state(('RELATED','ESTABLISHED')).accept()
+smtp.input().protocol('icmp').accept()
+smtp.input().interface('-i','lo').accept()
+smtp.input().protocol('tcp').state('NEW').dport('22').accept()
+smtp.input().protocol('tcp').state('NEW').dport(('25','110')).accept()
+#smtp.input().protocol('tcp').dport(('3306','5432')).reject()
+smtp.input().reject('--reject-with icmp-host-prohibited')
+smtp.forward().reject('--reject-with icmp-host-prohibited')
+
+for ip in range(53,58):
+	smtp.postrouting().outbound('enp2s0').protocol('tcp').state('NEW').statistic('5').snat('--to-source 173.24.223.'+str(ip))
+for ip in range(130,191):
+	smtp.postrouting().outbound('enp2s0').protocol('tcp').state('NEW').statistic('5').snat('--to-source 107.17.40.'+str(ip))
+for ip in range(2,63):
+	smtp.postrouting().outbound('enp2s0').protocol('tcp').state('NEW').statistic('5').snat('--to-source 107.18.142.'+str(ip))
+for ip in range(130,191):
+	smtp.postrouting().outbound('enp2s0').protocol('tcp').state('NEW').statistic('5').snat('--to-source 146.71.38.'+str(ip))
+for ip in range(194,255):
+	smtp.postrouting().outbound('enp2s0').protocol('tcp').state('NEW').statistic('5').snat('--to-source 104.20.164.'+str(ip))
+
+
+def start():
+	smtp.start()
+def stop():
+	smtp.stop()
+def restart():
+	smtp.stop()
+	smtp.start()
+def show():
+	smtp.show()
+def status():
+	smtp.status()
+def main():
+	show()
+	return( 0 )
+
+if __name__ == '__main__':
+	main()
+				
+				</pre>
+				<p>启动firewall</p>
+				<pre class="screen">
+systemctl enable firewall
+systemctl start firewall
+				</pre>
+				<p>CentOS 6.x 之前的版本请使用 /etc/init.d/firewall 脚本</p>
+			</div>
+		</div>
+	</div><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
+            /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+
+            //if(document.domain == 'netkiller.github.io'){
+            var disqus_shortname = 'netkiller'; // required: replace example with your forum shortname
+            //}else{
+			//var disqus_shortname = 'neochan';
+            //}
+
+            /* * * DON'T EDIT BELOW THIS LINE * * */
+            (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+            })();
+        </script><noscript xmlns="">Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><a xmlns="" href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="maillog.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="example.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">4.5. /var/log/maillog </td><td width="20%" align="center"><a accesskey="h" href="../index.html">Home</a></td><td width="40%" align="right" valign="top"> 4.7. Example</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" type="text/javascript">
+var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F997cd4a7320a82d72cb74d179118f697' type='text/javascript'%3E%3C/script%3E"));
+</script><script xmlns="" type="text/javascript" src="/js/q.js"></script></body></html>
