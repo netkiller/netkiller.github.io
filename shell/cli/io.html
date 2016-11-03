@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>3.12. standard input/output</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><meta name="keywords" content="shell,bash,zsh, awk,sed,curl,expect, grep,sort" /><link rel="home" href="../index.html" title="Netkiller Linux Shell 手札" /><link rel="up" href="index.html" title="第 3 章 Shell command" /><link rel="prev" href="table.html" title="3.11. 表格操作/行列转换" /><link rel="next" href="log.html" title="3.13. Logging" /></head><body><a xmlns="" href="http://www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="http://netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
+	    <a xmlns="" href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://zb.oschina.net/profile/725072/market">作品与服务</a> |
+		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">3.12. standard input/output</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="table.html">上一页</a> </td><th width="60%" align="center">第 3 章 Shell command</th><td width="20%" align="right"> <a accesskey="n" href="log.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="io"></a>3.12. standard input/output</h2></div></div></div>
+	
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm45684431162496"></a>3.12.1. xargs - build and execute command lines from standard input</h3></div></div></div>
+		
+		<p>xargs命令用法</p>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm45684431161104"></a>3.12.1.1. 格式化</h4></div></div></div>
+			
+			<p>xargs用作替换工具，读取输入数据重新格式化后输出。</p>
+			<pre class="screen">
+			
+定义一个测试文件，内有多行文本数据：
+
+cat &gt;&gt; test.txt &lt;&lt;EOF
+
+a b c d e f g
+h i j k l m n
+o p q
+r s t
+u v w x y z
+
+EOF
+
+# cat test.txt 
+
+a b c d e f g
+h i j k l m n
+o p q
+r s t
+u v w x y z
+
+
+多行输入一行输出：
+
+# cat test.txt | xargs
+a b c d e f g h i j k l m n o p q r s t u v w x y z
+
+等效
+# cat test.txt | tr "\n" " "
+a b c d e f g h i j k l m n o p q r s t u v w x y z
+
+-n选项多行输出：
+
+# cat test.txt | xargs -n3
+a b c
+d e f
+g h i
+j k l
+m n o
+p q r
+s t u
+v w x
+y z
+# cat test.txt | xargs -n4
+a b c d
+e f g h
+i j k l
+m n o p
+q r s t
+u v w x
+y z
+# cat test.txt | xargs -n5
+a b c d e
+f g h i j
+k l m n o
+p q r s t
+u v w x y
+z
+
+
+-d选项可以自定义一个定界符：
+
+# echo "name|age|sex|birthday" | xargs -d"|"
+name age sex birthday
+
+结合-n选项使用：
+
+# echo "name=Neo|age=30|sex=T|birthday=1980" | xargs -d"|" -n1
+name=Neo
+age=30
+sex=T
+birthday=1980			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="input"></a>3.12.1.2. standard input</h4></div></div></div>
+			
+			<pre class="screen">
+			
+# xargs &lt; test.txt 
+a b c d e f g h i j k l m n o p q r s t u v w x y z		
+		
+# cat /etc/passwd | cut -d : -f1 &gt; users
+# xargs -n1 &lt; users echo "Your name is"
+Your name is root
+Your name is bin
+Your name is daemon
+Your name is adm
+Your name is lp
+Your name is sync
+Your name is shutdown
+Your name is halt
+Your name is mail
+Your name is operator
+Your name is games
+Your name is ftp
+Your name is nobody
+Your name is dbus
+Your name is polkitd
+Your name is avahi
+Your name is avahi-autoipd
+Your name is postfix
+Your name is sshd
+Your name is neo
+Your name is ntp
+Your name is opendkim
+Your name is netkiller
+Your name is tcpdump		
+			
+			</pre>
+		</div>		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm45684431158288"></a>3.12.1.3. -I 替换操作</h4></div></div></div>
+			
+			<pre class="screen">
+复制所有图片文件到 /data/images 目录下：
+
+ls *.jpg | xargs -n1 -I cp {} /data/images
+			</pre>		
+			<pre class="screen">
+			
+读取stdin，将格式化后的参数传递给命令xargs的一个选项-I，使用-I指定一个替换字符串{}，这个字符串在xargs扩展时会被替换掉，当-I与xargs结合使用，每一个参数命令都会被执行一次：
+
+# echo "name=Neo|age=30|sex=T|birthday=1980" | xargs -d"|" -n1 | xargs -I {} echo "select * from tab where {} "
+select * from tab where name=Neo 
+select * from tab where age=30 
+select * from tab where sex=T 
+select * from tab where birthday=1980 
+
+# xargs -I user echo "Hello user" &lt;users 
+Hello root
+Hello bin
+Hello daemon
+Hello adm
+Hello lp
+Hello sync
+Hello shutdown
+Hello halt
+Hello mail
+Hello operator
+Hello games
+Hello ftp
+Hello nobody
+Hello dbus
+Hello polkitd
+Hello avahi
+Hello avahi-autoipd
+Hello postfix
+Hello sshd
+Hello netkiller
+Hello neo
+Hello tss
+Hello ntp
+Hello opendkim
+Hello noreply
+Hello tcpdump
+			
+			</pre>
+		</div>		
+	</div>
+</div><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
+            /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+
+            //if(document.domain == 'netkiller.github.io'){
+            var disqus_shortname = 'netkiller'; // required: replace example with your forum shortname
+            //}else{
+			//var disqus_shortname = 'neochan';
+            //}
+
+            /* * * DON'T EDIT BELOW THIS LINE * * */
+            (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+            })();
+        </script><noscript xmlns="">Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><a xmlns="" href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="table.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="log.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">3.11. 表格操作/行列转换 </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 3.13. Logging</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" type="text/javascript">
+var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F997cd4a7320a82d72cb74d179118f697' type='text/javascript'%3E%3C/script%3E"));
+</script><script xmlns="" type="text/javascript" src="/js/q.js"></script></body></html>

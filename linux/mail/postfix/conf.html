@@ -52,7 +52,7 @@ postmap transport
 			<pre class="screen">
 sudo vim /etc/postfix/main.cf
 
-smtpd_recipient_restrictions = check_sender_access hash:/etc/postfix/check_sender_access		
+smtpd_recipient_restrictions = check_sender_access hash:/etc/postfix/check_sender_access
 			</pre>
 			<p>然后在/etc/postfix/目录下创建一个check_sender_access文件，内容如下</p>
 			<pre class="screen">
@@ -72,6 +72,86 @@ postmap /etc/postfix/check_sender_access
 			<p>最后重新加载Postfix配置文件</p> 
 			<pre class="screen">
 sudo /etc/init.d/postfix reload		
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="mailbox"></a>123.2.3. 收件箱配置</h3></div></div></div>
+			
+			<p>Postfix 提供三种收件箱，第一种是Mailbox,第二种是Maildir, 第三种是Unix风格的收件想/var/spool/mail</p>
+			<p>如你有POP/IMAP服务请使用Mailbox 或者 Maildir。否则仅仅是在 unix上阅读纯文本邮件可以使用/var/spool/mail</p>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm45858868942512"></a>123.2.3.1. Mailbox 配置</h4></div></div></div>
+				
+				<pre class="screen">
+home_mailbox = Mailbox
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm45858868941312"></a>123.2.3.2. Maildir 配置</h4></div></div></div>
+				
+				<pre class="screen">
+home_mailbox = Maildir/
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm45858868939872"></a>123.2.3.3. 传统Unix风格邮箱配置</h4></div></div></div>
+				
+				<pre class="screen">
+mail_spool_directory = /var/mail
+				</pre>
+				<pre class="screen">
+mail_spool_directory = /var/spool/mail
+				</pre>
+			</div>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="destination"></a>123.2.4. 邮件投递</h3></div></div></div>
+			
+			<p>邮件投递是指从你的Postfix服务器将邮件投到目的地邮件服务器，即 SMTP对SMTP，而非用户到的SMTP配置。</p>
+			<p>配置主要涉及邮件投递频率，如果过高，会被退回也可能被封锁一段时间。</p>
+			<pre class="screen">
+* initial_destination_concurrency：到目标主机的初始化并发连接数。
+* default_destination_concurrency_limit：初始化连接后对同一目标主机的最大并发连接数目。
+* local_destination_concurrency_limit：控制对同一本地收件人的最大同时投递的邮件数目。
+			</pre>
+			<p>默认值可以通过 $ postconf | grep local_destination_concurrency_limit 命令查看</p>
+			<pre class="screen">
+initial_destination_concurrency = 5
+default_destination_concurrency_limit = 20
+local_destination_concurrency_limit = 2
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="queue"></a>123.2.5. 队列配置</h3></div></div></div>
+			
+			<p>queue_run_delay 配置间隔多长时间重新发送一次deferred队列的邮件</p>
+			<pre class="screen">
+# postconf | grep queue_run_delay
+queue_run_delay = 300s
+			</pre>
+			<p>deferred邮件队列中的生存时间</p>
+			<pre class="screen">
+# postconf | grep maximal_queue_lifetime
+maximal_queue_lifetime = 5d
+			</pre>
+			<p>队列尺寸</p>
+			<pre class="screen">
+# postconf  | grep qmgr_
+qmgr_clog_warn_time = 300s
+qmgr_daemon_timeout = 1000s
+qmgr_fudge_factor = 100
+qmgr_ipc_timeout = 60s
+qmgr_message_active_limit = 20000
+qmgr_message_recipient_limit = 20000
+qmgr_message_recipient_minimum = 10
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="client"></a>123.2.6. 客户端</h3></div></div></div>
+			
+			<p>smtpd_client_connection_count_limit 配置邮件客户端链接数，例如 Outlook 用户数量</p>
+			<pre class="screen">
+# postconf | grep smtpd_client_connection_count_limit 
+postscreen_client_connection_count_limit = $smtpd_client_connection_count_limit
+smtpd_client_connection_count_limit = 50
+			</pre>
+			<p>控制接收邮件频率</p>
+			<pre class="screen">
+# postconf | grep smtpd_client_connection_rate_limit 
+smtpd_client_connection_rate_limit = 0
 			</pre>
 		</div>
 	</div><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
