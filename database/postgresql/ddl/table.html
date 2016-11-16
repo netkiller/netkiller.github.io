@@ -11,7 +11,58 @@
 	    <a xmlns="" href="https://zb.oschina.net/profile/725072/market">作品与服务</a> |
 		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">23.2. 表管理(Table)</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><th width="60%" align="center">第 23 章 DDL - Data Definition Language</th><td width="20%" align="right"> <a accesskey="n" href="partition.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="table"></a>23.2. 表管理(Table)</h2></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm45807629184256"></a>23.2.1. create table ... select</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm45650991366976"></a>23.2.1. 数据类型</h3></div></div></div>
+			
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm45650991366240"></a>23.2.1.1. SET 集合类型</h4></div></div></div>
+				
+				<p>SET 集合类型，此类型适合用于多项选择场景，例如保存表单中的checkbox。</p>
+				<pre class="screen">
+CREATE TABLE `QA` (
+	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+	`question` VARCHAR(255) NOT NULL COMMENT '问题描述',
+	`answer` SET('A','B','C','D') NOT NULL COMMENT '问题答案',
+	PRIMARY KEY (`id`)
+)
+COMMENT='Multiple Choice'
+COLLATE='utf8_general_ci'
+ENGINE=InnoDB;
+				</pre>
+				<p>插入数据</p>
+				<pre class="screen">
+INSERT INTO `QA` (`id`, `question`, `answer`) VALUES
+	(1, 'Netkiller 系列手札始于那一年？ A.2000年，B.2008年，C.2010年，D.2016年', 'A'),
+	(2, 'Netkiller 系列手札有哪些? A.《Netkiller Scals 手札》, B.《Netkiller Java 手札》, C.《Netkiller Linux 手札》, D.《Netkiller EMC 手札》', 'B,C'),
+	(3, 'XXXXXXXXX', 'C,D'),
+	(4, 'XXXXXXXXX', 'A,B,C'),
+	...
+	...
+	(1000, 'XXXXXXXXXX', 'B,C,D'),
+	...
+	...
+	(5000, 'XXXXXXXXXX', 'A,B,C,D');
+				</pre>
+				<p>查询 SET 结果集，MySQL为SET配备了FIND_IN_SET函数</p>
+				<pre class="programlisting">
+				
+select * from QA where FIND_IN_SET('B',`answer`);
+				
+				</pre>
+				<p>下面两种方法也能实现，但不推荐使用。</p>
+				<pre class="programlisting">
+				
+select question, answer from QA where locate('B',answer)&gt;0;
+select question, answer from QA where POSITION('B' in answer)&gt;0;				
+				
+				</pre>
+				<p>查询多个答案</p>
+				<pre class="programlisting">
+				
+select question, answer from QA where answer = 'B,C';				
+				
+				</pre>
+			</div>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm45650991365920"></a>23.2.2. create table ... select</h3></div></div></div>
 			
 			<p>创建空表</p>
 			<pre class="programlisting">
@@ -26,14 +77,14 @@ create table admin_user_history select * from admin_user;
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm45807629181552"></a>23.2.2. modifiy table</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm45650991356704"></a>23.2.3. modifiy table</h3></div></div></div>
 			
 			<p>modifiy table</p>
 			<pre class="screen">
 ALTER TABLE ecs_users add user_picture varchar(255);
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm45807629179600"></a>23.2.3. TEMPORARY Table</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm45650991354656"></a>23.2.4. TEMPORARY Table</h3></div></div></div>
 			
 			<p>临时表将在你连接期间存在。一旦断开时将自动删除表并释放所用的空间。你在连接期间删除该表也同样释放空间。</p>
 			<pre class="screen">
@@ -50,13 +101,13 @@ CREATE TEMPORARY TABLE tmp_mem_table (
 ) TYPE = HEAP
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm45807629176544"></a>23.2.4. Collate</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm45650991351584"></a>23.2.5. Collate</h3></div></div></div>
 			
 			<pre class="programlisting">
 ALTER TABLE `tmp_cats`  COLLATE='utf8_general_ci',  CONVERT TO CHARSET utf8;
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm45807629175168"></a>23.2.5. CHARACTER</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm45650991350208"></a>23.2.6. CHARACTER</h3></div></div></div>
 			
 			<pre class="screen">
 			
@@ -64,7 +115,7 @@ ALTER TABLE &lt;table_name&gt; CONVERT TO CHARACTER SET utf8;
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm45807629173712"></a>23.2.6. DEFAULT</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm45650991348752"></a>23.2.7. DEFAULT</h3></div></div></div>
 			
 			<p>更新时间</p>
 			<p>`mtime` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更改时间',</p>
@@ -88,7 +139,7 @@ ENGINE=InnoDB
 AUTO_INCREMENT=2;
 			
 			</pre>
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm45807629170384"></a>23.2.6.1. AUTO_INCREMENT</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm45650991345424"></a>23.2.7.1. AUTO_INCREMENT</h4></div></div></div>
 				
 				<p>定义 AUTO_INCREMENT 起始值</p>
 				<pre class="programlisting">
@@ -108,7 +159,7 @@ ALTER TABLE `accounts`
 	AUTO_INCREMENT=792257;				
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm45807629167376"></a>23.2.6.2. 表存储位置(DATA DIRECTORY)</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm45650991342416"></a>23.2.7.2. 表存储位置(DATA DIRECTORY)</h4></div></div></div>
 				
 				<pre class="programlisting">
 				
@@ -123,9 +174,9 @@ CREATE TABLE IF NOT EXISTS `tab_name` (
 				</pre>
 			</div>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="key"></a>23.2.7. KEY</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="key"></a>23.2.8. KEY</h3></div></div></div>
 			
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm45807629164640"></a>23.2.7.1. PRIMARY KEY</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm45650991339680"></a>23.2.8.1. PRIMARY KEY</h4></div></div></div>
 				
 				<p>一般主键定义</p>
 				<pre class="screen">
@@ -138,7 +189,7 @@ PRIMARY KEY (`id`, `user_id`),
 			</div>
 
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm45807629161712"></a>23.2.8. COMMENT</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm45650991336752"></a>23.2.9. COMMENT</h3></div></div></div>
 			
 			<pre class="screen">
 ALTER TABLE `neo`.`stuff` COMMENT = '用户表' ;
@@ -158,7 +209,7 @@ PARTITIONS 10 */
 			</pre>
 		</div>
 		
-<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="engine"></a>23.2.9. Engine</h3></div></div></div>
+<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="engine"></a>23.2.10. Engine</h3></div></div></div>
 	
 	<pre class="screen">
 	
@@ -184,7 +235,7 @@ mysql&gt; show engines;
 ALTER TABLE `test` ENGINE=BLACKHOLE;
 ALTER TABLE `test` ENGINE=InnoDB;
 	</pre>
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="FEDERATED"></a>23.2.9.1. FEDERATED</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="FEDERATED"></a>23.2.10.1. FEDERATED</h4></div></div></div>
 		
 		<p>启用 FEDERATED 引擎, 服务器环境 Ubuntu 13.04</p>
 		<pre class="screen">
@@ -297,7 +348,7 @@ mysql&gt; select * from users;
 			<p>切记，mysqldump 只会dump出使用FEDERATED引擎表的结构,不会包含数据。</p>
 		</td></tr></table></div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="BLACKHOLE"></a>23.2.9.2. BLACKHOLE</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="BLACKHOLE"></a>23.2.10.2. BLACKHOLE</h4></div></div></div>
 		
 		<pre class="programlisting">
 CREATE TABLE test(id INT, val CHAR(10)) ENGINE = BLACKHOLE;
