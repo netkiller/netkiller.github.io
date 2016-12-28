@@ -19,16 +19,8 @@ worker_processes  1;
 error_log  /var/log/nginx/error.log warn;
 pid        /var/run/nginx.pid;
 	</pre>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="events"></a>2.2.1. events</h3></div></div></div>
-		
-		<pre class="screen">
-events {
-    worker_connections  4096;
-}
-		</pre>
-	</div>
 
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="http"></a>2.2.2. http 配置</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="http"></a>2.2.1. http 配置</h3></div></div></div>
 		
 		<p>自定义缓冲区相关设置</p>
 		<pre class="screen">
@@ -44,20 +36,30 @@ client_header_timeout 10;
 keepalive_timeout  	  65;
 send_timeout          10;
 		</pre>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="x-forwarded-for"></a>2.2.2.1. X-Forwarded-For</h4></div></div></div>
+	</div>
+	
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="events"></a>2.2.2. events</h3></div></div></div>
+		
+		<pre class="screen">
+events {
+    worker_connections  4096;
+}
+		</pre>
+	</div>
+
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="x-forwarded-for"></a>2.2.3. X-Forwarded-For</h3></div></div></div>
 			
 			<pre class="screen">
 real_ip_header X-Forwarded-For;
 			</pre>
 		</div>
-
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="gzip"></a>2.2.2.2. gzip</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="gzip"></a>2.2.4. gzip</h3></div></div></div>
 			
 			<pre class="screen">
 gzip  on;
 gzip_min_length  1000;
 gzip_buffers     4 8k;
-gzip_types       text/plain application/x-javascript text/css text/html application/xml;
+gzip_types       text/plain text/css application/json application/x-javascript application/xml;
 
 
 gzip on;
@@ -67,10 +69,42 @@ gzip_types text/plain application/x-javascript text/css text/javascript;
 			</pre>
 			<p>gzip_types 压缩类型</p>
 			<pre class="screen">
-gzip_types text/plain text/html text/css application/javascript text/javascript application/x-javascript text/xml application/xml application/xml+rss application/json;			
+gzip_types text/plain text/css application/javascript text/javascript application/x-javascript text/xml application/xml application/xml+rss application/json;			
+			</pre>
+			<p>text/html 是 gzip_types 默认值，所以不要将text/html加入到gzip_types</p>
+			
+			<p>测试，验证 gzip 正常工作</p>
+			<pre class="screen">
+neo@netkiller:~/workspace$ curl -s -I -H 'Accept-Encoding: gzip,deflate' http://img.netkiller.cn/js/react.js | grep gzip
+Content-Encoding: gzip
+			</pre>
+			<p>如果提示 Content-Encoding: gzip 便是配置正确</p>
+			<p>不仅仅只能压缩html,js,css还能压缩json</p>
+			<pre class="screen">
+neo@netkiller:~$ curl -s -I -H 'Accept-Encoding: gzip,deflate' http://inf.netkiller.cn/list/json/2.json
+HTTP/1.1 200 OK
+Server: nginx
+Date: Thu, 15 Dec 2016 03:36:31 GMT
+Content-Type: application/json; charset=utf-8
+Connection: keep-alive
+Cache-Control: max-age=60
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Headers: Content-Type,Origin
+Access-Control-Allow-Methods: GET,OPTIONS
+Content-Encoding: gzip
+			</pre>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp56"></a>2.2.4.1. CDN支持</h4></div></div></div>
+			
+			<p>配置 gzip_proxied any; 后CDN才能识别 gzip</p>
+			<pre class="screen">
+	server_tokens off;
+    gzip  on;
+    gzip_types text/plain text/css application/javascript text/javascript application/x-javascript text/xml application/xml application/xml+rss application/json;
+    gzip_proxied any;
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="server_tokens"></a>2.2.2.3. server_tokens</h4></div></div></div>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="server_tokens"></a>2.2.5. server_tokens</h3></div></div></div>
 			
 			<p>隐藏nginx版本号</p>
 			<pre class="screen">
@@ -80,8 +114,7 @@ server_tokens off;
 ...
 }
 			</pre>
-		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="ssi"></a>2.2.2.4. ssi</h4></div></div></div>
+		</div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="ssi"></a>2.2.6. ssi</h3></div></div></div>
 			
 			<pre class="screen">
 http {
@@ -107,12 +140,10 @@ client_max_body_size 8m;
 			<p>ssi_silent_errors 默认值是off，开启后在处理SSI文件出错时不输出错误提示:"[an error occurred while processing the directive] "</p>
 			<p>ssi_types 默认是ssi_types text/html，如果需要shtml支持，则需要设置：ssi_types text/shtml</p>
 			<p>ssi_value_length 默认值是 256，用于定义SSI参数的长度。</p>
-		</div>
-	</div>
-	
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="http.server"></a>2.2.3. server</h3></div></div></div>
+		</div>	
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="server"></a>2.2.7. server</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="listen"></a>2.2.3.1. listen</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="listen"></a>2.2.7.1. listen</h4></div></div></div>
 			
 			<p>绑定IP地址</p>
 			<pre class="screen">
@@ -135,7 +166,7 @@ server {
 }
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="http.server.example"></a>2.2.3.2. 单域名虚拟主机</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="http.server.example"></a>2.2.7.2. 单域名虚拟主机</h4></div></div></div>
 			
 			<pre class="screen">
 # cat /etc/nginx/conf.d/images.conf
@@ -201,7 +232,7 @@ server_name ~^(www\.)?(.+)$;
 			</pre>
 		</div>
 
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="http.server.ssl"></a>2.2.3.3. ssl 虚拟主机</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="http.server.ssl"></a>2.2.7.3. ssl 虚拟主机</h4></div></div></div>
 			
 			<pre class="screen">
 mkdir /etc/nginx/ssl
@@ -244,7 +275,7 @@ $ openssl s_client -connect www.example.com:443
 			</pre>
 		</div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="http.server.subdomain"></a>2.2.3.4. 泛解析主机</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="http.server.subdomain"></a>2.2.7.4. 泛解析主机</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -320,7 +351,7 @@ server {
 }
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="http.server.location"></a>2.2.3.5. location</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="http.server.location"></a>2.2.7.5. location</h4></div></div></div>
 			
 			<pre class="screen">
     location / {
@@ -351,10 +382,10 @@ server {
 			</pre>
 			
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="expires"></a>2.2.3.6. expires</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="expires"></a>2.2.7.6. expires</h4></div></div></div>
 			
 			<p>expires 格式</p>
-			<div class="example"><a id="idp122"></a><p class="title"><strong>例 2.1. Expires Examples</strong></p><div class="example-contents">
+			<div class="example"><a id="idp123"></a><p class="title"><strong>例 2.1. Expires Examples</strong></p><div class="example-contents">
 				
 				<pre class="screen">
 expires 1 January, 1970, 00:00:01 GMT;
@@ -429,7 +460,7 @@ location / {
 }
 			</pre>
 
-			<div class="example"><a id="idp123"></a><p class="title"><strong>例 2.2. nginx expires</strong></p><div class="example-contents">
+			<div class="example"><a id="idp124"></a><p class="title"><strong>例 2.2. nginx expires</strong></p><div class="example-contents">
 				
 				<pre class="screen">
 location ~ .*\.(gif|jpg|jpeg|png|bmp|swf|ico)$ {
@@ -448,7 +479,7 @@ location ~ .*\.(html|htm)$
 }
 				</pre>
 			</div></div><br class="example-break" />
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="add_header"></a>2.2.3.6.1. 通过 add_header / more_set_headers 设置缓存</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="add_header"></a>2.2.7.6.1. 通过 add_header / more_set_headers 设置缓存</h5></div></div></div>
 				
 				<p>add_header 实例</p>
 				<pre class="screen">
@@ -474,7 +505,7 @@ location ~ \.(ico|pdf|flv|jp?g|png|gif|js|css|webp|swf)(\.gz)?(\?.*)?$ {
 }
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="request_uri"></a>2.2.3.6.2. $request_uri</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="request_uri"></a>2.2.7.6.2. $request_uri</h5></div></div></div>
 				
 				<pre class="screen">
 if ($request_uri ~* "\.(ico|css|js|gif|jpe?g|png)\?[0-9]+$") {
@@ -489,7 +520,7 @@ if ($request_uri ~ ^/detail/html/[0-9]+/[0-9]/[^0][0-9]+\.html ) {
 }
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="request_filename"></a>2.2.3.6.3. $request_filename</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="request_filename"></a>2.2.7.6.3. $request_filename</h5></div></div></div>
 				
 				<pre class="screen">
 if (-f $request_filename) {
@@ -498,7 +529,7 @@ if (-f $request_filename) {
 				</pre>
 			</div>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="access"></a>2.2.3.7. access</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="access"></a>2.2.7.7. access</h4></div></div></div>
 			
 			<pre class="screen">
 #防止access文件被下载
@@ -546,7 +577,7 @@ location ~ ^/private/.*\.php$
 }			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="auth_basic"></a>2.2.3.8. auth_basic</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="auth_basic"></a>2.2.7.8. auth_basic</h4></div></div></div>
 			
 			<pre class="screen">
 cd /usr/local/nginx/conf
@@ -573,7 +604,7 @@ htpasswd -c -d htpasswd user_name
 				<p>必须使用 -d  Force CRYPT encryption of the password. 选项，</p>
 			</td></tr></table></div>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="autoindex"></a>2.2.3.9. autoindex</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="autoindex"></a>2.2.7.9. autoindex</h4></div></div></div>
 			
 			<p>开启目录浏览</p>
 			<pre class="screen">
@@ -589,7 +620,7 @@ Reloading nginx configuration: nginx.
 			</pre>
 		</div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="try_files"></a>2.2.3.10. try_files</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="try_files"></a>2.2.7.10. try_files</h4></div></div></div>
 			
 			<pre class="screen">
 server {
@@ -625,7 +656,7 @@ server {
 			</pre>
 		</div>
 
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="stub_status"></a>2.2.3.11. stub_status</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="stub_status"></a>2.2.7.11. stub_status</h4></div></div></div>
 			
 			<pre class="screen">
 location /nginx_status {
@@ -648,7 +679,7 @@ location /nginx_status {
 			</pre>
 		</div>
 
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="add_header"></a>2.2.3.12. add_header</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="add_header"></a>2.2.7.12. add_header</h4></div></div></div>
 			
 			<p># 相关页面设置Cache-Control头信息</p>
 			<pre class="screen">
@@ -660,7 +691,7 @@ location /nginx_status {
         add_header    Cache-Control  max-age=86400;
       }
 			</pre>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="cache"></a>2.2.3.12.1. Cache</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="cache"></a>2.2.7.12.1. Cache</h5></div></div></div>
 				
 				<pre class="screen">
 				
@@ -670,7 +701,7 @@ add_header     Nginx-Cache     "$upstream_cache_status  from  www.example.com";
 				
 				</pre>
 			</div>			
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp56"></a>2.2.3.12.2. Access-Control-Allow</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp57"></a>2.2.7.12.2. Access-Control-Allow</h5></div></div></div>
 				
 				<pre class="screen">
 location ~* \.(eot|ttf|woff)$ {
@@ -698,9 +729,9 @@ location / {
 				</pre>
 			</div>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="valid_referers"></a>2.2.3.13. valid_referers</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="valid_referers"></a>2.2.7.13. valid_referers</h4></div></div></div>
 			
-			<div class="example"><a id="idp124"></a><p class="title"><strong>例 2.3. Example: valid_referers</strong></p><div class="example-contents">
+			<div class="example"><a id="idp125"></a><p class="title"><strong>例 2.3. Example: valid_referers</strong></p><div class="example-contents">
 				
 				<pre class="screen">
 location /photos/ {
@@ -732,7 +763,7 @@ location /images/ {
 			</div></div><br class="example-break" />
 		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="http2"></a>2.2.4. HTTP2  配置 SSL证书</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="http2"></a>2.2.8. HTTP2  配置 SSL证书</h3></div></div></div>
 		
 		<p>创建证书</p>
 		<pre class="screen">
@@ -764,7 +795,7 @@ Email Address []:netkiller@msn.com
 		
 		</pre>
 		<p>注意: Common Name (eg, your name or your server's hostname) []:api.netkiller.cn 要跟你的 nginx server_name api.netkiller.cn 一样。</p>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="spdy"></a>2.2.4.1. spdy</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="spdy"></a>2.2.8.1. spdy</h4></div></div></div>
 			
 			<p>Nginx 配置 spdy</p>
 			<pre class="screen">
@@ -804,7 +835,7 @@ server {
 			</pre>
 			<p>spdy 是google提出，现在已经归入 http2 标准</p>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="http2"></a>2.2.4.2. HTTP2</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="http2"></a>2.2.8.2. HTTP2</h4></div></div></div>
 			
 			<pre class="screen">
 server {
@@ -815,7 +846,7 @@ server {
 }			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp58"></a>2.2.4.3. 用户访问 HTTP时强制跳转到 HTTPS</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp58"></a>2.2.8.3. 用户访问 HTTP时强制跳转到 HTTPS</h4></div></div></div>
 			
 			<p>497 - normal request was sent to HTTPS  </p>
 			<pre class="screen">
@@ -828,7 +859,7 @@ server {
 }
 
 			</pre>
-			<div class="section"><div class="titlepage"></div>
+			<pre class="screen">
 
 server {
     listen 80
@@ -843,10 +874,10 @@ server {
         return 301 https://$server_name$request_uri;
     }
 }	
-			</div>
+			</pre>
 		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="rewrite"></a>2.2.5. rewrite</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="rewrite"></a>2.2.9. rewrite</h3></div></div></div>
 		
 		<pre class="screen">
 Rewrite Flags
@@ -896,7 +927,7 @@ if ($host ~ '(.*)\.static\.example\.com' ) {
     rewrite  "^/(.*)$"  /$subdomain/$1;
 }
 		</pre>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp59"></a>2.2.5.1. http get 参数处理</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp59"></a>2.2.9.1. http get 参数处理</h4></div></div></div>
 			
 			<p>需求如下</p>
 			<pre class="screen">
@@ -952,7 +983,7 @@ Connection: keep-alive
 			</pre>
 		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="upstream"></a>2.2.6. upstream 负载均衡</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="upstream"></a>2.2.10. upstream 负载均衡</h3></div></div></div>
 		
 		<pre class="screen">
 http {
@@ -971,7 +1002,7 @@ http {
     }
 }		
 		</pre>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp60"></a>2.2.6.1. weight 权重配置</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp60"></a>2.2.10.1. weight 权重配置</h4></div></div></div>
 			
 			<pre class="screen">
     upstream myapp1 {
@@ -983,9 +1014,9 @@ http {
 		</div>
 	</div>
 	
-<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="fastcgi"></a>2.2.7. fastcgi</h3></div></div></div>
+<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="fastcgi"></a>2.2.11. fastcgi</h3></div></div></div>
 	
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="fastcgi.spawn-fcgi"></a>2.2.7.1. spawn-fcgi</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="fastcgi.spawn-fcgi"></a>2.2.11.1. spawn-fcgi</h4></div></div></div>
 		
 		<p>config php fastcgi</p>
 		<pre class="screen">
@@ -1059,9 +1090,9 @@ sudo vim /var/www/nginx-default/index.php
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="fastcgi.php-fpm"></a>2.2.7.2. php-fpm</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="fastcgi.php-fpm"></a>2.2.11.2. php-fpm</h4></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp61"></a>2.2.7.2.1. php5-fpm</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp61"></a>2.2.11.2.1. php5-fpm</h5></div></div></div>
 			
 			<pre class="screen">
 sudo apt-get install php5-cli php5-cgi php5-fpm
@@ -1070,7 +1101,7 @@ sudo apt-get install php5-cli php5-cgi php5-fpm
 /etc/init.d/php5-fpm start
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="php-fpm"></a>2.2.7.2.2. 编译 php-fpm</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="php-fpm"></a>2.2.11.2.2. 编译 php-fpm</h5></div></div></div>
 			
 			<pre class="screen">
 			
@@ -1157,7 +1188,7 @@ pm.max_requests = 500
 			<pre class="screen">
 chkconfig --add php-fpm
 			</pre>
-			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp62"></a>2.2.7.2.2.1. php-fpm 状态</h6></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp62"></a>2.2.11.2.2.1. php-fpm 状态</h6></div></div></div>
 				
 				<pre class="screen">
     location /nginx_status {
@@ -1177,7 +1208,7 @@ chkconfig --add php-fpm
 				</pre>
 			</div>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="fastcgi_pass"></a>2.2.7.2.3. fastcgi_pass</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="fastcgi_pass"></a>2.2.11.2.3. fastcgi_pass</h5></div></div></div>
 			
 			<pre class="screen">
    location ~ ^(.+\.php)(.*)$
@@ -1203,7 +1234,7 @@ location ~ .*\.(php|php5)?$  {
 		</div>
 	</div>
 </div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="return"></a>2.2.8. return</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="return"></a>2.2.12. return</h3></div></div></div>
 		
 		<p>301 跳转</p>
 		<pre class="screen">
@@ -1227,7 +1258,7 @@ server {
 
 	
 
-<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="var"></a>2.2.9. Nginx 变量</h3></div></div></div>
+<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="var"></a>2.2.13. Nginx 变量</h3></div></div></div>
 	
 	<p>可用的全局变量</p>
 	<pre class="screen">
@@ -1256,7 +1287,17 @@ $server_name
 $server_port
 $uri
 	</pre>
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="http_user_agent"></a>2.2.9.1. http_user_agent</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="host"></a>2.2.13.1. $host</h4></div></div></div>
+		
+		<p>抽取域名中的域，例如www.netkiller.cn 返回netkiller.cn</p>
+		<pre class="screen">
+if ($host ~* ^www\.(.*)) {       
+    set $domain $1;
+    rewrite ^(.*) http://user.$domain permanent;
+}
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="http_user_agent"></a>2.2.13.2. http_user_agent</h4></div></div></div>
 		
 		<pre class="screen">
 ## Block http user agent - wget ##
@@ -1278,8 +1319,11 @@ if ($http_user_agent ~ (Spider|Robot) ) {
     return 403;
 }
 
+if ($http_user_agent ~ MSIE) {
+    rewrite ^(.*)$ /msie/$1 break;
+}
 		</pre>
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp63"></a>2.2.9.1.1. 禁止非浏览器访问</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp63"></a>2.2.13.2.1. 禁止非浏览器访问</h5></div></div></div>
 			
 			<p>禁止非浏览器访问</p>
 			<pre class="screen">
@@ -1297,7 +1341,7 @@ GET /index.html HTTP/1.0
 Host: www.mydomain.com
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp64"></a>2.2.9.1.2. http_user_agent 没有设置不允许访问</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp64"></a>2.2.13.2.2. http_user_agent 没有设置不允许访问</h5></div></div></div>
 			
 			<pre class="screen">
 	if ($http_user_agent = "") { return 403; }
@@ -1318,12 +1362,12 @@ curl -A ""  http://www.example.com/xml/data.json
 			</pre>
 		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="http_referer"></a>2.2.9.2. http_referer</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="http_referer"></a>2.2.13.3. http_referer</h4></div></div></div>
 		
 		<pre class="screen">
 if ($http_referer ~* "PHP/5.2.14"){return 403;}
 		</pre>
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp65"></a>2.2.9.2.1. valid_referers/invalid_referer</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp65"></a>2.2.13.3.1. valid_referers/invalid_referer</h5></div></div></div>
 			
 			<pre class="screen">
 valid_referers none blocked *.example.com example.com;
@@ -1334,7 +1378,7 @@ if ($invalid_referer) {
 			</pre>
 		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="request_filename"></a>2.2.9.3. request_filename</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="request_filename"></a>2.2.13.4. request_filename</h4></div></div></div>
 		
 		<pre class="screen">
     location / {
@@ -1361,7 +1405,7 @@ if ($invalid_referer) {
     }
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="request_uri"></a>2.2.9.4. request_uri</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="request_uri"></a>2.2.13.5. request_uri</h4></div></div></div>
 		
 		<pre class="screen">
 server {
@@ -1434,7 +1478,7 @@ server {
 #end for yiiframework
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="remote_addr"></a>2.2.9.5. remote_addr</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="remote_addr"></a>2.2.13.6. remote_addr</h4></div></div></div>
 		
 		<pre class="screen">
 location /name/(match) {
@@ -1444,6 +1488,10 @@ location /name/(match) {
 
     proxy_buffering off;
     proxy_pass http://10.10.20.1/${1}.html;
+}
+
+if ($remote_addr ~* "192.168.0.50|192.168.0.51|192.168.0.56") {
+	proxy_pass http://www.netkiller.cn/error;
 }
 		</pre>
 		<pre class="screen">
@@ -1463,7 +1511,31 @@ $ curl 192.168.0.1/134
 192
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="set"></a>2.2.9.6. 自定义变量</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="http_cookie"></a>2.2.13.7. http_cookie</h4></div></div></div>
+		
+		<pre class="screen">
+if ($http_cookie ~* "id=([^;]+)(?:;|$)") {
+    set $id $1;
+}	
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="request_method"></a>2.2.13.8. request_method</h4></div></div></div>
+		
+		<pre class="screen">
+if ($request_method = POST) {
+    return 405;
+}
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="invalid_referer"></a>2.2.13.9. invalid_referer</h4></div></div></div>
+		
+		<pre class="screen">
+if ($invalid_referer) {
+    return 403;
+}		
+		</pre>
+	</div>		
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="set"></a>2.2.13.10. 自定义变量</h4></div></div></div>
 		
 		<pre class="screen">
 if ( $host ~* (.*)\.(.*)\.(.*)) {
@@ -1485,7 +1557,7 @@ location / {
 }
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="if"></a>2.2.9.7. if 条件判断</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="if"></a>2.2.13.11. if 条件判断</h4></div></div></div>
 		
 		<p>判断相等</p>
 		<pre class="screen">

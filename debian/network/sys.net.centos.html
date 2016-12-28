@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>13.12. CentOS 网络配置</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="home" href="../index.html" title="Netkiller Linux Basics 手札" /><link rel="up" href="index.html" title="第 13 章 Networking" /><link rel="prev" href="zebra.html" title="14.9. Zebra" /><link rel="next" href="../log.html" title="第 15 章 Logging" /></head><body><a xmlns="" href="http://www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="http://netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
+	    <a xmlns="" href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://zb.oschina.net/profile/725072/market">作品与服务</a> |
+		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">13.12. CentOS 网络配置</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="zebra.html">上一页</a> </td><th width="60%" align="center">第 13 章 Networking</th><td width="20%" align="right"> <a accesskey="n" href="../log.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="sys.net.centos"></a>13.12. CentOS 网络配置</h2></div></div></div>
+		
+		<span class="command"><strong>system-config-network</strong></span>
+		<pre class="screen">
+ifconfig eth0 192.168.0.10 netmask 255.255.255.0
+or
+ip addr add 192.168.0.10 dev eth0
+		</pre>
+		<p>ifcfg-eth0,ifcfg-eth1,ifcfg-eth2 ... ifcfg-eth(n)</p>
+		<pre class="screen">
+		
+[root@development httpd]# cat /etc/sysconfig/network-scripts/ifcfg-eth0
+# Broadcom Corporation NetLink BCM5784M Gigabit Ethernet PCIe
+DEVICE=eth0
+BOOTPROTO=static
+BROADCAST=192.168.3.255
+HWADDR=00:25:64:A3:59:BF
+IPADDR=192.168.3.40
+IPV6INIT=yes
+IPV6_AUTOCONF=yes
+NETMASK=255.255.255.0
+NETWORK=192.168.3.0
+ONBOOT=yes
+		
+		</pre>
+		<p>eth0:1</p>
+		<pre class="screen">
+		
+[root@development httpd]# cp /etc/sysconfig/network-scripts/ifcfg-eth0 /etc/sysconfig/network-scripts/ifcfg-eth0:1
+[root@development httpd]# vi /etc/sysconfig/network-scripts/ifcfg-eth0:1
+# Broadcom Corporation NetLink BCM5784M Gigabit Ethernet PCIe
+DEVICE=eth0:1
+BOOTPROTO=static
+BROADCAST=192.168.3.255
+HWADDR=00:25:64:A3:59:BF
+IPADDR=192.168.3.41
+IPV6INIT=yes
+IPV6_AUTOCONF=yes
+NETMASK=255.255.255.0
+NETWORK=192.168.3.0
+ONBOOT=yes
+		
+		</pre>
+		<p>reload network</p>
+		<pre class="screen">
+		
+[root@development ~]# /etc/init.d/network reload
+Shutting down interface eth0:                              [  OK  ]
+Shutting down loopback interface:                          [  OK  ]
+Bringing up loopback interface:                            [  OK  ]
+Bringing up interface eth0:
+		
+		</pre>
+	
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="gateway"></a>13.12.1. Gateway</h3></div></div></div>
+			
+			<pre class="screen">
+			
+[root@development ~]# cat /etc/sysconfig/network
+NETWORKING=yes
+NETWORKING_IPV6=yes
+HOSTNAME=development.domain.org
+GATEWAY=192.168.3.1
+			
+			</pre>
+		</div>
+		
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="bonding"></a>13.12.2. bonding</h3></div></div></div>
+		    
+		    <pre class="screen">
+		    
+cat &gt;&gt; /etc/modprobe.d/bonding.conf &lt;&lt;EOF
+alias bond0 bonding
+options bond0 mode=balance-alb miimon=1000
+EOF
+
+cat &gt; /etc/sysconfig/network-scripts/ifcfg-eth0 &lt;&lt;EOF
+DEVICE="eth0"
+ONBOOT="yes"
+BOOTPROTO="none"
+USERCTL="no"
+NM_CONTROLLED="no"
+EOF
+
+cat &gt; /etc/sysconfig/network-scripts/ifcfg-eth1 &lt;&lt;EOF
+DEVICE="eth1"
+ONBOOT="yes"
+BOOTPROTO="none"
+USERCTL="no"
+NM_CONTROLLED="no"
+EOF
+
+cat &gt; /etc/sysconfig/network-scripts/ifcfg-bond0 &lt;&lt;EOF
+DEVICE="bond0"
+ONBOOT="yes"
+BOOTPROTO="none"
+TYPE="Ethernet"
+IPADDR=172.16.0.5
+NETMASK=255.255.255.0
+NETWORK=172.16.0.0
+USERCTL="no"
+NM_CONTROLLED="no"
+EOF
+
+modprobe bonding mode=balance-alb miimon=1000
+ifconfig bond0 up
+ifconfig bond0 172.16.0.5 netmask 255.255.255.0 up
+ip route add default via 172.16.0.254 dev bond0
+ifenslave bond0 eth0
+ifenslave bond0 eth1
+
+cat &gt;&gt; /etc/rc.local &lt;&lt;EOF
+#-------------------------
+ifenslave bond0 eth0
+ifenslave bond0 eth1
+ip route add default via 172.16.0.254 dev bond0
+#-------------------------
+EOF
+
+more /proc/net/bonding/bond0
+			
+		    </pre>
+		</div>
+	
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="brctl"></a>13.12.3. brctl</h3></div></div></div>
+			
+			<p>Linux 系统4个物理网卡的名称则分别为eth0，eth1，eth2，eth3。我们将四个网口桥接到br0端口。</p>
+			<p>你可以这样理解 vlan 2, vlan ip 192.168.0.1，然后将4个接口划分到vlan2, 这时这4个接口可以通过vlan 2访问其他用户。我只是做了一个比喻，让你能够理解。</p>
+			<pre class="screen">
+	
+			</pre>
+			<pre class="screen">
+# brctl addbr br0
+
+# brctl addif br0 eth0
+# brctl addif br0 eth1
+# brctl addif br0 eth2
+# brctl addif br0 eth3
+
+# ifconfig eth0 0.0.0.0
+# ifconfig eth1 0.0.0.0
+# ifconfig eth2 0.0.0.0
+# ifconfig eth3 0.0.0.0
+
+# ifconfig br0 192.168.0.1
+			</pre>
+		</div>
+		
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="nmtui"></a>13.12.4. nmtui</h3></div></div></div>
+			
+			<pre class="screen">
+# nmtui
+# nmtui edit eno16777736
+# nmtui connect eno16777736
+			</pre>
+		</div>
+		
+	</div><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
+            /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+
+            //if(document.domain == 'netkiller.github.io'){
+            var disqus_shortname = 'netkiller'; // required: replace example with your forum shortname
+            //}else{
+			//var disqus_shortname = 'neochan';
+            //}
+
+            /* * * DON'T EDIT BELOW THIS LINE * * */
+            (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+            })();
+        </script><noscript xmlns="">Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><a xmlns="" href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="zebra.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="../log.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">14.9. Zebra </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 15 章 Logging</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" type="text/javascript">
+var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F997cd4a7320a82d72cb74d179118f697' type='text/javascript'%3E%3C/script%3E"));
+</script><script xmlns="" type="text/javascript" src="/js/q.js"></script></body></html>
