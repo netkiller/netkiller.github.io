@@ -3,12 +3,13 @@
 		<a xmlns="" href="http://netkiller.github.io/">简体中文</a> |
 	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
 	    <a xmlns="" href="/journal/index.html">杂文</a> |
-	    <a xmlns="" href="/search.html">Search</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
 	    <a xmlns="" href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
 	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
 	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
 	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
 	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
 		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">45.2. nginx 配置文件</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><th width="60%" align="center">第 45 章 Nginx</th><td width="20%" align="right"> <a accesskey="n" href="proxy.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="http://ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="conf"></a>45.2. nginx 配置文件</h2></div></div></div>
 	
 	<p>worker_processes = CPU 数量</p>
@@ -86,7 +87,7 @@ Access-Control-Allow-Headers: Content-Type,Origin
 Access-Control-Allow-Methods: GET,OPTIONS
 Content-Encoding: gzip
 			</pre>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp466"></a>45.2.3.1. CDN支持</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp475"></a>45.2.3.1. CDN支持</h4></div></div></div>
 			
 			<p>配置 gzip_proxied any; 后CDN才能识别 gzip</p>
 			<pre class="screen">
@@ -268,8 +269,13 @@ $ openssl s_client -connect www.example.com:443
 			</pre>
 		</div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="http.server.subdomain"></a>45.2.6.4. 泛解析主机</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="server_name"></a>45.2.6.4. server_name 配置</h4></div></div></div>
 			
+			<p>匹配所有域名</p>
+			<pre class="screen">
+server_name  _;			
+			</pre>
+			<p>泛解析主机</p>
 			<pre class="screen">
 			
 server {
@@ -297,6 +303,25 @@ server {
 }			
 			
 			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="root"></a>45.2.6.5. root 通过$host智能匹配目录</h4></div></div></div>
+			
+			<p>为每个host创建一个目录太麻烦，</p>
+			<pre class="screen">
+server {
+    listen       80;
+    server_name www.netkiller.cn news.netkiller.cn bbs.netkiller.cn;
+
+    charset utf-8;
+    access_log  /var/log/nginx/test.access.log  main;
+
+    location / {
+        root   /www/netkiller.cn/$host;
+        index  index.html index.htm;
+    }
+}
+			</pre>
+			<p>处理主机名中的域</p>
 			<pre class="screen">
 server {
 	listen       80;
@@ -342,9 +367,10 @@ server {
 		include fcgi.conf;
 	}
 }
-			</pre>
+			</pre>			
+			
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="http.server.location"></a>45.2.6.5. location</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="http.server.location"></a>45.2.6.6. location</h4></div></div></div>
 			
 			<pre class="screen">
     location / {
@@ -375,10 +401,10 @@ server {
 			</pre>
 			
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="expires"></a>45.2.6.6. expires</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="expires"></a>45.2.6.7. expires</h4></div></div></div>
 			
 			<p>expires 格式</p>
-			<div class="example"><a id="idp1077"></a><p class="title"><strong>例 45.1. Expires Examples</strong></p><div class="example-contents">
+			<div class="example"><a id="idp1099"></a><p class="title"><strong>例 45.1. Expires Examples</strong></p><div class="example-contents">
 				
 				<pre class="screen">
 expires 1 January, 1970, 00:00:01 GMT;
@@ -453,7 +479,7 @@ location / {
 }
 			</pre>
 
-			<div class="example"><a id="idp1078"></a><p class="title"><strong>例 45.2. nginx expires</strong></p><div class="example-contents">
+			<div class="example"><a id="idp1100"></a><p class="title"><strong>例 45.2. nginx expires</strong></p><div class="example-contents">
 				
 				<pre class="screen">
 location ~ .*\.(gif|jpg|jpeg|png|bmp|swf|ico)$ {
@@ -472,7 +498,7 @@ location ~ .*\.(html|htm)$
 }
 				</pre>
 			</div></div><br class="example-break" />
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="add_header"></a>45.2.6.6.1. 通过 add_header / more_set_headers 设置缓存</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="add_header"></a>45.2.6.7.1. 通过 add_header / more_set_headers 设置缓存</h5></div></div></div>
 				
 				<p>add_header 实例</p>
 				<pre class="screen">
@@ -498,7 +524,7 @@ location ~ \.(ico|pdf|flv|jp?g|png|gif|js|css|webp|swf)(\.gz)?(\?.*)?$ {
 }
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="request_uri"></a>45.2.6.6.2. $request_uri</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="request_uri"></a>45.2.6.7.2. $request_uri</h5></div></div></div>
 				
 				<pre class="screen">
 if ($request_uri ~* "\.(ico|css|js|gif|jpe?g|png)\?[0-9]+$") {
@@ -513,7 +539,7 @@ if ($request_uri ~ ^/detail/html/[0-9]+/[0-9]/[^0][0-9]+\.html ) {
 }
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="request_filename"></a>45.2.6.6.3. $request_filename</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="request_filename"></a>45.2.6.7.3. $request_filename</h5></div></div></div>
 				
 				<pre class="screen">
 if (-f $request_filename) {
@@ -522,7 +548,7 @@ if (-f $request_filename) {
 				</pre>
 			</div>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="access"></a>45.2.6.7. access</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="access"></a>45.2.6.8. access</h4></div></div></div>
 			
 			<pre class="screen">
 #防止access文件被下载
@@ -570,7 +596,7 @@ location ~ ^/private/.*\.php$
 }			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="auth_basic"></a>45.2.6.8. auth_basic</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="auth_basic"></a>45.2.6.9. auth_basic</h4></div></div></div>
 			
 			<pre class="screen">
 cd /usr/local/nginx/conf
@@ -597,7 +623,7 @@ htpasswd -c -d htpasswd user_name
 				<p>必须使用 -d  Force CRYPT encryption of the password. 选项，</p>
 			</td></tr></table></div>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="autoindex"></a>45.2.6.9. autoindex</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="autoindex"></a>45.2.6.10. autoindex</h4></div></div></div>
 			
 			<p>开启目录浏览</p>
 			<pre class="screen">
@@ -613,7 +639,7 @@ Reloading nginx configuration: nginx.
 			</pre>
 		</div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="try_files"></a>45.2.6.10. try_files</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="try_files"></a>45.2.6.11. try_files</h4></div></div></div>
 			
 			<pre class="screen">
 server {
@@ -649,7 +675,7 @@ server {
 			</pre>
 		</div>
 
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="stub_status"></a>45.2.6.11. stub_status</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="stub_status"></a>45.2.6.12. stub_status</h4></div></div></div>
 			
 			<pre class="screen">
 location /nginx_status {
@@ -672,7 +698,7 @@ location /nginx_status {
 			</pre>
 		</div>
 
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="add_header"></a>45.2.6.12. add_header</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="add_header"></a>45.2.6.13. add_header</h4></div></div></div>
 			
 			<p># 相关页面设置Cache-Control头信息</p>
 			<pre class="screen">
@@ -684,7 +710,7 @@ location /nginx_status {
         add_header    Cache-Control  max-age=86400;
       }
 			</pre>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="cache"></a>45.2.6.12.1. Cache</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="cache"></a>45.2.6.13.1. Cache</h5></div></div></div>
 				
 				<pre class="screen">
 				
@@ -694,7 +720,7 @@ add_header     Nginx-Cache     "$upstream_cache_status  from  www.example.com";
 				
 				</pre>
 			</div>			
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp467"></a>45.2.6.12.2. Access-Control-Allow</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp476"></a>45.2.6.13.2. Access-Control-Allow</h5></div></div></div>
 				
 				<pre class="screen">
 location ~* \.(eot|ttf|woff)$ {
@@ -722,9 +748,9 @@ location / {
 				</pre>
 			</div>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="valid_referers"></a>45.2.6.13. valid_referers</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="valid_referers"></a>45.2.6.14. valid_referers</h4></div></div></div>
 			
-			<div class="example"><a id="idp1079"></a><p class="title"><strong>例 45.3. Example: valid_referers</strong></p><div class="example-contents">
+			<div class="example"><a id="idp1101"></a><p class="title"><strong>例 45.3. Example: valid_referers</strong></p><div class="example-contents">
 				
 				<pre class="screen">
 location /photos/ {
@@ -826,7 +852,7 @@ server {
 
 }
 			</pre>
-			<p>spdy 是google提出，现在已经归入 http2 标准</p>
+			<p>spdy 是google提出的标准，现在已经归入 http2 标准，Nginx 1.10 之后建议使用 http2 替代 spdy.</p>
 		</div>
 		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="http2"></a>45.2.7.2. HTTP2</h4></div></div></div>
 			
@@ -839,7 +865,7 @@ server {
 }			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp468"></a>45.2.7.3. 用户访问 HTTP时强制跳转到 HTTPS</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp477"></a>45.2.7.3. 用户访问 HTTP时强制跳转到 HTTPS</h4></div></div></div>
 			
 			<p>497 - normal request was sent to HTTPS  </p>
 			<pre class="screen">
@@ -920,7 +946,7 @@ if ($host ~ '(.*)\.static\.example\.com' ) {
     rewrite  "^/(.*)$"  /$subdomain/$1;
 }
 		</pre>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp469"></a>45.2.8.1. http get 参数处理</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp478"></a>45.2.8.1. http get 参数处理</h4></div></div></div>
 			
 			<p>需求如下</p>
 			<pre class="screen">
@@ -975,6 +1001,13 @@ Connection: keep-alive
 			
 			</pre>
 		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp479"></a>45.2.8.2. 正则取非</h4></div></div></div>
+			
+			<p>需求如下，除了2015年保留，其他所有页面重定向到新页面</p>
+			<pre class="screen">
+rewrite ^/promotion/(?!2015\/)(.*) https://www.netkiller.cn/promotion.html permanent;
+			</pre>
+		</div>
 	</div>
 	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="upstream"></a>45.2.9. upstream 负载均衡</h3></div></div></div>
 		
@@ -995,7 +1028,7 @@ http {
     }
 }		
 		</pre>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp470"></a>45.2.9.1. weight 权重配置</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp480"></a>45.2.9.1. weight 权重配置</h4></div></div></div>
 			
 			<pre class="screen">
     upstream myapp1 {
@@ -1085,7 +1118,7 @@ sudo vim /var/www/nginx-default/index.php
 	</div>
 	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="fastcgi.php-fpm"></a>45.2.10.2. php-fpm</h4></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp471"></a>45.2.10.2.1. php5-fpm</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp481"></a>45.2.10.2.1. php5-fpm</h5></div></div></div>
 			
 			<pre class="screen">
 sudo apt-get install php5-cli php5-cgi php5-fpm
@@ -1181,7 +1214,7 @@ pm.max_requests = 500
 			<pre class="screen">
 chkconfig --add php-fpm
 			</pre>
-			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp472"></a>45.2.10.2.2.1. php-fpm 状态</h6></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp482"></a>45.2.10.2.2.1. php-fpm 状态</h6></div></div></div>
 				
 				<pre class="screen">
     location /nginx_status {
@@ -1316,7 +1349,7 @@ if ($http_user_agent ~ MSIE) {
     rewrite ^(.*)$ /msie/$1 break;
 }
 		</pre>
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp473"></a>45.2.12.2.1. 禁止非浏览器访问</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp483"></a>45.2.12.2.1. 禁止非浏览器访问</h5></div></div></div>
 			
 			<p>禁止非浏览器访问</p>
 			<pre class="screen">
@@ -1334,7 +1367,7 @@ GET /index.html HTTP/1.0
 Host: www.mydomain.com
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp474"></a>45.2.12.2.2. http_user_agent 没有设置不允许访问</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp484"></a>45.2.12.2.2. http_user_agent 没有设置不允许访问</h5></div></div></div>
 			
 			<pre class="screen">
 	if ($http_user_agent = "") { return 403; }
@@ -1360,7 +1393,7 @@ curl -A ""  http://www.example.com/xml/data.json
 		<pre class="screen">
 if ($http_referer ~* "PHP/5.2.14"){return 403;}
 		</pre>
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp475"></a>45.2.12.3.1. valid_referers/invalid_referer</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp485"></a>45.2.12.3.1. valid_referers/invalid_referer</h5></div></div></div>
 			
 			<pre class="screen">
 valid_referers none blocked *.example.com example.com;
@@ -1509,7 +1542,7 @@ $ curl 192.168.0.1/134
 		<pre class="screen">
 if ($http_cookie ~* "id=([^;]+)(?:;|$)") {
     set $id $1;
-}	
+}
 		</pre>
 	</div>
 	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="request_method"></a>45.2.12.8. request_method</h4></div></div></div>
@@ -1519,15 +1552,20 @@ if ($request_method = POST) {
     return 405;
 }
 		</pre>
+		<pre class="screen">
+if ($request_method !~ ^(GET|HEAD|POST)$) {
+	return 403;
+}
+		</pre>
 	</div>
 	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="invalid_referer"></a>45.2.12.9. invalid_referer</h4></div></div></div>
 		
 		<pre class="screen">
 if ($invalid_referer) {
     return 403;
-}		
+}
 		</pre>
-	</div>		
+	</div>
 	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="set"></a>45.2.12.10. 自定义变量</h4></div></div></div>
 		
 		<pre class="screen">
@@ -1625,22 +1663,20 @@ location /only-one-if {
 
 	</div>
 </div>
-</div><div xmlns="" id="disqus_thread"></div><script xmlns="" type="text/javascript">
-            /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
 
-            //if(document.domain == 'netkiller.github.io'){
-            var disqus_shortname = 'netkiller'; // required: replace example with your forum shortname
-            //}else{
-			//var disqus_shortname = 'neochan';
-            //}
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
 
-            /* * * DON'T EDIT BELOW THIS LINE * * */
-            (function() {
-                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-                dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
-                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-            })();
-        </script><noscript xmlns="">Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><a xmlns="" href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="proxy.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 45 章 Nginx </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 45.3. Proxy</td></tr></table></div><script xmlns="">
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="proxy.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 45 章 Nginx </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 45.3. Proxy</td></tr></table></div><script xmlns="">
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
   (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
   m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
@@ -1649,7 +1685,25 @@ location /only-one-if {
   ga('create', 'UA-11694057-1', 'auto');
   ga('send', 'pageview');
 
-</script><script xmlns="" type="text/javascript">
-var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
-document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F997cd4a7320a82d72cb74d179118f697' type='text/javascript'%3E%3C/script%3E"));
-</script><script xmlns="" type="text/javascript" src="/js/q.js"></script></body></html>
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script><script xmlns="" type="text/javascript" src="/js/q.js" async="async"></script></body></html>
