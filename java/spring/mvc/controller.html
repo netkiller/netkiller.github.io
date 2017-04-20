@@ -31,7 +31,7 @@ public class Welcome {
 }
 	</pre>
 
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="RequestMapping"></a>6.8.1. @RequestMapping</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="@RequestMapping"></a>6.8.1. @RequestMapping</h3></div></div></div>
 		
 		<pre class="programlisting">
 @RequestMapping("/welcome")
@@ -93,7 +93,7 @@ curl -H "Accept:application/json,text/html" http://localhost:8080/spring/news/js
 			</pre>
 		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="ResponseBody"></a>6.8.2. @ResponseBody</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="@ResponseBody"></a>6.8.2. @ResponseBody</h3></div></div></div>
 		
 		<pre class="programlisting">
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -127,7 +127,7 @@ public class Pathinfo {
 		</div>
 	</div>
 	
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="PathVariable"></a>6.8.3. RequestMapping with Path Variables - @PathVariable</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="@PathVariable"></a>6.8.3. RequestMapping with Path Variables - @PathVariable</h3></div></div></div>
 		
 		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp182"></a>6.8.3.1. URL 参数传递</h4></div></div></div>
 			
@@ -219,7 +219,7 @@ public void download(HttpSession session,@PathVariable("version")String version)
 		</div>
 	</div>
 
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="RequestParam"></a>6.8.4. RequestMapping with Request Parameters - @RequestParam</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="@RequestParam"></a>6.8.4. RequestMapping with Request Parameters - @RequestParam</h3></div></div></div>
 		
 		<pre class="programlisting">
 import org.springframework.web.bind.annotation.RequestParam;
@@ -596,7 +596,7 @@ Password: ${user.password}&lt;br&gt;
 			
 			</pre>
 		</div>
-	</div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="Scheduled"></a>6.8.7. @Scheduled</h3></div></div></div>
+	</div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="@Scheduled"></a>6.8.7. @Scheduled</h3></div></div></div>
 		
 		<p>计划任务</p>
 		<pre class="screen">
@@ -626,10 +626,76 @@ public class MyTask {
 	</div>
 	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="http"></a>6.8.9. HttpServletRequest / HttpServletResponse </h3></div></div></div>
 		
-		<pre class="programlisting">
-		
-		
-		</pre>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp194"></a>6.8.9.1. HttpServletResponse</h4></div></div></div>
+					
+			<p>HttpServletResponse 实例</p>
+			<pre class="programlisting">
+			
+package cn.netkiller.api.rest;
+
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.EncodeHintType;
+import com.google.zxing.MultiFormatWriter;
+import com.google.zxing.WriterException;
+import com.google.zxing.common.BitMatrix;
+import api.util.MatrixToImageWriter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.ModelAndView;
+
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.Hashtable;
+
+@Controller
+@RequestMapping("/public/QRCode")
+public class QRCodeController {
+    private static final Logger log = LoggerFactory.getLogger(QRCodeController.class);
+	
+    @RequestMapping("/create/{code}" )
+    @ResponseBody
+    public void create(@PathVariable String code, HttpServletResponse httpServletResponse) throws WriterException, IOException {
+        log.info(code);
+        if (code != null &amp;&amp; !"".equals(code)){
+            ServletOutputStream stream = null;
+            try {
+                String text = code; 	// 二维码内容
+                int width = 300; 		// 二维码图片宽度
+                int height = 300; 		// 二维码图片高度
+                String format = "gif";	// 二维码的图片格式
+
+                Hashtable&lt;EncodeHintType, String&gt; hints = new Hashtable&lt;EncodeHintType, String&gt;();
+                hints.put(EncodeHintType.CHARACTER_SET, "utf-8");   // 内容所使用字符集编码
+
+                BitMatrix bitMatrix = new MultiFormatWriter().encode(text, BarcodeFormat.QR_CODE, width, height, hints);
+                // 生成二维码
+                stream = httpServletResponse.getOutputStream();
+                MatrixToImageWriter.writeToStream(bitMatrix, format, stream);
+
+            }catch (WriterException e) {
+                e.printStackTrace();
+            } finally {
+                if (stream != null) {
+                    stream.flush();
+                    stream.close();
+                }
+            }
+        }
+    }
+
+    @RequestMapping("show")
+    @ResponseBody
+    public ModelAndView show(){
+
+        return new ModelAndView("/qrcode/qrcode");
+    }
+}		
+			
+			</pre>
+		</div>
 	</div>
 	
 </div><div xmlns="" id="disqus_thread"></div><script xmlns="">
