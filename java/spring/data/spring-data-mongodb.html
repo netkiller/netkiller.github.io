@@ -16,7 +16,7 @@
 	
 	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="SpringDataMongoDB"></a>7.2.1. Example Spring Data MongoDB</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp232"></a>7.2.1.1. pom.xml</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp237"></a>7.2.1.1. pom.xml</h4></div></div></div>
 			
 			<p>注意Spring4 与 1.9.1.RELEASE有兼容性问题，日志提示 Error creating bean with name 'mongoTemplate' defined in ServletContext resource</p>
 			<pre class="screen">
@@ -29,7 +29,7 @@
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp233"></a>7.2.1.2. springframework-servlet.xml</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp238"></a>7.2.1.2. springframework-servlet.xml</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -47,7 +47,7 @@
     &lt;/bean&gt;
 			
 			</pre>
-			<div class="example"><a id="idp333"></a><p class="title"><strong>例 7.2. Spring Data MongoDB - springframework-servlet.xml</strong></p><div class="example-contents">
+			<div class="example"><a id="idp344"></a><p class="title"><strong>例 7.2. Spring Data MongoDB - springframework-servlet.xml</strong></p><div class="example-contents">
 				
 				<pre class="screen">
 				
@@ -127,7 +127,7 @@ mongo.database=website
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp234"></a>7.2.1.3. POJO</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp239"></a>7.2.1.3. POJO</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -199,7 +199,7 @@ public class Tracker {
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp235"></a>7.2.1.4. Controller</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp240"></a>7.2.1.4. Controller</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -246,7 +246,7 @@ public class TrackerController {
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp236"></a>7.2.1.5. 查看测试结果</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp241"></a>7.2.1.5. 查看测试结果</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -256,7 +256,7 @@ public class TrackerController {
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp237"></a>7.2.1.6. 条件查询</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp242"></a>7.2.1.6. 条件查询</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -313,8 +313,73 @@ repository.save(new City("Shenzhen", "China"));
 			
 			</pre>
 		</div>
-		
-	</div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="document"></a>7.2.3. @Document</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp243"></a>7.2.2.5. findByXXXX</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+List&lt;User&gt; findByName(String name);
+
+List&lt;User&gt; users = userRepository.findByName("Eric");
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp244"></a>7.2.2.6. StartingWith 和 EndingWith</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+List&lt;User&gt; findByNameStartingWith(String regexp);
+List&lt;User&gt; findByNameEndingWith(String regexp);
+
+List&lt;User&gt; users = userRepository.findByNameStartingWith("N");
+List&lt;User&gt; users = userRepository.findByNameEndingWith("o");
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp245"></a>7.2.2.7. Between</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+List&lt;User&gt; findByAgeBetween(int ageGT, int ageLT);
+
+List&lt;User&gt; users = userRepository.findByAgeBetween(20, 50);
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="PageRequest"></a>7.2.2.8. PageRequest</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+Page&lt;User&gt; findByLastname(String lastname, Pageable pageable);			
+			
+			</pre>
+			<pre class="programlisting">
+			
+	@RequestMapping(value = "read/{size}/{page}", method = RequestMethod.GET, produces = { "application/xml", "application/json" })
+	@ResponseStatus(HttpStatus.OK)
+	public List&lt;Withdraw&gt; readPage(@PathVariable int size, @PathVariable int page){
+		PageRequest pageRequest = new PageRequest(page-1,size);
+		return repository.findAll(pageRequest).getContent();
+	}
+			
+			</pre>
+			<p>URL翻页参数，每次返回10条记录</p>
+			<pre class="screen">
+第一页 http://localhost:8080/v1/withdraw/read/10/1.json
+第二页 http://localhost:8080/v1/withdraw/read/10/2.json
+...
+第五页 http://localhost:8080/v1/withdraw/read/10/5.json
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp246"></a>7.2.2.9. @Query</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+
+			
+			</pre>
+		</div>		
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="document"></a>7.2.3. @Document</h3></div></div></div>
 		
 		<p>复杂的 @Document 数据类型定义</p>
 		<pre class="programlisting">
@@ -364,7 +429,47 @@ public class MultilevelDirectSellingTradingRebate {
 }
 		
 		</pre>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp238"></a>7.2.3.1. 在 @Document 中使用 Enum 类型</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="index"></a>7.2.3.1. @Indexed</h4></div></div></div>
+			
+			<p>索引</p>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp247"></a>7.2.3.1.1. 普通索引</h5></div></div></div>
+				
+				<pre class="programlisting">
+				
+@Indexed		
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp248"></a>7.2.3.1.2. 唯一索引</h5></div></div></div>
+				
+				<pre class="programlisting">
+				
+@Indexed(unique=true)	
+				
+				</pre>
+			</div>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp249"></a>7.2.3.2. @DateTimeFormat</h4></div></div></div>
+			
+			<pre class="programlisting">
+@DateTimeFormat( pattern = "yyyy-MM-dd" )
+private Date birthday
+
+@DateTimeFormat(iso = DateTimeFormat.ISO.NONE)
+private final Calendar datetime;
+
+@DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
+private Date date;
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp250"></a>7.2.3.3. @NumberFormat</h4></div></div></div>
+			
+			<pre class="programlisting">
+@NumberFormat(style=Style.CURRENCY)
+private double money;
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="Enum"></a>7.2.3.4. 在 @Document 中使用 Enum 类型</h4></div></div></div>
 			
 			<pre class="programlisting">
 			
@@ -394,7 +499,7 @@ public class MultilevelDirectSellingTradingRebate {
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="document"></a>7.2.3.2. 在 @Document 中定义数据结构 List/Map</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="document.list"></a>7.2.3.5. 在 @Document 中定义数据结构 List/Map</h4></div></div></div>
 			
 			<pre class="programlisting">
 			
@@ -419,29 +524,10 @@ public class MultilevelDirectSellingTradingRebate {
 			</pre>
 		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="index"></a>7.2.4. @Indexed</h3></div></div></div>
+	
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="mongoTemplate.Query"></a>7.2.4. mongoTemplate</h3></div></div></div>
 		
-		<p>索引</p>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp239"></a>7.2.4.1. 普通索引</h4></div></div></div>
-			
-			<pre class="programlisting">
-			
-@Indexed		
-			
-			</pre>
-		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp240"></a>7.2.4.2. 唯一索引</h4></div></div></div>
-			
-			<pre class="programlisting">
-			
-@Indexed(unique=true)	
-			
-			</pre>
-		</div>
-	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="query"></a>7.2.5. Query</h3></div></div></div>
-		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp241"></a>7.2.5.1. is</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp251"></a>7.2.4.1. is</h4></div></div></div>
 			
 			<pre class="programlisting">
 			
@@ -451,7 +537,7 @@ List&lt;User&gt; users = mongoTemplate.find(query, User.class);
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp242"></a>7.2.5.2. Regex 正则表达式搜索</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp252"></a>7.2.4.2. Regex 正则表达式搜索</h4></div></div></div>
 			
 			<p>查询以N开头的名字</p>
 			<pre class="programlisting">
@@ -470,7 +556,7 @@ List&lt;User&gt; users = mongoTemplate.find(query, User.class);
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp243"></a>7.2.5.3. lt 和 gt</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp253"></a>7.2.4.3. lt 和 gt</h4></div></div></div>
 			
 			<p>查询年龄小于 &lt; 30 并 &gt; 20 的用户</p>
 			<pre class="programlisting">
@@ -480,9 +566,7 @@ query.addCriteria(Criteria.where("age").lt(30).gt(20));
 List&lt;User&gt; users = mongoTemplate.find(query,User.class);
 			
 			</pre>
-		</div>
-	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="sort"></a>7.2.6. Sort</h3></div></div></div>
+		</div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="sort"></a>7.2.4.4. Sort</h4></div></div></div>
 		
 		<p>按照年龄排序</p>
 		<pre class="programlisting">
@@ -492,31 +576,10 @@ query.with(new Sort(Sort.Direction.ASC, "age"));
 List&lt;User&gt; users = mongoTemplate.find(query,User.class);
 		
 		</pre>
-	</div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="PageRequest"></a>7.2.7. PageRequest</h3></div></div></div>
 		
-		<pre class="programlisting">
-		
-Page&lt;User&gt; findByLastname(String lastname, Pageable pageable);			
-		
-		</pre>
-		<pre class="programlisting">
-		
-	@RequestMapping(value = "read/{size}/{page}", method = RequestMethod.GET, produces = { "application/xml", "application/json" })
-	@ResponseStatus(HttpStatus.OK)
-	public List&lt;Withdraw&gt; readPage(@PathVariable int size, @PathVariable int page){
-		PageRequest pageRequest = new PageRequest(page-1,size);
-		return repository.findAll(pageRequest).getContent();
-	}
-		
-		</pre>
-		<p>URL翻页参数，每次返回10条记录</p>
-		<pre class="screen">
-第一页 http://localhost:8080/v1/withdraw/read/10/1.json
-第二页 http://localhost:8080/v1/withdraw/read/10/2.json
-...
-第五页 http://localhost:8080/v1/withdraw/read/10/5.json
-		</pre>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp244"></a>7.2.7.1. Query + PageRequest</h4></div></div></div>
+	</div>
+	
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp254"></a>7.2.4.5. Query + PageRequest</h4></div></div></div>
 			
 			<pre class="programlisting">
 			
@@ -526,7 +589,38 @@ query.with(pageableRequest);
 			
 			</pre>
 		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp255"></a>7.2.4.6. newAggregation</h4></div></div></div>
+			
+			
+			<pre class="programlisting">
+			
+		MultilevelDirectSellingAccountRewardsSettlementDetails multilevelDirectSellingAccountRewardsSettlementDetails = new MultilevelDirectSellingAccountRewardsSettlementDetails();
+		multilevelDirectSellingAccountRewardsSettlementDetails.setLoginname("111");
+		multilevelDirectSellingAccountRewardsSettlementDetails.setPhone("111");
+		multilevelDirectSellingAccountRewardsSettlementDetails.setRecommenderLoginname("111");
+		multilevelDirectSellingAccountRewardsSettlementDetails.setRecommenderPhone("111");
+		multilevelDirectSellingAccountRewardsSettlementDetails.setRecommenderName("Neo");
+		multilevelDirectSellingAccountRewardsSettlementDetails.setRecommenderType("客户");
+		multilevelDirectSellingAccountRewardsSettlementDetails.setAmount(5.02);
+		multilevelDirectSellingAccountRewardsSettlementDetails.setCreatedDate(new Date());
+		multilevelDirectSellingAccountRewardsSettlementDetailsRepository.save(multilevelDirectSellingAccountRewardsSettlementDetails);
+		
+		Date beginDate = this.getToday("00:00:00");
+		Date endDate = this.getToday("23:59:59");
+		log.info(beginDate.toString() + " ~ " + endDate.toString());
+		
+		GroupOperation groupOperation = group("loginname").sum("amount").as("amount");
+		MatchOperation matchOperation = match(new Criteria("createdDate").gte(beginDate).lte(endDate));
+		SortOperation sortOperation = sort(new Sort(Direction.ASC, "loginname"));
+
+		Aggregation aggregation = newAggregation(matchOperation, groupOperation, sortOperation);
+		AggregationResults&lt;MultilevelDirectSellingAccountRewardsSettlementDetails&gt; results = mongoTemplate.aggregate(aggregation, MultilevelDirectSellingAccountRewardsSettlementDetails.class, MultilevelDirectSellingAccountRewardsSettlementDetails.class);		
+		System.out.println(results.getRawResults().get("result").toString());
+			
+			</pre>
+		</div>
 	</div>
+	
 </div><div xmlns="" id="disqus_thread"></div><script xmlns="">
 
 var disqus_config = function () {
