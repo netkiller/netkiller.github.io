@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>2.4. Nginx module</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><meta name="keywords" content="lamp,lnmp,famp,fnmp, cgi,fastcgi,wsgi, apache,lighttpd,nginx,tomcat, awstatus, webalizer" /><link rel="home" href="../index.html" title="Netkiller Linux Web 手札" /><link rel="up" href="index.html" title="第 2 章 Nginx" /><link rel="prev" href="proxy.html" title="2.3. Proxy" /><link rel="next" href="nginx.example.html" title="2.5. Example" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
+		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">2.4. Nginx module</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="proxy.html">上一页</a> </td><th width="60%" align="center">第 2 章 Nginx</th><td width="20%" align="right"> <a accesskey="n" href="nginx.example.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="module"></a>2.4. Nginx module</h2></div></div></div>
+	
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="stub_status"></a>2.4.1. stub_status</h3></div></div></div>
+		
+		<pre class="screen">
+location /nginx_status {
+	stub_status on;
+	access_log  off;
+	allow 127.0.0.1;
+	deny all;
+}
+		</pre>
+		<p>php-fpm 状态</p>
+		<pre class="screen">
+    location ~ ^/(status|ping)$ {
+        access_log off;
+        allow 202.82.21.12;
+        deny all;
+        fastcgi_pass 127.0.0.1:9000;
+		fastcgi_param SCRIPT_FILENAME $fastcgi_script_name;
+        include fastcgi_params;
+    }
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="sub_filter"></a>2.4.2. sub_filter 页面中查找和替换</h3></div></div></div>
+		
+		<p></p>
+		<pre class="screen">
+		
+location / {
+    sub_filter '&lt;a href="http://127.0.0.1:8080/'  '&lt;a href="https://$host/';
+    sub_filter '&lt;img src="http://127.0.0.1:8080/' '&lt;img src="https://$host/';
+    sub_filter_once on;
+}
+		
+		</pre>
+		<p>替换掉proxy_pass页面中的内容</p>
+		<pre class="screen">
+    location ~ ^/live800 {
+        proxy_pass           http://218.23.24.53;
+        rewrite              ^/live800/(.*)  /$1 break;
+        proxy_set_header    Accept-Encoding "";
+        proxy_set_header    X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header    Host www.abc.com;
+
+        sub_filter_types text/html text/css text/xml text/css text/javascript;
+        sub_filter 'www.abc.com'  '$host';
+        sub_filter_once off;
+    }
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="auth_basic"></a>2.4.3. auth_basic</h3></div></div></div>
+		
+		<pre class="screen">
+cd /usr/local/nginx/conf
+server {
+	listen 80;
+	server_name www.example.com;
+	root /var/www/htdocs;
+	index index.html;
+
+	location / {
+		try_files $uri $uri/ /index.html;
+		auth_basic            "Login";
+        auth_basic_user_file  htpasswd;
+	}
+}
+		</pre>
+		<p>生成密码文件</p>
+		<pre class="screen">
+$ sudo apt-get install apache2-utils
+
+htpasswd -c -d htpasswd user_name
+		</pre>
+		<div class="tip" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Tip"><tr><td rowspan="2" align="center" valign="top" width="25"><img alt="[提示]" src="/graphics/tip.png" /></td><th align="left">提示</th></tr><tr><td align="left" valign="top">
+			<p>必须使用 -d  Force CRYPT encryption of the password. 选项，</p>
+		</td></tr></table></div>
+	</div>	
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="valid_referers"></a>2.4.4. valid_referers</h3></div></div></div>
+		
+		<div class="example"><a id="idp127"></a><p class="title"><strong>例 2.3. Example: valid_referers</strong></p><div class="example-contents">
+			
+			<pre class="screen">
+location /photos/ {
+  valid_referers none blocked www.mydomain.com mydomain.com;
+
+  if ($invalid_referer) {
+    return   403;
+  }
+}
+			</pre>
+			<pre class="screen">
+location ~* \.(gif|jpg|jpeg|png|bmp|txt|zip|jar|swf)$ {
+	valid_referers none blocked *.mydomain.com;
+	if ($invalid_referer) {
+		rewrite ^/  http://www.mydomain.com/default.gif;
+		#return 403;
+	}
+
+}
+
+location /images/ {
+	alias /www/images/;
+	valid_referers none blocked *.mydomain.com;
+	if ($invalid_referer) {
+		rewrite ^/  http://www.mydomain.com/default.gif;
+	}
+}
+			</pre>
+		</div></div><br class="example-break" />
+	</div>	
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="ngx_http_flv_module"></a>2.4.5. ngx_http_flv_module</h3></div></div></div>
+		
+		<pre class="screen">
+location ~ \.flv$ {
+    flv;
+}
+		</pre>
+	</div>
+
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="ngx_http_mp4_module"></a>2.4.6. ngx_http_mp4_module</h3></div></div></div>
+		
+		<pre class="screen">
+location /video/ {
+    mp4;
+    mp4_buffer_size       1m;
+    mp4_max_buffer_size   5m;
+    mp4_limit_rate        on;
+    mp4_limit_rate_after  30s;
+}
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="limit_zone"></a>2.4.7. limit_zone</h3></div></div></div>
+		
+		<pre class="screen">
+limit_zone   one  $binary_remote_addr  10m;
+
+server {
+	location /download/ {
+	limit_conn   one  1;
+}
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="image_filter"></a>2.4.8. image_filter</h3></div></div></div>
+		
+		<pre class="screen">
+image_filter 配置项:
+image_filter off;　　　　在所在location关闭模块处理。
+image_filter test;　　确保应答是JPEG，GIF或PNG格式的图像。否则错误 415 (Unsupported Media Type) 将被返回。
+image_filter size;　　以JSON格式返回图像信息。
+image_filter rotate 90 | 180 | 270;　　将图像逆时针旋转指定角度。 参数的值可以包含变量。 可以单独使用，或与 resize 和 crop 变换同时使用.
+image_filter resize width height;　　按比例缩小图像至指定大小。 如果想只指定其中一维，另一维可以指定为： “-”。 如果有错误发生，服务器会返回 415 (Unsupported Media Type). 参数的值可以包含变量。 当与 rotate 参数同时使用时, 旋转发生在缩放 之后。　
+image_filter crop width height;　　按比例以图像的最短边为准对图像大小进行缩小，然后裁剪另一边多出来的部分。 如果想只指定其中一维，另一维可以指定为： “-”。 如果有错误发生，服务器会返回 415 (Unsupported Media Type). 参数的值可以包含变量。 当与 rotate 参数同时使用时, 旋转发生在裁剪 之前。
+
+image_filter_buffer 配置项：
+image_filter_buffer size; 例如 image_filter_buffer 1M;　设置用来读图像的缓冲区的最大值。 若图像超过这个大小，服务器会返回 415 (Unsupported Media Type).
+image_filter_jpeg_quality quality; 例如 image_filter_jpeg_quality 75;设置变换后的JPEG图像的 质量 。 可配置值： 1 ~ 100 。 更小的值意味着更差的图像质量以及更少需要传输的数据。 推荐的最大值是95. 参数的值可以包含变量。
+image_filter_sharpen percent; image_filter_sharpen 0;　　增加最终图像的锐度。 锐度百分比可以超过100. 0为关闭锐化。 参数的值可以包含变量。
+image_filter_transparency on|off; image_filter_transparency on;定义当对PNG，或者GIF图像进行颜色变换时是否需要保留透明度。 损失透明度有可能可以获得更高的图像质量。 PNG图像中的alpha通道的透明度默认会一直被保留。
+ 		
+		</pre>
+		<pre class="screen">
+比如所有的图片并修改尺寸为 800x600
+
+       location ~* \.(jpg|gif|png)$ {
+               image_filter resize 800 600;
+       }
+
+匹配images目录所有图片并修改尺寸为1920x1080
+
+       location ~* /images/.*\.(jpg|gif|png)$ {
+               image_filter resize 1920 1080;
+       }
+
+
+再比如用url来指定
+
+location ~* (.*\.(jpg|gif|png))!(.*)x(.*)$ {
+    set $width      $3;
+    set $height     $4;
+	rewrite "(.*\.(jpg|gif|png))(.*)$" $1;
+}
+
+location ~* .*\.(jpg|gif|png)$ {
+	image_filter resize $width $height;
+}
+
+location ~* /images/(.+)_(d+)x(d+).(jpg|gif|png)$ {            
+    set $height $2;
+    set $width $3;
+    if ($height = "0") {
+        rewrite /images/(.+)_(d+)x(d+).(jpg|gif|png)$ /images/$1.$4 last;
+    }
+    if ($width = "0") {
+        rewrite /images/(.+)_(d+)x(d+).(jpg|gif|png)$ /images/$1.$4 last;
+    }
+
+    #根据给定的长宽生成缩略图
+    image_filter resize $height $width;
+    
+    #原图最大2M，要裁剪的图片超过2M返回415错误，根据你的需求调节参数image_filter_buffer 
+    image_filter_buffer 2M;                          
+    
+    #error_page  415      		/images/404.jpg;
+    try_files /images/$1.$4  	/images/404.jpg;	
+}
+
+location ~* /images {
+    
+}
+        
+location ~* ^/images/resize/([\d\-]+)_([\d\-]+)/(.+) {  
+    alias /www/example.com/img.example.com/$3;
+    image_filter test;
+    image_filter resize $1 $2;
+    image_filter_buffer 2M;
+    image_filter_jpeg_quality 95;
+    image_filter_sharpen 90;
+    expires 60d;
+}		
+		</pre>
+	</div>
+</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="proxy.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="nginx.example.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">2.3. Proxy </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 2.5. Example</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script><script xmlns="" type="text/javascript" src="/js/q.js" async="async"></script></body></html>
