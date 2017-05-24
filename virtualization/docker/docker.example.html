@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>1.9. Docker Example</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><meta name="keywords" content="qmeu,kvm,xen,openvz, docker, coreos, , " /><link rel="home" href="../index.html" title="Netkiller Virtualization 手札" /><link rel="up" href="index.html" title="第 1 章 Docker" /><link rel="prev" href="cli.html" title="1.8. docker 命令" /><link rel="next" href="../kvm/index.html" title="第 2 章 Kernel-based Virtual Machine(KVM)" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
+		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">1.9. Docker Example</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="cli.html">上一页</a> </td><th width="60%" align="center">第 1 章 Docker</th><td width="20%" align="right"> <a accesskey="n" href="../kvm/index.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="docker.example"></a>1.9. Docker Example</h2></div></div></div>
+	
+	<pre class="screen">
+	</pre>
+	
+<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="example.java"></a>1.9.1. Example Java - Spring boot with Docker</h3></div></div></div>
+	
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp39"></a>1.9.1.1. 获取 CentOS 7 镜像</h4></div></div></div>
+		
+		<p>docker pull centos:7</p>
+		<pre class="screen">
+		
+# docker pull centos:7
+7: Pulling from library/centos
+343b09361036: Pull complete 
+Digest: sha256:bba1de7c9d900a898e3cadbae040dfe8a633c06bc104a0df76ae24483e03c077
+Status: Downloaded newer image for centos:7
+		
+		</pre>
+		<p>基于 CentOS 7 运行一个容器</p>
+		<p>docker run -it --name mycentos docker.io/centos:7 /bin/bash</p>
+		<pre class="screen">
+		
+# docker run -it --name mycentos docker.io/centos:7 /bin/bash
+		
+		</pre>
+		<p>运行后直接进入了容器的shell控制台默认是bash</p>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp40"></a>1.9.1.2. 安装 openjdk</h4></div></div></div>
+		
+		<pre class="screen">
+		
+# yum install -y java-1.8.0-openjdk
+
+# cat &gt;&gt; /etc/profile.d/java.sh &lt;&lt;'EOF'
+export JAVA_HOME=/usr/java/default
+export JAVA_OPTS="-server -Xms2048m -Xmx4096m -Djava.io.tmpdir=/tmp -Djava.security.egd=file:/dev/./urandom -Dfile.encoding=UTF8 -Duser.timezone=GMT+08"
+export CLASSPATH=$JAVA_HOME/lib:$JAVA_HOME/jre/lib:.
+export PATH=$PATH:$JAVA_HOME/bin:$JAVA_HOME/jre/bin:
+EOF
+
+# source /etc/profile.d/java.sh
+		
+		</pre>
+		<p>检查Java是否安装成功</p>
+		<pre class="screen">
+		
+# whereis java
+java: /usr/bin/java /usr/lib/java /etc/java /usr/share/java /usr/share/man/man1/java.1.gz
+
+# java -version
+openjdk version "1.8.0_131"
+OpenJDK Runtime Environment (build 1.8.0_131-b11)
+OpenJDK 64-Bit Server VM (build 25.131-b11, mixed mode)
+		
+		</pre>
+		<p>创建应用程序目录</p>
+		<pre class="screen">
+# mkdir -p /www/netkiller.cn/www.netkiller.cn/		
+		</pre>
+		<p>推出当前容器</p>
+		<pre class="screen">
+# exit
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp41"></a>1.9.1.3. Spring boot 包</h4></div></div></div>
+		
+		<p>复制 jar 文件到Docker容器</p> 
+		<pre class="screen">
+		
+docker cp /www/netkiller.cn/www.netkiller.cn/www.netkiller.cn-0.0.1.war mycentos:/usr/local/libexec
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp42"></a>1.9.1.4. 启动 Spring boot 项目</h4></div></div></div>
+		
+		<p>启动容器</p>
+		<pre class="screen">
+		
+# docker start mycentos
+mycentos		
+		
+		</pre>
+		<p>进入容器</p>
+		<pre class="screen">
+		
+# docker exec -it mycentos /bin/bash
+		
+		</pre>
+		<p>如果仅仅是测试可以手动启动 Srping boot 项目</p>
+		<pre class="screen">
+		
+# cat &gt;&gt; /root/run.sh &lt;&lt;EOF
+java -server -Xms2048m -Xmx8192m -jar /usr/local/libexec/www.netkiller.cn-0.0.1.war
+EOF
+
+chmod u+x /root/run.sh
+		
+		</pre>
+		<p>生产环境请使用启动脚本</p>
+		<pre class="screen">
+				
+# curl -s https://raw.githubusercontent.com/oscm/build/master/Application/Spring/service/springbootd -o /etc/init.d/springbootd
+# chmod +x /etc/init.d/springbootd
+		
+		</pre>
+		<p>编辑启动脚本 /etc/init.d/springbootd 修改下面配置项</p>
+		<pre class="screen">
+		
+##############################################
+BASEDIR="/www/netkiller.cn/api.netkiller.cn"
+JAVA_HOME=/srv/java
+JAVA_OPTS="-server -Xms2048m -Xmx8192m -Djava.security.egd=file:/dev/./urandom"
+PACKAGE="api.netkiller.cn-0.0.2-release.jar"
+CONFIG="--spring.config.location=$BASEDIR/application.properties"
+USER=www
+##############################################
+NAME=springbootd
+PROG="$JAVA_HOME/bin/java $JAVA_OPTS -jar $BASEDIR/$PACKAGE $CONFIG"
+LOGFILE=/var/tmp/$NAME.log
+PIDFILE=/var/tmp/$NAME.pid
+ACCESS_LOG=/var/tmp/$NAME.access.log
+##############################################
+		
+		</pre>
+		<p>你也可以使用 systemd 启动脚本，详见《Netkiller Java 手札》</p>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp43"></a>1.9.1.5. 基于 CentOS 7 制作 spring 镜像</h4></div></div></div>
+		
+		<p>docker commit mycentos springboot:1</p>
+		<pre class="screen">
+		
+# docker commit mycentos springboot:1
+sha256:757d92d642d1b5a7b244f6ddf89f24a8d463d154438651c83ba51a644b401782		
+		
+		</pre>
+		<p>启动 spring boot 容器</p>
+		<pre class="screen">
+		
+# docker run -d --name springboot -p 80:8080 springboot:1 /root/run.sh
+		
+		</pre>
+		<p></p>
+		<pre class="screen">
+		
+-d: 以守护进程方式启动 
+--name：指定容器的名称 
+-p：映射容器8080端口到宿主机的80端口 
+springboot:1 ：上一步制作好的springboot镜像,版本号为1	
+		
+		</pre>
+		<p>启动容器</p>
+		<pre class="screen">
+		
+# docker start springboot		
+		
+		</pre>
+		<p>停止容器</p>
+		<pre class="screen">
+		
+# docker stop springboot		
+		
+		</pre>
+	</div>
+</div>
+
+</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="cli.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="../kvm/index.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">1.8. docker 命令 </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 2 章 Kernel-based Virtual Machine(KVM)</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script><script xmlns="" type="text/javascript" src="/js/q.js" async="async"></script></body></html>
