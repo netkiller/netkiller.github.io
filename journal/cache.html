@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<html xmlns="http://www.w3.org/1999/xhtml"><head><title>实操 Web Cache</title><link rel="stylesheet" type="text/css" href="docbook.css"/><link rel="stylesheet" type="text/css" href="/journal/journal.css"/><meta name="generator" content="DocBook XSL Stylesheets V1.78.1"/><meta name="description" content="写这篇文章的原因，是我看到网上很多谈这类的文章，多是人云亦云，不求实事，误导读者。 下面文中我会一个一个做实验，并展示给你，说明为什么会这样。只有自己亲自尝试才能拿出有说服力的真凭实据。 2014-03-12 首次发布 2015-08-27 修改，增加特殊数据缓存"/><meta name="keywords" content="If-Modified-Since, Last-Modified, ETag, If-None-Match, "/><script xmlns="">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>实操 Web Cache</title><link rel="stylesheet" type="text/css" href="docbook.css"/><link rel="stylesheet" type="text/css" href="/journal/journal.css"/><meta name="generator" content="DocBook XSL Stylesheets V1.79.1"/><meta name="description" content="写这篇文章的原因，是我看到网上很多谈这类的文章，多是人云亦云，不求实事，误导读者。 下面文中我会一个一个做实验，并展示给你，说明为什么会这样。只有自己亲自尝试才能拿出有说服力的真凭实据。 2014-03-12 首次发布 2015-08-27 修改，增加特殊数据缓存"/><meta name="keywords" content="If-Modified-Since, Last-Modified, ETag, If-None-Match, "/><script xmlns="">
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
   (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
   m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
@@ -17,16 +17,21 @@
 	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
 	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
 	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
-	    <a xmlns="" href="https://zb.oschina.net/profile/725072/market">作品与服务</a> |
-		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><section xml:lang="zh-cn" class="article" id="idm46757847560096"><div class="titlepage"><div><div><h2 class="title">实操 Web Cache</h2></div><div><h3 class="subtitle"><em>http://netkiller.github.io/journal/cache.html</em></h3></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(陈景峯)</span>, <span class="lineage">netkiller, BG7NYT</span></h3><div class="affiliation"><div class="address"><p><br/>
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><section xml:lang="zh-cn" class="article" id="idp1"><div class="titlepage"><div><div><h2 class="title">实操 Web Cache</h2></div><div><h3 class="subtitle"><em>http://netkiller.github.io/journal/cache.html</em></h3></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(陈景峯)</span>, <span class="lineage">netkiller, BG7NYT</span></h3><div class="affiliation">
+			<div class="address"><p><br/>
 				<span class="country">中国</span><span class="state">广东省</span><span class="city">深圳市</span><span class="street">龙华新区民治街道溪山美地</span><br/>
 				<span class="postcode">518131</span><br/>
 				<span class="phone">+86 13113668890</span><br/>
 				<br/>
 				<code class="email">&lt;<a class="email" href="mailto:netkiller@msn.com">netkiller@msn.com</a>&gt;</code><br/>
-			</p></div></div></div></div><div><p class="releaseinfo">$Id: 12dfba037a04a025e01285ca3d35a1192d9bb95d </p></div><div><div class="legalnotice" id="legalnotice"><p class="legalnotice-title"><strong>版权声明</strong></p><p>转载请与作者联系，转载时请务必标明文章原始出处和作者信息及本声明。</p><table style="border: 0; " class="simplelist"><tr><td>
+			</p></div>
+		</div></div></div><div><p class="releaseinfo">$Id: 12dfba037a04a025e01285ca3d35a1192d9bb95d </p></div><div><div class="legalnotice" id="legalnotice">
+	<p class="legalnotice-title"><strong>版权声明</strong></p>
+	<p>转载请与作者联系，转载时请务必标明文章原始出处和作者信息及本声明。</p>
+	<table style="border: 0; " class="simplelist"><tr><td>
 		<a class="ulink" href="http://creativecommons.org/licenses/by/3.0/" target="_top">
-			<div><table style="border: 0; width: 180; cellpadding: 0; cellspacing: 0;"><tr><td><img src="/images/by-nc-sa.png" width="180"/></td></tr></table></div>
+			<div><table style="border: 0; width: 180px; cellpadding: 0; cellspacing: 0;"><tr><td><img src="/images/by-nc-sa.png" width="180"/></td></tr></table></div>
 		</a>
 		</td><td>
 			<table style="border: 0; " class="simplelist"><tr><td>
@@ -37,80 +42,20 @@
 					<a class="ulink" href="http://netkiller.sourceforge.net/" target="_top">http://netkiller.sourceforge.net</a>
 				</td></tr></table>
 		</td><td>
-			<div><table style="border: 0; width: 80; cellpadding: 0; cellspacing: 0;"><tr><td><img src="/images/weixin.jpg" width="80"/></td></tr></table></div>
+			<a class="ulink" href="/images/weixin.jpg" target="_top"><div><table style="border: 0; width: 80px; cellpadding: 0; cellspacing: 0;"><tr><td><img src="/images/weixin.jpg" width="80"/></td></tr></table></div></a>
 		</td><td>
 			<p>微信扫描二维码进入 Netkiller 微信订阅号 </p>
 			<p>QQ群：128659835 请注明“读者”</p>
-		</td></tr></table><p/></div></div><div><p class="pubdate">2016-03-29</p></div><div><div class="abstract"><div class="abstract-title">摘要</div>
+		</td></tr></table>
+	<p/>
+</div></div><div><p class="pubdate">2017-05-26</p></div><div><div class="abstract"><div class="abstract-title">摘要</div>
 			<p>写这篇文章的原因，是我看到网上很多谈这类的文章，多是人云亦云，不求实事，误导读者。</p>
 			<p>下面文中我会一个一个做实验，并展示给你，说明为什么会这样。只有自己亲自尝试才能拿出有说服力的真凭实据。</p>
 			<p>2014-03-12 首次发布</p>
 			<p>2015-08-27 修改，增加特殊数据缓存</p>
-		</div></div><div><div class="abstract" id="abstract"><div class="abstract-title">我的系列文档</div><p>编程语言</p><table style="border: 0; " class="simplelist"><tr><td>
-			<a class="ulink" href="../architect/index.html" target="_top">Netkiller Architect 手札</a>
-		</td><td>
-			<a class="ulink" href="../developer/index.html" target="_top">Netkiller Developer 手札</a>
-		</td><td>
-			<a class="ulink" href="../php/index.html" target="_top">Netkiller PHP 手札</a>
-		</td><td>
-			<a class="ulink" href="../python/index.html" target="_top">Netkiller Python 手札</a>
-		</td><td>
-			<a class="ulink" href="../testing/index.html" target="_top">Netkiller Testing 手札</a>
-		</td><td>
-			<a class="ulink" href="../cryptography/index.html" target="_top">Netkiller Cryptography 手札</a>
-		</td></tr><tr><td>
-			<a class="ulink" href="../perl/index.html" target="_top">Netkiller Perl 手札</a>
-		</td><td>
-			<a class="ulink" href="../docbook/index.html" target="_top">Netkiller Docbook 手札</a>
-		</td><td>
-			<a class="ulink" href="../project/index.html" target="_top">Netkiller Project 手札</a>
-		</td><td>
-				<a class="ulink" href="../java/index.html" target="_top">Netkiller Java 手札</a>
-			</td><td>
-			<a class="ulink" href="../devops/index.html" target="_top">Netkiller DevOps 手札</a>
-		</td><td> </td></tr></table><p>操作系统</p><table style="border: 0; " class="simplelist"><tr><td>
-			<a class="ulink" href="../linux/index.html" target="_top">Netkiller Linux 手札</a>
-		</td><td>
-			<a class="ulink" href="../debian/index.html" target="_top">Netkiller Debian 手札</a>
-		</td><td>
-			<a class="ulink" href="../centos/index.html" target="_top">Netkiller CentOS 手札</a>
-		</td><td>
-			<a class="ulink" href="../freebsd/index.html" target="_top">Netkiller FreeBSD 手札</a>
-		</td><td>
-			<a class="ulink" href="../shell/index.html" target="_top">Netkiller Shell 手札</a>
-		</td><td>
-			<a class="ulink" href="../security/index.html" target="_top">Netkiller Security 手札</a>
-		</td></tr><tr><td>
-			<a class="ulink" href="../www/index.html" target="_top">Netkiller Web 手札</a>
-		</td><td>
-			<a class="ulink" href="../monitoring/index.html" target="_top">Netkiller Monitoring 手札</a>
-		</td><td>
-			<a class="ulink" href="../storage/index.html" target="_top">Netkiller Storage 手札</a>
-		</td><td>
-			<a class="ulink" href="../mail/index.html" target="_top">Netkiller Mail 手札</a>
-		</td><td>
-			<a class="ulink" href="../multimedia/index.html" target="_top">Netkiller Multimedia 手札</a>
-		</td><td> </td></tr></table><p>数据库</p><table style="border: 0; " class="simplelist"><tr><td>
-			<a class="ulink" href="../database/index.html" target="_top">Netkiller Database 手札</a>
-		</td><td>
-			<a class="ulink" href="../postgresql/index.html" target="_top">Netkiller PostgreSQL 手札</a>
-		</td><td>
-			<a class="ulink" href="../mysql/index.html" target="_top">Netkiller MySQL 手札</a>
-		</td><td>
-			<a class="ulink" href="../nosql/index.html" target="_top">Netkiller NoSQL 手札</a>
-		</td><td>
-			<a class="ulink" href="../ldap/index.html" target="_top">Netkiller LDAP 手札</a>
-		</td><td> </td></tr></table><p>网络设备及其他</p><table style="border: 0; " class="simplelist"><tr><td>
-			<a class="ulink" href="../network/index.html" target="_top">Netkiller Network 手札</a>
-		</td><td>
-			<a class="ulink" href="../cisco/index.html" target="_top">Netkiller Cisco IOS 手札</a>
-		</td><td>
-			<a class="ulink" href="../h3c/index.html" target="_top">Netkiller H3C 手札</a>
-		</td><td>
-			<a class="ulink" href="../radio/index.html" target="_top">Netkiller Amateur Radio 手札</a>
-		</td><td> </td><td> </td></tr></table><p>您可以使用<a class="ulink" href="ibook.epub" target="_top">iBook</a>阅读当前文档</p></div></div></div><hr/></div><div class="toc"><div class="toc-title">目录</div><ul class="toc"><li><span class="section"><a href="#idm46757847558432">1. 测试环境</a></span></li><li><span class="section"><a href="#modified">2. 文件修改日期 If-Modified-Since / Last-Modified</a></span><ul><li><span class="section"><a href="#idm46757847493152">2.1. 静态文件</a></span><ul><li><span class="section"><a href="#idm46757847480256">2.1.1. if_modified_since</a></span></li></ul></li><li><span class="section"><a href="#idm46757847492896">2.2. 通过rewrite伪静态处理</a></span></li><li><span class="section"><a href="#idm46757847469200">2.3. 动态文件</a></span></li></ul></li><li><span class="section"><a href="#etag">3. ETag / If-None-Match</a></span><ul><li><span class="section"><a href="#idm46757847448784">3.1. 静态文件</a></span></li><li><span class="section"><a href="#idm46757847445120">3.2. 动态程序</a></span></li></ul></li><li><span class="section"><a href="#expires">4. Expires / Cache-Control</a></span><ul><li><span class="section"><a href="#idm46757847430464">4.1. 静态文件</a></span></li><li><span class="section"><a href="#idm46757847426128">4.2. 动态文件</a></span></li></ul></li><li><span class="section"><a href="#fastcgi">5. FastCGI 缓存相关</a></span></li><li><span class="section"><a href="#meta">6. HTML META 与 Cache</a></span></li><li><span class="section"><a href="#gzip">7. gzip</a></span><ul><li><span class="section"><a href="#idm46757847400832">7.1. gzip 总结</a></span></li></ul></li><li><span class="section"><a href="#proxy">8. 反向代理与缓存</a></span><ul><li><span class="section"><a href="#proxy.gzip">8.1. gzip 处理</a></span></li></ul></li><li><span class="section"><a href="#data">9. 特殊数据缓存</a></span><ul><li><span class="section"><a href="#idm46757847371408">9.1. json</a></span></li><li><span class="section"><a href="#idm46757847371152">9.2. XML</a></span></li></ul></li><li><span class="section"><a href="#summary">10. 总结</a></span></li></ul></div>
+		</div></div></div><hr/></div><div class="toc"><div class="toc-title">目录</div><ul class="toc"><li><span class="section"><a href="#idp2">1. 测试环境</a></span></li><li><span class="section"><a href="#modified">2. 文件修改日期 If-Modified-Since / Last-Modified</a></span><ul><li><span class="section"><a href="#idp4">2.1. 静态文件</a></span><ul><li><span class="section"><a href="#idp3">2.1.1. if_modified_since</a></span></li></ul></li><li><span class="section"><a href="#idp5">2.2. 通过rewrite伪静态处理</a></span></li><li><span class="section"><a href="#idp6">2.3. 动态文件</a></span></li></ul></li><li><span class="section"><a href="#etag">3. ETag / If-None-Match</a></span><ul><li><span class="section"><a href="#idp7">3.1. 静态文件</a></span></li><li><span class="section"><a href="#idp8">3.2. 动态程序</a></span></li></ul></li><li><span class="section"><a href="#expires">4. Expires / Cache-Control</a></span><ul><li><span class="section"><a href="#idp9">4.1. 静态文件</a></span></li><li><span class="section"><a href="#idp10">4.2. 动态文件</a></span></li></ul></li><li><span class="section"><a href="#fastcgi">5. FastCGI 缓存相关</a></span></li><li><span class="section"><a href="#meta">6. HTML META 与 Cache</a></span></li><li><span class="section"><a href="#gzip">7. gzip</a></span><ul><li><span class="section"><a href="#idp11">7.1. gzip 总结</a></span></li></ul></li><li><span class="section"><a href="#proxy">8. 反向代理与缓存</a></span><ul><li><span class="section"><a href="#proxy.gzip">8.1. gzip 处理</a></span></li></ul></li><li><span class="section"><a href="#data">9. 特殊数据缓存</a></span><ul><li><span class="section"><a href="#idp12">9.1. json</a></span></li><li><span class="section"><a href="#idp13">9.2. XML</a></span></li></ul></li><li><span class="section"><a href="#summary">10. 总结</a></span></li></ul></div>
 	
-	<section class="section" id="idm46757847558432"><div class="titlepage"><div><div><h2 class="title" style="clear: both">1. 测试环境</h2></div></div></div>
+	<section class="section" id="idp2"><div class="titlepage"><div><div><h2 class="title" style="clear: both">1. 测试环境</h2></div></div></div>
 		
 		<p>CentOS 6.5</p>
 		<p>Nginx安装脚本 https://github.com/oscm/shell/blob/master/nginx/nginx.sh</p>
@@ -120,7 +65,7 @@
  		
  		<p>If-Modified-Since 小于 Last-Modified 返回 HTTP/1.1 200 OK, 否则返回 HTTP/1.0 304 Not Modified</p>
 		<p>每次浏览器请求文件会携带  If-Modified-Since 头，将当前时间发送给服务器，与服务器的Last-Modified时间对对比，如果大于Last-Modified时间，返回HTTP/1.0 304 Not Modified不会重新打开文件，否则重新读取文件并返回内容</p>
- 		<section class="section" id="idm46757847493152"><div class="titlepage"><div><div><h3 class="title">2.1. 静态文件</h3></div></div></div>
+ 		<section class="section" id="idp4"><div class="titlepage"><div><div><h3 class="title">2.1. 静态文件</h3></div></div></div>
 			
 			<p>nginx/1.0.15 静态文件自动产生 Last-Modified 头</p>
 			<pre class="screen">
@@ -239,7 +184,7 @@ Accept-Ranges: bytes
 
 			<p>现在换成浏览器测试 Chrome Firefox成功， 因为浏览器不会主动发送If-Modified-Since, 浏览器只有发现Last-Modified后，第二次请求才会推送 If-Modified-Since 需要刷新两次页面。</p>
 
-			<section class="section" id="idm46757847480256"><div class="titlepage"><div><div><h4 class="title">2.1.1. if_modified_since</h4></div></div></div>
+			<section class="section" id="idp3"><div class="titlepage"><div><div><h4 class="title">2.1.1. if_modified_since</h4></div></div></div>
 				
 				<p>在开启ssi的情况下，通过参数 if_modified_since 可以开启 Last-Modified</p>
 				<pre class="screen">
@@ -290,7 +235,7 @@ Connection: keep-alive
 			</section>
 		</section>
 
-		<section class="section" id="idm46757847492896"><div class="titlepage"><div><div><h3 class="title">2.2. 通过rewrite伪静态处理</h3></div></div></div>
+		<section class="section" id="idp5"><div class="titlepage"><div><div><h3 class="title">2.2. 通过rewrite伪静态处理</h3></div></div></div>
 			
 			<p>index.php仍然是上面的那个php文件，我们只是做了伪静态</p>
 			<pre class="screen">
@@ -321,7 +266,7 @@ Last-Modified: Thu, 26 Feb 2014 08:39:35 GMT
 			<p>如果 Nginx 按预想的返回304，nginx 需要读取程序返回的HTTP头，Nginx 并没有这样的处理逻辑。</p>
 		</section>
 
-		<section class="section" id="idm46757847469200"><div class="titlepage"><div><div><h3 class="title">2.3. 动态文件</h3></div></div></div>
+		<section class="section" id="idp6"><div class="titlepage"><div><div><h3 class="title">2.3. 动态文件</h3></div></div></div>
 			
 			<p>动态文件没有 Last-Modified 头，我们可以伪造一个</p>
 			<pre class="screen">
@@ -515,7 +460,7 @@ ETag: "52fdce2f-46d"
 Accept-Ranges: bytes3
 		</pre>
 		<p>即使你开启了 ETag Nginx 对 HTML、CSS文件也不做处理。最终在一个外国网站是找到一个nginx-static-etags模块，有兴趣自己尝试，这里就不讲了。</p>
-		<section class="section" id="idm46757847448784"><div class="titlepage"><div><div><h3 class="title">3.1. 静态文件</h3></div></div></div>
+		<section class="section" id="idp7"><div class="titlepage"><div><div><h3 class="title">3.1. 静态文件</h3></div></div></div>
 			
 			<p>首先查询etag值</p>
 			<pre class="screen">
@@ -542,7 +487,7 @@ ETag: "52fdce2f-46d"
 			</pre>
 			<p>这次比较顺利，成功返回HTTP/1.1 304 Not Modified</p>
 		</section>
-		<section class="section" id="idm46757847445120"><div class="titlepage"><div><div><h3 class="title">3.2. 动态程序</h3></div></div></div>
+		<section class="section" id="idp8"><div class="titlepage"><div><div><h3 class="title">3.2. 动态程序</h3></div></div></div>
 			
 			<p>默认情况输出如下</p>
 			<pre class="screen">
@@ -648,7 +593,7 @@ http://www.example.com/news/100/1000.1.html
 		
 		<p>前面所讲 Last-Modified 与 Etag 主要用于分辨文件是否修改过， 无法控制页面在浏览器端缓存的时间。Expires / Cache-Control 可以控制缓存的时间段</p>
 		<p>Expires 是 HTTP/1.0标准，Cache-Control是 HTTP/1.1标准。都能正常工作，HTTP/1.1规范中max-age优先级高于Expires,有些浏览器会联动设置，例如你设置了Cache-Control随之自动生成Expires，仅仅为了兼容。</p>
-		<section class="section" id="idm46757847430464"><div class="titlepage"><div><div><h3 class="title">4.1. 静态文件</h3></div></div></div>
+		<section class="section" id="idp9"><div class="titlepage"><div><div><h3 class="title">4.1. 静态文件</h3></div></div></div>
 			
 			<p>首先配置nginx设置html与png文件缓存1天</p>
 			<pre class="screen">
@@ -684,7 +629,7 @@ Cache-Control: max-age=86400
 Accept-Ranges: bytes
 			</pre>
 		</section>
-		<section class="section" id="idm46757847426128"><div class="titlepage"><div><div><h3 class="title">4.2. 动态文件</h3></div></div></div>
+		<section class="section" id="idp10"><div class="titlepage"><div><div><h3 class="title">4.2. 动态文件</h3></div></div></div>
 			
 			<p>默认返回</p>
 			<pre class="screen">
@@ -867,7 +812,7 @@ Accept-Ranges: bytes
 # curl -H Accept-Encoding:gzip,defalte  http://localhost/gzip.html | gunzip
 		</pre>
 		<p>如果能正常看到html输出，表示压缩无误。</p>
-		<section class="section" id="idm46757847400832"><div class="titlepage"><div><div><h3 class="title">7.1. gzip 总结</h3></div></div></div>
+		<section class="section" id="idp11"><div class="titlepage"><div><div><h3 class="title">7.1. gzip 总结</h3></div></div></div>
 			
 			<p>gzip on; 开启后默认支持 text/html 不能在 gzip_types 再次定义，否则会提示重复MIME类型</p>
 			<pre class="screen">
@@ -1076,7 +1021,7 @@ server {
 		
 		<p>缓存并非只能缓存静态内容，HTML,CSS,JS以及图片意外的数据一样可以缓存。</p>
 		<p>只要处理好HTTP头即可。例如Ajax动态内容缓存，JSON数据缓存。</p>
-		<section class="section" id="idm46757847371408"><div class="titlepage"><div><div><h3 class="title">9.1. json</h3></div></div></div>
+		<section class="section" id="idp12"><div class="titlepage"><div><div><h3 class="title">9.1. json</h3></div></div></div>
 			
 			<p>当用户请求json地址时，我们将 json 数据附加HTTP头（Cache-Control, Expires, ETag），然后返回给用户，用户的设备会遵循HTTP的声明，进行缓存操作。</p>
 			<pre class="screen">
@@ -1125,7 +1070,7 @@ Connection: keep-alive
 			</pre>
 			<p>数据被缓存并返回结果 HTTP/1.0 304 Not Modified，304代码是告诉用户端该页面或者数据没有变动，无需要再次下载数据。</p>
 		</section>
-		<section class="section" id="idm46757847371152"><div class="titlepage"><div><div><h3 class="title">9.2. XML</h3></div></div></div>
+		<section class="section" id="idp13"><div class="titlepage"><div><div><h3 class="title">9.2. XML</h3></div></div></div>
 			
 			<p>这里是指动态生成的XML，处理方式与 JSON一样，XML数据附加HTTP头（Cache-Control, Expires, ETag）后返回给用户。</p>
 		</section>
