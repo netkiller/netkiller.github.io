@@ -106,6 +106,67 @@ public class ScheduledTasks {
 tail -f spring.log			
 			</pre>
 		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp163"></a>5.19.4. 计划任务控制</h3></div></div></div>
+			
+			<p>matchIfMissing = true， 如果改属性条目不存在返回 true</p>
+			<pre class="programlisting">
+@ConditionalOnProperty("batch.metrics.export.influxdb.enabled")
+			
+# mybean.enabled = true
+@ConditionalOnProperty(value='mybean.enabled')
+@ConditionalOnProperty(value = "endpoints.hal.enabled", matchIfMissing = true)
+
+# server.host = localhost
+@ConditionalOnProperty(name="server.host", havingValue="localhost")
+@ConditionalOnExpression("'${server.host}'=='localhost'")
+
+# spring.rabbitmq.dynamic = true
+@ConditionalOnProperty(prefix = "spring.rabbitmq", name = "dynamic", matchIfMissing = true)
+@ConditionalOnProperty(prefix = "extension.security.cors", name = "enabled", matchIfMissing = false)
+@ConditionalOnProperty(prefix = "camunda.bpm.job-execution", name = "enabled", havingValue = "true", matchIfMissing = true)
+
+# spring.social.auto-connection-views = true
+@ConditionalOnProperty(prefix = "spring.social.", value = "auto-connection-views")
+			</pre>
+			<p>使用案例</p>
+			<pre class="programlisting">
+			
+package mis.schedule;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+
+@ConditionalOnProperty("mis.schedule.enabled")
+@Component
+public class ScheduledTasks {
+	private static final Logger logger = LoggerFactory.getLogger(ScheduledTasks.class);
+	private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd HH:mm:ss");
+	public final static long ONE_DAY = 24 * 60 * 60 * 1000;
+	public final static long ONE_HOUR = 60 * 60 * 1000;
+	public final static long ONE_SECOND = 1000;
+
+	public ScheduledTasks() {
+		// TODO Auto-generated constructor stub
+	}
+
+	@Scheduled(fixedDelay = ONE_SECOND)
+	public void scheduleTaskSplitLine() {
+		logger.info("==================== {} ====================", dateFormat.format(new Date()));
+	}
+}
+			
+			</pre>
+			<p>application.properties 配置如下</p>
+			<pre class="screen">
+mis.schedule.enabled=true
+			</pre>
+		</div>
 	</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
 
 var disqus_config = function () {
