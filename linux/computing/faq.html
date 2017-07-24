@@ -10,14 +10,65 @@
 	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
 	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
 	    <a xmlns="" href="/search.html">Search</a> |
-		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">138.7. FAQ</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="hadoop.webui.html">上一页</a> </td><th width="60%" align="center">第 138 章 Hadoop</th><td width="20%" align="right"> <a accesskey="n" href="../security/index.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp12866"></a>138.7. FAQ</h2></div></div></div>
+		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">138.7. FAQ</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="hadoop.webui.html">上一页</a> </td><th width="60%" align="center">第 138 章 Hadoop</th><td width="20%" align="right"> <a accesskey="n" href="../security/index.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="faq"></a>138.7. FAQ</h2></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp837"></a>138.7.1. hadoop-1.1.2-1.x86_64.rpm 包含哪些文件内容</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp836"></a>138.7.1. hadoop-1.1.2-1.x86_64.rpm 包含哪些文件内容</h3></div></div></div>
 			
 			<p>查看安装文件</p>
 			<pre class="screen">
 # rpm -ql hadoop-1.1.2-1
 			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp837"></a>138.7.2. 启动 Hadoop 后 9000 端口不存在</h3></div></div></div>
+			
+			<p>首先通过 jps 排查 NameNode 是否存在</p>
+			<pre class="screen">
+			
+[hadoop@netkiller apache-hadoop]$ jps
+23345 NodeManager
+23042 SecondaryNameNode
+11076 Jps
+22860 DataNode
+23228 ResourceManager		
+			
+			</pre>
+			<p>检查 hdfs 目录</p>
+			<pre class="screen">
+			
+[hadoop@netkiller ~]$ find /opt/hadoop/volume/
+/opt/hadoop/volume/
+/opt/hadoop/volume/datanode
+/opt/hadoop/volume/namenode	
+			
+			</pre>
+			<p>故障是 hdfs 目录没有初始化，初始化 hdfs 后重启 hadoop 即可解决</p>
+			<pre class="screen">
+			
+[hadoop@netkiller apache-hadoop]$ bin/hdfs namenode -format
+
+[hadoop@netkiller apache-hadoop]$ find /opt/hadoop/volume/
+/opt/hadoop/volume/
+/opt/hadoop/volume/datanode
+/opt/hadoop/volume/namenode
+/opt/hadoop/volume/namenode/current
+/opt/hadoop/volume/namenode/current/seen_txid
+/opt/hadoop/volume/namenode/current/fsimage_0000000000000000000
+/opt/hadoop/volume/namenode/current/VERSION
+/opt/hadoop/volume/namenode/current/fsimage_0000000000000000000.md5
+
+[hadoop@netkiller ~]$ /srv/apache-hadoop/sbin/stop-all.sh
+[hadoop@netkiller ~]$ /srv/apache-hadoop/sbin/start-all.sh
+
+[hadoop@netkiller ~]$ jps
+13728 NameNode
+13875 DataNode
+14308 ResourceManager
+14776 Jps
+14105 SecondaryNameNode
+14425 NodeManager			
+			
+			</pre>
+			<p>故障处理完毕</p>
 		</div>
 	</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
 

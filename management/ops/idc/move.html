@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>16.2. 机房迁移</title><link rel="stylesheet" type="text/css" href="../..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><meta name="keywords" content="www, web, apache, httpd, nginx" /><link rel="home" href="../../index.html" title="Netkiller Management 手札" /><link rel="up" href="../index.html" title="Chapter 16. 运维篇(Operations)" /><link rel="prev" href="../index.html" title="Chapter 16. 运维篇(Operations)" /><link rel="next" href="../template.html" title="16.3. 安装模板" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
+		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">16.2. 机房迁移</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="../index.html">Prev</a> </td><th width="60%" align="center">Chapter 16. 运维篇(Operations)</th><td width="20%" align="right"> <a accesskey="n" href="../template.html">Next</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="move"></a>16.2. 机房迁移</h2></div><div><h3 class="subtitle"></h3></div></div></div>
+	
+	
+	
+	<p>总结一下5年前的工作，在不写下来自己都快忘光了，工作关系现在已经不涉及运维这块的工作。</p>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="topology"></a>16.2.1. 拓扑确立</h3></div></div></div>
+		
+		<p>首先制定服务器拓扑图，拓扑图应该有两套，一套是物理拓扑图，另一套是基于业务的虚拟拓扑图。</p>
+		<p>物理拓扑图包含机柜，机位，例如防火墙，核心交换机，机柜交换机，服务器，存储等等他们之间的物理关系。如果是云主机也许标注出来。</p>
+		<p>接下来分配IP地址以及服务端口号</p>
+		<p>最后制定虚拟拓扑图，是各种服务间的关系图，由IP地址和端口组成，标住出他们之间的关系。</p>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="storage"></a>16.2.2. 存储规划</h3></div></div></div>
+		
+		<p>什么东西放在什么地方，怎么规划空间等等。</p>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp94"></a>16.2.2.1. RAID Disk Group 规划</h4></div></div></div>
+			
+			<p>根据不同用途使用不同的RAID，这主要跟IO密集都与数据安全性有关。</p>
+			<p>Virtual Disk 技术很有用，我使用这种技术两RAID划分为两个设备，一个用来安装操作系统，另一个用于数据存储，方便系统重做。</p>
+			<p>SSD 机械故障为零，整体故障率低于传统硬盘。我通常做RAID0用与负载均衡场景。</p>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp95"></a>16.2.2.2. 文件系统规划</h4></div></div></div>
+			
+			<p>我通常使用btrfs，LVM/EXT4已经过时。</p>
+			<p>/ 分区EXT4 安装操作系统，swap 分区不一定是内存2倍，因为现在的服务器都是8~16GB，OS很少能使用到交换分区，但是像Oracle这样强制交换分区为内存两倍。</p>
+			<p>其余所有空间分区格式化为btrfs mount 到 /srv 目录，在通过子卷(subvolume)分配给各个应用。</p>
+			<div class="tip" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Tip"><tr><td rowspan="2" align="center" valign="top" width="25"><img alt="[Tip]" src="/graphics/tip.png" /></td><th align="left">Tip</th></tr><tr><td align="left" valign="top">子卷(subvolume) 有个特点是不能rm -rf 删除子卷的，也起到一定的安全性。</td></tr></table></div>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp96"></a>16.2.2.3. 目录规划</h4></div></div></div>
+			
+			<p>以Tomcat为例</p>
+			<p>Tomcat 的虚拟机功能基本没用，因为需要升级需要频繁启动，会影响其他业务，所以采用每个项目一个实例的方式。</p>
+			<pre class="screen">
+			
+/srv/apache-tomcat/ 是Tomcat目录
+/srv/apache-tomcat/www.netkiller.cn 每个实例一个目录
+/srv/apache-tomcat/other.netkiller.cn
+			
+			</pre>
+			<p>以PHP为例</p>
+			<pre class="screen">
+/srv/php-7.0.0
+ln -s /srv/php-7.0.0 /srv/php
+			</pre>
+			<p>通过 /srv/php 符号链接可以任意切换PHP版本</p>
+			<p>代码目录与服务器目录分开</p>
+			<pre class="screen">
+			
+/www/netkiller.cn/www.netkiller.cn
+/www/netkiller.cn/other.netkiller.cn
+			
+			</pre>
+		</div>		
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="device"></a>16.2.3. 设备上架</h3></div></div></div>
+		
+		<p>按照物理图谱图，对应机位安装设备，链接网线，整理机柜。</p>
+		<p>注意强弱电分离，以免强电磁场干扰弱电。以Dell系列服务器为例，电源通常在右边，网口在中间左边，这样电源走机会右侧理线架，网线走左侧理线架。</p>
+		<p>我通常每个机柜放两台千兆交换机，一台放在机柜最顶端，通过10GB万兆以太网链接至核心交换机，走核心业务数据；另一台放在机柜最底端，负责其他次要业务，例如远程控制口，数据库备份等等。</p>
+		<p>上电，接通电源，开机。观察机柜的电压/电流变化。</p>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="os"></a>16.2.4. 操作系统初始化</h3></div></div></div>
+		
+		<p>安装操作系统，系统裁剪，内核优化，时区设置，配置history格式（记录每条发出命令的时间点），TCP栈优化</p>
+		<p>安装自动化运维客户端，监控客户端</p>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="application"></a>16.2.5. 服务器及运行环境</h3></div></div></div>
+		
+		<p>通过脚本或者自动化运维工具按照并配置。</p>
+		<p>安装各种服务器软件如 nginx, apache-httpd, apache-tomcat ......</p>
+		<p>软件运行环境，例如Java，PHP, Node.js, Ruby, Python ......</p>
+		<p>安装数据库，配置复制策略，备份计划</p>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="deployment"></a>16.2.6. 部署应用程序</h3></div></div></div>
+		
+		<p>配置管理员通过虚拟拓扑提供的IP地址，端口号以及运维提供的账号密码配置应用程序。</p>
+		<p>然后部署应用程序到远程服务器</p>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="monitor"></a>16.2.7. 监控系统</h3></div></div></div>
+		
+		<p>应用程序部署完毕后不要急着测试，可能很多IP地址以及端口不通，这时候测试只能是频繁报BUG。</p>
+		<p>我们先让将监控系统建立起来，监控所有服务器IP地址与端口，以及各种应用服务监控。</p>
+		<p>硬件监控: 温度监控，风扇监控，RAID卡监控，内存监控，PCI设备监控...</p>
+		<p>操作监控：负载，CPU，内存，用户登陆监控，磁盘空间监控，网络流量监控，TCP/IP状态监控，进程数量，线程监控，僵尸进程，进程退出...</p>
+		<p>服务器监控：连接数，线程数，进程数，内存开销，节点状态...</p>
+		<p>日志监控：如果监控到日志中出现某些关键次，发出警报。</p>
+		<p>服务监控：HTTP，SMTP，POP，AJAX/JSON，XML</p>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="log"></a>16.2.8. 日志中心</h3></div></div></div>
+		
+		<p>所有的日志应该实时同步到日志中心，便于开发与测试人员实时观察服务器的状态</p>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="test"></a>16.2.9. 测试</h3></div></div></div>
+		
+		<p>当我们看到监控系统报表中的各种服务器都畅通无阻时就可以进行验收测试，测试的时候需要关注监控系统的图标，与日志中心的日志变化。</p>
+		<p>安全测试：硬件防火墙规则，服务器防火墙规则，SSL证书，服务器版本号隐藏，操作系统权限检查</p>
+		<p>压力与性能测试</p>
+		<p>业务功能测试</p>
+	</div>
+</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="../index.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="../index.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="../template.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">Chapter 16. 运维篇(Operations) </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">Home</a></td><td width="40%" align="right" valign="top"> 16.3. 安装模板</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script><script xmlns="" type="text/javascript" src="/js/q.js" async="async"></script></body></html>
