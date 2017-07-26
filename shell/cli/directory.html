@@ -451,6 +451,38 @@ find . -regex ".*\.\(jpg\|png\)"
 find . -regex ".*\.\(txt\|sh\)"
 find . -name "*.sh" -o -name "*.txt"
 		</pre>
+		<p>-regex参数，使用正则表达式来匹配. 查找当前目录以及子目录中以 ".sh",并改为以".shell"结尾.</p>
+		<pre class="screen">
+		
+[neo@netkiller test]# tree a
+a
+├── a.py
+├── a.sh
+└── b
+    ├── b.py
+    ├── b.sh
+    ├── c
+    │   └── c.sh
+    └── d
+        └── d.sh
+
+[neo@netkiller test]# find ./a -type f  -regex ".*\.sh$" | sed -r -n 's#(.*\.)sh$#mv &amp; \1shell#e'
+[neo@netkiller test]# tree a
+a
+├── a.py
+├── a.shell
+└── b
+    ├── b.py
+    ├── b.shell
+    ├── c
+    │   └── c.shell
+    └── d
+        └── d.shell
+        
+ // 注意 sed s-&gt;e  使用方式,官方文档是这样解释的.
+This command allows one to pipe input from a shell command into pattern space. If a substitution was made, the command that is found in pattern space is executed and pattern space is replaced with its output. A trailing newline is suppressed; results are undefined if the command to be executed contains a NUL character. This is a GNU sed extension.
+		
+		</pre>
 	</div>
 	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="find.user"></a>5.3.17.3. user</h4></div></div></div>
 		
@@ -466,6 +498,10 @@ $ find . -user nobody -iname '*.php'
 		<pre class="screen">
 find ./ -perm -7 -print | xargs chmod o-w
 find . -perm -o=w
+		</pre>
+		<p>查找当前目录下权限为777的文件并显示到标准输出</p>
+		<pre class="screen">
+find ./ -type f -perm 777 -print		
 		</pre>
 	</div>
 	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="find.type"></a>5.3.17.5. type</h4></div></div></div>
@@ -515,25 +551,8 @@ find -type f -name "*.js" -exec yuicompressor --type js {} -o {} \;
 find -type f -name "*.css" -exec yuicompressor --type css {} -o {} \;
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="find.xargs"></a>5.3.17.8. xargs</h4></div></div></div>
-		
-       	<pre class="screen">
-find /etc -type f|xargs md5sum
-		</pre>
-		<p>sha1sum</p>
-		<pre class="screen">
-find /etc -type f|xargs sha1sum
-		</pre>
-		<pre class="screen">
-find ./ -name "*html" | xargs -n 1 sed -i -e 's/aaa/bbb/g'
-		</pre>
-		<p></p>
-		<pre class="screen">
-find /tmp -name core -type f -print | xargs /bin/rm -f
-find . -type f -exec file '{}' \;
-		</pre>
-	</div>
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="find.path"></a>5.3.17.9. 排除目录</h4></div></div></div>
+	
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="find.path"></a>5.3.17.8. 排除目录</h4></div></div></div>
 		
 		<pre class="screen">
 find /usr/local -path "/usr/local/share" -prune -o -print
@@ -547,7 +566,7 @@ find /usr/local \(-path /usr/local/dir1 -o -path /usr/local/file1 \) -prune -o -
 find . \( -path ./templates_c -o -path ./caches \) -prune -o -name "*.php" -print
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="find.mmin"></a>5.3.17.10. -mmin n File's data was last modified n minutes ago.</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="find.mmin"></a>5.3.17.9. -mmin n File's data was last modified n minutes ago.</h4></div></div></div>
 		
 		<pre class="screen">
 # find . -mmin +5 -mmin -10
@@ -555,6 +574,19 @@ find . \( -path ./templates_c -o -path ./caches \) -prune -o -name "*.php" -prin
 		<pre class="screen">
 find /www -type f -mtime +60s
 		</pre>	
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="find.ctime"></a>5.3.17.10. -ctime</h4></div></div></div>
+		
+		<p>查找当前目录下超过6天且是空文件并删除</p>
+		<pre class="screen">
+find ./ -type d -empty -ctime +6 -exec rm -f {} \;	
+		</pre>
+		<p>查找7天前的文件并删除</p>
+		<pre class="screen">
+find /backup/svn/day -type f -ctime +7 -exec rm -f {} \; 
+find /backup/svn/day -type f -ctime +7 -delete
+find /backup/svn/day -type f -ctime +7 | xargs rm -f	
+		</pre>
 	</div>
 	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="find.mtime"></a>5.3.17.11. -mtime / -mmin</h4></div></div></div>
 		
@@ -566,7 +598,7 @@ find . -type f -mtime -3
 		<pre class="screen">
 find . -type f -mtime +3
 		</pre>
-		<div class="example"><a id="idp167"></a><p class="title"><strong>例 5.1. backup(find + tar)</strong></p><div class="example-contents">
+		<div class="example"><a id="idp165"></a><p class="title"><strong>例 5.1. backup(find + tar)</strong></p><div class="example-contents">
 			
 			<pre class="screen">
 find / -type f -mtime -7 | xargs tar -rf weekly_incremental.tar
@@ -624,6 +656,53 @@ Name:              bin Size:   4096
 		<p>查找0字节文件</p>
 		<pre class="screen">
 find /www -type f -size 0
+		</pre>
+		<p>查找根目录下大于1G的文件</p>
+		<pre class="screen">
+find /  -type f -size +1000M		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="find.path"></a>5.3.17.15. -path</h4></div></div></div>
+		
+		<p>搜索当前目录下除了keys目录下所以子目录中的文件</p>
+		<pre class="screen">
+find ./ -path "./keys" -prune -o -type f -print 		
+		</pre>
+		<p>find排除多个目录</p>
+		<pre class="screen">
+find ./ \( -path ./conf -o -path ./logs \) -prune -o -print
+
+find /data/ \( -path /data/data_backup -o -path /data/mysql \) -prune -o -name "core.*" -type f 
+/data/mysql
+/data/data_backup		
+		</pre>
+		<p>ps 要么都是绝对路径 要么都是相对路径 /data/ 必须有"/" path 后面的路径必须没有"/"</p>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="find.maxdepth"></a>5.3.17.16. -maxdepth</h4></div></div></div>
+		
+		<p>-maxdepth和-mindepth，最大深度，最小深度搜索，搜索当前目录下最大深度为1的所以文件</p>
+		<pre class="screen">
+find . -maxdepth 1 -type f 		
+		</pre>
+	</div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="find.xargs"></a>5.3.17.17. xargs</h4></div></div></div>
+		
+       	<pre class="screen">
+find /etc -type f|xargs md5sum
+		</pre>
+		<p>sha1sum</p>
+		<pre class="screen">
+find /etc -type f|xargs sha1sum
+		</pre>
+		<pre class="screen">
+find ./ -name "*html" | xargs -n 1 sed -i -e 's/aaa/bbb/g'
+		</pre>
+		<pre class="screen">
+find /tmp -name core -type f -print | xargs /bin/rm -f
+find . -type f -exec file '{}' \;
+		</pre>
+		<p>find后执行xargs提示xargs: argument line too long解决方法：</p>
+		<pre class="screen">
+find . -type f -name "*.log" -print0 | xargs -0 rm -f		
 		</pre>
 	</div>
 </div>

@@ -12,8 +12,13 @@
 	    <a xmlns="" href="/search.html">Search</a> |
 		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">5.12. standard input/output</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="table.html">上一页</a> </td><th width="60%" align="center">第 5 章 Shell command</th><td width="20%" align="right"> <a accesskey="n" href="log.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="io"></a>5.12. standard input/output</h2></div></div></div>
 	
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp106"></a>5.12.1. xargs - build and execute command lines from standard input</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="xargs"></a>5.12.1. xargs - build and execute command lines from standard input</h3></div></div></div>
 		
+		<p>xargs命令是
+     给其他命令传递参数的一个过滤器,也是组合多个命令的一个工具
+     它擅长将标准输入数据转换成命令行参数,xargs能够处理管道或者stdin并将其转换成特定命令的命令参数.
+     xargs也可以将单行或多行文本输入转换为其他格式,例如多行变单行,单行变多行.
+     xargs的默认命令是echo,空格是默认定界符;这意味着通过管道传递给xargs的输入将会包含换行和空白,不过通过xargs的处理,换行和空白将被空格取代.</p>
 		<p>xargs命令用法</p>
 		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp104"></a>5.12.1.1. 格式化</h4></div></div></div>
 			
@@ -49,48 +54,6 @@ a b c d e f g h i j k l m n o p q r s t u v w x y z
 等效
 # cat test.txt | tr "\n" " "
 a b c d e f g h i j k l m n o p q r s t u v w x y z
-
--n选项多行输出：
-
-# cat test.txt | xargs -n3
-a b c
-d e f
-g h i
-j k l
-m n o
-p q r
-s t u
-v w x
-y z
-# cat test.txt | xargs -n4
-a b c d
-e f g h
-i j k l
-m n o p
-q r s t
-u v w x
-y z
-# cat test.txt | xargs -n5
-a b c d e
-f g h i j
-k l m n o
-p q r s t
-u v w x y
-z
-
-
--d选项可以自定义一个定界符：
-
-# echo "name|age|sex|birthday" | xargs -d"|"
-name age sex birthday
-
-结合-n选项使用：
-
-# echo "name=Neo|age=30|sex=T|birthday=1980" | xargs -d"|" -n1
-name=Neo
-age=30
-sex=T
-birthday=1980			
 			
 			</pre>
 		</div>
@@ -130,8 +93,9 @@ Your name is tcpdump
 			
 			</pre>
 		</div>		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp105"></a>5.12.1.3. -I 替换操作</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="xargs.i"></a>5.12.1.3. -I 替换操作</h4></div></div></div>
 			
+			<p>-I R                         same as --replace=R</p>
 			<pre class="screen">
 复制所有图片文件到 /data/images 目录下：
 
@@ -176,7 +140,136 @@ Hello noreply
 Hello tcpdump
 			
 			</pre>
-		</div>		
+			<pre class="screen">
+-I 使用-I指定一个替换字符串,这个字符串在xargs扩展时会被替换掉,当-I与xargs结合使用,每一个参数命令都会被执行一次.
+mysql -u root -predhat -s -e "show databases" | egrep "^mt4_user_equity_" | xargs -I "@@" mysql -u root -predhat -e "DROP DATABASE \`@@\`;"  			
+			</pre>
+		</div>	
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="xargs.n"></a>5.12.1.4. -n, --max-args=MAX-ARGS      use at most MAX-ARGS arguments per command line</h4></div></div></div>
+			
+			<p>-n 参数來指定每一次执行指令所使用的参数个数上限值.</p>
+			<pre class="screen">
+			
+-n选项多行输出：
+
+# cat test.txt | xargs -n3
+a b c
+d e f
+g h i
+j k l
+m n o
+p q r
+s t u
+v w x
+y z
+# cat test.txt | xargs -n4
+a b c d
+e f g h
+i j k l
+m n o p
+q r s t
+u v w x
+y z
+# cat test.txt | xargs -n5
+a b c d e
+f g h i j
+k l m n o
+p q r s t
+u v w x y
+z
+
+[neo@netkiller test]# echo 'a b c d e 1 2 3 4 5' | xargs -n 5
+a b c d e
+1 2 3 4 5
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="xargs.t"></a>5.12.1.5. -t, --verbose                print commands before executing them</h4></div></div></div>
+			
+			<p>-t 参数可以让 xargs 在执行指令之前先显示要执行的指令</p>
+			<pre class="screen">
+			
+[neo@netkiller test]# echo a b c d e f | xargs -t
+/bin/echo a b c d e f
+a b c d e f
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="xargs.d"></a>5.12.1.6. -d, --delimiter=CHARACTER    items in input stream are separated by CHARACTER,
+                                 not by whitespace; disables quote and backslash
+                                 processing and logical EOF processing</h4></div></div></div>
+			
+			<p>-d  自定义一个定界符 默认是空格</p>
+			<pre class="screen">
+			
+[neo@netkiller test]# echo 'abc' | xargs -d b
+a c
+
+-d选项可以自定义一个定界符：
+
+# echo "name|age|sex|birthday" | xargs -d"|"
+name age sex birthday
+
+结合-n选项使用：
+
+# echo "name=Neo|age=30|sex=T|birthday=1980" | xargs -d"|" -n1
+name=Neo
+age=30
+sex=T
+birthday=1980	
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="xargs.0"></a>5.12.1.7. -0, --null                   items are separated by a null, not whitespace;
+                                 disables quote and backslash processing and
+                                 logical EOF processing</h4></div></div></div>
+			
+			<p>-0 是以null字符结尾的,而不是以白空格(whitespace)结尾的且引号和反斜杠,都不是特殊字符;</p>
+			<pre class="screen">
+			
+
+每个输入的字符,都视为普通字符禁止掉文件结束符,被视为别的参数.当输入项可能包含白空格,引号,反斜杠等情况时,才适合用此参数
+[neo@netkiller test]# touch "Mr liu"
+[neo@netkiller test]# ls M*
+Mr liu
+[neo@netkiller test]# find -type f -name "Mr*" | xargs rm -f
+[neo@netkiller test]# ls M*
+Mr liu
+[neo@netkiller test]# find -type f -name "Mr*" | xargs -t rm  -f
+rm -f ./Mr liu
+// 这个时候我们可以将 find 指令加上 -print0 参数，另外将 xargs 指令加上 -0 参数，改成这样:
+[neo@netkiller test]# find -type f -name "Mr*"  -print0| xargs -t -0 rm  -f
+rm -f ./Mr liu
+[neo@netkiller test]# ls M*
+ls: 无法访问M*: 没有那个文件或目录			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="xargs.r"></a>5.12.1.8. -r, --no-run-if-empty        if there are no arguments, then do not run COMMAND;
+                                 if this option is not given, COMMAND will be</h4></div></div></div>
+			
+			<p>-r  如果标准输入不包含任何非空格，请不要运行该命令.</p>
+			<pre class="screen">
+			
+[neo@netkiller test]# echo a b c d e f | xargs -p -n 3
+/bin/echo a b c ?...n
+/bin/echo d e f ?...n
+/bin/echo ?...n
+//当我们使用 -p 参数时，如果所有的指令都输入 n 跳过不执行时候，最后还会出现一个沒有任何参数的 echo 指令,
+如果想要避免以這种空字串作为参数来执行指令，可以加上 -r 参数
+[neo@netkiller test]# echo a b c d e f | xargs -p -n 3 -r
+/bin/echo a b c ?...n
+/bin/echo d e f ?...n
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="xargs.p"></a>5.12.1.9. -p, --interactive            prompt before running commands</h4></div></div></div>
+			
+			<p> -p 确认操作选项,具有可交互性:</p>
+			<pre class="screen">
+-P 修改最大的进程数, 默认是1.为 0 时候为 as many as it can.
+			</pre>
+		</div>
 	</div>
 </div><div xmlns="" id="disqus_thread"></div><script xmlns="">
 

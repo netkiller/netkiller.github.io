@@ -26,7 +26,7 @@ $@	 以"参数1" "参数2" ... 形式保存所有参数
 $$	 本程序的(进程ID号)PID
 $!	 上一个命令的PID
 		</pre>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp16"></a>1.3.1.1. 命令行参数传递</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp17"></a>1.3.1.1. 命令行参数传递</h4></div></div></div>
 			
 			<pre class="screen">
 [root@cc tmp]# cat test.sh
@@ -38,7 +38,7 @@ echo $@
 helloworld
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp17"></a>1.3.1.2. $n $# $0 $?</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp18"></a>1.3.1.2. $n $# $0 $?</h4></div></div></div>
 			
 			<p>其中使用得比较多得是 $n $# $0 $? ,看看下面的例子：</p>
 			<pre class="screen">
@@ -62,13 +62,42 @@ Not Found "usage" in chapter2.2.sh
 -bash-2.05b$ ./chapter2.2.sh Usage chapter2.2.sh
 echo "Usage: $0 string file";
 Found "Usage" in chapter2.2.sh
-			</pre>			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp19"></a>1.3.1.3. $? 程序运行返回值</h4></div></div></div>
+			
+			<p>0 表示正常结束运行， 1 表示异常退出</p>
 			<pre class="screen">
 			
+[root@iZ621r6pk9aZ nginx]# ping -W 2 -c 2 www.google.com
+PING www.google.com (172.217.24.196) 56(84) bytes of data.
+64 bytes from hkg12s13-in-f4.1e100.net (172.217.24.196): icmp_seq=1 ttl=57 time=1.51 ms
+64 bytes from hkg12s13-in-f4.1e100.net (172.217.24.196): icmp_seq=2 ttl=57 time=1.44 ms
+
+--- www.google.com ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 1001ms
+rtt min/avg/max/mdev = 1.447/1.479/1.512/0.050 ms
+
+[root@iZ621r6pk9aZ nginx]# echo $?
+0
+
+			
+			</pre>
+			<p>我们ping 一个不存在的IP地址，然后 Ctrl+C 推出程序，返回值是 1.</p>
+			<pre class="screen">
+			
+[root@iZ621r6pk9aZ nginx]# ping -W 2 -c 2 172.16.1.100
+PING 172.16.1.100 (172.16.1.100) 56(84) bytes of data.
+^C
+--- 172.16.1.100 ping statistics ---
+2 packets transmitted, 0 received, 100% packet loss, time 999ms
+
+[root@iZ621r6pk9aZ nginx]# echo $?
+1			
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="shift"></a>1.3.1.3. shift 移位</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="shift"></a>1.3.1.4. shift 移位</h4></div></div></div>
 			
 			<p>shift 移位传递过来的参数</p>
 			<pre class="screen">
@@ -255,8 +284,11 @@ $((EXPR))
 		</pre>
 		<p></p>
 		<pre class="screen">
-echo $((1+1))
-echo $((5*5))
+neo@netkiller ~ % echo $((1+1))
+neo@netkiller ~ % echo $((5*5))
+
+neo@netkiller ~ % echo $(( (1 + 1) * 2 ))
+4
 		</pre>
 		<pre class="screen">
 num=$(awk "BEGIN {print $num1+$num2; exit}")
@@ -264,10 +296,60 @@ num=$(python -c "print $num1+$num2")
 num=$(perl -e "print $num1+$num2")
 num=$(echo $num1 + $num2 | bc) 		
 		</pre>
+		<p>巧用linux服务器下的/dev/shm, 实现斐波拉切数列</p>
+		<pre class="screen">
+		
+[neo@netkiller ~]# cat mblq.sh
+
+TEMP_FILE=/dev/shm/mblq
+echo 0 &gt; $TEMP_FILE
+echo 1 &gt;&gt; $TEMP_FILE
+count=$1
+for i in `seq $count`
+do
+    first=$(tail -2 $TEMP_FILE |head -1)
+    two=$(tail -1 $TEMP_FILE)
+    echo $((first+two)) &gt;&gt; $TEMP_FILE
+done
+cat $TEMP_FILE
+[neo@netkiller ~]# bash mblq.sh 15
+0
+1
+1
+2
+3
+5
+8
+13
+21
+34
+55
+89
+144
+233
+377
+610
+987
+		
+		</pre>
 	</div>
 	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="variable.strings"></a>1.3.10. Strings 字符串操作</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp18"></a>1.3.10.1. ##/#</h4></div></div></div>
+		<pre class="screen">
+		
+[neo@netkiller ~]# cat abcde.sh
+#!/bin/bash
+str="abcde";
+for ((m=1;m&lt;=${#str};m++));do
+    for ((n=0;n&lt;${#str};n++));do
+        [[ ${#str}-$n -lt $m ]] &amp;&amp; continue || echo -n ${str:$n:$m}' '
+    done
+done
+[neo@netkiller ~]# bash abcde.sh
+a b c d e ab bc cd de abc bcd cde abcd bcde abcde 		
+		
+		</pre>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp20"></a>1.3.10.1. ##/#</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -299,7 +381,7 @@ At first glance, this does not appear to be a tarball.
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp19"></a>1.3.10.2. %%/%</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp21"></a>1.3.10.2. %%/%</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -325,7 +407,7 @@ aaa
 
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp20"></a>1.3.10.3. :n1:n2</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp22"></a>1.3.10.3. :n1:n2</h4></div></div></div>
 			
 			<p>：${varible:n1:n2}:截取变量varible从n1到n2之间的字符串。</p>
 			<pre class="screen">
@@ -343,11 +425,11 @@ $echo ${file: -3}
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp21"></a>1.3.10.4. #</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp23"></a>1.3.10.4. #</h4></div></div></div>
 			
 			<p>：${varible:n1:n2}:截取变量varible从n1到n2之间的字符串。</p>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp22"></a>1.3.10.5. example</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp24"></a>1.3.10.5. example</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -376,7 +458,7 @@ jam zheng
 echo ${#PATH}
     		</pre>
     	</div>
-    	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp23"></a>1.3.10.7. 字符串查找替换</h4></div></div></div>
+    	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp25"></a>1.3.10.7. 字符串查找替换</h4></div></div></div>
     		
     		<pre class="screen">
 # str="1 2 3 4";echo ${str// /}
@@ -418,7 +500,7 @@ ARRAY=()
 ARRAY+=('foo')
 ARRAY+=('bar')
 		</pre>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp24"></a>1.3.11.1. for 与 array</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp26"></a>1.3.11.1. for 与 array</h4></div></div></div>
 			
 			<pre class="screen">
 #!/bin/bash
@@ -493,7 +575,7 @@ do
 done
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp25"></a>1.3.11.2. while 与 array</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp27"></a>1.3.11.2. while 与 array</h4></div></div></div>
 			
 			<p>while 与 array</p>
 			<pre class="screen">
@@ -509,7 +591,7 @@ done
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp26"></a>1.3.11.3. array 与 read</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp28"></a>1.3.11.3. array 与 read</h4></div></div></div>
 			
 			<p>array 与 read</p>
 			<pre class="screen">
@@ -538,7 +620,7 @@ done
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp27"></a>1.3.11.4. 拆分字符串并转换为数组</h4></div><div><h5 class="subtitle">Split string into an array in Bash</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp29"></a>1.3.11.4. 拆分字符串并转换为数组</h4></div><div><h5 class="subtitle">Split string into an array in Bash</h5></div></div></div>
 			
 			
 			<p>字符串</p>
@@ -565,7 +647,7 @@ for key in ${!captions[@]}; do
 done
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp28"></a>1.3.11.5. 数组转为字符串</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp30"></a>1.3.11.5. 数组转为字符串</h4></div></div></div>
 			
 			<pre class="screen">
 ids=(1 2 3 4);echo ${ids[*]// /|}
