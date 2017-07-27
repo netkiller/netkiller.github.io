@@ -15,8 +15,12 @@
 		<pre class="screen">
 debian:~# apt-get install sudo		
 		</pre>
-		<p>/etc/sudoers</p>
-		<pre class="screen">
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp127"></a>18.8.1. /etc/sudoers</h3></div></div></div>
+			
+			<p>sudo的配置文件是/etc/sudoers,visudo修改时会锁住sudoers文件,保存修改到临时文件,然后检查文件格式,确保正确后才会覆盖sudoers文件.
+    必须保证sudoers格式正确,否则sudo将无法运行.</p>
+			<p>/etc/sudoers</p>
+			<pre class="screen">
 # /etc/sudoers
 #
 # This file MUST be edited with the 'visudo' command as root.
@@ -40,13 +44,40 @@ root    ALL=(ALL) ALL
 # it further down)
 %sudo ALL=NOPASSWD: ALL
 		
-		</pre>
-		<p>sudo group</p>
-		<pre class="screen">
+			</pre>
+			<p>sudo group</p>
+			<pre class="screen">
 neo@debian:/etc/mysql$ cat /etc/group | grep 'sudo'
 sudo:x:27:neo		
-		</pre>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp129"></a>18.8.1. NOPASSWD</h3></div></div></div>
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp128"></a>18.8.2. /etc/sudoers</h3></div></div></div>
+			
+			<p>visudo调用的默认编辑器是vi,如果要临时使用其他编辑器,在该命令前加上EDITOR环境变量即可.</p>
+			<pre class="screen">		
+[root@netkiller ~]# EDITOR=vim visudo
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp129"></a>18.8.3. 设置示例</h3></div></div></div>
+			
+			<pre class="screen">
+			
+&gt;1 允许neo用户从任何主机登录,以root的身份执行/usr/sbin/useradd命令
+
+neo   ALL=(root) /usr/sbin/useradd 
+
+&gt;2 允许jam用户从任何主机登录,以root的身份无密码使用sudo执行/sbin/iptables -n -t filter -L 
+
+jam   ALL=(ALL) NOPASSWD: /sbin/iptables -n -t filter -L 
+
+&gt;3 neo用户从任何主机登录,以root的身份执行自定义命令链里面的命令
+
+Cmnd_Alias USERCOMMAND = /sbin/route,/sbin/ifconfig,/bin/ping,/sbin/dhclient,/usr/bin/net,/sbin/iptables,/usr/bin/rfcomm,/usr/bin/wvdial,/sbin/iwconfig
+neo   ALL=(root)    USERCOMMAND
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp130"></a>18.8.4. NOPASSWD</h3></div></div></div>
 			
 			<p>ubuntu NOPASSWD sudo的时候不需要输入密码</p>
 			<p>组</p>
@@ -60,7 +91,7 @@ sudo:x:27:neo
 www localhost=NOPASSWD: /bin/cat, /bin/ls			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp130"></a>18.8.2. 允许或禁止命令</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp131"></a>18.8.5. 允许或禁止命令</h3></div></div></div>
 			
 			<p>命令前面加‘!’可以禁止用户运行该命令</p>
 			<pre class="screen">
@@ -68,15 +99,21 @@ neo ALL = （root） /bin/mount, /bin/umount, !/bin/mount /data0
 dba ALL = /bin/mount /u0[1-5], /bin/umount /u0[1-5]
 			</pre>		
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp131"></a>18.8.3. Cmnd_Alias 用法</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp132"></a>18.8.6. Cmnd_Alias 用法</h3></div></div></div>
 			
 			<p>Cmnd_Alias 定义命令别名</p>
 			<pre class="screen">
 Cmnd_Alias WEBMASTER = /srv/nginx/sbin/nginx, /srv/php/sbin/php-fpm, !/srv/mysql/bin/mysql
 www localhost = NETWORKING, SERVICES, DELEGATING, PROCESSES, WEBMASTER
 			</pre>
+			<p>自定义用户组(以所有的身份)执行自定义的命令链里的命令</p>
+			<pre class="screen">
+Cmnd_Alias USERCOMMAND = /sbin/route,/sbin/ifconfig,/bin/ping,/usr/sbin/mtr,/bin/traceroute,/usr/bin/top,/bin/df,/usr/bin/free,/usr/bin/du,/bin/ls,/bin/date,/usr/bin/less
+User_Alias    ADMINS = user1, user2
+ADMINS	ALL=(ALL)	USERCOMMAND			
+			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="wheel"></a>18.8.4. wheel 组</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="wheel"></a>18.8.7. wheel 组</h3></div></div></div>
 			
 			<pre class="screen">
 ## Allow root to run any commands anywhere
@@ -84,7 +121,22 @@ root    ALL=(ALL)       ALL
 neo     ALL=(ALL)       ALL
 %wheel  ALL=(ALL)       ALL
 			</pre>
-		</div>	
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp133"></a>18.8.8. 注意事项</h3></div></div></div>
+			
+			<pre class="screen">
+1 修改sudo记录密码的时间
+
+
+Defaults:用户名 timestamp_timeout=20
+eg:
+Defaults:redhat timestamp_timeout=20
+
+2 默认sudo命令只能在tty上执行,注释掉下面选项可以使程序调用sudo命令
+
+Defaults    requiretty			
+			</pre>
+		</div>
 	</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
 
 var disqus_config = function () {
