@@ -1,0 +1,368 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>5.27. Spring boot with Elasticsearch 5.5.x</title><link rel="stylesheet" type="text/css" href="../..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="home" href="../../index.html" title="Netkiller Java 手札" /><link rel="up" href="index.html" title="第 5 章 Spring Boot" /><link rel="prev" href="elasticsearch2.html" title="5.26. Spring boot with Elasticsearch 2.x" /><link rel="next" href="hive.html" title="5.28. Spring boot with Apache Hive" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
+		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">5.27. Spring boot with Elasticsearch 5.5.x</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="elasticsearch2.html">上一页</a> </td><th width="60%" align="center">第 5 章 Spring Boot</th><td width="20%" align="right"> <a accesskey="n" href="hive.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="elasticsearch5"></a>5.27. Spring boot with Elasticsearch 5.5.x</h2></div></div></div>
+		
+		<p>Spring data 目前还不支持 Elasticsearch 5.5.x 所以需要通过注入 TransportClient 这就意味着使用 5.5.x 版本你无法使用 ElasticsearchRepository 这种特性，只能通过官方的 TransportClient 操作 Elasticsearch。</p>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp196"></a>5.27.1. Maven</h3></div></div></div>
+			
+			<p>Elasticsearch 依赖下来四个包</p>
+			<pre class="programlisting">
+			
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.elasticsearch&lt;/groupId&gt;
+			&lt;artifactId&gt;elasticsearch&lt;/artifactId&gt;
+			&lt;version&gt;5.5.1&lt;/version&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.elasticsearch.client&lt;/groupId&gt;
+			&lt;artifactId&gt;transport&lt;/artifactId&gt;
+			&lt;version&gt;5.5.1&lt;/version&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.apache.logging.log4j&lt;/groupId&gt;
+			&lt;artifactId&gt;log4j-api&lt;/artifactId&gt;
+			&lt;version&gt;2.8.2&lt;/version&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.apache.logging.log4j&lt;/groupId&gt;
+			&lt;artifactId&gt;log4j-core&lt;/artifactId&gt;
+			&lt;version&gt;2.8.2&lt;/version&gt;
+		&lt;/dependency&gt;
+			
+            </pre>
+            <p>下面是我的完整例子</p>
+			<pre class="programlisting">
+			
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"&gt;
+	&lt;modelVersion&gt;4.0.0&lt;/modelVersion&gt;
+
+	&lt;groupId&gt;com.example&lt;/groupId&gt;
+	&lt;artifactId&gt;api&lt;/artifactId&gt;
+	&lt;version&gt;0.0.1-SNAPSHOT&lt;/version&gt;
+	&lt;packaging&gt;jar&lt;/packaging&gt;
+
+	&lt;name&gt;api&lt;/name&gt;
+	&lt;description&gt;Demo project for Spring Boot&lt;/description&gt;
+
+	&lt;parent&gt;
+		&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+		&lt;artifactId&gt;spring-boot-starter-parent&lt;/artifactId&gt;
+		&lt;version&gt;1.5.6.RELEASE&lt;/version&gt;
+		&lt;relativePath /&gt; &lt;!-- lookup parent from repository --&gt;
+	&lt;/parent&gt;
+
+	&lt;properties&gt;
+		&lt;project.build.sourceEncoding&gt;UTF-8&lt;/project.build.sourceEncoding&gt;
+		&lt;project.reporting.outputEncoding&gt;UTF-8&lt;/project.reporting.outputEncoding&gt;
+		&lt;java.version&gt;1.8&lt;/java.version&gt;
+	&lt;/properties&gt;
+
+	&lt;dependencies&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-data-jpa&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-jdbc&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-security&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-web&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+		&lt;!-- &lt;dependency&gt; &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt; &lt;artifactId&gt;spring-boot-starter-test&lt;/artifactId&gt; 
+			&lt;/dependency&gt; --&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;mysql&lt;/groupId&gt;
+			&lt;artifactId&gt;mysql-connector-java&lt;/artifactId&gt;
+			&lt;scope&gt;runtime&lt;/scope&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-test&lt;/artifactId&gt;
+			&lt;scope&gt;test&lt;/scope&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-data-redis&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+		&lt;!-- https://mvnrepository.com/artifact/javax.persistence/persistence-api --&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;javax.persistence&lt;/groupId&gt;
+			&lt;artifactId&gt;persistence-api&lt;/artifactId&gt;
+			&lt;version&gt;1.0.2&lt;/version&gt;
+		&lt;/dependency&gt;
+		&lt;!-- https://mvnrepository.com/artifact/org.json/json --&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.json&lt;/groupId&gt;
+			&lt;artifactId&gt;json&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.elasticsearch&lt;/groupId&gt;
+			&lt;artifactId&gt;elasticsearch&lt;/artifactId&gt;
+			&lt;version&gt;5.5.1&lt;/version&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.elasticsearch.client&lt;/groupId&gt;
+			&lt;artifactId&gt;transport&lt;/artifactId&gt;
+			&lt;version&gt;5.5.1&lt;/version&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.apache.logging.log4j&lt;/groupId&gt;
+			&lt;artifactId&gt;log4j-api&lt;/artifactId&gt;
+			&lt;version&gt;2.8.2&lt;/version&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.apache.logging.log4j&lt;/groupId&gt;
+			&lt;artifactId&gt;log4j-core&lt;/artifactId&gt;
+			&lt;version&gt;2.8.2&lt;/version&gt;
+		&lt;/dependency&gt;
+	&lt;/dependencies&gt;
+
+	&lt;build&gt;
+		&lt;plugins&gt;
+			&lt;plugin&gt;
+				&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+				&lt;artifactId&gt;spring-boot-maven-plugin&lt;/artifactId&gt;
+			&lt;/plugin&gt;
+
+			&lt;plugin&gt;
+				&lt;groupId&gt;org.apache.maven.plugins&lt;/groupId&gt;
+				&lt;artifactId&gt;maven-surefire-plugin&lt;/artifactId&gt;
+				&lt;configuration&gt;
+					&lt;skip&gt;true&lt;/skip&gt;
+				&lt;/configuration&gt;
+			&lt;/plugin&gt;
+		&lt;/plugins&gt;
+	&lt;/build&gt;
+&lt;/project&gt;
+
+               
+               </pre>
+	       </div>
+	       <div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp197"></a>5.27.2. Application</h3></div></div></div>
+               
+               <pre class="programlisting">
+               
+package cn.netkiller;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
+import org.springframework.scheduling.annotation.EnableScheduling;
+
+@SpringBootApplication
+@EnableAutoConfiguration
+@ComponentScan
+@EnableMongoRepositories
+@EnableJpaRepositories
+@EnableScheduling
+public class Application {
+
+       public static void main(String[] args) {
+               SpringApplication.run(Application.class, args);
+       }
+}
+               
+               </pre>
+           </div>
+           <div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp198"></a>5.27.3. application.properties</h3></div></div></div>
+               
+               <p>注意：Elasticsearch 连接地址是 9300， 而不是 9200</p>
+               <pre class="programlisting">
+               
+spring.data.elasticsearch.cluster-nodes=172.0.0.1:9300
+spring.data.elasticsearch.local=false
+spring.data.elasticsearch.properties.transport.tcp.connect_timeout=60s
+               
+               </pre>
+           </div>
+           <div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp199"></a>5.27.4. ElasticsearchConfiguration</h3></div></div></div>
+               
+               <pre class="programlisting">
+               
+package com.example.api.config;
+
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+
+import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.elasticsearch.transport.client.PreBuiltTransportClient;
+import org.elasticsearch.common.settings.Settings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class ElasticsearchConfiguration implements FactoryBean&lt;TransportClient&gt;, InitializingBean, DisposableBean {
+	private static final Logger logger = LoggerFactory.getLogger(ElasticsearchConfiguration.class);
+
+	@Value("${spring.data.elasticsearch.cluster-nodes}")
+	private String clusterNodes;
+
+	private TransportClient transportClient;
+	private PreBuiltTransportClient preBuiltTransportClient;
+
+	@Override
+	public void destroy() throws Exception {
+		try {
+			logger.info("Closing elasticSearch client");
+			if (transportClient != null) {
+				transportClient.close();
+			}
+		} catch (final Exception e) {
+			logger.error("Error closing ElasticSearch client: ", e);
+		}
+	}
+
+	@Override
+	public TransportClient getObject() throws Exception {
+		return transportClient;
+	}
+
+	@Override
+	public Class&lt;TransportClient&gt; getObjectType() {
+		return TransportClient.class;
+	}
+
+	@Override
+	public boolean isSingleton() {
+		return false;
+	}
+
+	@Override
+	public void afterPropertiesSet() throws Exception {
+		buildClient();
+	}
+
+	protected void buildClient() {
+		try {
+			preBuiltTransportClient = new PreBuiltTransportClient(settings());
+
+			String InetSocket[] = clusterNodes.split(":");
+			String address = InetSocket[0];
+			Integer port = Integer.valueOf(InetSocket[1]);
+			transportClient = preBuiltTransportClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(address), port));
+
+		} catch (UnknownHostException e) {
+			logger.error(e.getMessage());
+		}
+	}
+
+	/**
+	 * 初始化默认的client
+	 */
+	private Settings settings() {
+//		Settings settings = Settings.builder().put("cluster.name", clusterName).put("client.transport.sniff", true).build();
+		Settings settings = Settings.builder().put("cluster.name", "elasticsearch").build();
+		return settings;
+	}
+}
+            
+            </pre>
+        </div>
+        <div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp200"></a>5.27.5. RestController</h3></div></div></div>
+            
+            <pre class="programlisting">
+            
+package com.example.api.restful;
+
+import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.client.transport.TransportClient;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/restful/search")
+public class SearchRestController {
+
+	@Autowired
+	private TransportClient client;
+
+	@RequestMapping(value = "/client/{articleId}")
+	public GetResponse test(@PathVariable String articleId) {
+		GetResponse response = client.prepareGet("information", "article", articleId).get();
+		return response;
+	}
+}
+
+	        
+	        </pre>
+	        <p>使用 Curl 测试 restful 接口</p>
+	        <pre class="screen">
+	        
+MacBook-Pro:~ neo$ curl -k https://test:test@localhost:8443/restful/search/client/1093.json
+{"fields":{},"id":"1093","type":"article","source":{"@timestamp":"2017-07-31T05:41:00.248Z","author":"test","@version":"1","description":"test","ctime":"2017-07-31T05:40:35.000Z","id":1093,"source":"test","title":"test11111","content":"&lt;p&gt;test&lt;/p&gt;&lt;p&gt;aaaaaaaaaaaaaa&lt;/p&gt;"},"version":3,"index":"information","sourceAsBytes":"eyJAdGltZXN0YW1wIjoiMjAxNy0wNy0zMVQwNTo0MTowMC4yNDhaIiwiYXV0aG9yIjoidGVzdCIsIkB2ZXJzaW9uIjoiMSIsImRlc2NyaXB0aW9uIjoidGVzdCIsImN0aW1lIjoiMjAxNy0wNy0zMVQwNTo0MDozNS4wMDBaIiwiaWQiOjEwOTMsInNvdXJjZSI6InRlc3QiLCJ0aXRsZSI6InRlc3QxMTExMSIsImNvbnRlbnQiOiI8cD50ZXN0PC9wPjxwPmFhYWFhYWFhYWFhYWFhPC9wPiJ9","sourceInternal":{"childResources":[]},"sourceAsString":"{\"@timestamp\":\"2017-07-31T05:41:00.248Z\",\"author\":\"test\",\"@version\":\"1\",\"description\":\"test\",\"ctime\":\"2017-07-31T05:40:35.000Z\",\"id\":1093,\"source\":\"test\",\"title\":\"test11111\",\"content\":\"&lt;p&gt;test&lt;/p&gt;&lt;p&gt;aaaaaaaaaaaaaa&lt;/p&gt;\"}","sourceEmpty":false,"sourceAsMap":{"@timestamp":"2017-07-31T05:41:00.248Z","author":"test","@version":"1","description":"test","ctime":"2017-07-31T05:40:35.000Z","id":1093,"source":"test","title":"test11111","content":"&lt;p&gt;test&lt;/p&gt;&lt;p&gt;aaaaaaaaaaaaaa&lt;/p&gt;"},"exists":true,"sourceAsBytesRef":{"childResources":[]},"fragment":false}	        
+	        
+	        </pre>
+	    </div>
+    </div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="elasticsearch2.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="hive.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">5.26. Spring boot with Elasticsearch 2.x </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 5.28. Spring boot with Apache Hive</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script><script xmlns="" type="text/javascript" src="/js/q.js" async="async"></script></body></html>

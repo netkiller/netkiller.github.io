@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>5.31. Spring boot with ELK(Elasticsearch + Logstash + Kibana)</title><link rel="stylesheet" type="text/css" href="../..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="home" href="../../index.html" title="Netkiller Java 手札" /><link rel="up" href="index.html" title="第 5 章 Spring Boot" /><link rel="prev" href="data.restful.html" title="5.30. Spring boot with Data restful" /><link rel="next" href="docker.html" title="5.32. Spring boot with Docker" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
+		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">5.31. Spring boot with ELK(Elasticsearch + Logstash + Kibana)</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="data.restful.html">上一页</a> </td><th width="60%" align="center">第 5 章 Spring Boot</th><td width="20%" align="right"> <a accesskey="n" href="docker.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="SpringBoot.ELK"></a>5.31. Spring boot with ELK(Elasticsearch + Logstash + Kibana)</h2></div></div></div>
+		
+		<p>将 Spring boot 日志写入 ELK 有多种实现方式，这里仅提供三种方案：</p>
+		<div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>Spring boot -&gt; logback -&gt; Tcp/IP -&gt; logstash -&gt; elasticsearch</p> 这种方式实现非常方便不需要而外包或者软件</li><li class="listitem"><p>Spring boot -&gt; logback -&gt; Redis -&gt; logstash -&gt; elasticsearch</p> 利用 Redis 提供的发布订阅功能将日志投递到 elasticsearch</li><li class="listitem"><p>Spring boot -&gt; logback -&gt; Kafka -&gt; logstash -&gt; elasticsearch</p> Kafka 方法适合大数据的情况。</li></ol></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp208"></a>5.31.1. TCP 方案</h3></div></div></div>
+			
+			<p>logstash 配置</p>
+			<pre class="programlisting">
+			
+input {
+  tcp {
+    host =&gt; "172.16.1.16" 
+    port =&gt; 9250
+    mode =&gt; "server"
+    tags =&gt; ["tags"]
+    codec =&gt; json_lines  //可能需要更新logstash插件
+  }
+}
+
+output {
+ stdout{codec =&gt;rubydebug}
+  elasticsearch {
+   hosts =&gt; ["localhost:9200"]  //这块配置需要带端口号
+    flush_size =&gt; 1000
+
+  }
+}			
+			
+			</pre>
+			<p>Spring boot logback.xml 配置</p>
+			<pre class="programlisting">
+			
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;configuration&gt;
+    &lt;property resource="properties/logback-variables.properties" /&gt; 
+
+    &lt;appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender"&gt;
+        &lt;encoder charset="UTF-8"&gt;
+            &lt;pattern&gt;%d{HH:mm:ss.SSS} [%thread] %-5level %logger - %msg%n
+            &lt;/pattern&gt;
+        &lt;/encoder&gt;
+    &lt;/appender&gt;
+    &lt;appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender"&gt;
+        &lt;destination&gt;172.16.1.16:9250&lt;/destination&gt;
+        &lt;encoder charset="UTF-8" class="net.logstash.logback.encoder.LogstashEncoder" /&gt;
+    &lt;/appender&gt;
+
+    &lt;!--&lt;appender name="async" class="ch.qos.logback.classic.AsyncAppender"&gt;--&gt;
+        &lt;!--&lt;appender-ref ref="stash" /&gt;--&gt;
+    &lt;!--&lt;/appender&gt;--&gt;
+    
+    &lt;root level="info"&gt;                    &lt;!-- 设置日志级别 --&gt;
+        &lt;appender-ref ref="STDOUT" /&gt;
+        &lt;appender-ref ref="LOGSTASH" /&gt;
+    &lt;/root&gt;
+&lt;/configuration&gt;			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp209"></a>5.31.2. Redis 方案</h3></div></div></div>
+			
+			<p>Maven pom.xml 增加 Logback Redis 依赖</p>
+			<pre class="programlisting">
+			
+&lt;!-- https://mvnrepository.com/artifact/com.cwbase/logback-redis-appender --&gt;
+&lt;dependency&gt;
+    &lt;groupId&gt;com.cwbase&lt;/groupId&gt;
+    &lt;artifactId&gt;logback-redis-appender&lt;/artifactId&gt;
+    &lt;version&gt;1.1.5&lt;/version&gt;
+&lt;/dependency&gt;			
+			
+			</pre>
+			<p>Spring boot logback.xml 配置</p>
+			<pre class="programlisting">
+			
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;configuration&gt;
+	&lt;include resource="org/springframework/boot/logging/logback/defaults.xml" /&gt;
+	&lt;include resource="org/springframework/boot/logging/logback/file-appender.xml" /&gt;
+	&lt;property name="type.name" value="test" /&gt;
+	&lt;appender name="LOGSTASH" class="com.cwbase.logback.RedisAppender"&gt;
+		&lt;source&gt;spring-application&lt;/source&gt;
+		&lt;type&gt;${type.name}&lt;/type&gt;
+		&lt;host&gt;localhost&lt;/host&gt;
+		&lt;key&gt;logstash:redis&lt;/key&gt;
+		&lt;tags&gt;test-2&lt;/tags&gt;
+		&lt;mdc&gt;true&lt;/mdc&gt;
+		&lt;location&gt;true&lt;/location&gt;
+		&lt;callerStackIndex&gt;0&lt;/callerStackIndex&gt;
+		&lt;!--additionalField添加附加字段 用于head插件显示 --&gt;
+		&lt;additionalField&gt;
+			&lt;key&gt;MyKey&lt;/key&gt;
+			&lt;value&gt;MyValue&lt;/value&gt;
+		&lt;/additionalField&gt;
+		&lt;additionalField&gt;
+			&lt;key&gt;MySecondKey&lt;/key&gt;
+			&lt;value&gt;MyOtherValue&lt;/value&gt;
+		&lt;/additionalField&gt;
+	&lt;/appender&gt;
+	&lt;root level="INFO"&gt;
+		&lt;appender-ref ref="FILE" /&gt;
+		&lt;appender-ref ref="LOGSTASH" /&gt;
+	&lt;/root&gt;
+&lt;/configuration&gt;
+			
+			</pre>
+			<p>logstash 配置</p>
+			<pre class="programlisting">
+			
+input {
+    redis {
+        host =&gt; 'localhost'
+        data_type =&gt; 'list'
+        port =&gt; "6379"
+        key =&gt; 'logstash:redis' #自定义
+        type =&gt; 'redis-input'   #自定义
+    }
+}
+output {
+    elasticsearch {
+        host =&gt; "localhost" 
+        codec =&gt; "json"
+        protocol =&gt; "http"
+    }
+}			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp210"></a>5.31.3. Kafka 方案</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp211"></a>5.31.4. Other</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+			</pre>
+		</div>
+	</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="data.restful.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="docker.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">5.30. Spring boot with Data restful </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 5.32. Spring boot with Docker</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script><script xmlns="" type="text/javascript" src="/js/q.js" async="async"></script></body></html>

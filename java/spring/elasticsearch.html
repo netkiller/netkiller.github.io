@@ -1,0 +1,390 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>第 11 章 Elasticsearch</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="home" href="../index.html" title="Netkiller Java 手札" /><link rel="up" href="index.html" title="部分 I. Spring Framework" /><link rel="prev" href="data/jpa/faq.html" title="10.7. Spring Data FAQ" /><link rel="next" href="ch11s02.html" title="11.2. 集群模式" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
+		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">第 11 章 Elasticsearch</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="data/jpa/faq.html">上一页</a> </td><th width="60%" align="center">部分 I. Spring Framework</th><td width="20%" align="right"> <a accesskey="n" href="ch11s02.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="chapter"><div class="titlepage"><div><div><h2 class="title"><a id="elasticsearch"></a>第 11 章 Elasticsearch</h2></div></div></div><div class="toc"><p><strong>目录</strong></p><dl class="toc"><dt><span class="section"><a href="elasticsearch.html#idp298">11.1. 内嵌 Elasticsearch</a></span></dt><dd><dl><dt><span class="section"><a href="elasticsearch.html#idp292">11.1.1. Maven</a></span></dt><dt><span class="section"><a href="elasticsearch.html#idp293">11.1.2. src/main/resources/application.properties</a></span></dt><dt><span class="section"><a href="elasticsearch.html#idp294">11.1.3. Domain Class</a></span></dt><dt><span class="section"><a href="elasticsearch.html#idp295">11.1.4. ElasticsearchRepository</a></span></dt><dt><span class="section"><a href="elasticsearch.html#idp296">11.1.5. SearchRestController</a></span></dt><dt><span class="section"><a href="elasticsearch.html#idp297">11.1.6. 测试</a></span></dt></dl></dd><dt><span class="section"><a href="ch11s02.html">11.2. 集群模式</a></span></dt><dt><span class="section"><a href="ch11s03.html">11.3. Document</a></span></dt><dt><span class="section"><a href="faq.html">11.4. FAQ</a></span></dt><dd><dl><dt><span class="section"><a href="faq.html#idp299">11.4.1. java.lang.IllegalStateException: Received message from unsupported version: [2.0.0] minimal compatible version is: [5.0.0]</a></span></dt></dl></dd></dl></div>
+	
+	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp298"></a>11.1. 内嵌 Elasticsearch</h2></div></div></div>
+		
+		<p>内嵌 Elasticsearch 应用，你不需要一个 Elasticsearch 服务器，启动 Spring boot 即可使用 Elasticsearch 服务。</p>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp292"></a>11.1.1. Maven</h3></div></div></div>
+			
+			<p>需要下面两个依赖</p>
+			<pre class="screen">
+			
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-data-elasticsearch&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+		&lt;!-- com.sun.jna for elasticsearch --&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;com.sun.jna&lt;/groupId&gt;
+			&lt;artifactId&gt;jna&lt;/artifactId&gt;
+			&lt;version&gt;3.0.9&lt;/version&gt;
+		&lt;/dependency&gt;			
+			
+			</pre>
+			
+			<pre class="programlisting">
+			
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"&gt;
+	&lt;modelVersion&gt;4.0.0&lt;/modelVersion&gt;
+
+	&lt;groupId&gt;com.example&lt;/groupId&gt;
+	&lt;artifactId&gt;api&lt;/artifactId&gt;
+	&lt;version&gt;0.0.1-SNAPSHOT&lt;/version&gt;
+	&lt;packaging&gt;jar&lt;/packaging&gt;
+
+	&lt;name&gt;api&lt;/name&gt;
+	&lt;description&gt;Demo project for Spring Boot&lt;/description&gt;
+
+	&lt;parent&gt;
+		&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+		&lt;artifactId&gt;spring-boot-starter-parent&lt;/artifactId&gt;
+		&lt;version&gt;1.5.6.RELEASE&lt;/version&gt;
+		&lt;relativePath /&gt; &lt;!-- lookup parent from repository --&gt;
+	&lt;/parent&gt;
+
+	&lt;properties&gt;
+		&lt;project.build.sourceEncoding&gt;UTF-8&lt;/project.build.sourceEncoding&gt;
+		&lt;project.reporting.outputEncoding&gt;UTF-8&lt;/project.reporting.outputEncoding&gt;
+		&lt;java.version&gt;1.8&lt;/java.version&gt;
+	&lt;/properties&gt;
+
+	&lt;dependencies&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-data-jpa&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-jdbc&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-security&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-web&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-test&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;mysql&lt;/groupId&gt;
+			&lt;artifactId&gt;mysql-connector-java&lt;/artifactId&gt;
+			&lt;scope&gt;runtime&lt;/scope&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-test&lt;/artifactId&gt;
+			&lt;scope&gt;test&lt;/scope&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-data-redis&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-data-elasticsearch&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+		&lt;!-- https://mvnrepository.com/artifact/javax.persistence/persistence-api --&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;javax.persistence&lt;/groupId&gt;
+			&lt;artifactId&gt;persistence-api&lt;/artifactId&gt;
+			&lt;version&gt;1.0.2&lt;/version&gt;
+		&lt;/dependency&gt;
+		&lt;!-- https://mvnrepository.com/artifact/org.json/json --&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.json&lt;/groupId&gt;
+			&lt;artifactId&gt;json&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+		&lt;!-- com.sun.jna for elasticsearch --&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;com.sun.jna&lt;/groupId&gt;
+			&lt;artifactId&gt;jna&lt;/artifactId&gt;
+			&lt;version&gt;3.0.9&lt;/version&gt;
+		&lt;/dependency&gt;
+
+	&lt;/dependencies&gt;
+
+	&lt;build&gt;
+		&lt;plugins&gt;
+			&lt;plugin&gt;
+				&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+				&lt;artifactId&gt;spring-boot-maven-plugin&lt;/artifactId&gt;
+			&lt;/plugin&gt;
+
+			&lt;plugin&gt;
+				&lt;groupId&gt;org.apache.maven.plugins&lt;/groupId&gt;
+				&lt;artifactId&gt;maven-surefire-plugin&lt;/artifactId&gt;
+				&lt;configuration&gt;
+					&lt;skip&gt;true&lt;/skip&gt;
+				&lt;/configuration&gt;
+			&lt;/plugin&gt;
+		&lt;/plugins&gt;
+	&lt;/build&gt;
+&lt;/project&gt;
+
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp293"></a>11.1.2. src/main/resources/application.properties</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+spring.data.elasticsearch.repositories.enabled=true
+#spring.data.elasticsearch.cluster-name=elasticsearch
+#spring.data.elasticsearch.cluster-nodes=119.29.241.95:9200
+spring.data.elasticsearch.local=false
+spring.data.elasticsearch.properties.transport.tcp.connect_timeout=60s
+spring.data.elasticsearch.properties.host=127.0.0.1
+spring.data.elasticsearch.properties.port=9200
+spring.data.elasticsearch.properties.path.home=/tmp
+			
+			</pre>
+		</div>
+		
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp294"></a>11.1.3. Domain Class</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+package com.example.api.domain.elasticsearch;
+
+import java.io.Serializable;
+import java.util.Date;
+
+import javax.persistence.Id;
+
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.elasticsearch.annotations.DateFormat;
+import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.elasticsearch.annotations.Field;
+import org.springframework.data.elasticsearch.annotations.FieldIndex;
+import org.springframework.data.elasticsearch.annotations.FieldType;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+
+@Document(indexName = "information", type = "article")
+public class Article implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 8789505663320446079L;
+	@Id
+	private int id;
+	private String title;
+	private String description;
+	private String author;
+	private String source;
+	private String content;
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyyMMdd'T'HHmmss.SSS'Z'")
+    @Field(type = FieldType.Date, format = DateFormat.basic_date_time, index = FieldIndex.not_analyzed)
+    @CreatedDate
+	private Date ctime;
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
+	public String getTitle() {
+		return title;
+	}
+
+	public void setTitle(String title) {
+		this.title = title;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	public Date getCtime() {
+		return ctime;
+	}
+
+	public void setCtime(Date ctime) {
+		this.ctime = ctime;
+	}
+
+	public String getAuthor() {
+		return author;
+	}
+
+	public void setAuthor(String author) {
+		this.author = author;
+	}
+
+	public String getSource() {
+		return source;
+	}
+
+	public void setSource(String source) {
+		this.source = source;
+	}
+
+	public String getContent() {
+		return content;
+	}
+
+	public void setContent(String content) {
+		this.content = content;
+	}
+
+	@Override
+	public String toString() {
+		return "Article [id=" + id + ", title=" + title + ", description=" + description + ", author=" + author + ", source=" + source + ", content=" + content + ", ctime=" + ctime + "]";
+	}
+
+}
+
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp295"></a>11.1.4. ElasticsearchRepository</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+package com.example.api.repository.elasticsearch;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
+import org.springframework.stereotype.Repository;
+
+import com.example.api.domain.elasticsearch.Article;
+
+@Repository
+public interface ArticleElasticsearchRepository extends ElasticsearchRepository&lt;Article, Integer&gt; {
+	Page&lt;Article&gt; findByTitleLike(String title, Pageable page);
+
+	Page&lt;Article&gt; findByDescription(String description, Pageable pageable);
+
+	Page&lt;Article&gt; findByDescriptionNot(String description, Pageable pageable);
+
+	Page&lt;Article&gt; findByDescriptionLike(String description, Pageable pageable);
+}
+
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp296"></a>11.1.5. SearchRestController</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+package com.example.api.restful;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.api.domain.elasticsearch.Article;
+import com.example.api.repository.elasticsearch.ArticleElasticsearchRepository;
+
+@RestController
+@RequestMapping("/restful/search")
+public class SearchRestController {
+	@Autowired
+	private ArticleElasticsearchRepository articleElasticsearchRepository;
+	
+	@RequestMapping(value = "/article/create")
+	public  Article create() {
+		Article article = new Article();
+		article.setId(1);
+		article.setTitle("sssss");
+		article.setContent("test");
+		return articleElasticsearchRepository.save(article);
+	}
+	@RequestMapping(value = "/article/{articleId}")
+	public  Article get(@PathVariable int articleId) {
+		return articleElasticsearchRepository.findOne(articleId);
+	}
+}
+
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp297"></a>11.1.6. 测试</h3></div></div></div>
+			
+			<pre class="screen">
+MacBook-Pro:~ neo$ curl http://test:test@localhost:8443/restful/search/article/create.json
+{"id":1,"title":"sssss","description":null,"author":null,"source":null,"content":"test","ctime":null}
+
+MacBook-Pro:~ neo$ curl http://test:test@localhost:8443/restful/search/article/1.json
+{"id":1,"title":"sssss","description":null,"author":null,"source":null,"content":"test","ctime":null}
+			</pre>
+		</div>
+	</div>
+	
+	
+	
+</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="data/jpa/faq.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ch11s02.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">10.7. Spring Data FAQ </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 11.2. 集群模式</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script><script xmlns="" type="text/javascript" src="/js/q.js" async="async"></script></body></html>

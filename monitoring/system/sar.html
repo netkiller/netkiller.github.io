@@ -1,0 +1,555 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>第 13 章 sar - System Activity Reporter</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><meta name="keywords" content="logwatch, nfswatch, watchdog, nmon, nulog, nload" /><meta name="keywords" content="snmp, ipmi,openipmi,freeipmi,ipmitool, cpu,memory,hdd,ssd,raid,power, logwatch, webmin" /><link rel="home" href="../index.html" title="Netkiller Linux Monitoring 手札" /><link rel="up" href="index.html" title="部分 I. System Monitoring &amp; Utility" /><link rel="prev" href="mcelog.html" title="12.2. mcelog - Decode kernel machine check log on x86 machines" /><link rel="next" href="sms.html" title="第 14 章 SMS" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
+		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">第 13 章 sar - System Activity Reporter</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="mcelog.html">上一页</a> </td><th width="60%" align="center">部分 I. System Monitoring &amp; Utility</th><td width="20%" align="right"> <a accesskey="n" href="sms.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="chapter"><div class="titlepage"><div><div><h2 class="title"><a id="sar"></a>第 13 章 sar - System Activity Reporter</h2></div></div></div>
+		
+		<pre class="screen">
+		
+sar 是 System Activity Reporter（系统活动情况报告）的缩写。
+
+sar工具将对系统当前的状态进行取样，然后通过计算数据和比例来表达系统的当前运行状态。它的特点是可以连续对系统取样，获得大量的取样数据；取样数据和分析的结果都可以存入文件，所需的负载很小。sar是目前Linux上最为全面的系统性能分析工具之一，可以从14个大方面对系统的活动进行报告，包括文件的读写情况、系统调用的使用情况、串口、CPU效率、内存使用状况、进程活动及IPC有关的活动等，使用也是较为复杂。
+
+sar命令常用格式
+sar [options] [-A] [-o file] t [n]
+
+其中：
+    t为采样间隔，n为采样次数，默认值是1；
+
+    -o file表示将命令结果以二进制格式存放在文件中，file 是文件名。
+
+options 为命令行选项，sar命令常用选项如下：
+
+    -A：所有报告的总和
+
+    -u：输出CPU使用情况的统计信息
+
+    -v：输出inode、文件和其他内核表的统计信息
+
+    -d：输出每一个块设备的活动信息
+
+    -r：输出内存和交换空间的统计信息
+
+    -b：显示I/O和传送速率的统计信息
+
+    -a：文件读写情况
+
+    -c：输出进程统计信息，每秒创建的进程数
+
+    -R：输出内存页面的统计信息
+
+    -y：终端设备活动情况
+
+    -w：输出系统交换活动信息
+
+&gt; Report CPU utilization
+
+
+[root@netkiller ~]# sar -u 1 3
+Linux 3.10.5-3.el6.x86_64 (test23) 	2017年03月08日 	_x86_64_	(2 CPU)
+
+15时05分29秒     CPU     %user     %nice   %system   %iowait    %steal     %idle
+15时05分30秒     all      0.00      0.00      0.00      0.00      0.00    100.00
+15时05分31秒     all      0.00      0.00      0.50      0.00      0.00     99.50
+15时05分32秒     all      0.50      0.00      0.00      0.50      0.00     99.00
+平均时间:     all      0.17      0.00      0.17      0.17      0.00     99.50
+
+%user：  显示在用户级别(application)运行使用 CPU 总时间的百分比.
+%nice：  显示在用户级别,用于nice操作,所占用CPU总时间的百分比.
+%system：在核心级别(kernel)运行所使用 CPU 总时间的百分比.
+%iowait：显示用于等待I/O操作占用CPU总时间的百分比.
+%steal： 管理程序(hypervisor)为另一个虚拟进程提供服务而等待虚拟CPU的百分比.
+%idle：  显示CPU空闲时间占用CPU总时间的百分比.
+
+&gt; Report status of inode, file and other kernel tables
+
+
+[root@netkiller ~]# sar -v  1 3
+Linux 3.10.5-3.el6.x86_64 (test23) 	2017年03月08日 	_x86_64_	(2 CPU)
+
+15时07分57秒 dentunusd   file-nr  inode-nr    pty-nr
+15时07分58秒     47524       640     46025         2
+15时07分59秒     47524       640     46025         2
+15时08分00秒     47524       640     46025         2
+平均时间:     47524       640     46025         2
+
+dentunusd: 目录缓存中未使用的缓存条目数
+file-nr:   由系统使用的文件数
+inode-nr： 由系统使用的inode数 
+pty-nr：   系统所使用的伪终端数
+
+&gt; 查看平均负载
+
+
+sar -q: 查看平均负载
+
+指定-q后，就能查看运行队列中的进程数、系统上的进程大小、平均负载等；与其它命令相比，它能查看各项指标随时间变化的情况；
+
+[root@netkiller ~]# sar -q 1 3
+Linux 3.10.5-3.el6.x86_64 (test23) 	2017年03月08日 	_x86_64_	(2 CPU)
+
+15时24分06秒   runq-sz  plist-sz   ldavg-1   ldavg-5  ldavg-15
+15时24分07秒         0       204      0.00      0.01      0.05
+15时24分08秒         1       204      0.00      0.01      0.05
+15时24分09秒         0       204      0.00      0.01      0.05
+平均时间:         0       204      0.00      0.01      0.05
+
+runq-sz： 运行队列的长度（等待运行的进程数）
+plist-sz：进程列表中进程（processes）和线程（threads）的数量
+ldavg-1： 最后1分钟的系统平均负载 
+ldavg-5： 过去5分钟的系统平均负载
+ldavg-15：过去15分钟的系统平均负载
+
+&gt; Report memory statistics
+
+
+[root@kvm ~]# sar -R 1 5
+Linux 2.6.32-358.11.1.el6.x86_64 (kvm)  11/04/2013      _x86_64_        (24 CPU)
+
+04:12:49 PM   frmpg/s   bufpg/s   campg/s
+04:12:50 PM   -174.00      0.00      0.00
+04:12:51 PM    -27.08      0.00      0.00
+04:12:52 PM    -73.27      0.00      0.00
+04:12:53 PM   -498.00      0.00      0.00
+04:12:54 PM    322.00      0.00      0.00
+Average:       -90.54      0.00      0.00
+
+frmpg/s :每秒钟系统释放的内存页数. 如果是负值，表示每秒钟被系统分配的内存页数.
+bufpg/s :每秒钟系统分配多少内存页作为buffer使用. 如果是负值，表示系统在回收一定的buffer空间.
+campg/s :每秒钟系统分配多少内存页作为bcached使用. 如果是负值，表示系统在回收一定的cached空间.
+
+&gt; 查看页面交换发生状况
+
+
+[root@kvm ~]# sar -W
+Linux 2.6.32-358.11.1.el6.x86_64 (kvm)  11/04/2013      _x86_64_        (24 CPU)
+
+12:00:01 AM  pswpin/s pswpout/s
+12:10:01 AM      0.00      0.00
+12:20:01 AM      0.00      0.00
+12:30:01 AM      0.00      0.00
+12:40:01 AM      0.00      0.00
+12:50:01 AM      0.00      0.00
+
+pswpin/s
+    Total number of swap pages the system brought in per second.
+
+pswpout/s
+    Total number of swap pages the system brought out per second.
+
+&gt; Report task creation and system switching activity
+
+
+[root@kvm ~]# sar -w 1 5
+Linux 2.6.32-358.11.1.el6.x86_64 (kvm) 	11/05/2013 	_x86_64_	(24 CPU)
+
+03:09:01 PM    proc/s   cswch/s
+03:09:02 PM      1.00  21017.00
+03:09:03 PM      1.02  18507.14
+03:09:04 PM      1.00  20803.00
+03:09:05 PM      0.99  17787.13
+03:09:06 PM      1.04  22041.67
+Average:         1.01  20016.57
+
+proc/s： 每秒创建的任务的总数.
+cswch/s：每秒上下文切换的总数.
+
+&gt; Report I/O and transfer rate statistics.
+
+
+[root@kvm ~]# sar -b 1 5
+Linux 2.6.32-358.11.1.el6.x86_64 (kvm) 	11/05/2013 	_x86_64_	(24 CPU)
+
+03:20:15 PM       tps      rtps      wtps   bread/s   bwrtn/s
+03:20:16 PM     18.00      0.00     18.00      0.00    383.00
+03:20:17 PM      5.05      0.00      5.05      0.00     72.73
+03:20:18 PM      0.00      0.00      0.00      0.00      0.00
+03:20:19 PM      0.00      0.00      0.00      0.00      0.00
+03:20:20 PM      0.00      0.00      0.00      0.00      0.00
+Average:         4.60      0.00      4.60      0.00     91.00
+
+tps：    每秒钟向物理设备发出请求(读与写)的总数
+rtps:    每秒钟向物理设备发出读请求的总数
+wtps:    每秒钟向物理设备发出写请求的总数
+bread/s: 每秒从块设备中读取的数据总数
+bwrtn/s: 每秒向块设备中写入的数据总数
+
+&gt; Report paging statistics
+
+
+[root@kvm ~]# sar -B 1 5
+Linux 2.6.32-358.11.1.el6.x86_64 (kvm) 	11/05/2013 	_x86_64_	(24 CPU)
+
+03:36:32 PM  pgpgin/s pgpgout/s   fault/s  majflt/s  pgfree/s pgscank/s pgscand/s pgsteal/s    %vmeff
+03:36:33 PM    192.00    384.00   1125.00      0.00   1709.00      0.00      0.00      0.00      0.00
+03:36:34 PM      0.00     16.16    240.40      0.00    935.35      0.00      0.00      0.00      0.00
+03:36:35 PM      0.00      1.01    273.74      0.00   1009.09      0.00      0.00      0.00      0.00
+03:36:36 PM      0.00    396.04   1052.48      0.00    878.22      0.00      0.00      0.00      0.00
+03:36:37 PM      0.00      0.00    228.00      0.00    997.00      0.00      0.00      0.00      0.00
+Average:        38.48    160.52    586.17      0.00   1105.81      0.00      0.00      0.00      0.00
+
+pgpgin/s:  每秒从磁盘或SWAP置换到内存的字节数
+pgpgout/s: 每秒从内存置换到磁盘或SWAP的字节数
+fault/s:   每秒钟系统产生的缺页数,即主缺页与次缺页之和(major + minor)
+majflt/s： 每秒钟产生的主缺页数
+pgfree/s:  每秒被放入空闲队列中的页个数
+pgscank/s: 每秒被kswapd扫描的页个数
+pgscand/s: 每秒直接被扫描的页个数
+pgsteal/s: 每秒钟从cache中被回收来满足内存需要的页个数
+%vmeff:    每秒回收的页(pgsteal)占总扫描页(pgscank+pgscand)的百分比
+
+缺页异常：
+	major（内存中没有需要的数据）
+	minor （内存中有这样的数据，单最先不是该进程的）
+
+&gt; Report network statistics
+
+
+sar命令使用-n选项可以汇报网络相关信息，可用的参数包括：DEV、EDEV、SOCK和FULL。
+
+1) 如果你使用DEV关键字，那么sar将汇报和网络设备相关的信息，如lo，eth0或eth1等
+
+[root@netkiller ~]# sar -n DEV 1 1
+Linux 3.10.5-3.el6.x86_64 (test23) 	2017年03月08日 	_x86_64_	(2 CPU)
+
+15时30分12秒     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s
+15时30分13秒       br0      3.03      1.01      0.14      0.16      0.00      0.00      0.00
+15时30分13秒      eth0      3.03      1.01      0.18      0.16      0.00      0.00      0.00
+15时30分13秒        lo      2.02      2.02      0.09      0.09      0.00      0.00      0.00
+15时30分13秒   docker0      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+
+平均时间:     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s
+平均时间:       br0      3.03      1.01      0.14      0.16      0.00      0.00      0.00
+平均时间:      eth0      3.03      1.01      0.18      0.16      0.00      0.00      0.00
+平均时间:        lo      2.02      2.02      0.09      0.09      0.00      0.00      0.00
+平均时间:   docker0      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+
+IFACE：就是网络设备的名称；
+
+rxpck/s：每秒钟接收到的包数目
+
+txpck/s：每秒钟发送出去的包数目
+
+rxbyt/s：每秒钟接收到的字节数
+
+txbyt/s：每秒钟发送出去的字节数
+
+rxcmp/s：每秒钟接收到的压缩包数目
+
+txcmp/s：每秒钟发送出去的压缩包数目
+
+txmcst/s：每秒钟接收到的多播包的包数目
+
+2) 如果你使用EDEV关键字，那么会针对网络设备汇报其失败情况，例如：
+[root@netkiller ~]# sar -n EDEV 1  1
+Linux 3.10.5-3.el6.x86_64 (test23) 	2017年03月08日 	_x86_64_	(2 CPU)
+
+15时31分29秒     IFACE   rxerr/s   txerr/s    coll/s  rxdrop/s  txdrop/s  txcarr/s  rxfram/s  rxfifo/s  txfifo/s
+15时31分30秒       br0      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+15时31分30秒      eth0      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+15时31分30秒        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+15时31分30秒   docker0      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+
+平均时间:     IFACE   rxerr/s   txerr/s    coll/s  rxdrop/s  txdrop/s  txcarr/s  rxfram/s  rxfifo/s  txfifo/s
+平均时间:       br0      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+平均时间:      eth0      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+平均时间:        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+平均时间:   docker0      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+
+rxerr/s：每秒钟接收到的损坏的包的数目
+
+txerr/s：当发送包时，每秒钟发生的错误数
+
+coll/s： 当发送包时，每秒钟发生的冲撞(collisions)数（这个是在半双工模式下才有）
+
+rxdrop/s：由于缓冲区满，网络设备接收端，每秒钟丢掉的网络包的数目
+
+txdrop/s：由于缓冲区满，网络设备发送端，每秒钟丢掉的网络包的数目
+
+txcarr/s：当发送数据包时，每秒钟载波错误发生的次数
+
+rxfram/s：在接收数据包时，每秒钟发生的帧对齐错误的次数
+
+rxfifo/s：在接收数据包时，每秒钟缓冲区溢出错误发生的次数
+
+txfifo/s：在发送数据包时，每秒钟缓冲区溢出错误发生的次数
+
+
+3) 如果你使用SOCK关键字，则会针对socket连接进行汇报，例如：
+[root@netkiller ~]# sar -n SOCK 1  1
+Linux 3.10.5-3.el6.x86_64 (test23) 	2017年03月08日 	_x86_64_	(2 CPU)
+
+15时33分29秒    totsck    tcpsck    udpsck    rawsck   ip-frag    tcp-tw
+15时33分30秒        86        47         0         0         0        67
+平均时间:        86        47         0         0         0        67
+
+totsck：被使用的socket的总数目
+
+tcpsck：当前正在被使用于TCP的socket数目
+
+udpsck：当前正在被使用于UDP的socket数目
+
+rawsck：当前正在被使用于RAW的socket数目
+
+ip-frag：当前的IP分片的数目
+
+## iostat
+
+
+通过iostat方便查看CPU、网卡、tty设备、磁盘、CD-ROM 等等设备的活动情况, 负载信息。
+
+命令格式
+iostat[参数][时间][次数]
+
+-C 显示CPU使用情况
+-d 显示磁盘使用情况
+-k 以 KB 为单位显示
+-m 以 M 为单位显示
+-N 显示磁盘阵列(LVM) 信息
+-n 显示NFS 使用情况
+-p[磁盘] 显示磁盘和分区的情况
+-t 显示终端和CPU的信息
+-x 显示详细信息
+-V 显示版本信息
+
+
+
+[root@netkiller ~]# iostat  -k
+Linux 3.10.5-3.el6.x86_64 (test23) 	2017年03月07日 	_x86_64_	(2 CPU)
+
+avg-cpu:  %user   %nice %system %iowait  %steal   %idle
+           0.14    0.00    0.23    0.39    0.00   99.25
+
+Device:            tps    kB_read/s    kB_wrtn/s    kB_read    kB_wrtn
+sda               8.65        28.46        95.63   54368942  182705652
+dm-0              0.01         0.01         0.19      21684     366024
+
+[root@netkiller ~]# iostat -x
+Linux 3.10.5-3.el6.x86_64 (test23) 	2017年03月07日 	_x86_64_	(2 CPU)
+
+avg-cpu:  %user   %nice %system %iowait  %steal   %idle
+           0.14    0.00    0.23    0.39    0.00   99.25
+
+Device:         rrqm/s   wrqm/s     r/s     w/s   rsec/s   wsec/s avgrq-sz avgqu-sz   await r_await w_await  svctm  %util
+sda               0.00     3.31    0.49    8.16    56.95   191.26    28.70     0.03    3.95    1.85    4.07   0.95   0.82
+dm-0              0.00     0.00    0.00    0.01     0.02     0.38    40.84     0.00   24.60    8.99   25.69   0.77   0.00
+
+&gt;cpu属性值说明
+
+
+%user：  CPU处在用户模式下的时间百分比
+%nice：  CPU处在带NICE值的用户模式下的时间百分比
+%system：CPU处在系统模式下的时间百分比
+%iowait：CPU等待输入输出完成时间的百分比
+%steal： 管理程序维护另一个虚拟处理器时，虚拟CPU的无意识等待时间百分比
+%idle：  CPU空闲时间百分比
+
+&gt; disk属性值说明
+
+
+rrqm/s:     每秒进行 merge 的读操作数目.即 delta(rmerge)/s
+wrqm/s:     每秒进行 merge 的写操作数目.即 delta(wmerge)/s
+r/s:        每秒完成的读 I/O 设备次数.即 delta(rio)/s
+w/s:        每秒完成的写 I/O 设备次数.即 delta(wio)/s
+rsec/s:     每秒读扇区数.即 delta(rsect)/s
+wsec/s:     每秒写扇区数.即 delta(wsect)/s
+rkB/s:      每秒读K字节数.是 rsect/s 的一半,因为每扇区大小为512字节.(需要计算)
+wkB/s:      每秒写K字节数.是 wsect/s 的一半.(需要计算)
+avgrq-sz:   平均每次设备I/O操作的数据大小 (扇区).delta(rsect+wsect)/delta(rio+wio)
+avgqu-sz:   平均I/O队列长度.即 delta(aveq)/s/1000 (因为aveq的单位为毫秒).
+await:      平均每次设备I/O操作的等待时间 (毫秒).即 delta(ruse+wuse)/delta(rio+wio)
+svctm:      平均每次设备I/O操作的服务时间 (毫秒).即 delta(use)/delta(rio+wio)
+%util:      一秒中有百分之多少的时间用于 I/O 操作,或者说一秒中有多少时间 I/O 队列是非空的.即 delta(use)/s/1000 (因为use的单位为毫秒)
+
+如果 %util 接近 100%,说明产生的I/O请求太多,I/O系统已经满负荷,该磁盘可能存在瓶颈.
+
+idle小于70% IO压力就较大了,一般读取速度有较多的wait.同时可以结合vmstat 查看查看b参数(等待资源的进程数)和wa参数(IO等待所占用的CPU时间的百分比,高过30%时IO压力高)
+
+另外 await 的参数也要多和 svctm 来参考.差的过高就一定有 IO 的问题.一般地系统IO响应时间(await)应该低于5ms，如果大于10ms就比较大了.
+
+avgqu-sz 也是个做 IO 调优时需要注意的地方,这个就是直接每次操作的数据的大小,如果次数多,但数据拿的小的话,其实 IO 也会很小.如果数据拿的大,才IO 的数据会高.也可以通过 avgqu-sz × ( r/s or w/s ) = rsec/s or wsec/s.也就是讲,读定速度是这个来决定的.
+
+一个不错的例子.(I/O 系统 vs. 超市排队)
+
+举一个例子,我们在超市排队 checkout 时,怎么决定该去哪个交款台呢?
+    首当是看排的队人数,5个人总比20人要快吧?
+    除了数人头,我们也常常看看前面人购买的东西多少,如果前面有个采购了一星期食品的大妈,那么可以考虑换个队排了.
+    还有就是收银员的速度了,如果碰上了连 钱都点不清楚的新手,那就有的等了.
+    另外,时机也很重要,可能 5 分钟前还人满为患的收款台,现在已是人去楼空,这时候交款可是很爽啊,当然,前提是那过去的 5 分钟里所做的事情比排队要有意义
+
+I/O 系统也和超市排队有很多类似之处:
+    r/s+w/s 类似于交款人的总数
+
+    平均队列长度(avgqu-sz)类似于单位时间里平均排队人的个数
+
+    平均服务时间(svctm)类似于收银员的收款速度
+
+    平均等待时间(await)类似于平均每人的等待时间
+
+    平均I/O数据(avgrq-sz)类似于平均每人所买的东西多少
+
+    I/O 操作率 (%util)类似于收款台前有人排队的时间比例.
+
+我们可以根据这些数据分析出 I/O 请求的模式,以及 I/O 的速度和响应时间.
+
+&gt; 下面是别人写的这个参数输出的分析
+
+
+// # iostat -x 1
+avg-cpu: %user %nice %sys %idle
+16.24 0.00 4.31 79.44
+Device:              rrqm/s wrqm/s r/s   w/s    rsec/s wsec/s rkB/s  wkB/s  avgrq-sz  avgqu-sz await svctm %util
+/dev/cciss/c0d0      0.00   44.90 1.02  27.55    8.16  579.59 4.08   289.80  20.57      22.35  78.21  5.00 14.29
+
+上面的 iostat 输出表明秒有 28.57 次设备 I/O 操作: 总IO(io)/s = r/s(读) +w/s(写) = 1.02+27.55 = 28.57 (次/秒) 其中写操作占了主体 (w:r = 27:1).
+
+平均每次设备 I/O 操作只需要 5ms 就可以完成,但每个 I/O 请求却需要等上 78ms,为什么? 因为发出的 I/O 请求太多 (每秒钟约 29 个),假设这些请求是同时发出的,那么平均等待时间可以这样计算:
+
+平均等待时间 = 单个 I/O 服务时间 * ( 1 + 2 + … + 请求总数-1) / 请求总数
+
+应用到上面的例子: 平均等待时间 = 5ms * (1+2+…+28)/29 = 70ms,和 iostat 给出的78ms 的平均等待时间很接近.这反过来表明 I/O 是同时发起的.
+
+每秒发出的 I/O 请求很多 (约 29 个),平均队列却不长 (只有 2 个 左右),这表明这 29 个请求的到来并不均匀,大部分时间 I/O 是空闲的.
+
+一秒中有 14.29% 的时间 I/O 队列中是有请求的,也就是说,85.71% 的时间里 I/O 系统无事可做,所有 29 个 I/O 请求都在142毫秒之内处理掉了.
+
+delta(ruse+wuse)/delta(io) = await = 78.21 =&gt; delta(ruse+wuse)/s =78.21 * delta(io)/s = 78.21*28.57 = 2232.8,表明每秒内的I/O请求总共需要等待2232.8ms.所以平均队列长度应为 2232.8ms/1000ms = 2.23,
+而 iostat 给出的平均队列长度 (avgqu-sz) 却为 22.35,为什么?! 因为 iostat 中有 bug,avgqu-sz 值应为 2.23,而不是 22.35.
+
+
+## vmstat
+
+vmstat是Virtual Meomory Statistics（虚拟内存统计）的缩写，可实时动态监视操作系统的虚拟内存、进程、CPU活动.
+
+vmstat的语法
+　　vmstat [-V] [-n] [delay [count]]
+　　
+r,  可运行队列的线程数, 这些线程都是可运行状态, 只不过 CPU 暂时不可用.
+b,  被 blocked 的进程数, 正在等待 IO 请求；
+in, 每秒被处理过的中断数
+cs, 每秒系统上正在做上下文切换的数目
+us, 用户占用 CPU 的百分比
+sy, 内核和中断占用 CPU 的百分比
+wa, 所有可运行的线程被 blocked 以后都在等待 IO, 这时候 CPU 空闲的百分比
+id, CPU 完全空闲的百分比
+
+swpd: 使用虚拟内存大小
+free: 可用内存大小
+buff: 用作缓冲的内存大小
+cache: 用作缓存的内存大小
+
+si: 每秒从交换区写到内存的大小
+so: 每秒写入交换区的内存大小
+
+bi: 每秒读取的块数
+bo: 每秒写入的块数
+
+
+### badblocks
+
+badblock 命令用于查找磁盘中损坏的区块.
+
+badblock (options)  (参数)
+
+options:
+    -b&lt;区块大小&gt;: 指定磁盘的区块大小，单位为字节 
+    -o&lt;输出文件&gt;: 将检查的结果写入指定的输出文件 
+    -c: 每个区块检查的次数,默认是16次
+    -s: 在检查时显示进度
+    -v: 执行时显示详细的信息 
+    -w: 在检查时,执行写入测试
+ 
+ 参数:
+    磁盘装置：  指定要检查的磁盘装置 
+    磁盘区块数：指定磁盘装置的区块总数 
+    启始区块：  指定要从哪个区块开始检查
+
+// 检查硬盘是否产生坏道并输出到badblocks.log中    
+badblocks -s -v -o /root/badblocks.log /dev/sda
+
+ 
+// badblocks以4096字节为一个“block”,每一个“block”检查1次, 将结果输出到“hda-badblocks-list.1”文件中，由第51000 block开始，到63000 block结束
+badblocks -b 4096 -c 1 /dev/hda1 -o hda-badblocks-list.1 63000 51000
+
+&gt; 利用硬盘的重分配特性修复坏道
+
+
+1) 硬盘上的芯片存有一个GList，里面存储着盘面上的坏道信息，当读写到其记录的地址时会自动重映射另一个地址来代替损坏的区域. 
+而往其中添加内容很简单：只要往坏道上写数据（读不行），硬盘会自动重映射.
+
+badblocks -w [-f] /dev/sdXX [-s -b4096] end start
+
+    -w：写入命令, 通过在坏道地址强制写入来让硬盘自动重映射.
+    -f：强制写入, 在已确定目标不被系统读写而-w仍然拒绝写入时使用.这个参数应该尽量避免！
+    end,start：强制写入的开始和终止块地址, 与-b制定的大小相配和.
+    
+2) 使用fsck -a /dev/sda1
+
+
+磁盘坏道分为三种：0磁道坏道，逻辑坏道，硬盘坏道。
+    
+    其中逻辑坏道可以使用上面的方法修复，0磁道坏道的修复方法是隔离0磁道，使用fdsk划分区的时候从1磁道开始划分区。
+    
+    如果是硬盘坏道的话，只能隔离不能修复。
+    
+    硬盘坏道的监测方法：使用上述方法检测修复后，再使用badblocks -s -v -o /root/badblocks.log /dev/sda监测看是否还有坏道存在，如果坏道还是存在的话说明坏道属于硬盘坏道。
+    
+    硬盘坏道隔离方法，首先记录监测出的硬盘坏道，然后分区的时候把硬盘坏道所在的扇区分在一个分区（大小一般大于坏扇区大小），划分出的坏道分区不使用即可达到隔离的目的。隔离只是暂时方案，建议尽快更换硬盘，因为坏道会扩散，以免以后出现严重的数据问题。
+
+		
+		
+		
+		
+		</pre>
+	</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="mcelog.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sms.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">12.2. mcelog - Decode kernel machine check log on x86 machines </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 14 章 SMS</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script><script xmlns="" type="text/javascript" src="/js/q.js" async="async"></script></body></html>

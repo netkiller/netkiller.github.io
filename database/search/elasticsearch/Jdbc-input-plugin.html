@@ -1,0 +1,356 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>23.8. Migrating MySQL Data into Elasticsearch using logstash</title><link rel="stylesheet" type="text/css" href="../..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><meta name="keywords" content="MySQL, PostgreSQL, Oracle, NoSQL, ER, TokyoCabinet/Tyrant, Memcache, Membase, Redis, Flare, Voldemort, LevelDB, MongoDB, GreenSQL, RDBMS, ORDBMS" /><link rel="home" href="../../index.html" title="Netkiller Database 手札" /><link rel="up" href="index.html" title="第 23 章 Elasticsearch" /><link rel="prev" href="example.html" title="23.7. Example" /><link rel="next" href="install.html" title="23.9. 安装 Elasticsearch 2.3" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
+		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">23.8. Migrating MySQL Data into Elasticsearch using logstash</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="example.html">上一页</a> </td><th width="60%" align="center">第 23 章 Elasticsearch</th><td width="20%" align="right"> <a accesskey="n" href="install.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="Jdbc-input-plugin"></a>23.8. Migrating MySQL Data into Elasticsearch using logstash</h2></div></div></div>
+		
+		<p>https://www.elastic.co/guide/en/logstash/current/plugins-inputs-jdbc.html</p>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp123"></a>23.8.1. 安装 logstash</h3></div></div></div>
+			
+			<p>安装 JDBC 驱动 和 Logstash </p>
+			<pre class="screen">
+curl -s https://raw.githubusercontent.com/oscm/shell/master/database/mysql/5.7/mysql-connector-java.sh	 | bash			
+curl -s https://raw.githubusercontent.com/oscm/shell/master/log/kibana/logstash-5.x.sh | bash
+			</pre>
+			<p>mysql 驱动文件位置在 /usr/share/java/mysql-connector-java.jar </p>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp124"></a>23.8.2. 配置 logstash</h3></div></div></div>
+			
+			<p>创建配置文件 /etc/logstash/conf.d/jdbc-mysql.conf</p>
+			<pre class="screen">
+			
+mysql&gt; desc article;
++-------------+--------------+------+-----+---------+-------+
+| Field       | Type         | Null | Key | Default | Extra |
++-------------+--------------+------+-----+---------+-------+
+| id          | int(11)      | NO   |     | 0       |       |
+| title       | mediumtext   | NO   |     | NULL    |       |
+| description | mediumtext   | YES  |     | NULL    |       |
+| author      | varchar(100) | YES  |     | NULL    |       |
+| source      | varchar(100) | YES  |     | NULL    |       |
+| ctime       | datetime     | NO   |     | NULL    |       |
+| content     | longtext     | YES  |     | NULL    |       |
++-------------+--------------+------+-----+---------+-------+
+7 rows in set (0.00 sec)
+			
+			</pre>
+			<pre class="screen">
+			
+input {
+  jdbc {
+    jdbc_driver_library =&gt; "/usr/share/java/mysql-connector-java.jar"
+    jdbc_driver_class =&gt; "com.mysql.jdbc.Driver"
+    jdbc_connection_string =&gt; "jdbc:mysql://localhost:3306/cms"
+    jdbc_user =&gt; "cms"
+    jdbc_password =&gt; "password"
+    schedule =&gt; "* * * * *"
+    statement =&gt; "select * from article"
+  }
+}
+output {
+    elasticsearch {
+    		hosts =&gt; "localhost:9200"
+        index =&gt; "information"
+        document_type =&gt; "article"
+        document_id =&gt; "%{id}"
+        
+    }
+}
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp125"></a>23.8.3. 启动 Logstash</h3></div></div></div>
+			
+			<pre class="screen">
+			
+root@netkiller /var/log/logstash % systemctl restart logstash
+
+root@netkiller /var/log/logstash % systemctl status logstash
+● logstash.service - logstash
+   Loaded: loaded (/etc/systemd/system/logstash.service; enabled; vendor preset: disabled)
+   Active: active (running) since Mon 2017-07-31 09:35:00 CST; 11s ago
+ Main PID: 10434 (java)
+   CGroup: /system.slice/logstash.service
+           └─10434 /usr/bin/java -XX:+UseParNewGC -XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=75 -XX:+UseCMSInitiatingOccupancyOnly -XX:+DisableExplicitGC -Djava.awt.headless=true -Dfi...
+
+Jul 31 09:35:00 VM_3_2_centos systemd[1]: Started logstash.
+Jul 31 09:35:00 VM_3_2_centos systemd[1]: Starting logstash...
+			
+root@netkiller /var/log/logstash % cat logstash-plain.log 
+[2017-07-31T09:35:28,169][INFO ][logstash.outputs.elasticsearch] Elasticsearch pool URLs updated {:changes=&gt;{:removed=&gt;[], :added=&gt;[http://localhost:9200/]}}
+[2017-07-31T09:35:28,172][INFO ][logstash.outputs.elasticsearch] Running health check to see if an Elasticsearch connection is working {:healthcheck_url=&gt;http://localhost:9200/, :path=&gt;"/"}
+[2017-07-31T09:35:28,298][WARN ][logstash.outputs.elasticsearch] Restored connection to ES instance {:url=&gt;#&lt;Java::JavaNet::URI:0x453a18e9&gt;}
+[2017-07-31T09:35:28,299][INFO ][logstash.outputs.elasticsearch] Using mapping template from {:path=&gt;nil}
+[2017-07-31T09:35:28,337][INFO ][logstash.outputs.elasticsearch] Attempting to install template {:manage_template=&gt;{"template"=&gt;"logstash-*", "version"=&gt;50001, "settings"=&gt;{"index.refresh_interval"=&gt;"5s"}, "mappings"=&gt;{"_default_"=&gt;{"_all"=&gt;{"enabled"=&gt;true, "norms"=&gt;false}, "dynamic_templates"=&gt;[{"message_field"=&gt;{"path_match"=&gt;"message", "match_mapping_type"=&gt;"string", "mapping"=&gt;{"type"=&gt;"text", "norms"=&gt;false}}}, {"string_fields"=&gt;{"match"=&gt;"*", "match_mapping_type"=&gt;"string", "mapping"=&gt;{"type"=&gt;"text", "norms"=&gt;false, "fields"=&gt;{"keyword"=&gt;{"type"=&gt;"keyword", "ignore_above"=&gt;256}}}}}], "properties"=&gt;{"@timestamp"=&gt;{"type"=&gt;"date", "include_in_all"=&gt;false}, "@version"=&gt;{"type"=&gt;"keyword", "include_in_all"=&gt;false}, "geoip"=&gt;{"dynamic"=&gt;true, "properties"=&gt;{"ip"=&gt;{"type"=&gt;"ip"}, "location"=&gt;{"type"=&gt;"geo_point"}, "latitude"=&gt;{"type"=&gt;"half_float"}, "longitude"=&gt;{"type"=&gt;"half_float"}}}}}}}}
+[2017-07-31T09:35:28,344][INFO ][logstash.outputs.elasticsearch] Installing elasticsearch template to _template/logstash
+[2017-07-31T09:35:28,465][INFO ][logstash.outputs.elasticsearch] New Elasticsearch output {:class=&gt;"LogStash::Outputs::ElasticSearch", :hosts=&gt;[#&lt;Java::JavaNet::URI:0x66df34ae&gt;]}
+[2017-07-31T09:35:28,483][INFO ][logstash.pipeline        ] Starting pipeline {"id"=&gt;"main", "pipeline.workers"=&gt;8, "pipeline.batch.size"=&gt;125, "pipeline.batch.delay"=&gt;5, "pipeline.max_inflight"=&gt;1000}
+[2017-07-31T09:35:29,562][INFO ][logstash.pipeline        ] Pipeline main started
+[2017-07-31T09:35:29,700][INFO ][logstash.agent           ] Successfully started Logstash API endpoint {:port=&gt;9600}
+[2017-07-31T09:36:01,019][INFO ][logstash.inputs.jdbc     ] (0.006000s) select * from article	
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp126"></a>23.8.4. 验证</h3></div></div></div>
+			
+			<pre class="screen">
+			
+% curl -XGET 'http://localhost:9200/_all/_search?pretty'
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp134"></a>23.8.5. 配置模板</h3></div></div></div>
+			
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp127"></a>23.8.5.1. 全量导入</h4></div></div></div>
+				
+				<p>适合数据没有改变的归档数据或者只能增加没有修改的数据</p>
+				<pre class="screen">
+				
+input {
+  jdbc {
+    jdbc_driver_library =&gt; "/usr/share/java/mysql-connector-java.jar"
+    jdbc_driver_class =&gt; "com.mysql.jdbc.Driver"
+    jdbc_connection_string =&gt; "jdbc:mysql://localhost:3306/cms"
+    jdbc_user =&gt; "cms"
+    jdbc_password =&gt; "password"
+    schedule =&gt; "* * * * *"
+    statement =&gt; "select * from article"
+  }
+}
+output {
+    elasticsearch {
+    		hosts =&gt; "localhost:9200"
+        index =&gt; "information"
+        document_type =&gt; "article"
+        document_id =&gt; "%{id}"
+        
+    }
+}
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp128"></a>23.8.5.2. 多表导入</h4></div></div></div>
+				
+				<p>多张数据表导入到 Elasticsearch</p>
+				<pre class="screen">
+				
+# multiple inputs on logstash jdbc
+
+input {
+  jdbc {
+    jdbc_driver_library =&gt; "/usr/share/java/mysql-connector-java.jar"
+    jdbc_driver_class =&gt; "com.mysql.jdbc.Driver"
+    jdbc_connection_string =&gt; "jdbc:mysql://localhost:3306/cms"
+    jdbc_user =&gt; "cms"
+    jdbc_password =&gt; "password"
+    schedule =&gt; "* * * * *"
+    statement =&gt; "select * from article"
+    type =&gt; "article"
+  }
+  jdbc {
+    jdbc_driver_library =&gt; "/usr/share/java/mysql-connector-java.jar"
+    jdbc_driver_class =&gt; "com.mysql.jdbc.Driver"
+    jdbc_connection_string =&gt; "jdbc:mysql://localhost:3306/cms"
+    jdbc_user =&gt; "cms"
+    jdbc_password =&gt; "password"
+    schedule =&gt; "* * * * *"
+    statement =&gt; "select * from comment"
+    type =&gt; "comment"
+  } 
+}
+output {
+    elasticsearch {
+    		hosts =&gt; "localhost:9200"
+        index =&gt; "information"
+        document_type =&gt; "%{type}"
+        document_id =&gt; "%{id}"
+        
+    }
+}				
+				
+				</pre>
+				<p>需要在每一个jdbc配置项中加入 type 配置，然后 elasticsearch 配置项中加入 document_type =&gt; "%{type}" </p>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp129"></a>23.8.5.3. 通过 ID 主键字段增量复制数据</h4></div></div></div>
+				
+				<pre class="screen">
+				
+input {
+  jdbc {
+    statement =&gt; "SELECT id, mycolumn1, mycolumn2 FROM my_table WHERE id &gt; :sql_last_value"
+    use_column_value =&gt; true
+    tracking_column =&gt; "id"
+    tracking_column_type =&gt; "numeric"
+    # ... other configuration bits
+  }
+}
+				
+				</pre>
+				<p>tracking_column_type =&gt; "numeric" 可以声明 id 字段的数据类型, 如果不指定将会默认为日期</p>
+				<pre class="screen">
+[2017-07-31T11:08:00,193][INFO ][logstash.inputs.jdbc     ] (0.020000s) select * from article where id &gt; '2017-07-31 02:47:00'
+				</pre>
+				<p>如果复制不对称可以加入 clean_run =&gt; true 配置项，清楚数据</p>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp130"></a>23.8.5.4. 通过日期字段增量复制数据</h4></div></div></div>
+				
+				<pre class="screen">
+				
+input {
+  jdbc {
+    statement =&gt; "SELECT * FROM my_table WHERE create_date &gt; :sql_last_value"
+    use_column_value =&gt; true
+    tracking_column =&gt; "create_date"
+    # ... other configuration bits
+  }
+}
+				
+				</pre>
+				<p>如果复制不对称可以加入 clean_run =&gt; true 配置项，清楚数据</p>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp131"></a>23.8.5.5. 指定SQL文件</h4></div></div></div>
+				
+				<p>statement_filepath 指定 SQL 文件，有时SQL太复杂写入 statement 配置项维护部方便，可以将 SQL 写入一个文本文件，然后使用 statement_filepath 配置项引用该文件。</p>
+				<pre class="screen">
+				
+input {
+    jdbc {
+        jdbc_driver_library =&gt; "/path/to/driver.jar"
+        jdbc_driver_class =&gt; "org.postgresql.Driver"
+        jdbc_url =&gt; "jdbc://postgresql"
+        jdbc_user =&gt; "neo"
+        jdbc_password =&gt; "password"
+        statement_filepath =&gt; "query.sql"
+    }
+}				
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp132"></a>23.8.5.6. 参数传递</h4></div></div></div>
+				
+				<p>将需要复制的条件参数写入 parameters 配置项</p>
+				<pre class="screen">
+				
+input {
+  jdbc {
+    jdbc_driver_library =&gt; "mysql-connector-java-5.1.36-bin.jar"
+    jdbc_driver_class =&gt; "com.mysql.jdbc.Driver"
+    jdbc_connection_string =&gt; "jdbc:mysql://localhost:3306/mydb"
+    jdbc_user =&gt; "mysql"
+    parameters =&gt; { "favorite_artist" =&gt; "Beethoven" }
+    schedule =&gt; "* * * * *"
+    statement =&gt; "SELECT * from songs where artist = :favorite_artist"
+  }
+}				
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp133"></a>23.8.5.7. 控制返回JDBC数据量</h4></div></div></div>
+				
+				<pre class="screen">
+	jdbc_fetch_size =&gt; 1000  #jdbc获取数据的数量大小
+	jdbc_page_size =&gt; 1000 #jdbc一页的大小，
+	jdbc_paging_enabled =&gt; true  #和jdbc_page_size组合，将statement的查询分解成多个查询,相当于: SELECT * FROM table LIMIT 1000 OFFSET 4000 				
+				</pre>
+			</div>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp135"></a>23.8.6. example</h3></div></div></div>
+			
+			<p>下面的例子实现了新数据复制，旧数据更新</p>
+			<pre class="screen">
+			
+input {
+  jdbc {
+    jdbc_driver_library =&gt; "/usr/share/java/mysql-connector-java.jar"
+    jdbc_driver_class =&gt; "com.mysql.jdbc.Driver"
+    jdbc_connection_string =&gt; "jdbc:mysql://localhost:3306/cms"
+    jdbc_user =&gt; "cms"
+    jdbc_password =&gt; "password"
+    schedule =&gt; "* * * * *"	#定时cron的表达式,这里是每分钟执行一次
+    statement =&gt; "select id, title, description, author, source, ctime, content from article where id &gt; :sql_last_value"
+    use_column_value =&gt; true
+    tracking_column =&gt; "id"
+    tracking_column_type =&gt; "numeric" 
+    record_last_run =&gt; true
+    last_run_metadata_path =&gt; "/var/tmp/article.last"
+  }
+  jdbc {
+    jdbc_driver_library =&gt; "/usr/share/java/mysql-connector-java.jar"
+    jdbc_driver_class =&gt; "com.mysql.jdbc.Driver"
+    jdbc_connection_string =&gt; "jdbc:mysql://localhost:3306/cms"
+    jdbc_user =&gt; "cms"
+    jdbc_password =&gt; "password"
+    schedule =&gt; "* * * * *"	#定时cron的表达式,这里是每分钟执行一次
+    statement =&gt; "select * from article where ctime &gt; :sql_last_value"
+    use_column_value =&gt; true
+    tracking_column =&gt; "ctime"
+    tracking_column_type =&gt; "timestamp" 
+    record_last_run =&gt; true
+    last_run_metadata_path =&gt; "/var/tmp/article-ctime.last"
+  }
+}
+output {
+    elasticsearch {
+    		hosts =&gt; "localhost:9200"
+        index =&gt; "information"
+        document_type =&gt; "article"
+        document_id =&gt; "%{id}"
+        action =&gt; "update"　 # 操作执行的动作,可选值有["index", "delete", "create", "update"]
+        doc_as_upsert =&gt; true  #支持update模式
+    }
+}
+			
+			</pre>
+		</div>
+	</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="example.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="install.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">23.7. Example </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 23.9. 安装 Elasticsearch 2.3</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script><script xmlns="" type="text/javascript" src="/js/q.js" async="async"></script></body></html>
