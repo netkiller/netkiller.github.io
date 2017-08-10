@@ -12,7 +12,7 @@
 	    <a xmlns="" href="/search.html">Search</a> |
 		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">1.3. redis-cli - Command-line client to redis-server</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="redis.conf.html">上一页</a> </td><th width="60%" align="center">第 1 章 Redis</th><td width="20%" align="right"> <a accesskey="n" href="redis-benchmark.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="redis-cli"></a>1.3. redis-cli - Command-line client to redis-server</h2></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp10"></a>1.3.1. 命令参数</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="redis-cli.args"></a>1.3.1. 命令参数</h3></div></div></div>
 			
 			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp8"></a>1.3.1.1. password</h4></div></div></div>
 				
@@ -192,7 +192,10 @@ OK
 				
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="set"></a>1.3.9. set/get/del</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="redis.string"></a>1.3.9. 字符串操作</h3></div></div></div>
+			
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="set"></a>1.3.9.1. set/get/del</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -209,7 +212,7 @@ OK
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="setnx"></a>1.3.10. setnx</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="setnx"></a>1.3.9.2. setnx</h4></div></div></div>
 			
 			<span class="command"><strong>SETNX key value</strong></span>
 			<p>当 key 不存在时将 key 的值设为 value，若给定的 key 已经存在，则 SETNX 不做任何动作。SETNX 是(SET if Not eXists) (如果不存在，则 SET)的简写。</p>
@@ -233,7 +236,182 @@ redis&gt; GET neo                # 没有被覆盖
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="expire"></a>1.3.11. expire/ttl</h3></div></div></div>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="redis.list"></a>1.3.10. LIST 数据类型</h3></div></div></div>
+			
+			<p>获取 list 列表长度</p>
+			<pre class="screen">
+			
+127.0.0.1:6379&gt; TYPE "logstash:redis"
+list
+127.0.0.1:6379&gt; LLEN "logstash:redis"
+(integer) 69
+127.0.0.1:6379&gt; lpop "logstash:redis"
+127.0.0.1:6379&gt; 	
+127.0.0.1:6379&gt; LLEN "logstash:redis"
+(integer) 68
+			
+			</pre>
+			<pre class="screen">
+			
+1. LPUSH/LPUSHX/LRANGE:
+/&gt; redis-cli    #在Shell提示符下启动redis客户端工具。
+redis 127.0.0.1:6379&gt; del queue:test
+(integer) 1
+#queue:test键并不存在，该命令会创建该键及与其关联的List，之后在将参数中的values从左到右依次插入。
+redis 127.0.0.1:6379&gt; lpush queue:test a b c d
+(integer) 4
+#取从位置0开始到位置2结束的3个元素。
+redis 127.0.0.1:6379&gt; lrange queue:test 0 2
+1) "d"
+2) "c"
+3) "b"
+#取链表中的全部元素，其中0表示第一个元素，-1表示最后一个元素。
+redis 127.0.0.1:6379&gt; lrange queue:test 0 -1
+1) "d"
+2) "c"
+3) "b"
+4) "a"
+#queue:test2键此时并不存在，因此该命令将不会进行任何操作，其返回值为0。
+redis 127.0.0.1:6379&gt; lpushx queue:test2 e
+(integer) 0
+#可以看到queue:test2没有关联任何List Value。
+redis 127.0.0.1:6379&gt; lrange queue:test2 0 -1
+(empty list or set)
+#queue:test键此时已经存在，所以该命令插入成功，并返回链表中当前元素的数量。
+redis 127.0.0.1:6379&gt; lpushx queue:test e
+(integer) 5
+#获取该键的List Value的头部元素。
+redis 127.0.0.1:6379&gt; lrange queue:test 0 0
+1) "e"
+
+2. LPOP/LLEN:
+redis 127.0.0.1:6379&gt; lpush queue:test a b c d
+(integer) 4
+redis 127.0.0.1:6379&gt; lpop queue:test
+"d"
+redis 127.0.0.1:6379&gt; lpop queue:test
+"c"
+#在执行lpop命令两次后，链表头部的两个元素已经被弹出，此时链表中元素的数量是2
+redis 127.0.0.1:6379&gt; llen queue:test
+(integer) 2
+
+3. LREM/LSET/LINDEX/LTRIM:
+#为后面的示例准备测试数据。
+redis 127.0.0.1:6379&gt; lpush queue:test a b c d a c
+(integer) 6
+#从头部(left)向尾部(right)变量链表，删除2个值等于a的元素，返回值为实际删除的数量。
+redis 127.0.0.1:6379&gt; lrem queue:test 2 a
+(integer) 2
+#看出删除后链表中的全部元素。
+redis 127.0.0.1:6379&gt; lrange queue:test 0 -1
+1) "c"
+2) "d"
+3) "c"
+4) "b"
+#获取索引值为1(头部的第二个元素)的元素值。
+redis 127.0.0.1:6379&gt; lindex queue:test 1
+"d"
+#将索引值为1(头部的第二个元素)的元素值设置为新值e。
+redis 127.0.0.1:6379&gt; lset queue:test 1 e
+OK
+#查看是否设置成功。
+redis 127.0.0.1:6379&gt; lindex queue:test 1
+"e"
+#索引值6超过了链表中元素的数量，该命令返回nil。
+redis 127.0.0.1:6379&gt; lindex queue:test 6
+(nil)
+#设置的索引值6超过了链表中元素的数量，设置失败，该命令返回错误信息。
+redis 127.0.0.1:6379&gt; lset queue:test 6 hh
+(error) ERR index out of range
+#仅保留索引值0到2之间的3个元素，注意第0个和第2个元素均被保留。
+redis 127.0.0.1:6379&gt; ltrim queue:test 0 2
+OK
+#查看trim后的结果。
+redis 127.0.0.1:6379&gt; lrange queue:test 0 -1
+1) "c"
+2) "e"
+3) "c"
+
+4. LINSERT:
+#删除该键便于后面的测试。
+redis 127.0.0.1:6379&gt; del queue:test
+(integer) 1
+#为后面的示例准备测试数据。
+redis 127.0.0.1:6379&gt; lpush queue:test a b c d e
+(integer) 5
+#在a的前面插入新元素a1。
+redis 127.0.0.1:6379&gt; linsert queue:test before a a1
+(integer) 6
+#查看是否插入成功，从结果看已经插入。注意lindex的index值是0-based。
+redis 127.0.0.1:6379&gt; lindex queue:test 0
+"e"
+#在e的后面插入新元素e2，从返回结果看已经插入成功。
+redis 127.0.0.1:6379&gt; linsert queue:test after e e2
+(integer) 7
+#再次查看是否插入成功。
+redis 127.0.0.1:6379&gt; lindex queue:test 1
+"e2"
+#在不存在的元素之前或之后插入新元素，该命令操作失败，并返回-1。
+redis 127.0.0.1:6379&gt; linsert queue:test after k a
+(integer) -1
+#为不存在的Key插入新元素，该命令操作失败，返回0。
+redis 127.0.0.1:6379&gt; linsert queue:test1 after a a2
+(integer) 0
+
+5. RPUSH/RPUSHX/RPOP/RPOPLPUSH:
+#删除该键，以便于后面的测试。
+redis 127.0.0.1:6379&gt; del queue:test
+(integer) 1
+#从链表的尾部插入参数中给出的values，插入顺序是从左到右依次插入。
+redis 127.0.0.1:6379&gt; rpush queue:test a b c d
+(integer) 4
+#通过lrange的可以获悉rpush在插入多值时的插入顺序。
+redis 127.0.0.1:6379&gt; lrange queue:test 0 -1
+1) "a"
+2) "b"
+3) "c"
+4) "d"
+#该键已经存在并且包含4个元素，rpushx命令将执行成功，并将元素e插入到链表的尾部。
+redis 127.0.0.1:6379&gt; rpushx queue:test e
+(integer) 5
+#通过lindex命令可以看出之前的rpushx命令确实执行成功，因为索引值为4的元素已经是新元素了。
+redis 127.0.0.1:6379&gt; lindex queue:test 4
+"e"
+#由于queue:test2键并不存在，因此该命令不会插入数据，其返回值为0。
+redis 127.0.0.1:6379&gt; rpushx queue:test2 e
+(integer) 0
+#在执行rpoplpush命令前，先看一下queue:test中链表的元素有哪些，注意他们的位置关系。
+redis 127.0.0.1:6379&gt; lrange queue:test 0 -1
+1) "a"
+2) "b"
+3) "c"
+4) "d"
+5) "e"
+#将queue:test的尾部元素e弹出，同时再插入到queue:test2的头部(原子性的完成这两步操作)。
+redis 127.0.0.1:6379&gt; rpoplpush queue:test queue:test2
+"e"
+#通过lrange命令查看queue:test在弹出尾部元素后的结果。
+redis 127.0.0.1:6379&gt; lrange queue:test 0 -1
+1) "a"
+2) "b"
+3) "c"
+4) "d"
+#通过lrange命令查看queue:test2在插入元素后的结果。
+redis 127.0.0.1:6379&gt; lrange queue:test2 0 -1
+1) "e"
+#将source和destination设为同一键，将queue:test中的尾部元素移到其头部。
+redis 127.0.0.1:6379&gt; rpoplpush queue:test queue:test
+"d"
+#查看移动结果。
+redis 127.0.0.1:6379&gt; lrange queue:test 0 -1
+1) "d"
+2) "a"
+3) "b"
+4) "c"			
+			
+			</pre>
+		</div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="expire"></a>1.3.11. expire/ttl</h3></div></div></div>
 			
 			<p>EXPIRE 设置过期时间, TTL 可以查询过期时间倒计时。</p>
 			<pre class="screen">
@@ -302,7 +480,28 @@ Reading messages... (press Ctrl-C to quit)
 3) "Helloworld!!!"
 			</pre>
 		</div>
-
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="flushdb"></a>1.3.13. flushdb 清空 Redis 数据</h3></div></div></div> 
+			
+			<pre class="screen">
+			
+root@netkiller ~ % redis-cli 
+127.0.0.1:6379&gt; flushdb
+OK
+127.0.0.1:6379&gt; 			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="TYPE"></a>1.3.14. 获取 key 类型</h3></div></div></div>
+			
+			<pre class="screen">
+			
+root@netkiller ~ % redis-cli 
+127.0.0.1:6379&gt; TYPE "logstash:redis"
+list		
+			
+			</pre>
+		</div>
+		
 	</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
 
 var disqus_config = function () {

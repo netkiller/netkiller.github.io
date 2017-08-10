@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>5.13. flock - manage locks from shell scripts</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><meta name="keywords" content="shell,bash,zsh, awk,sed,curl,expect, grep,sort" /><link rel="home" href="../index.html" title="Netkiller Linux Shell 手札" /><link rel="up" href="index.html" title="第 5 章 Shell command" /><link rel="prev" href="io.html" title="5.12. standard input/output" /><link rel="next" href="log.html" title="5.14. Logging" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
+		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">5.13. flock - manage locks from shell scripts</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="io.html">上一页</a> </td><th width="60%" align="center">第 5 章 Shell command</th><td width="20%" align="right"> <a accesskey="n" href="log.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="flock"></a>5.13. flock - manage locks from shell scripts</h2></div></div></div>
+	
+	<pre class="screen">
+	
+### flock
+
+    当多个进程可能会对同样的数据执行操作时,这些进程需要保证其它进程没有在操作,以免损坏数据.通常,这样的进程会使用一个“锁文件”,也就是建立一个文件来告诉别的进程自己在运行,如果检测到那个文件存在则认为有操作同样数据的进程在工作.
+	这样的问题是,进程不小心意外死亡了,没有清理掉那个锁文件,那么只能由用户手动来清理了.
+
+	flock 是对于整个文件的建议性锁;也就是说如果一个进程在一个文件(inode)上放了锁,那么其它进程是可以知道的,(建议性锁不强求进程遵守)最棒的一点是,它的第一个参数是文件描述符,在此文件描述符关闭时,锁会自动释放;而当进程终止时,所有的文件描述符均会被关闭.于是,很多时候就不用考虑解锁的事情.
+
+flock分为两种锁：
+	一种是共享锁 使用-s参数
+	一种是独享锁 使用-x参数
+
+选项和参数：
+-s  --shared：获取一个共享锁,在定向为某文件的FD上设置共享锁而未释放锁的时间内,其他进程试图在定向为此文件的FD上设置独占锁的请求失败,而其他进程试图在定向为此文件的FD上设置共享锁的请求会成功.
+-x，-e，--exclusive：获取一个排它锁,或者称为写入锁,为默认项
+-u，--unlock： 手动释放锁,一般情况不必须,当FD关闭时,系统会自动解锁,此参数用于脚本命令一部分需要异步执行,一部分可以同步执行的情况.
+-n，--nb, --nonblock：非阻塞模式,当获取锁失败时,返回1而不是等待.
+-w, --wait, --timeout seconds : 设置阻塞超时,当超过设置的秒数时,退出阻塞模式,返回1,并继续执行后面的语句.
+-o, --close : 表示当执行command前关闭设置锁的FD,以使command的子进程不保持锁.
+-c, --command command : 在shell中执行其后的语句.
+
+&lt;&gt;打开${LOCK_FILE} (打开LOCK_FILE文件,与文件描述符101绑定),原因是定向文件描述符是先于命令执行的.因此假如在您要执行的语句段中需要读 LOCK_FILE 文件,例如想获得上一个脚本实例的pid,并将此次的脚本实例的pid写入 LOCK_FILE ,此时直接用&gt;打开 LOCK_FILE 会清空上次存入的内容,而用&lt;打开 LOCK_FILE 当它不存在时会导致一个错误.
+
+#### example
+&gt; ntp 
+
+
+#!/bin/bash
+#
+#author junun
+#description this script for start or stop check sever time from an ntp server every 1s
+#please add in /etc/rc.local 
+#
+script_0=$0
+script_name=${script_0##*/}
+lockfile=/var/lock/subsys/$script_name
+pidfile=/var/run/$script_name
+
+start() {
+    [ -f $lockfile ] &amp;&amp; echo  -e "\033[31m$script_name is running...\033[0m" &amp;&amp;  exit 1
+    while true ;do
+        /usr/sbin/ntpdate clock.isc.org &gt; /dev/null 2&gt;&amp;1
+        echo $$ &gt; $pidfile
+        touch $lockfile
+        sleep 1
+    done
+}
+
+stop() {
+    [ ! -f $lockfile ] &amp;&amp; echo  -e "\033[31m$script_name is not running...\033[0m" &amp;&amp;  exit 1
+    kill -TERM `cat $pidfile`
+    rm -rf $lockfile
+}
+
+case "$1" in
+    start)
+        $1
+        ;;
+    stop)
+        $1
+        ;;
+    *)
+      echo $"Usage: $0 {start|stop}"
+      exit 2
+esac
+exit $?
+
+*/10 * * * * /usr/bin/flock -xn /var/run/check_time.lock -c '/usr/local/bin/monitor/check_time start &amp;' &gt; /dev/null 2&gt;&amp;1
+
+&gt;2 monitor
+
+
+#!/bin/bash
+#
+#
+
+SHELL_DIR=$(cd $(dirname $0);pwd)
+
+LOCK_FILE=/dev/shm/`echo ${SHELL_DIR}|sed 's!/!.!g;s!.!!'`.monitor.lock
+
+{
+    flock -n 100 || { exit 2; }
+
+    cd ${SHELL_DIR}
+    function monitor() {
+        while true;do
+            ./run.sh monitor
+            sleep 3
+        done
+    }
+
+    monitor &gt;&gt; ../logs/monitor.log 2&gt;&amp;1 &amp;
+
+} 100&lt;&gt;${LOCK_FILE}
+
+
+#!/bin/bash
+#
+
+ulimit -c unlimited
+ulimit -u unlimited
+ulimit -HSn 655350
+
+SERVER_NAME='changed_order_deal'
+SHELL_DIR=$(cd $(dirname $0);pwd)
+BASE_DIR=$(cd $(dirname $0);cd ..;pwd)
+SHELL_FILE="${SHELL_DIR}/run.sh"
+SERVER_BIN=${SHELL_DIR}/${SERVER_NAME}
+LOG_DIR=${BASE_DIR}/logs
+PID_FILE=${LOG_DIR}/PID
+CONF_FILE=${BASE_DIR}/conf/${SERVER_NAME}.conf
+LOCK_FILE=/dev/shm/`echo ${SERVER_BIN}|sed 's!/!.!g;s!.!!'`.monitor.lock
+
+start() {
+    if [ ! -f "${SERVER_BIN}" ];then
+        echo `date +"%F %T"` - ERROR - Can not find ${SERVER_BIN} ...
+        exit 1
+    fi
+
+    PID=`/sbin/pidof ${SERVER_BIN}`
+    if [ x"${PID}" == x"" ];then
+        cd ${SHELL_DIR}
+        mkdir -p ${LOG_DIR}
+        nohup ${SERVER_BIN} -flagfile=${CONF_FILE} &gt;&gt; ${LOG_DIR}/${SERVER_NAME}.stdout.log 2&gt;&amp;1 &amp;
+        # place the following shell sentence right after the nohup statement
+        /sbin/pidof ${SERVER_BIN} &gt; ${PID_FILE}          #进程pid写入文件
+        echo "`date +"%F %T"` - start ${SERVER_BIN} "
+    else
+        ps aux|grep pt_auth
+        echo "`date +"%F %T"` - ERROR - PID:${PID} exist. ${SERVER_BIN} is already running."
+    fi
+}
+
+stop() {
+    PID=`cat ${PID_FILE}`
+    if [ x"${PID}" == x"" ];then
+        echo "`date +"%F %T"` - ERROR - ${SERVER_BIN} is not running..."
+    else
+        kill -15 $PID
+        while true
+        do
+            if test $( ps aux | awk '{print $2}' | grep -w "$PID" | grep -v 'grep' | wc -l ) -eq 0;then
+                echo "`date +"%F %T"` - SUCCESS - ${SERVER_BIN} has been stopped..."
+                &gt; ${PID_FILE}
+                break
+            else
+                echo "`date +"%F %T"` - wait to stop..."
+                sleep 1
+            fi
+        done
+    fi
+}
+
+kill9() {
+    PID=`cat ${PID_FILE}`
+    if [ x"${PID}" == x"" ];then
+        echo "`date +"%F %T"` - ERROR - ${SERVER_BIN} is not running..."
+        exit 1
+    else
+        kill -9 $PID
+    fi
+}
+
+restart() {
+    stop
+    start
+}
+
+monitor() {
+    check_num=`ps ax -o pid,cmd|grep "$SERVER_BIN"|grep -v grep|wc -l`
+    if [ $check_num -eq 0 ];then
+        start
+        echo `date +"%F %T"` - restart.
+    fi
+}
+
+case "$1" in
+    "start")
+      start;
+    ;;
+    "stop")
+      stop;
+    ;;
+    "restart")
+      restart;
+    ;;
+    "kill9")
+      kill9;
+    ;;
+    "monitor")
+      monitor;
+    ;;
+  *)
+    echo "Usage: $(basename "$0") start/stop/restart/kill9/monitor"
+    exit 1
+esac
+
+
+* * * * * /srv/bin/monitor.sh  &amp;&gt; /dev/null
+	
+	
+	</pre>
+</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="io.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="log.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">5.12. standard input/output </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 5.14. Logging</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script><script xmlns="" type="text/javascript" src="/js/q.js" async="async"></script></body></html>
