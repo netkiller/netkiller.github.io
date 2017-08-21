@@ -87,7 +87,7 @@ output {
 				<p>指定 Database 10</p>
 				<pre class="screen">
 				
-root@VM_3_2_centos /etc/logstash/conf.d % cat spring-boot-redis.conf 
+root@netkiller /etc/logstash/conf.d % cat spring-boot-redis.conf 
 input {
  redis {
   codec =&gt; json
@@ -181,7 +181,7 @@ output {
 		</div>
 		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="output"></a>21.4.3. output</h4></div></div></div>
 			
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp85"></a>21.4.3.1. file 写入文件</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="file"></a>21.4.3.1. file 写入文件</h5></div></div></div>
 				
 				<pre class="screen">
 				
@@ -195,15 +195,9 @@ output {
 				
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp86"></a>21.4.3.2. elasticsearch</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="elasticsearch"></a>21.4.3.2. elasticsearch</h5></div></div></div>
 				
-				<p>默认 index 格式，每日切割一个 index</p>
-				<pre class="screen">
 				
-"_index" : "logstash-2017.03.22"		
-				
-				</pre>
-				<p>可以通过 index 自定义</p>
 				<pre class="screen">
 				
 output {
@@ -215,8 +209,52 @@ output {
 }				
 				
 				</pre>
+				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp82"></a>21.4.3.2.1. 自定义 index</h6></div></div></div>
+					
+					<p>配置实现每日切割一个 index</p>
+					<pre class="screen">
+					
+index =&gt; "logstash-%{+YYYY.MM.dd}"
+
+	
+"_index" : "logstash-2017.03.22"	
+					
+					</pre>
+					<p>index 自定义 logstash-%{type}-%{+YYYY.MM.dd}</p>
+					<pre class="screen">
+					
+input {
+
+    redis {
+        data_type =&gt; "list"
+        key =&gt; "logstash:redis"
+        host =&gt; "127.0.0.1"
+        port =&gt; 6379
+        threads =&gt; 5
+        codec =&gt; "json"
+    }
+}
+filter {
+
+}
+output {
+
+    elasticsearch {
+        hosts =&gt; ["127.0.0.1:9200"]
+        index =&gt; "logstash-%{type}-%{+YYYY.MM.dd}"
+        document_type =&gt; "%{type}"
+        workers =&gt; 1
+        flush_size =&gt; 20
+        idle_flush_time =&gt; 1
+        template_overwrite =&gt; true
+    }
+    stdout{}
+}					
+					
+					</pre>
+				</div>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp87"></a>21.4.3.3. exec 执行脚本</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp83"></a>21.4.3.3. exec 执行脚本</h5></div></div></div>
 				
 				<pre class="screen">
 				
@@ -228,7 +266,7 @@ output {
 				
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp88"></a>21.4.3.4. stdout</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp84"></a>21.4.3.4. stdout</h5></div></div></div>
 				
 				<pre class="screen">
 output {

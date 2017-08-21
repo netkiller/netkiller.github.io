@@ -12,9 +12,10 @@
 	    <a xmlns="" href="/search.html">Search</a> |
 		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">21.5. Example</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="logstash.html">上一页</a> </td><th width="60%" align="center">第 21 章 ElasticSearch + Logstash + Kibana</th><td width="20%" align="right"> <a accesskey="n" href="faq.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="logstash.example"></a>21.5. Example</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp89"></a>21.5.1. Spring boot logback</h4></div></div></div>
+		<p>https://github.com/kmtong/logback-redis-appender</p>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp85"></a>21.5.1. Spring boot logback</h4></div></div></div>
 			
-			<div class="example"><a id="idp137"></a><p class="title"><strong>例 21.1. spring boot logback</strong></p><div class="example-contents">
+			<div class="example"><a id="idp134"></a><p class="title"><strong>例 21.1. spring boot logback</strong></p><div class="example-contents">
 				
 				<pre class="screen">
 				
@@ -70,7 +71,74 @@ neo@MacBook-Pro ~/deployment % cat api.netkiller.cn/src/main/resources/logback.x
 &lt;/configuration&gt;
 				
 				</pre>
+			</div></div><br class="example-break" />
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp86"></a>21.5.2. 索引切割实例</h4></div></div></div>
+			
+			<div class="example"><a id="idp135"></a><p class="title"><strong>例 21.2. Elasticsearch 索引切割示例</strong></p><div class="example-contents">
+				
 				<pre class="screen">
+				
+root@netkiller /opt/api.netkiller.cn % cat /etc/logstash/conf.d/spring-boot-redis.conf 
+input {
+ redis {
+  codec =&gt; json
+  host =&gt; "localhost"
+  port =&gt; 6379
+  db =&gt; 10
+  key =&gt; "logstash:redis"
+  data_type =&gt; "list"
+ }
+}
+
+output {
+  stdout { codec =&gt; rubydebug }
+  elasticsearch {
+    hosts =&gt; ["127.0.0.1:9200"]
+    index =&gt; "logstash-%{type}-%{+YYYY.MM.dd}"
+  }
+}
+
+				
+				</pre>
+				<pre class="screen">
+				
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;configuration&gt;
+	&lt;include resource="org/springframework/boot/logging/logback/defaults.xml" /&gt;
+	&lt;include resource="org/springframework/boot/logging/logback/file-appender.xml" /&gt;
+	&lt;property name="logstash.type" value="api" /&gt;
+	&lt;property name="logstash.tags" value="springboot" /&gt;
+	&lt;appender name="LOGSTASH" class="com.cwbase.logback.RedisAppender"&gt;
+		&lt;source&gt;application.properties&lt;/source&gt;
+		&lt;type&gt;${logstash.type}&lt;/type&gt;
+		&lt;tags&gt;${logstash.tags}&lt;/tags&gt;
+
+		&lt;host&gt;localhost&lt;/host&gt;
+		&lt;database&gt;10&lt;/database&gt;
+		&lt;key&gt;logstash:redis&lt;/key&gt;
+
+		&lt;mdc&gt;true&lt;/mdc&gt;
+		&lt;location&gt;true&lt;/location&gt;
+		&lt;callerStackIndex&gt;0&lt;/callerStackIndex&gt;
+
+	&lt;/appender&gt;
+	&lt;appender name="ASYNC" class="ch.qos.logback.classic.AsyncAppender"&gt;
+		&lt;appender-ref ref="LOGSTASH" /&gt;
+	&lt;/appender&gt;
+
+	&lt;appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender"&gt;
+		&lt;encoder&gt;
+			&lt;pattern&gt;%date{yyyy-MM-dd HH:mm:ss} %-4relative [%thread] %-5level %logger{35} : %msg %n&lt;/pattern&gt;
+		&lt;/encoder&gt;
+	&lt;/appender&gt;
+	&lt;root level="INFO"&gt;
+		&lt;appender-ref ref="STDOUT" /&gt;
+		&lt;appender-ref ref="FILE" /&gt;
+		&lt;appender-ref ref="LOGSTASH" /&gt;
+	&lt;/root&gt;
+&lt;/configuration&gt;
+				
 				
 				</pre>
 			</div></div><br class="example-break" />
