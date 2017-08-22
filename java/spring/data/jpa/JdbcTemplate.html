@@ -26,42 +26,15 @@ int count = jdbcTemplate.queryForInt("SELECT COUNT(*) FROM USER");
 		</div>
 		
 		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="queryForObject"></a>10.5.3. queryForObject</h3></div></div></div>
-			
-			<pre class="programlisting">
-	private static final Logger log = LoggerFactory.getLogger(ScheduledTasks.class);
-	private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd HH:mm:ss");
-	
-	@Autowired
-	private JdbcTemplate jdbcTemplate;
-
-	@Scheduled(initialDelay = 1000, fixedRate = 60000)
-	public void currentDate() {
-		Date date = jdbcTemplate.queryForObject("select sysdate from dual", Date.class);
-		log.info("The oracle sysdate is {}", dateFormat.format(date));
-	}			
-			</pre>
-			<pre class="programlisting">
-			
-	@Autowired
-	private JdbcTemplate jdbcTemplate;
-
-	@RequestMapping(value = "/article")
-	public @ResponseBody String dailyStats(@RequestParam Integer id) {
-		String query = "SELECT id, title, content from article where id = " + id;
-
-		return jdbcTemplate.queryForObject(query, (resultSet, i) -&gt; {
-			System.out.println(resultSet.getLong(1) + "," + resultSet.getString(2) + "," + resultSet.getString(3));
-			return (resultSet.getLong(1) + "," + resultSet.getString(2) + "," + resultSet.getString(3));
-		});
-
-	}			
-			
-			</pre>
-			<pre class="programlisting">
+					
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp315"></a>10.5.3.1. 返回整形与字符型</h4></div></div></div>
+				
+				<pre class="programlisting">
 Integer age = queryForObject("select age from emp", Integer.class);
 String name = queryForObject("select name from emp",String.class);
-			</pre>
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp315"></a>10.5.3.1. 查询 Double 类型数据库</h4></div></div></div>
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp316"></a>10.5.3.2. 查询 Double 类型数据库</h4></div></div></div>
 				
 				<pre class="programlisting">
 				
@@ -75,6 +48,74 @@ String name = queryForObject("select name from emp",String.class);
 		}
 		return result;
 	}
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp317"></a>10.5.3.3. 返回日期</h4></div></div></div>
+				
+				<p>注意 Date 是 java.util 不是 java.sql</p>
+				<pre class="programlisting">
+	private static final Logger log = LoggerFactory.getLogger(ScheduledTasks.class);
+	private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd HH:mm:ss");
+	
+	@Autowired
+	private JdbcTemplate jdbcTemplate;
+
+	@Scheduled(initialDelay = 1000, fixedRate = 60000)
+	public void currentDate() {
+		Date date = jdbcTemplate.queryForObject("select sysdate from dual", Date.class);
+		log.info("The oracle sysdate is {}", dateFormat.format(date));
+	}			
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp318"></a>10.5.3.4. 返回结果集</h4></div></div></div>
+				
+				<pre class="programlisting">
+				
+	@Autowired
+	private JdbcTemplate jdbcTemplate;
+
+	@RequestMapping(value = "/article")
+	public @ResponseBody String dailyStats(@RequestParam Integer id) {
+		String query = "SELECT id, title, content from article where id = " + id;
+
+		return jdbcTemplate.queryForObject(query, (resultSet, i) -&gt; {
+			System.out.println(resultSet.getLong(1) + "," + resultSet.getString(2) + "," + resultSet.getString(3));
+			return (resultSet.getLong(1) + "," + resultSet.getString(2) + "," + resultSet.getString(3));
+		});
+
+	}			
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp319"></a>10.5.3.5. 通过 "?" 向SQL传递参数</h4></div></div></div>
+				
+				<pre class="programlisting">
+				
+package com.example.api.restful;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.api.pojo.ResponseRestful;
+
+@RestController
+@RequestMapping("/restful/cms")
+public class CmsRestController {
+	@Autowired
+	private JdbcTemplate jdbcTemplate;
+
+	@RequestMapping(value = "/article/update/count/{articleId}", method = RequestMethod.GET, produces = { "application/xml", "application/json" })
+	public ResponseRestful updateCount(@PathVariable int articleId) {
+		String sql = "SELECT count(*) FROM cms.article WHERE id &gt; ?";
+		int count = jdbcTemplate.queryForObject(sql, new Object[] { articleId }, Integer.class);
+		return new ResponseRestful(true, 1, "文章更新", count);
+	}
+}
 				
 				</pre>
 			</div>

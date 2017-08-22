@@ -10,7 +10,8 @@
 	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
 	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
 	    <a xmlns="" href="/search.html">Search</a> |
-		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">47.3. Proxy</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="conf.html">上一页</a> </td><th width="60%" align="center">第 47 章 Nginx</th><td width="20%" align="right"> <a accesskey="n" href="module.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="proxy"></a>47.3. Proxy</h2></div></div></div>
+		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">47.3. Proxy</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="conf.html">上一页</a> </td><th width="60%" align="center">第 47 章 Nginx</th><td width="20%" align="right"> <a accesskey="n" href="module.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="ngx_http_proxy_module"></a>47.3. Proxy</h2></div><div><h3 class="subtitle">ngx_http_proxy_module</h3></div></div></div>
+	
 	
 	<pre class="screen">
 # cat /etc/nginx/nginx.conf
@@ -520,10 +521,11 @@ location / {
 }
 		</pre>
 	</div>	
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="x-forwarded-for"></a>47.3.9. X-Forwarded-For</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="proxy.x-forwarded-for"></a>47.3.9. X-Forwarded-For</h3></div></div></div>
 		
 		<pre class="screen">
-real_ip_header X-Forwarded-For;
+proxy_set_header    X-Real-IP   $remote_addr;
+proxy_set_header    X-Forwarded-For $proxy_add_x_forwarded_for;
 		</pre>
 	</div>
 	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="proxy.xsendfile"></a>47.3.10. X-Sendfile</h3></div></div></div>
@@ -563,9 +565,30 @@ proxy_set_header X-Forwarded-URI $request_uri;
 
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="proxy.example"></a>47.3.14. example</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp466"></a>47.3.14. limit_except</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp470"></a>47.3.14.1. upstream 实例</h4></div></div></div>
+		<pre class="screen">
+    location /api/ {
+
+        limit_except PUT DELETE {
+            proxy_pass http://127.0.0.1:9080;
+        }
+    }		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="proxy.geoip_country_code"></a>47.3.15. geoip_country_code</h3></div></div></div>
+		
+		<pre class="screen">
+location /google {
+    if ( $geoip_country_code ~ (RU|CN) ) {
+        proxy_pass http://www.google.hk;
+    }
+}
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="proxy.example"></a>47.3.16. example</h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp467"></a>47.3.16.1. upstream 实例</h4></div></div></div>
 			
 			<pre class="screen">
 127.0.0.1 		api.example.com
@@ -610,7 +633,7 @@ server {
 }
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp471"></a>47.3.14.2. Tomcat 实例</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp468"></a>47.3.16.2. Tomcat 实例</h4></div></div></div>
 			
 			<pre class="screen">
 server {
@@ -678,7 +701,7 @@ server {
 			<p>上面的jsessionid处理方式</p>
 		</div>
 
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="proxy.live800"></a>47.3.14.3. Nginx -&gt; Nginx -&gt; Tomcat</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="proxy.live800"></a>47.3.16.3. Nginx -&gt; Nginx -&gt; Tomcat</h4></div></div></div>
 			
 			<p>背景各种原因需要再Nginx前面再增加一层Nginx虽然需求很变态，本着学习的目的试了试。</p>
 			<p>这里还使用了 http2 加速 nginx ssl http2 -&gt; nginx ssl http2 -&gt; Tomcat 8080</p>
@@ -719,7 +742,7 @@ server {
 			<p>如果是443你需要挂在证书，需要透传cookie给目的主机，否则你将无法支持Session，应用程序需要从 X-Forwarded-For 获取IP地址。</p>
 		</div>
 	
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp472"></a>47.3.14.4. Proxy 处理 Cookie</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp469"></a>47.3.16.4. Proxy 处理 Cookie</h4></div></div></div>
 			
 			<p>下面是一个通过 proxy_pass 代理live800的案例，我们需要处理几个地方：</p>
 			<p>Host头处理，Cookie传递，替换原因页面中的域名，替换文件有html,css,xml,css,js</p>
@@ -742,7 +765,7 @@ server {
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp473"></a>47.3.14.5. Proxy 添加 CORS 头</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp470"></a>47.3.16.5. Proxy 添加 CORS 头</h4></div></div></div>
 			
 			<pre class="screen">
 			
