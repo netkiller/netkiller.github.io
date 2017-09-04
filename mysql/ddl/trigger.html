@@ -11,11 +11,12 @@
 	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
 	    <a xmlns="" href="/search.html">Search</a> |
 		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">4.8. 触发器(Trigger)</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="procedure.html">上一页</a> </td><th width="60%" align="center">第 4 章 DDL - Data Definition Language</th><td width="20%" align="right"> <a accesskey="n" href="event.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="trigger"></a>4.8. 触发器(Trigger)</h2></div></div></div>
+	
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp141"></a>4.8.1. create trigger</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp138"></a>4.8.1. create trigger</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp138"></a>4.8.1.1. Update 更新出发</h4></div></div></div>
 			
-
-			<p>history</p>
+			<p>实现 history 历史表功能，BEFORE update 做到数据库更新自动备份</p>
 			<pre class="programlisting">
 			
 CREATE TABLE user_history SELECT * FROM user WHERE 1 &lt;&gt; 1
@@ -28,10 +29,42 @@ END; //
 DELIMITER ;
 			
 			</pre>
+			<p>判断某字段数据修改满足条件后出发。</p>
+			<pre class="programlisting">
+			
+CREATE DEFINER=`dba`@`%` TRIGGER `cms`.`jc_content_BEFORE_UPDATE` BEFORE UPDATE ON `jc_content` FOR EACH ROW
+BEGIN
+	IF NEW.status = '1' THEN
+		insert into `neo`.elasticsearch_trash(id) values(OLD.content_id);
+	END IF;
+    IF NEW.status = '2' THEN
+		delete from `neo`.elasticsearch_trash where id = OLD.content_id;
+	END IF;
+END
+			
+			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp139"></a>4.8.2. drop trigger</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp139"></a>4.8.1.2. Delete 删除出发</h4></div></div></div>
 			
 			<pre class="programlisting">
+			
+CREATE DEFINER=`dba`@`%` TRIGGER `cms`.`jc_content_BEFORE_DELETE` BEFORE DELETE ON `jc_content` FOR EACH ROW
+BEGIN
+	insert into `neo`.elasticsearch_trash(id) values(OLD.content_id);
+END
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp140"></a>4.8.1.3. Insert 插入出发</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+			</pre>
+		</div>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp142"></a>4.8.2. drop trigger</h3></div></div></div>
+		
+		<pre class="programlisting">
 DROP TRIGGER admin_user_history;
 
 DELIMITER //
@@ -40,21 +73,21 @@ BEGIN
 insert into admin_user_history SELECT * FROM admin_user WHERE user_id = OLD.user_id;
 END; //
 DELIMITER;
-			</pre>
-		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp140"></a>4.8.3. show triggers</h3></div></div></div>
-			
-			<pre class="programlisting">
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp143"></a>4.8.3. show triggers</h3></div></div></div>
+		
+		<pre class="programlisting">
 show triggers;
-			</pre>
-		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp144"></a>4.8.4. EXAMPLE</h3></div></div></div>
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp147"></a>4.8.4. EXAMPLE</h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp144"></a>4.8.4.1. BEFORE/AFTER</h4></div></div></div>
 			
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp141"></a>4.8.4.1. BEFORE/AFTER</h4></div></div></div>
+			<div class="example"><a id="idp178"></a><p class="title"><strong>例 4.1. BEFORE/AFTER</strong></p><div class="example-contents">
 				
-				<div class="example"><a id="idp175"></a><p class="title"><strong>例 4.1. BEFORE/AFTER</strong></p><div class="example-contents">
-					
-					<pre class="programlisting">
+				<pre class="programlisting">
 DROP TRIGGER MY_TEST_MONITOR;
 DELIMITER //
 CREATE TRIGGER MY_TEST_MONITOR BEFORE insert ON MY_TEST FOR EACH ROW
@@ -62,8 +95,8 @@ BEGIN
 	INSERT INTO MY_TEST_MONITOR SELECT * FROM MY_TEST WHERE TICKET = NEW.TICKET;
 END; //
 DELIMITER;
-					</pre>
-					<pre class="programlisting">
+				</pre>
+				<pre class="programlisting">
 DROP TRIGGER MY_TEST_MONITOR;
 DELIMITER //
 CREATE TRIGGER MY_TEST_MONITOR AFTER insert ON MY_TEST FOR EACH ROW
@@ -71,9 +104,9 @@ BEGIN
 	INSERT INTO MY_TEST_MONITOR SELECT * FROM MY_TEST WHERE TICKET = NEW.TICKET;
 END; //
 DELIMITER;
-					</pre>
-					<p>通过触发器保护数据，防止重复插入数据</p>
-					<pre class="programlisting">
+				</pre>
+				<p>通过触发器保护数据，防止重复插入数据</p>
+				<pre class="programlisting">
 CREATE DEFINER=`neo`@`%` TRIGGER `members_before_insert` BEFORE INSERT ON `members` FOR EACH ROW BEGIN
 	IF new.username IS NOT NULL THEN
 		IF exists(select m.username from members m where m.username = new.username) THEN
@@ -81,16 +114,16 @@ CREATE DEFINER=`neo`@`%` TRIGGER `members_before_insert` BEFORE INSERT ON `membe
 		END IF;
 	END IF;
 END					
-					</pre>
-				</div></div><br class="example-break" />
+				</pre>
+			</div></div><br class="example-break" />
 
-			</div>
+		</div>
 
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp142"></a>4.8.4.2. UUID</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp145"></a>4.8.4.2. UUID</h4></div></div></div>
+			
+			<div class="example"><a id="idp179"></a><p class="title"><strong>例 4.2. uuid()</strong></p><div class="example-contents">
 				
-				<div class="example"><a id="idp176"></a><p class="title"><strong>例 4.2. uuid()</strong></p><div class="example-contents">
-					
-					<pre class="programlisting">
+				<pre class="programlisting">
 delimiter $$
 
 CREATE TABLE `member` (
@@ -107,13 +140,13 @@ BEFORE INSERT ON `test`.`member`
 FOR EACH ROW
 SET new.uuid = uuid()
 $$
-					</pre>
-				</div></div><br class="example-break" />
-			</div>
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp143"></a>4.8.4.3. CALL PROCEDURE</h4></div></div></div>
-				
-				<pre class="programlisting">
-				
+				</pre>
+			</div></div><br class="example-break" />
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp146"></a>4.8.4.3. CALL PROCEDURE</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
 CREATE DEFINER=`neo`@`%` TRIGGER `accounts_angelfund` AFTER INSERT ON `accounts` FOR EACH ROW BEGIN
 	
    IF new.paymode = 'angelfund' THEN
@@ -121,9 +154,6 @@ CREATE DEFINER=`neo`@`%` TRIGGER `accounts_angelfund` AFTER INSERT ON `accounts`
    END IF;
 
 END
-
-
-
 
 CREATE DEFINER=`neo`@`%` PROCEDURE `angelfund`(IN `puid` VARCHAR(50), IN `ptime` DATETIME)
 	LANGUAGE SQL
@@ -144,11 +174,11 @@ BEGIN
    END IF;
 
 END				
-				
-				</pre>
-			</div>
+			
+			</pre>
 		</div>
-	</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+	</div>
+</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
 
 var disqus_config = function () {
 this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
