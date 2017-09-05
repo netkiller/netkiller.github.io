@@ -404,7 +404,7 @@ server {
 		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="expires"></a>2.3.6.7. expires</h4></div></div></div>
 			
 			<p>expires 格式</p>
-			<div class="example"><a id="idp129"></a><p class="title"><strong>例 2.1. Expires Examples</strong></p><div class="example-contents">
+			<div class="example"><a id="idp132"></a><p class="title"><strong>例 2.1. Expires Examples</strong></p><div class="example-contents">
 				
 				<pre class="screen">
 expires 1 January, 1970, 00:00:01 GMT;
@@ -481,7 +481,7 @@ location / {
 }
 			</pre>
 
-			<div class="example"><a id="idp130"></a><p class="title"><strong>例 2.2. nginx expires</strong></p><div class="example-contents">
+			<div class="example"><a id="idp133"></a><p class="title"><strong>例 2.2. nginx expires</strong></p><div class="example-contents">
 				
 				<pre class="screen">
 location ~ .*\.(gif|jpg|jpeg|png|bmp|swf|ico)$ {
@@ -1551,7 +1551,51 @@ if ($invalid_referer) {
 }
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="set"></a>2.3.12.11. 自定义变量</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp72"></a>2.3.12.11. $request_body - HTTP POST 数据</h4></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp70"></a>2.3.12.11.1. 用户日志</h5></div></div></div>
+			
+			<p>将 POST 数据记录到日志中</p>
+			<pre class="screen">
+    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                      '$status $body_bytes_sent "$http_referer" '
+                      '"$http_user_agent" "$http_x_forwarded_for" - "$request_body"';
+			</pre>
+			<p>注意：用户登录通常使用POST方式，所以记录POST数据到日志会带来安全问题，例如用户密码泄露。</p>
+		</div>
+		
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp71"></a>2.3.12.11.2. $request_body 用于缓存</h5></div></div></div>
+			
+			<p>因为nginx 使用 url 作为缓存的key ( Nginx 将url地址 md5后作为缓存的 key )，所以默认情况下 Nginx 只能处理 HTTP GET 缓存。</p>
+			<p>对于 HTTP POST 请求，提交数据放在HTTP Head 头部提交到服务器的， 提交前后URL始终不变，Nginx 无法区分相同网址两次请求的内容有变化。</p>
+			<p>但是我们可以自定义 缓存 key 例如： "$request_uri|$request_body" 我们将请求地址加上post内容作为缓存的key，这样nginx 便可以区分每次提交后的页面变化。</p>
+			<pre class="screen">
+ proxy_cache_path /tmp/cache levels=1:2 keys_zone=netkiller:128m inactive=1m;
+ 
+ server {
+  listen 8080;
+  server_name localhost;
+
+  location / {
+   try_files $uri @backend;
+  }
+ 
+  location @backend {
+   proxy_pass http://node1.netkiller.cn:8080;
+   proxy_cache netkiller;
+   proxy_cache_methods POST;
+   proxy_cache_key "$request_uri|$request_body";
+   proxy_buffers 8 32k;
+   proxy_buffer_size 64k;
+   proxy_cache_valid 5s;
+   proxy_cache_use_stale updating;
+   add_header X-Cached $upstream_cache_status;
+  }
+ }
+			</pre>
+		</div>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="set"></a>2.3.12.12. 自定义变量</h4></div></div></div>
 		
 		<pre class="screen">
 if ( $host ~* (.*)\.(.*)\.(.*)) {
@@ -1573,7 +1617,7 @@ location / {
 }
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="if"></a>2.3.12.12. if 条件判断</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="if"></a>2.3.12.13. if 条件判断</h4></div></div></div>
 		
 		<p>判断相等</p>
 		<pre class="screen">
