@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>9.2. Buffering and Caching</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="home" href="../index.html" title="Netkiller MySQL 手札" /><link rel="up" href="index.html" title="第 9 章 Optimization" /><link rel="prev" href="index.html" title="第 9 章 Optimization" /><link rel="next" href="optimization.where.html" title="9.3. where 优化" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
+		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">9.2. Buffering and Caching</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><th width="60%" align="center">第 9 章 Optimization</th><td width="20%" align="right"> <a accesskey="n" href="optimization.where.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="cache"></a>9.2. Buffering and Caching</h2></div></div></div>
+		
+		<p>查看缓存是否开启</p>
+		<pre class="programlisting">
+		
+MySQL&gt; select @@query_cache_type;
+MySQL&gt; show variables like 'query_cache_type';
+		
+		</pre>
+		<p>开启与关闭缓存</p>
+		<pre class="programlisting">
+		
+MySQL&gt; set query_cache_type=on;
+MySQL&gt; set query_cache_type=off;
+		
+		</pre>
+		<p>查看缓存状态</p>
+		<pre class="programlisting">
+show variables like 'have_query_cache';
+		</pre>
+		<p>查询缓存的大小</p>
+		<pre class="programlisting">
+		
+MySQL&gt; select @@global.query_cache_size;
+MySQL&gt; select @@query_cache_size;
+		
+		</pre>
+		<p>查看最大缓存限制，如果集大于该数则不缓存。</p>
+		<pre class="programlisting">
+		
+MySQL&gt; select @@global.query_cache_limit;
+		
+		</pre>
+		<p>清除缓存/重置缓存</p>
+		<pre class="programlisting">
+		
+MySQL&gt; flush tables;
+MySQL&gt; flush query cache;
+MySQL&gt; reset query cache;
+		
+		</pre>
+		<p>查询缓存性能</p>
+		<pre class="programlisting">
+		
+MySQL&gt; show status like 'qcache%';
+
+MySQL&gt; show status like 'qcache_q%';
++-------------------------+-------+
+| Variable_name | Value |
++-------------------------+-------+
+| Qcache_queries_in_cache | 1 |
++-------------------------+-------+
+1 row in set (0.00 sec)
+
+MySQL&gt; show status like 'qcache_f%';
++--------------------+----------+
+| Variable_name | Value |
++--------------------+----------+
+| Qcache_free_blocks | 1 |
+| Qcache_free_memory | 16766728 |
++--------------------+----------+
+2 rows in set (0.00 sec)
+		
+		</pre>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp173"></a>9.2.1. Query Cache SELECT Options</h3></div></div></div>
+			
+			<pre class="programlisting">
+Two query cache-related options may be specified in SELECT statements:
+
+SQL_CACHE
+
+The query result is cached if it is cacheable and the value of the query_cache_type system variable is ON or DEMAND.
+
+SQL_NO_CACHE
+
+The query result is not cached.
+
+Examples:
+
+SELECT SQL_CACHE id, name FROM customer;
+SELECT SQL_NO_CACHE id, name FROM customer;
+
+
+SELECT /*! SQL_NO_CACHE */ stuff FROM table
+
+			</pre>
+			<div class="example"><a id="idp183"></a><p class="title"><strong>例 9.1. SQL_CACHE 测试</strong></p><div class="example-contents">
+				
+				<p>下面的例子中你将看到缓存变化</p>
+				<pre class="programlisting">
+				
+flush tables;
+show status like 'qcache_q%';
+select sql_cache * from members limit 5;
+show status like 'qcache_q%';
+select sql_cache * from members limit 10;
+show status like 'qcache_q%';
+				
+				</pre>
+				<p>显示当前缓存中的信息数量：</p>
+				<pre class="programlisting">
+				
+MySQL&gt; show status like 'qcache_q%';
+				
+				</pre>
+				<pre class="screen">
+其中各个参数的意义如下：
+Qcache_free_blocks：缓存中相邻内存块的个数。数目大说明可能有碎片。FLUSH QUERY CACHE会对缓存中的碎片进行整理，从而得到一个空闲块。
+Qcache_free_memory：缓存中的空闲内存。
+Qcache_hits：每次查询在缓存中命中时就增大
+Qcache_inserts：每次插入一个查询时就增大。命中次数除以插入次数就是不中比率。
+Qcache_lowmem_prunes：缓存出现内存不足并且必须要进行清理以便为更多查询提供空间的次数。这个数字最好长时间来看;如果这个 数字在不断增长，就表示可能碎片非常严重，或者内存很少。(上面的 free_blocks和free_memory可以告诉您属于哪种情况)
+Qcache_not_cached：不适合进行缓存的查询的数量，通常是由于这些查询不是 SELECT 语句或者用了now()之类的函数。
+Qcache_queries_in_cache：当前缓存的查询(和响应)的数量。
+Qcache_total_blocks：缓存中块的数量。				
+				</pre>
+			</div></div><br class="example-break" />
+		</div>
+	</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="optimization.where.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 9 章 Optimization </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 9.3. where 优化 </td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script><script xmlns="" type="text/javascript" src="/js/q.js" async="async"></script></body></html>
