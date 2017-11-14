@@ -1,0 +1,714 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>5.2. Spring Data MongoDB</title><link rel="stylesheet" type="text/css" href="../..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><meta name="keywords" content="" /><link rel="home" href="../../index.html" title="Netkiller Spring 手札" /><link rel="up" href="index.html" title="第 5 章 Spring Data" /><link rel="prev" href="index.html" title="第 5 章 Spring Data" /><link rel="next" href="spring-data-jpa.html" title="5.3. Spring Data JPA" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">5.2. Spring Data MongoDB</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><th width="60%" align="center">第 5 章 Spring Data</th><td width="20%" align="right"> <a accesskey="n" href="spring-data-jpa.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="spring-data-mongodb"></a>5.2. Spring Data MongoDB</h2></div></div></div>
+	
+	
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="SpringDataMongoDB"></a>5.2.1. Example Spring Data MongoDB</h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp209"></a>5.2.1.1. pom.xml</h4></div></div></div>
+			
+			<p>注意Spring4 与 1.9.1.RELEASE有兼容性问题，日志提示 Error creating bean with name 'mongoTemplate' defined in ServletContext resource</p>
+			<pre class="screen">
+			
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.data&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-data-mongodb&lt;/artifactId&gt;
+			&lt;version&gt;1.8.1.RELEASE&lt;/version&gt;
+		&lt;/dependency&gt;			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp210"></a>5.2.1.2. springframework-servlet.xml</h4></div></div></div>
+			
+			<pre class="screen">
+			
+	&lt;mongo:db-factory id="mongoDbFactory" host="${mongo.host}" port="${mongo.port}" dbname="${mongo.database}" /&gt;
+	&lt;!-- username="${mongo.username}" password="${mongo.password}" --&gt;
+
+	&lt;bean id="mongoTemplate" class="org.springframework.data.mongodb.core.MongoTemplate"&gt;
+        &lt;constructor-arg name="mongoDbFactory" ref="mongoDbFactory"/&gt;
+    &lt;/bean&gt;
+    
+    &lt;mongo:mapping-converter id="converter" db-factory-ref="mongoDbFactory"/&gt;
+    &lt;bean id="gridFsTemplate" class="org.springframework.data.mongodb.gridfs.GridFsTemplate"&gt;
+      &lt;constructor-arg ref="mongoDbFactory"/&gt;
+      &lt;constructor-arg ref="converter"/&gt;
+    &lt;/bean&gt;
+			
+			</pre>
+			<div class="example"><a id="idp313"></a><p class="title"><strong>例 5.2. Spring Data MongoDB - springframework-servlet.xml</strong></p><div class="example-contents">
+				
+				<pre class="screen">
+				
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;beans xmlns="http://www.springframework.org/schema/beans" 
+	xmlns:mvc="http://www.springframework.org/schema/mvc" 
+	xmlns:context="http://www.springframework.org/schema/context" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:mongo="http://www.springframework.org/schema/data/mongo"
+	xmlns:tx="http://www.springframework.org/schema/tx" xsi:schemaLocation="
+        http://www.springframework.org/schema/beans     
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/mvc 
+        http://www.springframework.org/schema/mvc/spring-mvc.xsd
+        http://www.springframework.org/schema/context 
+        http://www.springframework.org/schema/context/spring-context.xsd
+		http://www.springframework.org/schema/data/mongo
+		http://www.springframework.org/schema/data/mongo/spring-mongo-1.5.xsd        
+        "&gt;
+
+	&lt;mvc:resources location="/images/" mapping="/images/**" /&gt;
+	&lt;mvc:resources location="/css/" mapping="/css/**" /&gt;
+	&lt;mvc:resources location="/js/" mapping="/js/**" /&gt;
+	&lt;mvc:resources location="/zt/" mapping="/zt/**" /&gt;
+	&lt;mvc:resources location="/sm/" mapping="/sm/**" /&gt;
+	&lt;mvc:resources location="/module/" mapping="/module/**" /&gt;
+
+	&lt;context:component-scan base-package="cn.netkiller.controller" /&gt;
+	&lt;!-- &lt;context:property-placeholder location="classpath:resources/development.properties" /&gt; --&gt;
+	&lt;mvc:annotation-driven /&gt;
+
+	&lt;bean id="viewResolver" class="org.springframework.web.servlet.view.UrlBasedViewResolver"&gt;
+		&lt;property name="viewClass" value="org.springframework.web.servlet.view.JstlView" /&gt;
+		&lt;property name="prefix" value="/WEB-INF/jsp/" /&gt;
+		&lt;property name="suffix" value=".jsp" /&gt;
+	&lt;/bean&gt;
+
+	&lt;bean id="configuracion" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer"&gt;
+		&lt;property name="location" value="classpath:resources/development.properties" /&gt;
+	&lt;/bean&gt;
+	
+	&lt;!-- MongoDB Connection Factory --&gt;
+	&lt;mongo:db-factory id="mongoDbFactory" host="${mongo.host}" port="${mongo.port}" dbname="${mongo.database}" /&gt;
+	&lt;!-- username="${mongo.username}" password="${mongo.password}" --&gt;
+	
+	&lt;!-- MongoDB template definition --&gt;
+	&lt;bean id="mongoTemplate" class="org.springframework.data.mongodb.core.MongoTemplate"&gt;
+        &lt;constructor-arg name="mongoDbFactory" ref="mongoDbFactory"/&gt;
+    &lt;/bean&gt;
+    
+    &lt;!-- MongoDB GridFS template definition --&gt;
+    &lt;mongo:mapping-converter id="converter" db-factory-ref="mongoDbFactory"/&gt;
+    &lt;bean id="gridFsTemplate" class="org.springframework.data.mongodb.gridfs.GridFsTemplate"&gt;
+      &lt;constructor-arg ref="mongoDbFactory"/&gt;
+      &lt;constructor-arg ref="converter"/&gt;
+    &lt;/bean&gt;
+    
+	&lt;!-- Redis Connection Factory --&gt;
+	&lt;bean id="jedisConnFactory" class="org.springframework.data.redis.connection.jedis.JedisConnectionFactory" p:host-name="192.168.2.1" p:port="6379" p:use-pool="true" /&gt;
+
+	&lt;!-- redis template definition --&gt;
+	&lt;bean id="redisTemplate" class="org.springframework.data.redis.core.RedisTemplate" p:connection-factory-ref="jedisConnFactory" /&gt;
+ 
+&lt;/beans&gt;
+				
+				</pre>
+			</div></div><br class="example-break" />
+			<p>development.properties 配置内容</p>
+			<pre class="screen">
+			
+mongo.host=192.168.4.1
+mongo.port=27017
+mongo.username=test
+mongo.password=passw0rd
+mongo.database=website
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp211"></a>5.2.1.3. POJO</h4></div></div></div>
+			
+			<pre class="screen">
+			
+package cn.netkiller.pojo;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+@Document(collection = "tracker")
+public class Tracker {
+	@Id
+	private String id;
+	private String name;
+	private String unique;
+	private String hostname;
+	private String referrer;
+	private String href;
+
+	public Tracker() {
+		// TODO Auto-generated constructor stub
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getUnique() {
+		return unique;
+	}
+
+	public void setUnique(String unique) {
+		this.unique = unique;
+	}
+
+	public String getHostname() {
+		return hostname;
+	}
+
+	public void setHostname(String hostname) {
+		this.hostname = hostname;
+	}
+
+	public String getReferrer() {
+		return referrer;
+	}
+
+	public void setReferrer(String referrer) {
+		this.referrer = referrer;
+	}
+
+	public String getHref() {
+		return href;
+	}
+
+	public void setHref(String href) {
+		this.href = href;
+	}
+
+	@Override
+	public String toString() {
+		return "Tracker [id=" + id + ", name=" + name + ", unique=" + unique + ", hostname=" + hostname + ", referrer=" + referrer + ", href=" + href + "]";
+	}
+
+}		
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp212"></a>5.2.1.4. Controller</h4></div></div></div>
+			
+			<pre class="screen">
+			
+package cn.netkiller.controller;
+
+import cn.netkiller.pojo.Tracker;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.stereotype.*;
+import org.springframework.web.bind.annotation.*;
+
+@Controller
+public class TrackerController {
+
+	@Autowired
+	private MongoTemplate mongoTemplate;
+
+	public TrackerController() {
+
+	}
+
+	@RequestMapping("/tracker/test")
+	@ResponseBody
+	String hello() {
+		return "Hello World!";
+	}
+
+	@RequestMapping("/tracker")
+	@ResponseBody
+	String execute() {
+		Tracker tracker = new Tracker();
+		tracker.setName("test");
+		tracker.setUnique("111223456");
+		tracker.setHostname("www.example.com");
+		tracker.setHref("http://example.com/test.html");
+		tracker.setReferrer("http://example.com/");
+		this.mongoTemplate.insert(tracker);
+		
+		return tracker.toString();
+	}
+
+}
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp213"></a>5.2.1.5. 查看测试结果</h4></div></div></div>
+			
+			<pre class="screen">
+			
+&gt; db.tracker.find();
+{ "_id" : ObjectId("5757c0b92c526a6bda5eea3a"), "_class" : "cn.netkiller.repositories.Tracker", "name" : "test", "unique" : "111223456", "hostname" : "www.example.com", "referrer" : "http://example.com/", "href" : "http://example.com/test.html" }
+
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp214"></a>5.2.1.6. 条件查询</h4></div></div></div>
+			
+			<pre class="screen">
+			
+	@RequestMapping("/read/name/{name}")
+	public ArrayList&lt;Tracker&gt; sort(@PathVariable String name) {
+	
+		Query query = new Query(Criteria.where("name").is(name)); 
+		 
+		ArrayList&lt;Tracker&gt; trackers =  (ArrayList&lt;Tracker&gt;) mongoTemplate.find(query, Tracker.class);
+		return trackers;
+	}			
+			
+			</pre>
+		</div>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="document"></a>5.2.2. @Document</h3></div></div></div>
+		
+		<p>复杂的 @Document 数据类型定义</p>
+		<pre class="programlisting">
+		
+package cn.netkiller.domain;
+
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+@Document
+public class MultilevelDirectSellingTradingRebate {
+
+	public enum Type {
+		POINT, CASH, GIFT
+	}
+
+	public enum Rebate {
+		DIRECT, INDIRECT
+	}
+
+	public enum Status {
+		New, Rejected, Approved
+	}
+
+	@Id
+	private String id;
+	public String name;
+	public Date beginDate;
+	public Date endDate;
+	public double lowAmount;
+	public double highAmount;
+	public Type type;
+	public Status status = Status.New;
+	public List&lt;Map&lt;String, Map&lt;?, ?&gt;&gt;&gt; product;
+
+	@Override
+	public String toString() {
+		return "MultilevelDirectSellingTradingRebate [id=" + id + ", name=" + name + ", beginDate=" + beginDate
+				+ ", endDate=" + endDate + ", lowAmount=" + lowAmount + ", highAmount=" + highAmount + ", type=" + type
+				+ ", status=" + status + ", product=" + product + "]";
+	}
+
+}
+		
+		</pre>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="index"></a>5.2.2.1. @Indexed</h4></div></div></div>
+			
+			<p>索引</p>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp215"></a>5.2.2.1.1. 普通索引</h5></div></div></div>
+				
+				<pre class="programlisting">
+				
+@Indexed		
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp216"></a>5.2.2.1.2. 唯一索引</h5></div></div></div>
+				
+				<pre class="programlisting">
+				
+@Indexed(unique=true)	
+				
+				</pre>
+			</div>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="DateTimeFormat"></a>5.2.2.2. @DateTimeFormat</h4></div></div></div>
+			
+			<pre class="programlisting">
+@DateTimeFormat( pattern = "yyyy-MM-dd" )
+private Date birthday
+
+@DateTimeFormat(iso = DateTimeFormat.ISO.NONE)
+private final Calendar datetime;
+
+@DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
+private Date date;
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="NumberFormat"></a>5.2.2.3. @NumberFormat</h4></div></div></div>
+			
+			<pre class="programlisting">
+@NumberFormat(style=Style.CURRENCY)
+private double money;
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="Enum"></a>5.2.2.4. 在 @Document 中使用 Enum 类型</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+	public enum Type {
+		POINT, CASH, GIFT
+	}
+
+	public enum Rebate {
+		DIRECT, INDIRECT
+	}
+
+	public enum Status {
+		New, Rejected, Approved
+	}
+			
+			</pre>
+			<p>枚举类型的赋值方法</p>
+			<pre class="programlisting">
+			
+		MultilevelDirectSellingTradingRebate multilevelDirectSellingTradingRebate = new MultilevelDirectSellingTradingRebate();
+		multilevelDirectSellingTradingRebate.name = "TEST";
+		multilevelDirectSellingTradingRebate.beginDate = new Date();
+		multilevelDirectSellingTradingRebate.endDate = new Date();
+		multilevelDirectSellingTradingRebate.lowAmount = 1.5d;
+		multilevelDirectSellingTradingRebate.highAmount = 100d;
+		multilevelDirectSellingTradingRebate.type = Type.CASH;			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="document.list"></a>5.2.2.5. 在 @Document 中定义数据结构 List/Map</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+	public List&lt;Map&lt;String, Map&lt;?, ?&gt;&gt;&gt; product;
+			
+			</pre>
+			<p>下面是数据集结构的赋值例子</p>
+			<pre class="programlisting">
+			
+	Map&lt;Enum&lt;Rebate&gt;, Double&gt; rebate = new HashMap&lt;Enum&lt;Rebate&gt;, Double&gt;();
+
+	rebate.put(Rebate.DIRECT, 10.05d);
+	rebate.put(Rebate.INDIRECT, 6.05d);
+
+	Map&lt;String, Map&lt;?, ?&gt;&gt; prod1 = new HashMap&lt;String, Map&lt;?, ?&gt;&gt;();
+	prod1.put("USDRMB", rebate);
+
+	List&lt;Map&lt;String, Map&lt;?, ?&gt;&gt;&gt; products = new ArrayList&lt;Map&lt;String, Map&lt;?, ?&gt;&gt;&gt;();
+	products.add(prod1);
+	multilevelDirectSellingTradingRebate.product = products;
+			
+			</pre>
+		</div>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="MongoRepository"></a>5.2.3. MongoRepository</h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="findAll"></a>5.2.3.1. findAll()</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+	@RequestMapping(value = "read", method = RequestMethod.GET, produces = { "application/xml", "application/json" })
+	@ResponseStatus(HttpStatus.OK)
+	public List&lt;Withdraw&gt; read() {
+		return repository.findAll();
+	}
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="deleteAll"></a>5.2.3.2. deleteAll()</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+repository.deleteAll();
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="save"></a>5.2.3.3. save()</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+repository.save(new City("Shenzhen", "China"));
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="count"></a>5.2.3.4. count()</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+	@RequestMapping("count")
+	public long count() {
+		return repository.count();
+	}
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="findByXXXX"></a>5.2.3.5. findByXXXX</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+List&lt;User&gt; findByName(String name);
+
+List&lt;User&gt; users = userRepository.findByName("Eric");
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="StartingWith"></a>5.2.3.6. StartingWith 和 EndingWith</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+List&lt;User&gt; findByNameStartingWith(String regexp);
+List&lt;User&gt; findByNameEndingWith(String regexp);
+
+List&lt;User&gt; users = userRepository.findByNameStartingWith("N");
+List&lt;User&gt; users = userRepository.findByNameEndingWith("o");
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="Between"></a>5.2.3.7. Between</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+List&lt;User&gt; findByAgeBetween(int ageGT, int ageLT);
+
+List&lt;User&gt; users = userRepository.findByAgeBetween(20, 50);
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="PageRequest"></a>5.2.3.8. PageRequest</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+Page&lt;User&gt; findByLastname(String lastname, Pageable pageable);			
+			
+			</pre>
+			<pre class="programlisting">
+			
+	@RequestMapping(value = "read/{size}/{page}", method = RequestMethod.GET, produces = { "application/xml", "application/json" })
+	@ResponseStatus(HttpStatus.OK)
+	public List&lt;Withdraw&gt; readPage(@PathVariable int size, @PathVariable int page){
+		PageRequest pageRequest = new PageRequest(page-1,size);
+		return repository.findAll(pageRequest).getContent();
+	}
+			
+			</pre>
+			<p>URL翻页参数，每次返回10条记录</p>
+			<pre class="screen">
+第一页 http://localhost:8080/v1/withdraw/read/10/1.json
+第二页 http://localhost:8080/v1/withdraw/read/10/2.json
+...
+第五页 http://localhost:8080/v1/withdraw/read/10/5.json
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="@Query"></a>5.2.3.9. @Query</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+
+			
+			</pre>
+		</div>		
+	</div>
+	
+	
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="mongoTemplate.Query"></a>5.2.4. mongoTemplate</h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="is"></a>5.2.4.1. is</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+Query query = new Query();
+query.addCriteria(Criteria.where("name").is("Neo"));
+List&lt;User&gt; users = mongoTemplate.find(query, User.class);		
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="regex"></a>5.2.4.2. Regex 正则表达式搜索</h4></div></div></div>
+			
+			<p>查询以N开头的名字</p>
+			<pre class="programlisting">
+			
+Query query = new Query();
+query.addCriteria(Criteria.where("name").regex("^N"));
+List&lt;User&gt; users = mongoTemplate.find(query,User.class);	
+			
+			</pre>
+			<p>查询以o结尾的名字</p>
+			<pre class="programlisting">
+			
+Query query = new Query();
+query.addCriteria(Criteria.where("name").regex("o$"));
+List&lt;User&gt; users = mongoTemplate.find(query, User.class);
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="ltgt"></a>5.2.4.3. lt 和 gt</h4></div></div></div>
+			
+			<p>查询年龄小于 &lt; 30 并 &gt; 20 的用户</p>
+			<pre class="programlisting">
+			
+Query query = new Query();
+query.addCriteria(Criteria.where("age").lt(30).gt(20));
+List&lt;User&gt; users = mongoTemplate.find(query,User.class);
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="between"></a>5.2.4.4. between</h4></div></div></div>
+			
+			<p>实现一个区间条件 new Criteria("createdDate").gte(beginDate).lte(endDate)</p>
+			<pre class="programlisting">
+			
+	public boolean AccountDeposit(Date beginDate, Date endDate) {
+
+		MatchOperation matchOperation = match(new Criteria("createdDate").gte(beginDate).lte(endDate));
+		GroupOperation groupOperation = group("loginname").sum("amount").as("amount");
+		SortOperation sortOperation = sort(new Sort(Direction.ASC, "loginname"));
+
+		Aggregation aggregation = newAggregation(matchOperation, groupOperation, sortOperation);
+		AggregationResults&lt;AccountSettlementDetails&gt; results = mongoTemplate.aggregate(aggregation, AccountSettlementDetails.class, AccountSettlementDetails.class);
+
+		if (results.getMappedResults() != null) {
+			log.info(results.getRawResults().get("result").toString());
+			for (AccountSettlementDetails settlementDetails : results.getMappedResults()) {
+							
+				log.info("{}", settlementDetails.toString());
+				
+			}
+		}
+		return true;
+	}
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="Criteria"></a>5.2.4.5. Criteria</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+Query query = new Query();
+query.addCriteria(
+    new Criteria().andOperator(
+        Criteria.where("field1").exists(true),
+        Criteria.where("field1").ne(false)
+    )
+);
+
+List&lt;Foo&gt; result = mongoTemplate.find(query, Foo.class);
+System.out.println("query - " + query.toString());
+
+for (Foo foo : result) {
+    System.out.println("result - " + foo);
+}			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="sort"></a>5.2.4.6. Sort</h4></div></div></div>
+			
+			<p>按照年龄排序</p>
+			<pre class="programlisting">
+			
+Query query = new Query();
+query.with(new Sort(Sort.Direction.ASC, "age"));
+List&lt;User&gt; users = mongoTemplate.find(query,User.class);
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="PageRequest"></a>5.2.4.7. Query + PageRequest</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+final Pageable pageableRequest = new PageRequest(0, 2);
+Query query = new Query();
+query.with(pageableRequest);
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="newAggregation"></a>5.2.4.8. newAggregation</h4></div></div></div>
+			
+			
+			<pre class="programlisting">
+			
+		MultilevelDirectSellingAccountRewardsSettlementDetails multilevelDirectSellingAccountRewardsSettlementDetails = new MultilevelDirectSellingAccountRewardsSettlementDetails();
+		multilevelDirectSellingAccountRewardsSettlementDetails.setLoginname("111");
+		multilevelDirectSellingAccountRewardsSettlementDetails.setPhone("111");
+		multilevelDirectSellingAccountRewardsSettlementDetails.setRecommenderLoginname("111");
+		multilevelDirectSellingAccountRewardsSettlementDetails.setRecommenderPhone("111");
+		multilevelDirectSellingAccountRewardsSettlementDetails.setRecommenderName("Neo");
+		multilevelDirectSellingAccountRewardsSettlementDetails.setRecommenderType("客户");
+		multilevelDirectSellingAccountRewardsSettlementDetails.setAmount(5.02);
+		multilevelDirectSellingAccountRewardsSettlementDetails.setCreatedDate(new Date());
+		multilevelDirectSellingAccountRewardsSettlementDetailsRepository.save(multilevelDirectSellingAccountRewardsSettlementDetails);
+		
+		Date beginDate = this.getToday("00:00:00");
+		Date endDate = this.getToday("23:59:59");
+		log.info(beginDate.toString() + " ~ " + endDate.toString());
+		
+		GroupOperation groupOperation = group("loginname").sum("amount").as("amount");
+		MatchOperation matchOperation = match(new Criteria("createdDate").gte(beginDate).lte(endDate));
+		SortOperation sortOperation = sort(new Sort(Direction.ASC, "loginname"));
+
+		Aggregation aggregation = newAggregation(matchOperation, groupOperation, sortOperation);
+		AggregationResults&lt;MultilevelDirectSellingAccountRewardsSettlementDetails&gt; results = mongoTemplate.aggregate(aggregation, MultilevelDirectSellingAccountRewardsSettlementDetails.class, MultilevelDirectSellingAccountRewardsSettlementDetails.class);		
+		System.out.println(results.getRawResults().get("result").toString());
+			
+			</pre>
+		</div>
+	</div>
+	
+</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="spring-data-jpa.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 5 章 Spring Data </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 5.3. Spring Data JPA</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script><script xmlns="" type="text/javascript" src="/js/q.js" async="async"></script></body></html>

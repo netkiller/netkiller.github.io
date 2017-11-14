@@ -1,0 +1,371 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>5.5. JdbcTemplate</title><link rel="stylesheet" type="text/css" href="../..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><meta name="keywords" content="" /><link rel="home" href="../../index.html" title="Netkiller Spring 手札" /><link rel="up" href="index.html" title="第 5 章 Spring Data" /><link rel="prev" href="EntityManager.html" title="5.4. EntityManager" /><link rel="next" href="elasticsearch.html" title="5.6. Elasticsearch" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">5.5. JdbcTemplate</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="EntityManager.html">上一页</a> </td><th width="60%" align="center">第 5 章 Spring Data</th><td width="20%" align="right"> <a accesskey="n" href="elasticsearch.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="JdbcTemplate"></a>5.5. JdbcTemplate</h2></div></div></div>
+	
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="execute"></a>5.5.1. execute</h3></div></div></div>
+		
+		<pre class="programlisting">
+			jdbcTemplate.execute("CREATE TABLE USER (id integer, name varchar(100))");
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="queryForInt"></a>5.5.2. queryForInt</h3></div></div></div>
+		
+		<pre class="programlisting">
+			int count = jdbcTemplate.queryForInt("SELECT COUNT(*) FROM USER");
+		</pre>
+	</div>
+
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="queryForObject"></a>5.5.3. queryForObject</h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp232"></a>5.5.3.1. 返回整形与字符型</h4></div></div></div>
+			
+			<pre class="programlisting">
+				Integer age = queryForObject("select age from emp", Integer.class);
+				String name = queryForObject("select name from emp",String.class);
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp233"></a>5.5.3.2. 查询 Double 类型数据库</h4></div></div></div>
+			
+			<pre class="programlisting">
+				
+	private double getSumByMemberId(int memberId) {
+		double result = 0.0d;
+		String sql = "SELECT sum(o.price::NUMERIC) as total FROM public.order o group by member_id ="+ memberId;
+		try {
+			result = jdbcTemplate.queryForObject(sql, Double.class);
+		} catch (org.springframework.dao.EmptyResultDataAccessException e) {
+			log.info("{} {}", MemberId, e.toString());
+		}
+		return result;
+	}
+				
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp234"></a>5.5.3.3. 返回日期</h4></div></div></div>
+			
+			<p>注意 Date 是 java.util 不是 java.sql</p>
+			<pre class="programlisting">
+			
+	private static final Logger log = LoggerFactory.getLogger(ScheduledTasks.class);
+	private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd HH:mm:ss");
+	
+	@Autowired
+	private JdbcTemplate jdbcTemplate;
+	
+	@Scheduled(initialDelay = 1000, fixedRate = 60000)
+	public void currentDate() {
+	Date date = jdbcTemplate.queryForObject("select sysdate from dual", Date.class);
+	log.info("The oracle sysdate is {}", dateFormat.format(date));
+	}
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp235"></a>5.5.3.4. 返回结果集</h4></div></div></div>
+			
+			<pre class="programlisting">
+				
+	@Autowired
+	private JdbcTemplate jdbcTemplate;
+
+	@RequestMapping(value = "/article")
+	public @ResponseBody String dailyStats(@RequestParam Integer id) {
+		String query = "SELECT id, title, content from article where id = " + id;
+
+		return jdbcTemplate.queryForObject(query, (resultSet, i) -&gt; {
+			System.out.println(resultSet.getLong(1) + "," + resultSet.getString(2) + "," + resultSet.getString(3));
+			return (resultSet.getLong(1) + "," + resultSet.getString(2) + "," + resultSet.getString(3));
+		});
+
+	}			
+				
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp236"></a>5.5.3.5. 通过 "?" 向SQL传递参数</h4></div></div></div>
+			
+			<pre class="programlisting">
+				
+package com.example.api.restful;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.api.pojo.ResponseRestful;
+
+@RestController
+@RequestMapping("/restful/cms")
+public class CmsRestController {
+	@Autowired
+	private JdbcTemplate jdbcTemplate;
+
+	@RequestMapping(value = "/article/update/count/{articleId}", method = RequestMethod.GET, produces = { "application/xml", "application/json" })
+	public ResponseRestful updateCount(@PathVariable int articleId) {
+		String sql = "SELECT count(*) FROM cms.article WHERE id &gt; ?";
+		int count = jdbcTemplate.queryForObject(sql, new Object[] { articleId }, Integer.class);
+		return new ResponseRestful(true, 1, "文章更新", count);
+	}
+}
+				
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp237"></a>5.5.3.6. RowMapper 记录映射</h4></div></div></div>
+			
+			<pre class="programlisting">
+				
+package cn.netkiller.model;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+import org.springframework.jdbc.core.RowMapper;
+
+public class CustomerRowMapper implements RowMapper
+{
+	public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
+		Customer customer = new Customer();
+		customer.setId(rs.getInt("ID"));
+		customer.setName(rs.getString("NAME"));
+		customer.setAge(rs.getInt("AGE"));
+		return customer;
+	}
+
+}
+				
+			</pre>
+
+			<pre class="programlisting">
+				
+public Customer findByCustomerId(int id){
+
+	String sql = "SELECT * FROM CUSTOMER WHERE ID = ?";
+
+	Customer customer = (Customer)getJdbcTemplate().queryForObject(
+			sql, new Object[] { id }, new CustomerRowMapper());
+
+	return customer;
+}
+				
+			</pre>
+			<p></p>
+			<pre class="programlisting">
+				
+Member member = this.jdbcTemplate.queryForObject("select first_name, last_name from member where id = ?",new Object[]{112L},
+new RowMapper&lt;Member&gt;() {
+    public Actor mapRow(ResultSet rs, int rowNum) throws SQLException {
+        Member member = new Member();
+        member.setFirstName(rs.getString("first_name"));
+        member.setLastName(rs.getString("last_name"));
+        return member;
+    }
+});
+				
+			</pre>
+		</div>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="queryForList"></a>5.5.4. queryForList</h3></div></div></div>
+		
+		<pre class="programlisting">
+			
+List rows = jdbcTemplate.queryForList("SELECT * FROM USER");  
+Iterator it = rows.iterator();  
+while(it.hasNext()) {  
+    Map userMap = (Map) it.next();  
+    System.out.print(userMap.get("id") + "\t");  
+    System.out.print(userMap.get("name") + "\t");  
+    System.out.print(userMap.get("sex") + "\t");  
+    System.out.println(userMap.get("age") + "\t");  
+}
+			
+		</pre>
+		<pre class="programlisting">
+			
+	@RequestMapping("/article/tag/{siteId}")
+	public ResponseRestful tag(@PathVariable int siteId) {
+		List&lt;Tag&gt; tags = new ArrayList&lt;Tag&gt;();
+		List&lt;Map&lt;String, Object&gt;&gt; rows = new ArrayList&lt;Map&lt;String, Object&gt;&gt;();
+
+		String sql = "SELECT id,name FROM cms.tag WHERE site_id = ?";
+		rows = jdbcTemplate.queryForList(sql, new Object[] { siteId });
+
+		for (Map&lt;String, Object&gt; row : rows) {
+			Tag tag = new Tag();
+			tag.setId((Integer) row.get("id"));
+			tag.setName((String) row.get("name"));
+			tags.add(tag);
+		}
+		logger.info("tag {} SQL: {}", siteId, sql);
+		return new ResponseRestful(true, tags.size(), "标签", tags);
+	}			
+			
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="queryForMap"></a>5.5.5. queryForMap</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+Map&lt;String, Object&gt; map = this.jdbcTemplate.queryForMap("SELECT * FROM USERS WHERE USERNAME=?", "username"); 
+
+System.out.println(map.get("USERNAME")); 
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="query"></a>5.5.6. query</h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp238"></a>5.5.6.1. ResultSet</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+HashMap&lt;String,String&gt; member = jdbcTemplate.query("select name,age from member where id=1", (ResultSet rs) -&gt; {
+    HashMap&lt;String,String&gt; results = new HashMap&lt;&gt;();
+    while (rs.next()) {
+        results.put(rs.getString("name"), rs.getString("age"));
+    }
+    return results;
+}); 
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp239"></a>5.5.6.2. ResultSetExtractor</h4></div></div></div>
+			
+			<p>ResultSetExtractor</p>
+			<pre class="programlisting">
+			
+HashMap&lt;String,String&gt; member = jdbcTemplate.query("select name,age from member where id=1", new ResultSetExtractor&lt;Map&gt;(){
+    @Override
+    public Map extractData(ResultSet rs) throws SQLException,DataAccessException {
+        HashMap&lt;String,String&gt; mapResult= new HashMap&lt;String,String&gt;();
+        while(rs.next()){
+            mapResult.put(rs.getString("name"),rs.getString("age"));
+        }
+        return mapResult;
+    }
+});
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp240"></a>5.5.6.3. RowMapper</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+List&lt;Actor&gt; actors = this.jdbcTemplate.query("select first_name, last_name from actor",new RowMapper&lt;Actor&gt;() {
+    public Actor mapRow(ResultSet rs, int rowNum) throws SQLException {
+        Actor actor = new Actor();
+        actor.setFirstName(rs.getString("first_name"));
+        actor.setLastName(rs.getString("last_name"));
+        return actor;
+    }
+});
+			
+			</pre>
+			<pre class="programlisting">
+			
+public List&lt;Actor&gt; findAllActors() {
+    return this.jdbcTemplate.query( "select first_name, last_name from actor", new ActorMapper());
+}
+
+private static final class ActorMapper implements RowMapper&lt;Actor&gt; {
+
+    public Actor mapRow(ResultSet rs, int rowNum) throws SQLException {
+        Actor actor = new Actor();
+        actor.setFirstName(rs.getString("first_name"));
+        actor.setLastName(rs.getString("last_name"));
+        return actor;
+    }
+}
+			
+			</pre>
+		</div>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="queryForRowSet"></a>5.5.7. queryForRowSet</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+SqlRowSet rs = jdbcTemplate.queryForRowSet("select * from test");  
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="update"></a>5.5.8. update</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+	@RequestMapping(value="/comment/add/{siteId}/{articleId}", method = RequestMethod.POST)
+	public ResponseRestful commentAdd(@PathVariable("siteId") int siteId, @PathVariable("articleId") int articleId, @RequestBody Comment comment) {
+		String sql = "insert into cms.comment("
+				+ "article_id, "
+				+ "ctime,"
+				+ "content,"
+				+ "member_id,"
+				+ "nickname,"
+				+ "picture"
+				+ ") values(?,?,now(),?,?,?,?,?)";
+
+		int count = jdbcTemplate.update(sql, 
+				comment.getArticleId(),
+				comment.getContent(),
+				comment.getMemberId(),
+				comment.getNickname(),
+				comment.getPicture()
+		);
+		
+		return new ResponseRestful(true, count, "评论添加成功", comment);
+	}		
+		
+		</pre>
+	</div>
+</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="EntityManager.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="elasticsearch.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">5.4. EntityManager </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 5.6. Elasticsearch</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script><script xmlns="" type="text/javascript" src="/js/q.js" async="async"></script></body></html>

@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>3.2. @RestController</title><link rel="stylesheet" type="text/css" href="../..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><meta name="keywords" content="" /><link rel="home" href="../../index.html" title="Netkiller Spring 手札" /><link rel="up" href="index.html" title="第 3 章 Spring MVC" /><link rel="prev" href="index.html" title="第 3 章 Spring MVC" /><link rel="next" href="scheduled.html" title="3.3. @Scheduled 计划任务" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">3.2. @RestController</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><th width="60%" align="center">第 3 章 Spring MVC</th><td width="20%" align="right"> <a accesskey="n" href="scheduled.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="RestController"></a>3.2. @RestController</h2></div></div></div>
+	
+	<p></p>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp175"></a>3.2.1. 返回实体</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+	@RequestMapping("/get/{id}")
+	public Member getStatistics(@PathVariable long id) {
+		Member statistics = memberRepostitory.findOne(id);
+		if (statistics == null) {
+			statistics = new Member();
+		}
+		return statistics;
+	}
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp176"></a>3.2.2. JSON</h3></div></div></div>
+		
+		<p>MediaType.APPLICATION_JSON_VALUE 执行结果反馈json数据</p>
+		<pre class="programlisting">
+		
+@RestController
+@RequestMapping("/api/persons")
+public class MainController {
+
+    @RequestMapping(
+            value = "/detail/{id}", 
+            method = RequestMethod.GET, 
+            produces = MediaType.APPLICATION_JSON_VALUE
+            )
+    public ResponseEntity&lt;Persons&gt; getUserDetail(@PathVariable Long id) {
+
+        Persons user = personsRepository.findById(id);
+
+        return new ResponseEntity&lt;&gt;(user, HttpStatus.OK);
+    }
+
+}
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp177"></a>3.2.3. XML</h3></div></div></div>
+		
+		<p>restful 将同时支持 json 和 xml 数据传递</p>
+		<pre class="programlisting">
+		
+package com.example.api.restful;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.api.domain.RecentRead;
+import com.example.api.repository.RecentReadRepostitory;
+
+@RestController
+@RequestMapping("/restful/article")
+public class ArticleRestController {
+
+	@Autowired
+	private RecentReadRepostitory recentReadRepostitory;
+
+	@RequestMapping(value = "/recent/read/add/{memberId}/{articleId}", method = RequestMethod.GET, produces = { "application/xml", "application/json" })
+	public ResponseEntity&lt;RecentRead&gt; recentAdd(@PathVariable long memberId, @PathVariable long articleId) {
+		RecentRead recentRead = new RecentRead();
+		recentRead.setMemberId(memberId);
+		recentRead.setArticleId(articleId);
+		recentReadRepostitory.save(recentRead);
+		return new ResponseEntity&lt;RecentRead&gt;(recentRead, HttpStatus.OK);
+	}
+
+	@RequestMapping(value="/recent/read/list/{id}", produces = { "application/xml", "application/json" })
+	public List&lt;RecentRead&gt; recentList(@PathVariable long id) {
+		int page = 0;
+		int limit = 20;
+		List&lt;RecentRead&gt; recentRead = recentReadRepostitory.findByMemberId(id, new PageRequest(page, limit));
+		return recentRead;
+	}
+}
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp178"></a>3.2.4. 兼容传统 json 接口</h3></div></div></div>
+		
+		<p>开发中发现很多人不适应新的接口方式，有时候只能妥协，这些顽固不化的人需要这样的数据库格式</p>
+		<pre class="programlisting">
+		
+{  
+   "status":true,
+   "reason":"登录成功",
+   "code":1,
+   "data":{
+      "id":2,
+      "name":null,
+      "sex":null,
+      "age":0,
+      "wechat":null,
+      "mobile":"13113668890",
+      "picture":null,
+      "ipAddress":"0:0:0:0:0:0:0:1"
+   }
+}
+		
+		</pre>
+		<p>返回数据必须放在 data 字典中, 而我通常是采用 http status code 来返回状态，返回结果是对象。实现上面的需求我们需要加入一个data成员变量，因为我们不清楚最终要返回什么对象。所以声明为 java.lang.Object</p>
+		<pre class="programlisting">
+		
+package com.example.api.pojo;
+
+import java.io.Serializable;
+
+public class RestfulResponse implements Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -4045645995352698349L;
+
+	private boolean status;
+	private String reason;
+	private int code;
+	private Object data;
+
+	public RestfulResponse(boolean status, int code, String reason, Object data) {
+		this.status = status;
+		this.code = code;
+		this.reason = reason;
+		this.data = data;
+
+	}
+
+	public boolean isStatus() {
+		return status;
+	}
+
+	public void setStatus(boolean status) {
+		this.status = status;
+	}
+
+	public String getReason() {
+		return reason;
+	}
+
+	public void setReason(String reason) {
+		this.reason = reason;
+	}
+
+	public int getCode() {
+		return code;
+	}
+
+	public void setCode(int code) {
+		this.code = code;
+	}
+
+	public Object getData() {
+		return data;
+	}
+
+	public void setData(Object data) {
+		this.data = data;
+	}
+
+	@Override
+	public String toString() {
+		return "RestfulResponse [status=" + status + ", reason=" + reason + ", code=" + code + ", data=" + data + "]";
+	}
+
+}
+		
+		</pre>
+		<p>Service</p>
+		<pre class="programlisting">
+		
+	public RestfulResponse bindWechat(String mobile, String wechat) {
+		Member member = memberRepository.findByMobile(mobile);
+		member.setWechat(wechat);
+		memberRepository.save(member);
+		return new RestfulResponse(true, 1, "微信绑定成功", member);
+	}
+		
+		</pre>
+		<p>Controller</p>
+		<pre class="programlisting">
+		
+	@RequestMapping("/login/sms/{mobile}/{code}")
+	public RestfulResponse sms(@PathVariable String mobile, @PathVariable String wechat) {
+		return memberService.bindWechat(mobile, wechat);
+	}
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="PageableDefault"></a>3.2.5. @PageableDefault 分页</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+@RequestMapping(value = "/list", method=RequestMethod.GET)
+public Page&lt;Blog&gt; getEntryByPageable1(@PageableDefault( sort = { "id" }, direction = Sort.Direction.DESC) 
+    Pageable pageable) {
+    return blogRepository.findAll(pageable);
+}
+
+@RequestMapping(value = "/blog", method=RequestMethod.GET)
+public Page&lt;Blog&gt; getEntryByPageable(@PageableDefault(value = 15, sort = { "id" }, direction = Sort.Direction.DESC) 
+    Pageable pageable) {
+    return blogRepository.findAll(pageable);
+}
+
+@RequestMapping(value = "/list", method=RequestMethod.GET)
+public Page&lt;Blog&gt; getEntryByPageable2(@PageableDefault Pageable pageable) {
+    return blogRepository.findAll(pageable);
+}
+
+@ModelAttribute("users")
+public Page&lt;User&gt; users(@PageableDefault(size = 5) Pageable pageable) {
+	return userManagement.findAll(pageable);
+}
+		
+		</pre>
+		<pre class="screen">
+		
+我们只需要在方法的参数中直接定义一个pageable类型的参数，当Spring发现这个参数时，Spring会自动的根据request的参数来组装该pageable对象，Spring支持的request参数如下：
+
+page，第几页，从0开始，默认为第0页
+size，每一页的大小，默认为20
+sort，排序相关的信息，以property,property(,ASC|DESC)的方式组织，例如sort=firstname&amp;sort=lastname,desc表示在按firstname正序排列基础上按lastname倒序排列
+这样，我们就可以通过url的参数来进行多样化、个性化的查询，而不需要为每一种情况来写不同的方法了。
+
+通过url来定制pageable很方便，但唯一的缺点是不太美观，因此我们需要为pageable设置一个默认配置，这样很多情况下我们都能够通过一个简洁的url来获取信息了。
+
+Spring提供了@PageableDefault帮助我们个性化的设置pageable的默认配置。例如@PageableDefault(value = 15, sort = { "id" }, direction = Sort.Direction.DESC)表示默认情况下我们按照id倒序排列，每一页的大小为15。		
+		
+		
+		</pre>
+	</div>
+</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="scheduled.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 3 章 Spring MVC </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 3.3. @Scheduled 计划任务</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script><script xmlns="" type="text/javascript" src="/js/q.js" async="async"></script></body></html>
