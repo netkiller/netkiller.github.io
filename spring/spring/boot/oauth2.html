@@ -128,7 +128,7 @@
   &lt;/dependencies&gt;
 &lt;/project&gt;
 			
-							
+			
 			</pre>
 			<p>下面的代码用于生成 Spring security 所用的密码</p>
 			<pre class="programlisting">
@@ -545,126 +545,151 @@ Hello world !
 				</pre>
 			</div>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp94"></a>2.21.4. Client</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="oauth.client"></a>2.21.4. Spring boot with Oauth2 RestTemplate</h3></div></div></div>
 			
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp90"></a>2.21.4.1. Maven</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="oauth.client.maven"></a>2.21.4.1. Maven</h4></div></div></div>
 				
 				<pre class="programlisting">
 				
-&lt;?xml version="1.0"?&gt;
-&lt;project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"&gt;
-	&lt;modelVersion&gt;4.0.0&lt;/modelVersion&gt;
-	&lt;parent&gt;
-		&lt;groupId&gt;cn.netkiller&lt;/groupId&gt;
-		&lt;artifactId&gt;oauth&lt;/artifactId&gt;
-		&lt;version&gt;0.0.1-SNAPSHOT&lt;/version&gt;
-	&lt;/parent&gt;
-	&lt;groupId&gt;cn.netkiller&lt;/groupId&gt;
-	&lt;artifactId&gt;client&lt;/artifactId&gt;
-	&lt;version&gt;0.0.1-SNAPSHOT&lt;/version&gt;
-	&lt;name&gt;client&lt;/name&gt;
-	&lt;url&gt;http://maven.apache.org&lt;/url&gt;
-	&lt;properties&gt;
-		&lt;project.build.sourceEncoding&gt;UTF-8&lt;/project.build.sourceEncoding&gt;
-	&lt;/properties&gt;
-	&lt;dependencies&gt;
 		&lt;dependency&gt;
-			&lt;groupId&gt;org.apache.httpcomponents&lt;/groupId&gt;
-			&lt;artifactId&gt;httpclient&lt;/artifactId&gt;
-			&lt;version&gt;4.5.3&lt;/version&gt;
+			&lt;groupId&gt;org.springframework.security.oauth&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-security-oauth2&lt;/artifactId&gt;
 		&lt;/dependency&gt;
-	&lt;/dependencies&gt;
-&lt;/project&gt;
-
 				
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp91"></a>2.21.4.2. SpringBootApplication</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="oauth2.client.configure"></a>2.21.4.2. OAuth2ClientConfiguration.java</h4></div></div></div>
 				
 				<pre class="programlisting">
 				
-package cn.netkiller.oauth.client;
+package cn.netkiller.config;
+
+import static java.util.Arrays.asList;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.oauth2.client.DefaultOAuth2ClientContext;
+import org.springframework.security.oauth2.client.OAuth2RestOperations;
+import org.springframework.security.oauth2.client.OAuth2RestTemplate;
+import org.springframework.security.oauth2.client.resource.OAuth2ProtectedResourceDetails;
+import org.springframework.security.oauth2.client.token.AccessTokenRequest;
+import org.springframework.security.oauth2.client.token.DefaultAccessTokenRequest;
+import org.springframework.security.oauth2.client.token.grant.password.ResourceOwnerPasswordResourceDetails;
+import org.springframework.security.oauth2.config.annotation.web.configuration.EnableOAuth2Client;
+
+@EnableOAuth2Client
+@Configuration
+public class OAuth2ClientConfiguration {
+
+	@Value("${oauth.resource:http://localhost:8080}")
+	private String baseUrl;
+	@Value("${oauth.authorize:http://localhost:8080/oauth/authorize}")
+	private String authorizeUrl;
+	@Value("${oauth.token:http://localhost:8080/oauth/token}")
+	private String tokenUrl;
+
+	@Bean
+	protected OAuth2ProtectedResourceDetails resource() {
+
+		ResourceOwnerPasswordResourceDetails resource = new ResourceOwnerPasswordResourceDetails();
+
+		resource.setAccessTokenUri(tokenUrl);
+		resource.setClientId("api");
+		resource.setClientSecret("secret");
+		resource.setGrantType("password");
+		resource.setScope(asList("read", "write"));
+
+		resource.setUsername("netkiller@msn.com");
+		resource.setPassword("123456");
+
+		return resource;
+	}
+
+	@Bean
+	public OAuth2RestOperations restTemplate() {
+		AccessTokenRequest accessTokenRequest = new DefaultAccessTokenRequest();
+		return new OAuth2RestTemplate(resource(), new DefaultOAuth2ClientContext(accessTokenRequest));
+	}
+
+}
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="oauth2.client.app"></a>2.21.4.3. Application.java</h4></div></div></div>
+				
+				<pre class="programlisting">
+				
+package cn.netkiller;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-/**
- * Hello world!
- *
- */
 @SpringBootApplication
 public class Application {
+
 	public static void main(String[] args) {
-		System.out.println("Hello World!");
+
+		System.out.println("Spring boot with Oauth2RestTemplate!");
 		SpringApplication.run(Application.class, args);
 	}
-}
-
+}				
 				
+
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp92"></a>2.21.4.3. ClientRestController</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="oauth2.client.application.properties"></a>2.21.4.4. application.properties</h4></div></div></div>
 				
 				<pre class="programlisting">
 				
-package cn.netkiller.oauth.client.controller;
+security.basic.enabled=false
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="oauth2.client.controller"></a>2.21.4.5. Controller</h4></div></div></div>
+				
+				<pre class="programlisting">
+				
+package cn.netkiller.controller;
 
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.client.OAuth2RestOperations;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.security.oauth2.common.OAuth2AccessToken;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.fasterxml.jackson.databind.JsonNode;
+@Controller
+public class TestController {
+	@Autowired
+	private OAuth2RestOperations restTemplate;
 
-@RestController
-public class ClientRestController {
-	
-	@RequestMapping("/token")
-	public String token() {
-	    HttpHeaders headers = new HttpHeaders();
-	    headers.setContentType(MediaType.APPLICATION_JSON);
-	    headers.set("Authorization","Bearer "+"6296057a-ed06-4899-9adc-1993ba7a4946");
-	    HttpEntity&lt;String&gt; entity = new HttpEntity&lt;String&gt;(headers);
-	    ResponseEntity&lt;String&gt; response = restTemplate.exchange("http://localhost:8000/api/test/hello.json",HttpMethod.GET,entity,String.class);
-	    System.out.println(response.getBody());
-		return response.getStatusCode().toString() + " " + response.getBody();
+	@GetMapping("/")
+	@ResponseBody
+	public String index() {
+		OAuth2AccessToken token = restTemplate.getAccessToken();
+		System.out.println(token.getValue());
+		String tmp = restTemplate.getForObject("http://api.netkiller.cn/test.json", String.class);
+		System.out.println(tmp);
+		return tmp;
 	}
 }
 				
+				
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp93"></a>2.21.4.4. Test</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="oauth2.client.test"></a>2.21.4.6. Test</h4></div></div></div>
 				
-				<p>首先获取 Token</p>
 				<pre class="screen">
 				
-MacBook-Pro:Application neo$ curl -X POST --user 'api:secret' -d 'grant_type=password&amp;username=netkiller@msn.com&amp;password=123456' http://localhost:8000/api/oauth/token
-{"access_token":"6296057a-ed06-4899-9adc-1993ba7a4946","token_type":"bearer","refresh_token":"b22d70db-3253-4f5f-9b6a-8714da23e14d","expires_in":2642,"scope":"read write"}
+neo@MacBook-Pro ~/deployment % curl http://localhost:8080
+
+OK
 				
-				</pre>
-				<p>将Token写入到 http 头</p>
-				<pre class="screen">
-headers.set("Authorization","Bearer "+"6296057a-ed06-4899-9adc-1993ba7a4946");
-				</pre>
-				<p>启动 client 项目</p>
-				<pre class="screen">
-mvn spring-boot:run				
-				</pre>
-				<p>curl 测试</p>
-				<pre class="screen">
-MacBook-Pro:Application neo$ curl http://localhost:8080/client/token.json
-200 Hello world !
 				</pre>
 			</div>
 		</div>
+
 	</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
 
 var disqus_config = function () {

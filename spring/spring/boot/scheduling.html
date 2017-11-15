@@ -13,136 +13,136 @@
 	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">2.22. Spring boot with Scheduling</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="oauth2.html">上一页</a> </td><th width="60%" align="center">第 2 章 Spring Boot</th><td width="20%" align="right"> <a accesskey="n" href="cache.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="scheduling"></a>2.22. Spring boot with Scheduling</h2></div></div></div>
 		
 		<p>项目中经常会用到计划任务，spring Boot 中通过@EnableScheduling启用计划任务，再通过@Scheduled注解配置计划任务如果运行。</p>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp95"></a>2.22.1. Application.java</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp90"></a>2.22.1. Application.java</h3></div></div></div>
 			
 			<p>Application.java</p>
 			<p>启用计划任务, 在Spring Boot启动类加上注解@EnableScheduling，表示该项目启用计划任务</p>
 			<pre class="programlisting">
-package api;
+				package api;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
-import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
+				import org.springframework.boot.SpringApplication;
+				import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+				import org.springframework.boot.autoconfigure.SpringBootApplication;
+				import org.springframework.context.annotation.Bean;
+				import org.springframework.context.annotation.ComponentScan;
+				import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+				import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
+				import org.springframework.scheduling.annotation.EnableScheduling;
+				import org.springframework.web.servlet.config.annotation.CorsRegistry;
+				import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+				import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
-@SpringBootApplication
-@EnableAutoConfiguration
-@ComponentScan({ "api.config", "api.web", "api.rest", "api.service","api.schedule" })
-@EnableMongoRepositories
-@EnableJpaRepositories
-@EnableScheduling
-public class Application {
+				@SpringBootApplication
+				@EnableAutoConfiguration
+				@ComponentScan({ "api.config", "api.web", "api.rest", "api.service","api.schedule" })
+				@EnableMongoRepositories
+				@EnableJpaRepositories
+				@EnableScheduling
+				public class Application {
 
-	public static void main(String[] args) {
-		SpringApplication.run(Application.class, args);
-	}
+				public static void main(String[] args) {
+				SpringApplication.run(Application.class, args);
+				}
 
-}			
+				}
 			</pre>
 			<p>开启计划任务 @EnableScheduling</p>
 			<p>确保你的计划任务在 @ComponentScan 包中。</p>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp96"></a>2.22.2. Component</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp91"></a>2.22.2. Component</h3></div></div></div>
 			
 			<p>在计划任务方法上加上@Scheduled注解，表示该方法是一个计划任务，项目启动后会去扫描该注解的方法并加入计划任务列表。</p>
 			<pre class="programlisting">
-package api.schedule;
+				package api.schedule;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
+				import java.text.SimpleDateFormat;
+				import java.util.Date;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
+				import org.slf4j.Logger;
+				import org.slf4j.LoggerFactory;
+				import org.springframework.scheduling.annotation.Scheduled;
+				import org.springframework.stereotype.Component;
 
-@Component
-public class ScheduledTasks {
+				@Component
+				public class ScheduledTasks {
 
-	private static final Logger log = LoggerFactory.getLogger(ScheduledTasks.class);
-	private static final SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
-	public final static long ONE_DAY = 24 * 60 * 60 * 1000;
-	public final static long ONE_HOUR = 60 * 60 * 1000;
+				private static final Logger log = LoggerFactory.getLogger(ScheduledTasks.class);
+				private static final SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
+				public final static long ONE_DAY = 24 * 60 * 60 * 1000;
+				public final static long ONE_HOUR = 60 * 60 * 1000;
 
-	public ScheduledTasks() {
-		// TODO Auto-generated constructor stub
-	}
+				public ScheduledTasks() {
+				// TODO Auto-generated constructor stub
+				}
 
-	@Scheduled(fixedRate = 5000) //5秒运行一次调度任务
-	public void echoCurrentTime() {
-		log.info("The time is now {}", dateFormat.format(new Date()));
-	}
+				@Scheduled(fixedRate = 5000) //5秒运行一次调度任务
+				public void echoCurrentTime() {
+				log.info("The time is now {}", dateFormat.format(new Date()));
+				}
 
-	@Scheduled(fixedRate = ONE_DAY)
-	public void scheduledTask() {
-		System.out.println("每隔一天执行一次调度任务");
-	}
+				@Scheduled(fixedRate = ONE_DAY)
+				public void scheduledTask() {
+				System.out.println("每隔一天执行一次调度任务");
+				}
 
-	@Scheduled(fixedDelay = ONE_HOUR)
-	public void scheduleTask2() {
-		System.out.println("运行完后隔一小时就执行任务");
-	}
+				@Scheduled(fixedDelay = ONE_HOUR)
+				public void scheduleTask2() {
+				System.out.println("运行完后隔一小时就执行任务");
+				}
 
-	@Scheduled(initialDelay = 1000, fixedRate = 5000)
-	public void doSomething() {
-		// something that should execute periodically
-	}
+				@Scheduled(initialDelay = 1000, fixedRate = 5000)
+				public void doSomething() {
+				// something that should execute periodically
+				}
 
-	@Scheduled(cron = "0 0/1 * * * ? ")
-	public void ScheduledTask3() {
-		System.out.println(" 每隔一分钟执行一次任务");
-	}
+				@Scheduled(cron = "0 0/1 * * * ? ")
+				public void ScheduledTask3() {
+				System.out.println(" 每隔一分钟执行一次任务");
+				}
 
-}
+				}
 			</pre>
 			<p>@Scheduled参数说明</p>
 			<pre class="screen">
-@Scheduled注解有一些参数，用于配置计划任务执行频率，执行时段等。
+				@Scheduled注解有一些参数，用于配置计划任务执行频率，执行时段等。
 
-cron ：cron表达式，e.g. {@code "0 * * * * ？"}从前到后依次表示秒 分 时 日 月 年
-zone：设置时区，指明计划任务运行在哪个时区下，默认为空，采用操作系统默认时区
-fixedDelay：同一个计划任务两次执行间隔固定时间，单位毫秒，上次执行结束到下次开始执行的时间，以long类型复制
-fixedDelayString：同一个计划任务两次执行间隔固定时间，单位毫秒，上次执行结束到下次开始执行的时间，以String类型赋值
-fixedRate：以一个固定频率执行，单位毫秒，表示每隔多久执行一次，以long类型赋值
-fixedRateString：以一个固定频率执行，单位毫秒，表示每隔多久执行一次，以String类型赋值
-initialDelay：延迟启动计划任务，单位毫秒，表示执行第一次计划任务前先延迟一段时间，以long类型赋值
-initialDelayString：延迟启动计划任务，单位毫秒，表示执行第一次计划任务前先延迟一段时间，以String赋值			
+				cron ：cron表达式，e.g. {@code "0 * * * * ？"}从前到后依次表示秒 分 时 日 月 年
+				zone：设置时区，指明计划任务运行在哪个时区下，默认为空，采用操作系统默认时区
+				fixedDelay：同一个计划任务两次执行间隔固定时间，单位毫秒，上次执行结束到下次开始执行的时间，以long类型复制
+				fixedDelayString：同一个计划任务两次执行间隔固定时间，单位毫秒，上次执行结束到下次开始执行的时间，以String类型赋值
+				fixedRate：以一个固定频率执行，单位毫秒，表示每隔多久执行一次，以long类型赋值
+				fixedRateString：以一个固定频率执行，单位毫秒，表示每隔多久执行一次，以String类型赋值
+				initialDelay：延迟启动计划任务，单位毫秒，表示执行第一次计划任务前先延迟一段时间，以long类型赋值
+				initialDelayString：延迟启动计划任务，单位毫秒，表示执行第一次计划任务前先延迟一段时间，以String赋值
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp97"></a>2.22.3. 查看日志</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp92"></a>2.22.3. 查看日志</h3></div></div></div>
 			
 			<pre class="programlisting">
-tail -f spring.log			
+				tail -f spring.log
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp98"></a>2.22.4. 计划任务控制</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp93"></a>2.22.4. 计划任务控制</h3></div></div></div>
 			
 			<p>matchIfMissing = true， 如果改属性条目不存在返回 true</p>
 			<pre class="programlisting">
-@ConditionalOnProperty("batch.metrics.export.influxdb.enabled")
-			
-# mybean.enabled = true
-@ConditionalOnProperty(value='mybean.enabled')
-@ConditionalOnProperty(value = "endpoints.hal.enabled", matchIfMissing = true)
+				@ConditionalOnProperty("batch.metrics.export.influxdb.enabled")
 
-# server.host = localhost
-@ConditionalOnProperty(name="server.host", havingValue="localhost")
-@ConditionalOnExpression("'${server.host}'=='localhost'")
+				# mybean.enabled = true
+				@ConditionalOnProperty(value='mybean.enabled')
+				@ConditionalOnProperty(value = "endpoints.hal.enabled", matchIfMissing = true)
 
-# spring.rabbitmq.dynamic = true
-@ConditionalOnProperty(prefix = "spring.rabbitmq", name = "dynamic", matchIfMissing = true)
-@ConditionalOnProperty(prefix = "extension.security.cors", name = "enabled", matchIfMissing = false)
-@ConditionalOnProperty(prefix = "camunda.bpm.job-execution", name = "enabled", havingValue = "true", matchIfMissing = true)
+				# server.host = localhost
+				@ConditionalOnProperty(name="server.host", havingValue="localhost")
+				@ConditionalOnExpression("'${server.host}'=='localhost'")
 
-# spring.social.auto-connection-views = true
-@ConditionalOnProperty(prefix = "spring.social.", value = "auto-connection-views")
+				# spring.rabbitmq.dynamic = true
+				@ConditionalOnProperty(prefix = "spring.rabbitmq", name = "dynamic", matchIfMissing = true)
+				@ConditionalOnProperty(prefix = "extension.security.cors", name = "enabled", matchIfMissing = false)
+				@ConditionalOnProperty(prefix = "camunda.bpm.job-execution", name = "enabled", havingValue = "true", matchIfMissing = true)
+
+				# spring.social.auto-connection-views = true
+				@ConditionalOnProperty(prefix = "spring.social.", value = "auto-connection-views")
 			</pre>
 			<p>使用案例</p>
 			<pre class="programlisting">
@@ -180,7 +180,7 @@ public class ScheduledTasks {
 			</pre>
 			<p>application.properties 配置如下</p>
 			<pre class="screen">
-mis.schedule.enabled=true
+				mis.schedule.enabled=true
 			</pre>
 		</div>
 	</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
