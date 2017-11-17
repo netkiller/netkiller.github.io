@@ -1,0 +1,296 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>48.3. PostgreSQL 官方 YUM 源安装</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><meta name="keywords" content="MySQL, PostgreSQL, Oracle, NoSQL, ER, TokyoCabinet/Tyrant, Memcache, Membase, Redis, Flare, Voldemort, LevelDB, MongoDB, GreenSQL, RDBMS, ORDBMS" /><link rel="home" href="../index.html" title="Netkiller Database 手札" /><link rel="up" href="install.html" title="第 48 章 PostgreSQL 安装" /><link rel="prev" href="pgsql.yum.html" title="48.2. YUM 默认源安装" /><link rel="next" href="pgsql.conf.html" title="48.4. PostgreSQL 配置" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">48.3. PostgreSQL 官方 YUM 源安装</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="pgsql.yum.html">上一页</a> </td><th width="60%" align="center">第 48 章 PostgreSQL 安装</th><td width="20%" align="right"> <a accesskey="n" href="pgsql.conf.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="pgsql.yum.new"></a>48.3. PostgreSQL 官方 YUM 源安装</h2></div></div></div>
+		
+		<p>CentOS 6.4  环境 YUM 地址 http://yum.postgresql.org/</p>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp348"></a>48.3.1. 9.2</h3></div></div></div>
+			
+			<pre class="screen">
+# yum install http://yum.postgresql.org/9.2/redhat/rhel-6-x86_64/pgdg-centos92-9.2-6.noarch.rpm
+# yum list postgres*
+
+# yum install postgresql92-server postgresql92
+
+chkconfig postgresql-9.2 on
+service postgresql-9.2 initdb
+service postgresql-9.2 start
+			</pre>
+			<p>配置文件的位置</p>
+			<pre class="screen">
+# ls /var/lib/pgsql/9.2/data/*.conf
+/var/lib/pgsql/9.2/data/pg_hba.conf  /var/lib/pgsql/9.2/data/pg_ident.conf  /var/lib/pgsql/9.2/data/postgresql.conf
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp349"></a>48.3.2. 9.3</h3></div></div></div>
+			
+			<pre class="screen">
+# yum install http://yum.postgresql.org/9.3/redhat/rhel-6-x86_64/pgdg-centos93-9.3-1.noarch.rpm
+# yum install postgresql93-server postgresql93
+			</pre>			
+			<pre class="screen">
+# chkconfig postgresql-9.3 on
+# service postgresql-9.3 initdb
+# service postgresql-9.3 start			
+			</pre>
+			
+			<p>9.2 升级到 9.3</p>
+			<p>备份数据库</p>
+			<pre class="screen">
+# su - postgres
+$ pg_dump -f wechat.sql wechat
+			</pre>
+			<p>升级数据库</p>
+			<p>关闭9.2，启动9。3</p>
+			<pre class="screen">
+# chkconfig postgresql-9.2 off
+# service postgresql-9.2 stop
+
+# service postgresql-9.3 start
+			</pre>
+			<p>回复数据库</p>
+			<pre class="screen">
+# su - postgres
+$ createuser -r -s -P dba
+$ createuser -P wechat
+$ createdb -E UTF8 -O wechat wechat
+$ cat wechat.sql | psql wechat
+			</pre>
+			<p>合并配置文件</p>
+			<pre class="screen">
+$ cp 9.3/data/postgresql.conf{,.original}
+$ cp 9.3/data/pg_hba.conf{,.original}
+$ vimdiff 9.2/data/postgresql.conf 9.3/data/postgresql.conf
+$ vimdiff 9.2/data/pg_hba.conf 9.3/data/pg_hba.conf
+			</pre>
+			<p>注意 vimdiff 命令是文件对比于合并工具，建议你选择你比较熟悉的工具。</p>
+			<pre class="screen">
+# service postgresql-9.3 restart
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp350"></a>48.3.3. 9.4</h3></div></div></div>
+			
+			<p>CentOS 6</p>
+			<p>https://github.com/oscm/shell/blob/master/database/postgresql/postgresql93-centos6.sh</p>
+			<p>CentOS 7</p>
+			<p>https://github.com/oscm/shell/blob/master/database/postgresql/postgresql93-centos7.sh</p>
+			<pre class="screen">
+			
+#!/bin/bash
+
+# CentOS 7
+yum install -y https://download.postgresql.org/pub/repos/yum/9.6/redhat/rhel-7-x86_64/pgdg-centos96-9.6-3.noarch.rpm
+yum install -y postgresql96-server postgresql96-contrib
+
+systemctl initdb postgresql-9.6
+chkconfig postgresql-9.6 on
+
+cp /var/lib/pgsql/9.6/data/postgresql.conf{,.original}
+cp /var/lib/pgsql/9.6/data/pg_hba.conf{,.original}
+cp /var/lib/pgsql/9.6/data/pg_ident.conf{,.original}
+
+sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/" /var/lib/pgsql/9.6/data/postgresql.conf
+
+systemctl start postgresql-9.6
+
+iptables -A INPUT -m state --state NEW -m tcp -p tcp --dport 5432 -j ACCEPT
+systemctl save iptables			
+			
+			</pre>
+			<p>一键安装</p>
+			<pre class="screen">
+			
+curl -s https://raw.githubusercontent.com/oscm/shell/master/database/postgresql/postgresql93-centos7.sh | bash
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp351"></a>48.3.4. 9.6</h3></div></div></div>
+			
+			<p>https://github.com/oscm/shell/blob/master/database/postgresql/postgresql96-centos7.sh</p>
+			<p>一键安装</p>
+			<pre class="screen">
+			
+curl -s https://raw.githubusercontent.com/oscm/shell/master/database/postgresql/postgresql96-centos7.sh | bash
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp352"></a>48.3.5. PostgreSQL 10</h3></div></div></div>
+			
+			<p>一键安装 PostgreSQL 10</p>
+			<pre class="screen">
+			
+curl -s https://raw.githubusercontent.com/oscm/shell/master/database/postgresql/10/repository.sh | bash
+curl -s https://raw.githubusercontent.com/oscm/shell/master/database/postgresql/10/postgresql-server.sh | bash
+			
+			</pre>
+			<p>监听所有适配器地址</p>
+			<pre class="screen">
+curl -s https://raw.githubusercontent.com/oscm/shell/master/database/postgresql/10/listen_addresses.all.sh | bash
+			</pre>
+			<p>创建数据库</p>
+			<pre class="screen">
+CREATE ROLE test LOGIN PASSWORD 'test' NOSUPERUSER NOINHERIT NOCREATEDB NOCREATEROLE;
+CREATE DATABASE test WITH OWNER = test ENCODING = 'UTF8' TABLESPACE = pg_default;
+			</pre>
+			<p>配置访问控制列表 /var/lib/pgsql/10/data/pg_hba.conf 加入</p>
+			<pre class="screen">
+# vim /var/lib/pgsql/10/data/pg_hba.conf
+host    *               dba         0.0.0.0/0       md5     
+host    test            test        0.0.0.0/0       md5
+			</pre>
+			<p>确认防火墙已经放行5432端口</p>
+			<p>
+# cat /etc/sysconfig/iptables | grep 5432
+-A INPUT -s 172.16.0.0/24 -p tcp -m state --state NEW -m tcp --dport 5432 -j ACCEPT			
+			</p>
+			<div class="example"><a id="idp501"></a><p class="title"><strong>例 48.1. Example for /var/lib/pgsql/10/data/pg_hba.conf</strong></p><div class="example-contents">
+				
+				<pre class="screen">
+# cat /var/lib/pgsql/10/data/pg_hba.conf
+# PostgreSQL Client Authentication Configuration File
+# ===================================================
+#
+# Refer to the "Client Authentication" section in the PostgreSQL
+# documentation for a complete description of this file.  A short
+# synopsis follows.
+#
+# This file controls: which hosts are allowed to connect, how clients
+# are authenticated, which PostgreSQL user names they can use, which
+# databases they can access.  Records take one of these forms:
+#
+# local      DATABASE  USER  METHOD  [OPTIONS]
+# host       DATABASE  USER  ADDRESS  METHOD  [OPTIONS]
+# hostssl    DATABASE  USER  ADDRESS  METHOD  [OPTIONS]
+# hostnossl  DATABASE  USER  ADDRESS  METHOD  [OPTIONS]
+#
+# (The uppercase items must be replaced by actual values.)
+#
+# The first field is the connection type: "local" is a Unix-domain
+# socket, "host" is either a plain or SSL-encrypted TCP/IP socket,
+# "hostssl" is an SSL-encrypted TCP/IP socket, and "hostnossl" is a
+# plain TCP/IP socket.
+#
+# DATABASE can be "all", "sameuser", "samerole", "replication", a
+# database name, or a comma-separated list thereof. The "all"
+# keyword does not match "replication". Access to replication
+# must be enabled in a separate record (see example below).
+#
+# USER can be "all", a user name, a group name prefixed with "+", or a
+# comma-separated list thereof.  In both the DATABASE and USER fields
+# you can also write a file name prefixed with "@" to include names
+# from a separate file.
+#
+# ADDRESS specifies the set of hosts the record matches.  It can be a
+# host name, or it is made up of an IP address and a CIDR mask that is
+# an integer (between 0 and 32 (IPv4) or 128 (IPv6) inclusive) that
+# specifies the number of significant bits in the mask.  A host name
+# that starts with a dot (.) matches a suffix of the actual host name.
+# Alternatively, you can write an IP address and netmask in separate
+# columns to specify the set of hosts.  Instead of a CIDR-address, you
+# can write "samehost" to match any of the server's own IP addresses,
+# or "samenet" to match any address in any subnet that the server is
+# directly connected to.
+#
+# METHOD can be "trust", "reject", "md5", "password", "scram-sha-256",
+# "gss", "sspi", "ident", "peer", "pam", "ldap", "radius" or "cert".
+# Note that "password" sends passwords in clear text; "md5" or
+# "scram-sha-256" are preferred since they send encrypted passwords.
+#
+# OPTIONS are a set of options for the authentication in the format
+# NAME=VALUE.  The available options depend on the different
+# authentication methods -- refer to the "Client Authentication"
+# section in the documentation for a list of which options are
+# available for which authentication methods.
+#
+# Database and user names containing spaces, commas, quotes and other
+# special characters must be quoted.  Quoting one of the keywords
+# "all", "sameuser", "samerole" or "replication" makes the name lose
+# its special character, and just match a database or username with
+# that name.
+#
+# This file is read on server startup and when the server receives a
+# SIGHUP signal.  If you edit the file on a running system, you have to
+# SIGHUP the server for the changes to take effect, run "pg_ctl reload",
+# or execute "SELECT pg_reload_conf()".
+#
+# Put your actual configuration here
+# ----------------------------------
+#
+# If you want to allow non-local connections, you need to add more
+# "host" records.  In that case you will also need to make PostgreSQL
+# listen on a non-local interface via the listen_addresses
+# configuration parameter, or via the -i or -h command line switches.
+
+
+
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
+host    *		dba         0.0.0.0/0       md5
+host    test		test        0.0.0.0/0       md5
+
+# "local" is for Unix domain socket connections only
+local   all             all                                     peer
+# IPv4 local connections:
+host    all             all             127.0.0.1/32            ident
+# IPv6 local connections:
+host    all             all             ::1/128                 ident
+# Allow replication connections from localhost, by a user with the
+# replication privilege.
+local   replication     all                                     peer
+host    replication     all             127.0.0.1/32            ident
+host    replication     all             ::1/128                 ident				
+				</pre>
+			</div></div><br class="example-break" />
+		</div>
+	</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="pgsql.yum.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="install.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="pgsql.conf.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">48.2. YUM 默认源安装 </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 48.4. PostgreSQL 配置</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script><script xmlns="" type="text/javascript" src="/js/q.js" async="async"></script></body></html>

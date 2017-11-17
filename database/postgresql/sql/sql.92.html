@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>53.12. SQL 92</title><link rel="stylesheet" type="text/css" href="../..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><meta name="keywords" content="MySQL, PostgreSQL, Oracle, NoSQL, ER, TokyoCabinet/Tyrant, Memcache, Membase, Redis, Flare, Voldemort, LevelDB, MongoDB, GreenSQL, RDBMS, ORDBMS" /><link rel="home" href="../../index.html" title="Netkiller Database 手札" /><link rel="up" href="index.html" title="第 53 章 SQL Statement Syntax" /><link rel="prev" href="sql.mysql.html" title="53.11. MySQL 专有命令" /><link rel="next" href="../functions/index.html" title="第 54 章 Functions and Operators" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">53.12. SQL 92</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="sql.mysql.html">上一页</a> </td><th width="60%" align="center">第 53 章 SQL Statement Syntax</th><td width="20%" align="right"> <a accesskey="n" href="../functions/index.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="sql.92"></a>53.12. SQL 92</h2></div></div></div>
+		
+
+			<p>insert + select</p>
+			<pre class="screen">
+insert into product_type_commission select id,5,1,1,0,0,0,0,0,0 from product_type where title='notebook' and is_physical=0;
+			</pre>
+
+			<p>update table1,table2</p>
+			<pre class="screen">
+begin;
+ALTER TABLE `customer` ADD COLUMN `cutoff_time` TIMESTAMP NOT NULL default '0000-00-00 00:00:00';
+update customer,agent set customer.cutoff_time = agent.cutoff_time where customer.id = agent.id;
+ALTER TABLE `agent` DROP COLUMN `cutoff_time`;
+commit;
+			</pre>
+
+			<p>update table1 set field1 = (select value from table2)</p>
+			<pre class="screen">
+UPDATE
+	transaction
+SET
+	transaction.total_sold_price = (
+		SELECT
+			SUM(transaction_item.price)
+	FROM
+			transaction_item
+		WHERE transaction_item.transaction_id = 100
+	)
+WHERE
+	transaction.id = 100
+			</pre>
+			<p>update table1, (select * from other) as table2 set table1.field1 = table2.field1</p>
+			<pre class="screen">
+UPDATE
+	transaction,(	SELECT
+						SUM(product_item.bought_price) AS total_bought_price, transaction_item.transaction_id
+					FROM
+						transaction_item
+			    	WHERE
+						transaction_item.transaction_id IN ( '123','456' )
+			     ) as total
+SET
+	transaction.total_bought_price = total.total_bought_price
+WHERE
+	transaction.id = total.transaction_id
+
+			</pre>
+
+		<p>join + subquery</p>
+		<pre class="screen">
+select u.*,t.category,t.items,t.[property] from tb_sysregchkusers as u left join (select a.items as category, b.* from (select id, items from tb_sysregchktask where categoryid=0) as a left join tb_sysregchktask as b on b.categoryid=a.id ) as t on u.taskID=t.id
+
+select * from tb_sysregchklog where CONVERT(datetime,CONVERT(varchar(10),checkTime,120)) between convert(datetime,'2007-12-12') and convert(datetime,'2007-12-12')
+		</pre>
+
+		<pre class="screen">
+select DISTINCT user_point_history.user_id,user.username,
+(select count(id) from transaction where id = user_point_history.transaction_id) as transactions,
+(SELECT SUM(u_p_h.points) FROM user_point_history as u_p_h WHERE u_p_h.type != 'RDMP' AND u_p_h.status IN('pr','ac') AND u_p_h.user_id = user_point_history.user_id) as total_points_earned,
+(SELECT SUM(u_p_h.points) FROM user_point_history as u_p_h WHERE u_p_h.type = 'RDMP' AND u_p_h.status IN('pr','ac') AND u_p_h.user_id = user_point_history.user_id) as total_points_redeemed
+from user_point_history,user where user_point_history.user_id = user.id;
+		</pre>
+
+		<p>(total_points_earned - total_points_redeemed) as current_balance_points </p>
+		<pre class="screen">
+select user_id, username, transactions, total_points_earned, total_points_redeemed, (total_points_earned - total_points_redeemed) as current_balance_points
+from (select DISTINCT user_point_history.user_id,user.username,
+(select count(id) from transaction where id = user_point_history.transaction_id) as transactions,
+(SELECT SUM(u_p_h.points) FROM user_point_history as u_p_h WHERE u_p_h.type != 'RDMP' AND u_p_h.status IN('pr','ac') AND u_p_h.user_id = user_point_history.user_id) as total_points_earned,
+(SELECT SUM(u_p_h.points) FROM user_point_history as u_p_h WHERE u_p_h.type = 'RDMP' AND u_p_h.status IN('pr','ac') AND u_p_h.user_id = user_point_history.user_id) as total_points_redeemed
+from user_point_history,user where user_point_history.user_id = user.id) as user_performance;
+		</pre>
+
+		<p>subquery作为一个字段使用 </p>
+		<pre class="screen">
+select product_type_attribute.*,(select 'selected' from product_type_attribute_set where product_type_attribute_set.product_type_attribute_id = product_type_attribute.id and product_type_attribute_set.product_type_id = 26) as selected
+from product_type_attribute;
+		</pre>
+	</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql.mysql.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="../functions/index.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">53.11. MySQL 专有命令 </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 54 章 Functions and Operators</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script><script xmlns="" type="text/javascript" src="/js/q.js" async="async"></script></body></html>
