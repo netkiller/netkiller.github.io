@@ -4,7 +4,6 @@
 	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
 	    <a xmlns="" href="/journal/index.html">杂文</a> |
 	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
-	    <a xmlns="" href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
 	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
 	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
 	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
@@ -12,7 +11,7 @@
 	    <a xmlns="" href="/search.html">Search</a> |
 	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">20.5. MySQL Plugin</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="my.cnf.html">上一页</a> </td><th width="60%" align="center">第 20 章 MySQL Server</th><td width="20%" align="right"> <a accesskey="n" href="replication.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="plugin"></a>20.5. MySQL Plugin</h2></div></div></div>
 	
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp135"></a>20.5.1. validate_password</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp134"></a>20.5.1. validate_password</h3></div></div></div>
 		
 		<p>插件的卸载与安装</p>
 		<pre class="screen">
@@ -48,7 +47,7 @@ mysql&gt; grant all privileges on test.* to 'test'@localhost  identified by 'che
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp136"></a>20.5.2. MySQL Images manager</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="netkiller.mysql.images"></a>20.5.2. MySQL Images manager</h3></div></div></div>
 		
 		<p>地址： https://github.com/netkiller/mysql-image-plugin</p>
 		<pre class="screen">
@@ -86,7 +85,7 @@ select image_move('/path/filename.ext','/path/to/newfile.ext');
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp137"></a>20.5.3. MySQL fifo</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="netkiller.mysql.fifo"></a>20.5.3. MySQL fifo</h3></div></div></div>
 		
 		<pre class="screen">
 		
@@ -242,6 +241,74 @@ mysql&gt; select fifo_write('/tmp/nofifo',concat(mobile,'\r\n')) from demo;
 		
 		</pre>
 	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="netkiller.mysql.out2file"></a>20.5.4. 内容输出到文本插件</h3></div></div></div>
+		
+		<p>Plugin Install and Uninstall</p>
+		<pre class="programlisting">
+		
+# Install
+create function out2file returns string soname 'liboutfile.so';
+
+# Uninstall
+drop function out2file;	
+		
+		</pre>
+		<p>操作演示</p>
+		<pre class="programlisting">
+		
+# 安装插件
+
+mysql&gt; create function out2file returns string soname 'liboutfile.so';
+Query OK, 0 rows affected (0.00 sec)
+
+# 调用插件
+
+mysql&gt; select out2file('/tmp/myoutfile',"Helloworld!!!");
++--------------------------------------------+
+| out2file('/tmp/myoutfile',"Helloworld!!!") |
++--------------------------------------------+
+| true                                       |
++--------------------------------------------+
+1 row in set (0.00 sec)
+
+# 查看文件
+
+root@netkiller ~/mysql-outfile-plugin % cat /tmp/myoutfile
+Helloworld!!!	
+		
+		</pre>
+		<p>触发器应用</p>
+		<pre class="programlisting">
+		
+CREATE TABLE `demo` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(45) DEFAULT NULL,
+  `sex` enum('Man','Woman') DEFAULT NULL,
+  `address` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8		
+		
+DROP TRIGGER IF EXISTS `test`.`demo_AFTER_INSERT`;
+
+DELIMITER $$
+USE `test`$$
+CREATE DEFINER=`root`@`%` TRIGGER `test`.`demo_AFTER_INSERT` AFTER INSERT ON `demo` FOR EACH ROW
+BEGIN
+	set @rev = "";
+	SELECT 
+    OUT2FILE('/tmp/demo.log',
+            CONCAT_WS(',',
+                    NEW.id,
+                    NEW.name,
+                    NEW.sex,
+                    NEW.address))
+	INTO @rev;
+END$$
+DELIMITER ;			
+		
+		</pre>
+	</div>
+	
 </div><div xmlns="" id="disqus_thread"></div><script xmlns="">
 
 var disqus_config = function () {

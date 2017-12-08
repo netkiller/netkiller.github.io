@@ -38,7 +38,7 @@
 
 &lt;/project&gt;		
 		
-		</pre>	
+		</pre>
 		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="pojo"></a>19.2.1. map 处理</h3></div></div></div>
 			
 			<p>Example</p>
@@ -77,9 +77,9 @@ public class GsonTest {
 		System.out.println(map.get("1").get("title"));
 		System.out.println(map.get("pages").get("count"));
 			
-			</pre>			
-			
-			
+			</pre>
+
+
 		</div>
 		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="pojo"></a>19.2.2. POJO</h3></div></div></div>
 			
@@ -110,7 +110,7 @@ public class Personal {
 }
 			
 			</pre>
-		</div>	
+		</div>
 		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="toJson"></a>19.2.3. toJson</h3></div></div></div>
 			
 			<pre class="programlisting">
@@ -134,7 +134,7 @@ public class GsonExampleToJson {
 }
 			
 			</pre>
-		</div>	
+		</div>
 		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="fromJson"></a>19.2.4. fromJson</h3></div></div></div>
 			
 			<pre class="programlisting">
@@ -157,7 +157,7 @@ public class GsonExampleFromJson {
 }
 			
 			</pre>
-		</div>	
+		</div>
 		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="JsonParser"></a>19.2.5. JsonParser</h3></div></div></div>
 			
 			<pre class="programlisting">
@@ -196,6 +196,76 @@ public class GsonJsonParser {
 	}
 
 }
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="map2json"></a>19.2.6. Exmaple 范例</h3></div></div></div>
+			
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp409"></a>19.2.6.1. Map to Json</h4></div></div></div>
+				
+				<pre class="programlisting">
+				
+Gson gson = new GsonBuilder().enableComplexMapKeySerialization().create();
+String jsonString = gson.toJson(map);
+				
+				</pre>
+			</div>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="json2map"></a>19.2.7. Exmaple 范例</h3></div></div></div>
+			
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp410"></a>19.2.7.1. Map to Json</h4></div></div></div>
+				
+				<pre class="programlisting">
+				
+Gson gson = new GsonBuilder().enableComplexMapKeySerialization().create();
+Map&lt;String, String&gt; source = gson.fromJson(output, HashMap.class);
+				
+				</pre>
+			</div>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp411"></a>19.2.8. 处理复杂的类型</h3></div></div></div>
+			
+			<p>通过 TypeToken 定义复杂数据库类型。</p>
+			<pre class="programlisting">
+			
+package cn.netkiller.ipo.process.json;
+
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
+
+import cn.netkiller.ipo.process.ProcessInterface;
+
+public class JsonValueLength implements ProcessInterface {
+	private final static Logger logger = LoggerFactory.getLogger(JsonValueLength.class);
+	private Gson gson = new GsonBuilder().enableComplexMapKeySerialization().create();
+	private int maxLength = 0;
+
+	public JsonValueLength(int maxLength) {
+		this.maxLength = maxLength;
+	}
+
+	@Override
+	public String run(String line) {
+
+		Map&lt;String, String&gt; map = gson.fromJson(line, new TypeToken&lt;Map&lt;String, String&gt;&gt;() {
+		}.getType());
+		for (String key : map.keySet()) {
+			if (map.get(key).length() &gt; this.maxLength) {
+				map.put(key, map.get(key).substring(0, this.maxLength));
+			}
+		}
+		logger.debug("{}", map);
+		return gson.toJson(map);
+	}
+
+}
+
 			
 			</pre>
 		</div>
