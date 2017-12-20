@@ -4,10 +4,12 @@
 	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
 	    <a xmlns="" href="/journal/index.html">杂文</a> |
 	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">云栖社区</a> |
 	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
 	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
 	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
 	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+		<a xmlns="" href="https://github.com/netkiller">Github</a> |
 	    <a xmlns="" href="/search.html">Search</a> |
 	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">5.3. Spring Data JPA</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="spring-data-mongodb.html">上一页</a> </td><th width="60%" align="center">第 5 章 Spring Data</th><td width="20%" align="right"> <a accesskey="n" href="EntityManager.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="spring-data-jpa"></a>5.3. Spring Data JPA</h3></div></div></div>
 	
@@ -343,13 +345,169 @@ CREATE TABLE `elasticsearch_trash` (
 		</div>
 		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="index"></a>5.3.1.7. 索引</h5></div></div></div>
 			
-			<p>针对字段做唯一索引</p>
-			<pre class="screen">
-				@Column(unique = true)
-			</pre>
-			<p>创建复合索引</p>
-			<pre class="programlisting">
+			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id=""></a>5.3.1.7.1. 普通索引</h6></div></div></div>
+				
+				<pre class="screen">
+				
+@Table(indexes = { @Index(name = "name", columnList = "name DESC"), @Index(name = "path", columnList = "path") })				
+				
+				</pre>
+				<pre class="programlisting">
+				
+package common.domain;
+
+import java.util.Date;
+import java.util.Set;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Index;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
+
+import org.springframework.format.annotation.DateTimeFormat;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+@Entity
+@Table(indexes = { @Index(name = "name", columnList = "name DESC"), @Index(name = "path", columnList = "path") })
+public class Category {
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "id", unique = true, nullable = false, insertable = true, updatable = false)
+	public int id;
+	public String name;
+	public String description;
+	public String path;
+
+	@Column(columnDefinition = "enum('Enabled','Disabled') DEFAULT 'Enabled' COMMENT '状态'")
+	public String status;
+
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+	@Column(columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间'")
+	public Date ctime;
+
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+	@Column(columnDefinition = "TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更改时间'")
+	public Date mtime;
+
+	@ManyToOne(cascade = { CascadeType.PERSIST, CascadeType.REMOVE })
+	@JoinColumn(name = "pid", referencedColumnName = "id")
+	private Category categorys;
+
+	@JsonIgnore
+	@OneToMany(cascade = CascadeType.ALL, mappedBy = "category", fetch = FetchType.EAGER)
+	private Set&lt;Category&gt; category;
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	public String getPath() {
+		return path;
+	}
+
+	public void setPath(String path) {
+		this.path = path;
+	}
+
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
+	}
+
+	public Date getCtime() {
+		return ctime;
+	}
+
+	public void setCtime(Date ctime) {
+		this.ctime = ctime;
+	}
+
+	public Date getMtime() {
+		return mtime;
+	}
+
+	public void setMtime(Date mtime) {
+		this.mtime = mtime;
+	}
+
+	public Category getCategorys() {
+		return categorys;
+	}
+
+	public void setCategorys(Category categorys) {
+		this.categorys = categorys;
+	}
+
+	public Set&lt;Category&gt; getCategory() {
+		return category;
+	}
+
+	public void setCategory(Set&lt;Category&gt; category) {
+		this.category = category;
+	}
+
+	@Override
+	public String toString() {
+		return "Category [id=" + id + ", name=" + name + ", description=" + description + ", path=" + path + ", status="
+				+ status + ", ctime=" + ctime + ", mtime=" + mtime + ", categorys=" + categorys + ", category="
+				+ category + "]";
+	}
+
+}
+				
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="unique"></a>5.3.1.7.2. 唯一索引</h6></div></div></div>
+				
+				<p>针对字段做唯一索引</p>
+				<pre class="screen">
+				
+@Column(unique = true)
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="uniqueConstraints"></a>5.3.1.7.3. 复合索引</h6></div></div></div>
+				
 			
+				<p>创建由多个字段组成的复合索引</p>
+				<pre class="programlisting">
+				
 package cn.netkiller.api.model;
 
 import java.io.Serializable;
@@ -436,10 +594,10 @@ public class Comment implements Serializable {
 		this.createDate = createDate;
 	}
 }
-			
-			</pre>
-			<pre class="screen">
-			
+				
+				</pre>
+				<pre class="screen">
+				
 CREATE TABLE `comment` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `article_id` int(11) NOT NULL,
@@ -450,8 +608,9 @@ CREATE TABLE `comment` (
   UNIQUE KEY `UK5qxfiu92nwlvgli7bl3evl11m` (`member_id`,`article_id`),
   CONSTRAINT `FKmrrrpi513ssu63i2783jyiv9m` FOREIGN KEY (`member_id`) REFERENCES `member` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-			
-			</pre>
+				
+				</pre>
+			</div>
 		</div>
 		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="enum"></a>5.3.1.8. Enum 枚举数据类型</h5></div></div></div>
 			
@@ -616,7 +775,7 @@ CREATE TABLE `netkiller_trash` (
 				</pre>
 			</div>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp212"></a>5.3.1.9. 整形数据类型</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="UNSIGNED"></a>5.3.1.9. 整形数据类型</h5></div></div></div>
 			
 			<p>无符号整形</p>
 			<pre class="programlisting">
@@ -1357,7 +1516,7 @@ public class Member implements Serializable {
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp214"></a>5.3.1.15. 其他</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp213"></a>5.3.1.15. 其他</h5></div></div></div>
 			
 			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="Cascade"></a>5.3.1.15.1. Cascade</h6></div></div></div>
 				
@@ -1369,7 +1528,7 @@ public class Member implements Serializable {
 					CascadeType.ALL
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp213"></a>5.3.1.15.2. @JsonIgnore</h6></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp212"></a>5.3.1.15.2. @JsonIgnore</h6></div></div></div>
 				
 				<p>当尸体返回 Json 数据结构是，将不包含 @JsonIgnore 定义变量。</p>
 				<pre class="programlisting">
@@ -1584,7 +1743,7 @@ List&lt;RecentRead&gt; findByMemberIdOrderByIdDesc(int memberId, Pageable pageab
 		</div>
 		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="Query"></a>5.3.3.5. Query</h5></div></div></div>
 			
-			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp215"></a>5.3.3.5.1. 参数传递</h6></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp214"></a>5.3.3.5.1. 参数传递</h6></div></div></div>
 				
 				<pre class="programlisting">
 				
@@ -1629,7 +1788,7 @@ public interface PersonRepository extends JpaRepository&lt;Person, Long&gt; {
 		</div>
 		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="Transactional"></a>5.3.3.6. @Transactional</h5></div></div></div>
 			
-			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp216"></a>5.3.3.6.1. 删除更新需要 @Transactional 注解</h6></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp215"></a>5.3.3.6.1. 删除更新需要 @Transactional 注解</h6></div></div></div>
 				
 				<pre class="programlisting">
 				
@@ -1670,7 +1829,7 @@ public interface RecentReadRepostitory extends CrudRepository&lt;RecentRead, Int
 				
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp217"></a>5.3.3.6.2. 回滚操作</h6></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp216"></a>5.3.3.6.2. 回滚操作</h6></div></div></div>
 				
 				<pre class="programlisting">
 				
