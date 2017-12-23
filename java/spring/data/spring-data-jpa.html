@@ -345,13 +345,169 @@ CREATE TABLE `elasticsearch_trash` (
 		</div>
 		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="index"></a>8.3.1.7. 索引</h5></div></div></div>
 			
-			<p>针对字段做唯一索引</p>
-			<pre class="screen">
-				@Column(unique = true)
-			</pre>
-			<p>创建复合索引</p>
-			<pre class="programlisting">
+			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id=""></a>8.3.1.7.1. 普通索引</h6></div></div></div>
+				
+				<pre class="screen">
+				
+@Table(indexes = { @Index(name = "name", columnList = "name DESC"), @Index(name = "path", columnList = "path") })				
+				
+				</pre>
+				<pre class="programlisting">
+				
+package common.domain;
+
+import java.util.Date;
+import java.util.Set;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Index;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
+
+import org.springframework.format.annotation.DateTimeFormat;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+@Entity
+@Table(indexes = { @Index(name = "name", columnList = "name DESC"), @Index(name = "path", columnList = "path") })
+public class Category {
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "id", unique = true, nullable = false, insertable = true, updatable = false)
+	public int id;
+	public String name;
+	public String description;
+	public String path;
+
+	@Column(columnDefinition = "enum('Enabled','Disabled') DEFAULT 'Enabled' COMMENT '状态'")
+	public String status;
+
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+	@Column(columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间'")
+	public Date ctime;
+
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+	@Column(columnDefinition = "TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更改时间'")
+	public Date mtime;
+
+	@ManyToOne(cascade = { CascadeType.PERSIST, CascadeType.REMOVE })
+	@JoinColumn(name = "pid", referencedColumnName = "id")
+	private Category categorys;
+
+	@JsonIgnore
+	@OneToMany(cascade = CascadeType.ALL, mappedBy = "category", fetch = FetchType.EAGER)
+	private Set&lt;Category&gt; category;
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	public String getPath() {
+		return path;
+	}
+
+	public void setPath(String path) {
+		this.path = path;
+	}
+
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
+	}
+
+	public Date getCtime() {
+		return ctime;
+	}
+
+	public void setCtime(Date ctime) {
+		this.ctime = ctime;
+	}
+
+	public Date getMtime() {
+		return mtime;
+	}
+
+	public void setMtime(Date mtime) {
+		this.mtime = mtime;
+	}
+
+	public Category getCategorys() {
+		return categorys;
+	}
+
+	public void setCategorys(Category categorys) {
+		this.categorys = categorys;
+	}
+
+	public Set&lt;Category&gt; getCategory() {
+		return category;
+	}
+
+	public void setCategory(Set&lt;Category&gt; category) {
+		this.category = category;
+	}
+
+	@Override
+	public String toString() {
+		return "Category [id=" + id + ", name=" + name + ", description=" + description + ", path=" + path + ", status="
+				+ status + ", ctime=" + ctime + ", mtime=" + mtime + ", categorys=" + categorys + ", category="
+				+ category + "]";
+	}
+
+}
+				
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="unique"></a>8.3.1.7.2. 唯一索引</h6></div></div></div>
+				
+				<p>针对字段做唯一索引</p>
+				<pre class="screen">
+				
+@Column(unique = true)
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="uniqueConstraints"></a>8.3.1.7.3. 复合索引</h6></div></div></div>
+				
 			
+				<p>创建由多个字段组成的复合索引</p>
+				<pre class="programlisting">
+				
 package cn.netkiller.api.model;
 
 import java.io.Serializable;
@@ -438,10 +594,10 @@ public class Comment implements Serializable {
 		this.createDate = createDate;
 	}
 }
-			
-			</pre>
-			<pre class="screen">
-			
+				
+				</pre>
+				<pre class="screen">
+				
 CREATE TABLE `comment` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `article_id` int(11) NOT NULL,
@@ -452,8 +608,9 @@ CREATE TABLE `comment` (
   UNIQUE KEY `UK5qxfiu92nwlvgli7bl3evl11m` (`member_id`,`article_id`),
   CONSTRAINT `FKmrrrpi513ssu63i2783jyiv9m` FOREIGN KEY (`member_id`) REFERENCES `member` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-			
-			</pre>
+				
+				</pre>
+			</div>
 		</div>
 		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="enum"></a>8.3.1.8. Enum 枚举数据类型</h5></div></div></div>
 			
@@ -618,7 +775,87 @@ CREATE TABLE `netkiller_trash` (
 				</pre>
 			</div>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp302"></a>8.3.1.9. 整形数据类型</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="set"></a>8.3.1.9. SET 数据结构</h5></div></div></div>
+			
+			<pre class="programlisting">
+			
+package common.domain;
+
+import java.util.Date;
+import java.util.Map;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Convert;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+
+import org.springframework.format.annotation.DateTimeFormat;
+import com.fasterxml.jackson.annotation.JsonFormat;
+
+import common.type.OptionConverter;
+
+@Entity
+public class ItemPool {
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "id", unique = true, nullable = false, insertable = false, updatable = false)
+	public int id;
+
+	@ManyToOne(cascade = { CascadeType.PERSIST, CascadeType.REMOVE })
+	@JoinColumn(name = "site_id", referencedColumnName = "id")
+	private Site site;
+
+	public String question;
+
+	@Column(columnDefinition = "json DEFAULT NULL")
+	@Convert(converter = OptionConverter.class)
+	public Map&lt;String, String&gt; options;
+
+	@Column(columnDefinition = "SET('A','B','C','D','E','F','G') DEFAULT NULL COMMENT '答案'")
+	public String answer;
+
+	@ManyToOne(cascade = { CascadeType.PERSIST, CascadeType.REMOVE })
+	@JoinColumn(name = "category_id", referencedColumnName = "id")
+	private Category category;
+
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+	@Column(columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间'")
+	public Date ctime;
+
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+	@Column(columnDefinition = "TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更改时间'")
+	public Date mtime;
+}
+			
+			</pre>
+			<p>定义 SET 如下，在JAVA中 SET被映射为逗号分隔的字符串（String），所以操作起来并无不同。使用字符串"A,B,C"存储即可，取出也同样是字符串。</p>
+			<pre class="programlisting">
+			
+@Column(columnDefinition = "SET('A','B','C','D','E','F','G') DEFAULT NULL COMMENT '答案'")			
+			
+			</pre>
+			<p>接入后查看</p>
+			<pre class="programlisting">
+			
+mysql&gt; select answer from item_pool;
++--------+
+| answer |
++--------+
+| A,B,C  |
++--------+
+1 row in set (0.00 sec)			
+			
+			</pre>
+			<p>完美实现</p>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="UNSIGNED"></a>8.3.1.10. 整形数据类型</h5></div></div></div>
 			
 			<p>无符号整形</p>
 			<pre class="programlisting">
@@ -665,7 +902,204 @@ CREATE TABLE `member` (
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="JoinColumn"></a>8.3.1.10. @JoinColumn</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="json"></a>8.3.1.11. JSON 数据类型</h5></div></div></div>
+			
+			<p>MySQL 5.7 中增加了 json 数据类型，下面是一个例子：</p>
+			<pre class="programlisting">
+			
+CREATE TABLE `test` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `your` json DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8
+			
+			</pre>
+			<p>我们需要在 Java 实体中定义 json 数据库结构，我搜索遍了整个互联网（Google,Bing,Baidu......），没有找到解决方案，功夫不负有心人，反复尝试后终于成功。记住我是第一个这样用的 ：） 。</p>
+			<pre class="programlisting">
+			
+package common.domain;
+
+import java.util.Date;
+import java.util.Map;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Convert;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+
+import org.springframework.format.annotation.DateTimeFormat;
+import com.fasterxml.jackson.annotation.JsonFormat;
+
+import common.type.OptionConverter;
+
+@Entity
+public class ItemPool {
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "id", unique = true, nullable = false, insertable = false, updatable = false)
+	public int id;
+
+	@ManyToOne(cascade = { CascadeType.PERSIST, CascadeType.REMOVE })
+	@JoinColumn(name = "site_id", referencedColumnName = "id")
+	private Site site;
+
+	public String name;
+
+	@Column(columnDefinition = "json DEFAULT NULL")
+	@Convert(converter = OptionConverter.class)
+	public Map&lt;String, String&gt; options;
+
+	@ManyToOne(cascade = { CascadeType.PERSIST, CascadeType.REMOVE })
+	@JoinColumn(name = "category_id", referencedColumnName = "id")
+	private Category category;
+
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+	@Column(columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间'")
+	public Date ctime;
+
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+	@Column(columnDefinition = "TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更改时间'")
+	public Date mtime;
+}
+
+			
+			</pre>
+			<p>类型转换 Class</p>
+			<pre class="programlisting">
+			
+package common.type;
+
+import java.util.Map;
+import javax.persistence.AttributeConverter;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
+public class OptionConverter implements AttributeConverter&lt;Map&lt;String, String&gt;, String&gt; {
+
+	Gson json = new Gson();
+
+	@Override
+	public String convertToDatabaseColumn(Map&lt;String, String&gt; items) {
+		return json.toJson(items, new TypeToken&lt;Map&lt;String, String&gt;&gt;() {
+		}.getType());
+	}
+
+	@Override
+	public Map&lt;String, String&gt; convertToEntityAttribute(String str) {
+		return json.fromJson(str, new TypeToken&lt;Map&lt;String, String&gt;&gt;() {
+		}.getType());
+	}
+}			
+			
+			</pre>
+			<p>通过 @Column(columnDefinition = "json DEFAULT NULL") 定义数据库为 JSON 数据类型</p>
+			<p>数据存储与取出通过 @Convert(converter = OptionConverter.class) 做转换 </p>
+			<p>这里我需要使用 Map 数据结构 public Map&lt;String, String&gt; options;， 你可以根据你的实际需要定义数据类型 Class</p>
+			<p>启动 Spring 项目后创建 Schema 如下：</p>
+			<pre class="programlisting">
+			
+CREATE TABLE `item_pool` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `ctime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '????',
+  `mtime` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '????',
+  `name` varchar(255) DEFAULT NULL,
+  `category_id` int(11) DEFAULT NULL,
+  `site_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `FKgwuxedi20fxclobkk2po053hj` (`category_id`),
+  KEY `FKiujumwssofow95st51ukklpgv` (`site_id`),
+  CONSTRAINT `FKgwuxedi20fxclobkk2po053hj` FOREIGN KEY (`category_id`) REFERENCES `category` (`id`),
+  CONSTRAINT `FKiujumwssofow95st51ukklpgv` FOREIGN KEY (`site_id`) REFERENCES `site` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8
+			
+			</pre>
+			<p>我们做个简单的测试, 创建仓库。</p>
+			<pre class="programlisting">
+			
+package common.repository;
+
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
+
+import common.domain.ItemPool;
+
+@Repository
+public interface ItemPoolRepository extends CrudRepository&lt;ItemPool, Integer&gt; {
+
+}
+			
+			</pre>
+			<pre class="programlisting">
+			
+package cn.netkiller.api.restful;
+
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
+
+import common.domain.ItemPool;
+import common.repository.ItemPoolRepository;
+
+@RestController
+public class TestRestController {
+
+	private static final Logger logger = LoggerFactory.getLogger(TestRestController.class);
+	@Autowired
+	private ItemPoolRepository itemPoolRepository;
+
+	@GetMapping("/test/json/data/type")
+	public void jsonType() {
+
+		ItemPool itemPool = new ItemPool();
+		itemPool.name = "Which is Operstion System?";
+		Map&lt;String, String&gt; opt = new LinkedHashMap&lt;String, String&gt;();
+		opt.put("A", "Linux");
+		opt.put("B", "Java");
+		itemPool.options = opt;
+		itemPoolRepository.save(itemPool);
+
+		itemPool = null;
+		itemPool = itemPoolRepository.findOne(1);
+		System.out.println(itemPool.toString());
+	}
+
+}
+
+			
+			</pre>
+			<p>只能用完美来形容</p>
+			<pre class="programlisting">
+			
+mysql&gt; select options from item_pool;
++-----------------------------+
+| options                     |
++-----------------------------+
+| {"A": "Linux", "B": "Java"} |
++-----------------------------+
+1 row in set (0.00 sec)			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="JoinColumn"></a>8.3.1.12. @JoinColumn</h5></div></div></div>
 			
 			<p>@JoinColumn与@Column注释类似，它的定义如下代码所示。 </p>
 			<pre class="screen">
@@ -694,7 +1128,7 @@ String table() default "";
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="OneToOne"></a>8.3.1.11. @OneToOne</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="OneToOne"></a>8.3.1.13. @OneToOne</h5></div></div></div>
 			
 			<p>一对一表结构，如下面ER图所示，users表是用户表里面有登陆信息，profile 保存的时死人信息，这样的目的是我们尽量减少users表的字段，在频繁操作该表的时候性能比较好，另外一个目的是为了横向水平扩展。</p>
 			<pre class="programlisting">
@@ -860,7 +1294,7 @@ ENGINE=InnoDB;
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="OneToMany"></a>8.3.1.12. OneToMany 一对多</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="OneToMany"></a>8.3.1.14. OneToMany 一对多</h5></div></div></div>
 			
 			<p>我们要实现一个一对多实体关系，ER 图如下</p>
 			<pre class="programlisting">
@@ -1042,7 +1476,7 @@ ENGINE=InnoDB;
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="ManyToMany"></a>8.3.1.13. ManyToMany 多对多</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="ManyToMany"></a>8.3.1.15. ManyToMany 多对多</h5></div></div></div>
 			
 			<p>用户与角色就是一个多对多的关系，多对多是需要中间表做关联的。所以我方需要一个 user_has_role 表。</p>
 			<pre class="programlisting">
@@ -1227,7 +1661,7 @@ ENGINE=InnoDB;
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="orphanRemoval"></a>8.3.1.14. 外键级联删除</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="orphanRemoval"></a>8.3.1.16. 外键级联删除</h5></div></div></div>
 			
 			<p>orphanRemoval = true 可以实现数据级联删除</p>
 			<pre class="programlisting">
@@ -1359,9 +1793,9 @@ public class Member implements Serializable {
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp304"></a>8.3.1.15. 其他</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp303"></a>8.3.1.17. 其他</h5></div></div></div>
 			
-			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="Cascade"></a>8.3.1.15.1. Cascade</h6></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="Cascade"></a>8.3.1.17.1. Cascade</h6></div></div></div>
 				
 				<pre class="screen">
 					CascadeType.PERSIST （级联新建）
@@ -1371,7 +1805,7 @@ public class Member implements Serializable {
 					CascadeType.ALL
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp303"></a>8.3.1.15.2. @JsonIgnore</h6></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp302"></a>8.3.1.17.2. @JsonIgnore</h6></div></div></div>
 				
 				<p>当尸体返回 Json 数据结构是，将不包含 @JsonIgnore 定义变量。</p>
 				<pre class="programlisting">
@@ -1586,7 +2020,7 @@ List&lt;RecentRead&gt; findByMemberIdOrderByIdDesc(int memberId, Pageable pageab
 		</div>
 		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="Query"></a>8.3.3.5. Query</h5></div></div></div>
 			
-			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp305"></a>8.3.3.5.1. 参数传递</h6></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp304"></a>8.3.3.5.1. 参数传递</h6></div></div></div>
 				
 				<pre class="programlisting">
 				
@@ -1631,7 +2065,7 @@ public interface PersonRepository extends JpaRepository&lt;Person, Long&gt; {
 		</div>
 		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="Transactional"></a>8.3.3.6. @Transactional</h5></div></div></div>
 			
-			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp306"></a>8.3.3.6.1. 删除更新需要 @Transactional 注解</h6></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp305"></a>8.3.3.6.1. 删除更新需要 @Transactional 注解</h6></div></div></div>
 				
 				<pre class="programlisting">
 				
@@ -1672,7 +2106,7 @@ public interface RecentReadRepostitory extends CrudRepository&lt;RecentRead, Int
 				
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp307"></a>8.3.3.6.2. 回滚操作</h6></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp306"></a>8.3.3.6.2. 回滚操作</h6></div></div></div>
 				
 				<pre class="programlisting">
 				

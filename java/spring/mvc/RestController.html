@@ -54,7 +54,48 @@ public class MainController {
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp253"></a>6.2.3. XML</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id=""></a>6.2.3. 返回 JSON 对象 NULL 专为 "" 字符串</h4></div></div></div>
+		
+		<pre class="programlisting">
+		
+package api.config;
+
+import java.io.IOException;
+
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
+
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializerProvider;
+
+@Configuration
+public class JacksonConfig {
+    @Bean
+    @Primary
+    @ConditionalOnMissingBean(ObjectMapper.class)
+    public ObjectMapper jacksonObjectMapper(Jackson2ObjectMapperBuilder builder) {
+        ObjectMapper objectMapper = builder.createXmlMapper(false).build();
+        objectMapper.getSerializerProvider().setNullValueSerializer(new JsonSerializer&lt;Object&gt;() {
+            @Override
+            public void serialize(Object o, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException, JsonProcessingException {
+                jsonGenerator.writeString("");
+            }
+        });
+        return objectMapper;
+    }
+}
+
+		
+		</pre>
+
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp253"></a>6.2.4. XML</h4></div></div></div>
 		
 		<p>restful 将同时支持 json 和 xml 数据传递</p>
 		<pre class="programlisting">
@@ -102,7 +143,7 @@ public class ArticleRestController {
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp254"></a>6.2.4. 兼容传统 json 接口</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp254"></a>6.2.5. 兼容传统 json 接口</h4></div></div></div>
 		
 		<p>开发中发现很多人不适应新的接口方式，有时候只能妥协，这些顽固不化的人需要这样的数据库格式</p>
 		<pre class="programlisting">
@@ -124,7 +165,9 @@ public class ArticleRestController {
 }
 		
 		</pre>
-		<p>返回数据必须放在 data 字典中, 而我通常是采用 http status code 来返回状态，返回结果是对象。实现上面的需求我们需要加入一个data成员变量，因为我们不清楚最终要返回什么对象。所以声明为 java.lang.Object</p>
+		<p>返回数据必须放在 data 字典中, 而我通常是采用 http status code
+			来返回状态，返回结果是对象。实现上面的需求我们需要加入一个data成员变量，因为我们不清楚最终要返回什么对象。所以声明为
+			java.lang.Object</p>
 		<pre class="programlisting">
 		
 package com.example.api.pojo;
@@ -211,7 +254,7 @@ public class RestfulResponse implements Serializable {
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="PageableDefault"></a>6.2.5. @PageableDefault 分页</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="PageableDefault"></a>6.2.6. @PageableDefault 分页</h4></div></div></div>
 		
 		<pre class="programlisting">
 		
@@ -251,7 +294,7 @@ sort，排序相关的信息，以property,property(,ASC|DESC)的方式组织，
 
 Spring提供了@PageableDefault帮助我们个性化的设置pageable的默认配置。例如@PageableDefault(value = 15, sort = { "id" }, direction = Sort.Direction.DESC)表示默认情况下我们按照id倒序排列，每一页的大小为15。		
 		
-		
+
 		</pre>
 	</div>
 </div><div xmlns="" id="disqus_thread"></div><script xmlns="">

@@ -4,10 +4,12 @@
 	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
 	    <a xmlns="" href="/journal/index.html">杂文</a> |
 	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">云栖社区</a> |
 	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
 	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
 	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
 	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+		<a xmlns="" href="https://github.com/netkiller">Github</a> |
 	    <a xmlns="" href="/search.html">Search</a> |
 	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">98.4. logstash 配置项</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="redis.html">上一页</a> </td><th width="60%" align="center">第 98 章 ElasticSearch + Logstash + Kibana</th><td width="20%" align="right"> <a accesskey="n" href="logstash.example.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="logstash"></a>98.4. logstash 配置项</h3></div></div></div>
 		
@@ -69,6 +71,37 @@ output {
 				
 				</pre>
 				<p>start_position =&gt; "beginning" 从头开始读，如果没有这个选项，只会读取最后更新的数据。</p>
+				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="input.type"></a>98.4.1.3.1. 指定文件类型</h6></div></div></div>
+					
+					<pre class="screen">
+					
+input { 
+ file { path =&gt;"/var/log/messages" type =&gt;"syslog"} 
+ file { path =&gt;"/var/log/apache/access.log" type =&gt;"apache"} 
+}					 
+					
+					</pre>
+					<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="type.nginx"></a>98.4.1.3.1.1. Nginx</h6></div></div></div>
+						
+						<pre class="screen">
+						
+input {
+        file {
+                type =&gt; "nginx_access"
+                path =&gt; ["/usr/share/nginx/logs/test.access.log"]
+        }
+}
+output {
+        redis {
+                host =&gt; "localhost"
+                data_type =&gt; "list"
+                key =&gt; "logstash:redis"
+        }
+}						
+						
+						</pre>
+					</div>
+				</div>
 			</div>
 			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="socket"></a>98.4.1.4. TCP/UDP</h5></div></div></div>
 				
@@ -213,7 +246,176 @@ output {
 		</div>
 		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="filter"></a>98.4.2. filter</h4></div></div></div>
 			
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp717"></a>98.4.2.1. 执行 ruby 代码</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="date"></a>98.4.2.1. 日期格式化</h5></div></div></div>
+				
+				<p>系统默认是 ISO8601 如果需要转换为 yyyy-MM-dd-HH:mm:ss 参考：</p>
+				<pre class="programlisting">
+				
+
+filter {
+  date {
+    match =&gt; [ "ctime", "yyyy-MM-dd HH:mm:ss" ]
+    locale =&gt; "cn"
+  }
+ date {
+    match =&gt; [ "mtime", "yyyy-MM-dd HH:mm:ss" ]
+    locale =&gt; "cn"
+  } 
+}				
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="filter.patterns"></a>98.4.2.2. patterns</h5></div></div></div>
+				
+				<p>创建匹配文件 /usr/share/logstash/patterns</p>
+				<pre class="screen">
+				
+mkdir /usr/share/logstash/patterns
+vim /usr/share/logstash/patterns
+
+NGUSERNAME [a-zA-Z\.\@\-\+_%]+
+NGUSER %{NGUSERNAME}
+NGINXACCESS %{IPORHOST:clientip} %{NGUSER:ident} %{NGUSER:auth} \[%{HTTPDATE:timestamp}\] "%{WORD:verb} %{URIPATHPARAM:request} HTTP/%{NUMBER:httpversion}" %{NUMBER:response} (?:%{NUMBER:bytes}|-) (?:"(?:%{URI:referrer}|-)"|%{QS:referrer}) %{QS:agent}
+				
+				</pre>
+				<pre class="screen">
+				
+filter {
+  if [type] == "nginx-access" {
+    grok {
+      match =&gt; { "message" =&gt; "%{NGINXACCESS}" }
+    }
+  }
+}
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="syslog"></a>98.4.2.3. syslog</h5></div></div></div>
+				
+				<pre class="screen">
+				
+input {
+  file {
+    type =&gt; "syslog" 
+    path =&gt; [ "/var/log/*.log", "/var/log/messages", "/var/log/syslog" ]
+    sincedb_path =&gt; "/opt/logstash/sincedb-access"
+  }
+  syslog {
+    type =&gt; "syslog"
+    port =&gt; "5544"
+  }
+}
+ 
+filter {
+  grok {
+    type =&gt; "syslog"
+    match =&gt; [ "message", "%{SYSLOGBASE2}" ]
+    add_tag =&gt; [ "syslog", "grokked" ]
+  }
+}
+ 
+output {
+ elasticsearch { host =&gt; "elk.netkiller.cn" }
+}				
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="csv"></a>98.4.2.4. csv</h5></div></div></div>
+				
+				<pre class="screen">
+				
+input {
+    file {
+        type =&gt; "SSRCode"
+        path =&gt; "/SD/2015*/01*/*.csv"
+        start_position =&gt; "beginning"
+    }
+}
+ 
+filter {
+	csv {
+		columns =&gt; ["Code","Source"]
+		separator =&gt; ","
+	}
+	kv {
+		source =&gt; "uri"
+		field_split =&gt; "&amp;?"
+		value_split =&gt; "="
+	}
+ 
+}
+ 
+# output logs to console and to elasticsearch
+output {
+    stdout {}
+    elasticsearch {
+        hosts =&gt; ["172.16.1.1:9200"]
+    }
+}				
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="filter.ruby.csv"></a>98.4.2.5. 使用ruby 处理 CSV文件</h5></div></div></div>
+				
+				<pre class="screen">
+				
+input {
+    stdin {}
+}
+filter {
+    ruby {
+        init =&gt; "
+            begin
+                @@csv_file    = 'output.csv'
+                @@csv_headers = ['A','B','C']
+                if File.zero?(@@csv_file) || !File.exist?(@@csv_file)
+                    CSV.open(@@csv_file, 'w') do |csv|
+                        csv &lt;&lt; @@csv_headers
+                    end
+                end
+            end
+        "
+        code =&gt; "
+            begin
+                event['@metadata']['csv_file']    = @@csv_file
+                event['@metadata']['csv_headers'] = @@csv_headers
+            end
+        "
+    }
+    csv {
+        columns =&gt; ["a", "b", "c"]
+    }
+}
+output {
+    csv {
+        fields =&gt; ["a", "b", "c"]
+        path   =&gt; "%{[@metadata][csv_file]}"
+    }
+    stdout {
+        codec =&gt; rubydebug {
+            metadata =&gt; true
+        }
+    }
+}				
+				
+				</pre>
+				<p>测试</p>
+				<pre class="screen">
+				
+echo "1,2,3\n4,5,6\n7,8,9" | ./bin/logstash -f csv-headers.conf				
+				
+				</pre>
+				<p>输出结果</p>
+				<pre class="screen">
+				
+A,B,C
+1,2,3
+4,5,6
+7,8,9
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="filter.ruby"></a>98.4.2.6. 执行 ruby 代码</h5></div></div></div>
 				
 				<p>日期格式化, 将ISO 8601日期格式转换为 %Y-%m-%d %H:%M:%S</p>
 				<p>保存下面内容到配置文件data.conf</p>
@@ -225,11 +427,13 @@ input {
 filter {
 
 	ruby {
-        code =&gt; "event.set('ctime', event.get('[ctime]').time.localtime.strftime('%Y-%m-%d %H:%M:%S'))"
+		init =&gt; "require 'time'"
+        code =&gt; "event.set('ctime', event.get('ctime').time.localtime.strftime('%Y-%m-%d %H:%M:%S'))"
     }
 
 	ruby {
-        code =&gt; "event.set('mtime', event.get('[mtime]').time.localtime.strftime('%Y-%m-%d %H:%M:%S'))"
+		init =&gt; "require 'time'"
+        code =&gt; "event.set('mtime', event.get('mtime').time.localtime.strftime('%Y-%m-%d %H:%M:%S'))"
     }
 }
 output {
@@ -242,11 +446,23 @@ output {
 				
 				</pre>
 				<p>/usr/share/logstash/bin/logstash -f date.conf</p>
-			</div>			
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="grok.debug"></a>98.4.2.7. grok debug 工具</h5></div></div></div>
+				
+				<p>http://grokdebug.herokuapp.com</p>
+			</div>
 		</div>
 		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="output"></a>98.4.3. output</h4></div></div></div>
 			
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="file"></a>98.4.3.1. file 写入文件</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp718"></a>98.4.3.1. stdout</h5></div></div></div>
+				
+				<pre class="screen">
+output {
+	stdout { codec =&gt; rubydebug }
+}
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="file"></a>98.4.3.2. file 写入文件</h5></div></div></div>
 				
 				<pre class="screen">
 				
@@ -260,8 +476,7 @@ output {
 				
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="elasticsearch"></a>98.4.3.2. elasticsearch</h5></div></div></div>
-				
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="elasticsearch"></a>98.4.3.3. elasticsearch</h5></div></div></div>
 				
 				<pre class="screen">
 				
@@ -274,14 +489,13 @@ output {
 }				
 				
 				</pre>
-				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp718"></a>98.4.3.2.1. 自定义 index</h6></div></div></div>
+				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp719"></a>98.4.3.3.1. 自定义 index</h6></div></div></div>
 					
 					<p>配置实现每日切割一个 index</p>
 					<pre class="screen">
 					
 index =&gt; "logstash-%{+YYYY.MM.dd}"
 
-	
 "_index" : "logstash-2017.03.22"	
 					
 					</pre>
@@ -319,7 +533,7 @@ output {
 					</pre>
 				</div>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp719"></a>98.4.3.3. exec 执行脚本</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp720"></a>98.4.3.4. exec 执行脚本</h5></div></div></div>
 				
 				<pre class="screen">
 				
@@ -331,14 +545,7 @@ output {
 				
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp720"></a>98.4.3.4. stdout</h5></div></div></div>
-				
-				<pre class="screen">
-output {
-	stdout { codec =&gt; rubydebug }
-}
-				</pre>
-			</div>
+			
 		</div>
 	</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
 
