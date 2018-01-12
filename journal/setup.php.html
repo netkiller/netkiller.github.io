@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>CentOS 7 + nginx-1.12 + php-7.2 + MySQL-5.7</title><link rel="stylesheet" type="text/css" href="docbook.css"/><link rel="stylesheet" type="text/css" href="/journal/journal.css"/><meta name="generator" content="DocBook XSL Stylesheets V1.79.1"/><meta name="description" content="在工作中，需要经常为新系统安装软件，重复而简单，但又不得不作，我将过去几年中工作中临时写的脚本这里了一下，能够实现半自动化安装标本，只需要Ctrl+C, Ctrl+V 快速粘贴复制，即可快速完成安装"/><meta name="keywords" content="linux, apache, lighttpd, nginx, php, redis, mongodb, &#10;&#9;&#9;&#9;"/></head><body><section xml:lang="zh-cn" class="article" id="idp1"><div class="titlepage"><div><div><h2 class="title">CentOS 7 + nginx-1.12 + php-7.2 + MySQL-5.7</h2></div><div><h3 class="subtitle"><em>使用 Netkiller OSCM 一键安装PHP环境</em></h3></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(陈景峯)</span>, <span class="lineage">netkiller, BG7NYT</span></h3><div class="affiliation"><div class="address"><p><br/>
+				<span class="country">中国</span><span class="state">广东省</span><span class="city">深圳市</span><span class="street">龙华新区民治街道溪山美地</span><br/>
+				<span class="postcode">518131</span><br/>
+				<span class="phone">+86 13113668890</span><br/>
+				<br/>
+				<code class="email">&lt;<a class="email" href="mailto:netkiller@msn.com">netkiller@msn.com</a>&gt;</code><br/>
+			</p></div></div></div></div><div><p class="releaseinfo">$Id: setup.xml 608 2013-05-31 11:25:25Z netkiller </p></div><div><div class="legalnotice" id="legalnotice"><p class="legalnotice-title"><strong>版权声明</strong></p><p>转载请与作者联系，转载时请务必标明文章原始出处和作者信息及本声明。</p><table style="border: 0; " class="simplelist"><tr><td>
+		<a class="ulink" href="http://creativecommons.org/licenses/by/3.0/" target="_top">
+			<div><table style="border: 0; width: 180px; cellpadding: 0; cellspacing: 0;"><tr><td><img src="/images/by-nc-sa.png" width="180"/></td></tr></table></div>
+		</a>
+		</td><td>
+			<table style="border: 0; " class="simplelist"><tr><td>
+					文档出处:
+				</td></tr><tr><td>
+					<a class="ulink" href="http://netkiller.github.io/" target="_top">http://netkiller.github.io</a>
+				</td></tr><tr><td>
+					<a class="ulink" href="http://netkiller.sourceforge.net/" target="_top">http://netkiller.sourceforge.net</a>
+				</td></tr></table>
+		</td><td>
+			<a class="ulink" href="/images/weixin.jpg" target="_top"><div><table style="border: 0; width: 80px; cellpadding: 0; cellspacing: 0;"><tr><td><img src="/images/weixin.jpg" width="80"/></td></tr></table></div></a>
+		</td><td>
+			<p>微信扫描二维码进入 Netkiller 微信订阅号 </p>
+			<p>QQ群：128659835 请注明“读者”</p>
+		</td></tr></table><p/></div></div><div><p class="pubdate">2018-01-12: 2013-05-31 19:25:25 +0800 (Fri, 31 May 2013) </p></div><div><div class="abstract"><div class="abstract-title">摘要</div>
+			<p>在工作中，需要经常为新系统安装软件，重复而简单，但又不得不作，我将过去几年中工作中临时写的脚本这里了一下，能够实现半自动化安装标本，只需要Ctrl+C,
+				Ctrl+V 快速粘贴复制，即可快速完成安装</p>
+		</div></div></div><hr/></div><div class="toc"><div class="toc-title">目录</div><ul class="toc"><li><span class="section"><a href="#centos">1. CentOS 7 64bit (Minimal ISO) 安装后 新机初始化常用软件包安装</a></span></li><li><span class="section"><a href="#mysql">2. MySQL-5.7</a></span></li><li><span class="section"><a href="#php">3. php-7.2</a></span></li><li><span class="section"><a href="#nginx">4. nginx-1.12</a></span><ul><li><span class="section"><a href="#idp2">4.1. host 配置</a></span></li></ul></li><li><span class="section"><a href="#redis">5. redis-4.0.6</a></span></li><li><span class="section"><a href="#mongodb">6. MongoDB</a></span></li></ul></div>
+	
+	<section class="section" id="centos"><div class="titlepage"><div><div><h2 class="title" style="clear: both">1. CentOS 7 64bit (Minimal ISO) 安装后 新机初始化常用软件包安装</h2></div></div></div>
+		
+		<p>
+			<a class="ulink" href="https://www.centos.org/download/" target="_top">Minimal ISO</a>
+		</p>
+		<p>初始化操作系统</p>
+		<pre class="screen">
+		
+curl -s https://raw.githubusercontent.com/oscm/shell/master/os/personalise.sh | bash
+		
+		</pre>
+	</section>
+	<section class="section" id="mysql"><div class="titlepage"><div><div><h2 class="title" style="clear: both">2. MySQL-5.7</h2></div></div></div>
+		
+		<p>卸载旧的包，以免出现冲突</p>
+		<pre class="screen">
+		
+rpm -e --nodeps mysql-libs
+yum localinstall MySQL-*		
+		
+		</pre>
+		<p>安装 MySQL</p>
+		<pre class="screen">
+		
+curl -s https://raw.githubusercontent.com/oscm/shell/master/database/mysql/5.7/mysql57-community-release-el7-11.sh | bash
+curl -s https://raw.githubusercontent.com/oscm/shell/master/database/mysql/5.7/mysql.server.sh | bash
+		
+		</pre>
+		<p>安装完成后会提示临时密码</p>
+		<pre class="screen">
+		
+2018-01-08T00:39:52.431840Z 1 [Note] A temporary password is generated for root@localhost: 6)?#raQPKf3s		
+
+[root@localhost my.cnf.d]# mysql -uroot -p
+Enter password: 
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 3
+Server version: 5.7.20
+
+Copyright (c) 2000, 2017, Oracle and/or its affiliates. All rights reserved.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql&gt;
+		
+		</pre>
+		<p>使用这个密码登陆，然后修改密码</p>
+		<pre class="screen">
+		
+ALTER USER root@localhost identified by 'MQiEge1ikst7S_6tlXzBOmt_4b';
+ALTER USER root@localhost PASSWORD EXPIRE NEVER;
+		
+		</pre>
+		<p/>
+		<pre class="screen">
+		
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY 'chen' WITH GRANT OPTION;
+FLUSH PRIVILEGES;		
+		
+		</pre>
+	</section>
+	<section class="section" id="php"><div class="titlepage"><div><div><h2 class="title" style="clear: both">3. php-7.2</h2></div></div></div>
+		
+		<p/>
+		<p>安装编译器和一些依赖的devel包。</p>
+		<pre class="screen">
+		
+curl -s https://raw.githubusercontent.com/oscm/shell/master/lang/gcc/gcc.sh | bash
+curl -s https://raw.githubusercontent.com/oscm/shell/master/lang/php/7.1/devel.sh | bash		
+		
+		</pre>
+		<p>安装 PHP 7.2</p>
+		<pre class="screen">
+		
+curl -s https://raw.githubusercontent.com/oscm/shell/master/lang/php/7.2/php-7.2.1.sh | bash
+curl -s https://raw.githubusercontent.com/oscm/shell/master/lang/php/php-profile.sh | bash		
+		
+		</pre>
+		<p>安装 PHP 扩展</p>
+		
+		<pre class="screen">
+		
+curl -s https://raw.githubusercontent.com/oscm/shell/master/lang/php/pecl/amqp.sh | bash
+curl -s https://raw.githubusercontent.com/oscm/shell/master/lang/php/pecl/mongodb.sh | bash
+curl -s https://raw.githubusercontent.com/oscm/shell/master/lang/php/pecl/pthreads.sh | bash
+curl -s https://raw.githubusercontent.com/oscm/shell/master/lang/php/pecl/phalcon.sh | bash		
+		
+		</pre>
+		<p>Redis 暂不支持 7.2，至少现在没有稳定版本，我们只能使用最新的Release版本。</p>
+		<pre class="screen">
+		
+https://raw.githubusercontent.com/oscm/shell/master/lang/php/7.2/extension/redis.sh
+		
+		</pre>
+
+	</section>
+	<section class="section" id="nginx"><div class="titlepage"><div><div><h2 class="title" style="clear: both">4. nginx-1.12</h2></div></div></div>
+		
+		<p>为web服务器创建一个用户，我喜欢使用www,id为80更容易记，同时将一个单独分区挂在/www上用户存放web应用程序。</p>
+		<pre class="screen">
+		
+curl -s https://raw.githubusercontent.com/oscm/shell/master/os/user/www.sh | bash		
+		
+		</pre>
+		<p>安装 nginx</p>
+		<pre class="screen">
+		
+curl -s https://raw.githubusercontent.com/oscm/shell/master/web/nginx/stable/nginx.sh | bash
+		
+		</pre>
+		<p>如果你不懂编译器优化，建议你使用yum方案。在不优化的情况下编译出来程序很臃肿。</p>
+
+		<pre class="screen">
+		
+[root@localhost src]# rpm -qa | grep nginx
+nginx-release-centos-7-0.el7.ngx.noarch
+nginx-1.12.2-1.el7_4.ngx.x86_64	
+		
+		</pre>
+		<p>配置虚拟主机</p>
+		<section class="section" id="idp2"><div class="titlepage"><div><div><h3 class="title">4.1. host 配置</h3></div></div></div>
+			
+			<pre class="screen">
+			
+mkdir -p /www/www.mydomain.com/htdocs
+
+cd /etc/nginx/conf.d
+cp
+default.conf www.mydomain.com.conf
+vim www.mydomain.com.conf
+			
+			</pre>
+
+			<pre class="screen">
+			
+			
+server {
+	listen 80;
+	server_name www.mydomain.com;
+	
+	charset utf-8;
+	access_log /var/log/nginx/www.mydomain.com.access.log main;
+	
+	location / {
+		root /www/www.mydomain.com/htdocs;
+		index index.html index.php;
+	}
+	
+	#error_page 404 /404.html;
+	
+	# redirect server error pages to the
+	static page /50x.html
+	#
+	error_page 500 502 503 504 /50x.html;
+	location = /50x.html {
+		root /usr/share/nginx/html;
+	}
+	
+	# proxy the PHP scripts to
+	Apache listening on 127.0.0.1:80
+	#
+	#location ~ \.php$ {
+	# proxy_pass http://127.0.0.1;
+	#}
+	
+	# pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
+	#
+	location ~ \.php$ {
+		root html;
+		fastcgi_pass 127.0.0.1:9000;
+		fastcgi_index index.php;
+		fastcgi_param
+		SCRIPT_FILENAME /www/www.mydomain.com/htdocs$fastcgi_script_name;
+		include fastcgi_params;
+	}
+	
+	# deny access to .htaccess files, if
+	Apache's document root
+	# concurs with nginx's one
+	#
+	location ~ /\.ht {
+		deny all;
+	}
+}
+			
+			</pre>
+			<p>创建测试页面</p>
+			<pre class="screen">
+			
+cat &gt;&gt; /www/www.mydomain.com/htdocs/index.php &lt;&lt;PHP
+&lt;?php
+phpinfo();
+PHP
+			
+			</pre>
+			<p>启动服务器</p>
+			<pre class="screen">
+				service php-fpm start
+				service nginx start
+			</pre>
+			<p>检查index.php输出</p>
+			<pre class="screen">
+				# curl -H HOST:www.mydomain.com http://127.0.0.1/index.php
+			</pre>
+		</section>
+	</section>
+	<section class="section" id="redis"><div class="titlepage"><div><div><h2 class="title" style="clear: both">5. redis-4.0.6</h2></div></div></div>
+		
+		<p>安装 Redis 因为YUM安装的Redis版本比较低，所以我们选择了源码安装</p>
+		<pre class="screen">
+		
+curl -s https://raw.githubusercontent.com/oscm/shell/master/database/redis/source/redis-4.0.6.sh | bash		
+		
+		</pre>
+		<p>安装redis</p>
+		<pre class="screen">
+		
+[root@localhost redis-4.0.6]# redis-cli 
+127.0.0.1:6379&gt; set nickname netkiller 10
+(error) ERR syntax error
+127.0.0.1:6379&gt; get nickname
+(nil)
+127.0.0.1:6379&gt; set nickname netkiller 
+OK
+127.0.0.1:6379&gt; get nickname
+"netkiller"
+127.0.0.1:6379&gt; expire nickname 5
+(integer) 1
+127.0.0.1:6379&gt; get nickname
+(nil)
+127.0.0.1:6379&gt; 
+		
+		</pre>
+	</section>
+	<section class="section" id="mongodb"><div class="titlepage"><div><div><h2 class="title" style="clear: both">6. MongoDB</h2></div></div></div>
+		
+		<pre class="screen">
+		
+curl -s https://raw.githubusercontent.com/oscm/shell/master/database/mongodb/mongodb.org/mongodb-3.6.sh | bash		
+		
+		</pre>
+	</section>
+</section><div xmlns="" id="disqus_thread"/><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns=""/><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"/></body></html>
