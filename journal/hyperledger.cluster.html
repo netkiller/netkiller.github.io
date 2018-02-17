@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<html xmlns="http://www.w3.org/1999/xhtml"><head><title>hyperledger v1.0.5 区块链运维入门</title><link rel="stylesheet" type="text/css" href="docbook.css"/><link rel="stylesheet" type="text/css" href="/journal/journal.css"/><meta name="generator" content="DocBook XSL Stylesheets V1.79.1"/><meta name="description" content="你网上搜索hyperledger大部分文章是讲解开发环境的安装与配置，没有一篇关于怎样运维区块链的文章。当你配置好开发环境，写好合约，怎样落地呢？却很少文章提及。 要将区块链落地，我们必须依赖运维技术，这是IT基础设施，区块链应用将建立在这个基础设施之上，否则区块链就是浮云，悬在空中无法落地。"/><meta name="keywords" content=", , , "/></head><body><section xml:lang="zh-cn" class="article" id="idp1"><div class="titlepage"><div><div><h2 class="title">hyperledger v1.0.5 区块链运维入门</h2></div><div><h3 class="subtitle"><em>本文作者最近在找工作，有意向致电 13113668890</em></h3></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(陈景峯)</span>, <span class="lineage">netkiller, BG7NYT</span></h3><div class="affiliation">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Hyperledger Fabric v1.0.5 区块链运维入门</title><link rel="stylesheet" type="text/css" href="docbook.css"/><link rel="stylesheet" type="text/css" href="/journal/journal.css"/><meta name="generator" content="DocBook XSL Stylesheets V1.79.1"/><meta name="description" content="你网上搜索hyperledger大部分文章是讲解开发环境的安装与配置，没有一篇关于怎样运维区块链的文章。当你配置好开发环境，写好合约，怎样落地呢？却很少文章提及。 要将区块链落地，我们必须依赖运维技术，这是IT基础设施，区块链应用将建立在这个基础设施之上，否则区块链就是浮云，悬在空中无法落地。 本文采用碎片化写作，原文会不定期更新，请尽量阅读原文。 "/><meta name="keywords" content=", , , "/></head><body><section xml:lang="zh-cn" class="article" id="idp1"><div class="titlepage"><div><div><h2 class="title">Hyperledger Fabric v1.0.5 区块链运维入门</h2></div><div><h3 class="subtitle"><em>本文作者最近在找工作，有意向致电 13113668890</em></h3></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(陈景峯)</span>, <span class="lineage">netkiller, BG7NYT</span></h3><div class="affiliation">
 			<div class="address"><p><br/>
 				<span class="country">中国</span><span class="state">广东省</span><span class="city">深圳市</span><span class="street">龙华新区民治街道溪山美地</span><br/>
 				<span class="postcode">518131</span><br/>
@@ -28,10 +28,14 @@
 			<table style="border: 0; " class="simplelist"><tr><td>微信订阅号 netkiller-ebook (微信扫描二维码）</td></tr><tr><td>QQ：13721218 请注明“读者”</td></tr><tr><td>QQ群：128659835 请注明“读者”</td></tr></table>
 		</td></tr></table>
 	<p/>
-</div></div><div><p class="pubdate">2018-02-08</p></div><div><div class="abstract"><div class="abstract-title">摘要</div>
+</div></div><div><p class="pubdate">2018-02-10</p></div><div><div class="abstract"><div class="abstract-title">摘要</div>
 			<p>你网上搜索hyperledger大部分文章是讲解开发环境的安装与配置，没有一篇关于怎样运维区块链的文章。当你配置好开发环境，写好合约，怎样落地呢？却很少文章提及。</p>
 			<p>要将区块链落地，我们必须依赖运维技术，这是IT基础设施，区块链应用将建立在这个基础设施之上，否则区块链就是浮云，悬在空中无法落地。</p>
-		</div></div></div><hr/></div><div class="toc"><div class="toc-title">目录</div><ul class="toc"><li><span class="section"><a href="#background">1. 背景</a></span></li><li><span class="section"><a href="#overview">2. 部署拓扑</a></span><ul><li><span class="section"><a href="#depends">2.1. 依赖关系</a></span></li><li><span class="section"><a href="#hosts">2.2. 准备物理机</a></span></li></ul></li><li><span class="section"><a href="#genesis">3. 生成证书和创世区块</a></span><ul><li><span class="section"><a href="#genesis.block">3.1. 创建配置文件</a></span><ul><li><span class="section"><a href="#crypto-config.yaml">3.1.1. crypto-config.yaml</a></span></li><li><span class="section"><a href="#">3.1.2. configtx.yaml</a></span></li></ul></li><li><span class="section"><a href="#genesis.fabric-tools">3.2. 启动 fabric-tools 容器</a></span><ul><li><span class="section"><a href="#">3.2.1. 启动 Docker 容器</a></span></li><li><span class="section"><a href="#">3.2.2. 生成证书</a></span></li><li><span class="section"><a href="#">3.2.3. 生成创世区块</a></span></li><li><span class="section"><a href="#">3.2.4. 生成通道配置文件</a></span></li><li><span class="section"><a href="#">3.2.5.  generate anchor peer transaction</a></span></li><li><span class="section"><a href="#">3.2.6. 清理 Docker 容器</a></span></li></ul></li></ul></li><li><span class="section"><a href="#couchdb">4. CouchDB 节点</a></span><ul><li><span class="section"><a href="#couchdb.docker-compose">4.1. 安装 CouchDB</a></span></li><li><span class="section"><a href="#couchdb.up">4.2. 启动 CouchDB</a></span></li><li><span class="section"><a href="#couchdb.backup">4.3. 备份与恢复 CouchDB </a></span></li></ul></li><li><span class="section"><a href="#ca">5. CA 节点安装</a></span><ul><li><span class="section"><a href="#docker-compose-ca.yaml">5.1. docker-compose-ca.yml</a></span></li><li><span class="section"><a href="#ca.up">5.2. 启动 CA 节点</a></span></li></ul></li><li><span class="section"><a href="#orderer">6. Orderer 节点安装</a></span><ul><li><span class="section"><a href="#">6.1. docker-compose-orderer.yml</a></span></li><li><span class="section"><a href="#">6.2. 启动 Orderer 节点</a></span></li></ul></li><li><span class="section"><a href="#peer">7. Peer 节点安装</a></span><ul><li><span class="section"><a href="#">7.1. docker-compose-peer.yml</a></span></li><li><span class="section"><a href="#peer.up">7.2. 启动 Peer 节点</a></span></li><li><span class="section"><a href="#peel.channel">7.3. 创建 Channel</a></span></li></ul></li><li><span class="section"><a href="#tools">8. Tools 节点安装</a></span><ul><li><span class="section"><a href="#">8.1. </a></span></li></ul></li><li><span class="section"><a href="#test">9. 验收与测试</a></span></li><li><span class="section"><a href="#summary">10. 总结</a></span></li></ul></div>
+			<p>本文采用碎片化写作，原文会不定期更新，请尽量阅读原文。</p>
+			<p>
+				<a class="ulink" href="http://www.netkiller.cn/journal/hyperledger.cluster.html" target="_top">http://www.netkiller.cn/journal/hyperledger.cluster.html</a>
+			</p>
+		</div></div></div><hr/></div><div class="toc"><div class="toc-title">目录</div><ul class="toc"><li><span class="section"><a href="#background">1. 背景</a></span></li><li><span class="section"><a href="#overview">2. 部署拓扑</a></span><ul><li><span class="section"><a href="#depends">2.1. 依赖关系</a></span></li><li><span class="section"><a href="#hosts">2.2. 准备物理机</a></span></li></ul></li><li><span class="section"><a href="#tools">3. cli 管理节点安装</a></span><ul><li><span class="section"><a href="#">3.1. 安装 Docker 镜像</a></span></li><li><span class="section"><a href="#idp2">3.2. docker-compose-cli.yaml</a></span></li><li><span class="section"><a href="#">3.3. 启动 cli 节点</a></span></li><li><span class="section"><a href="#genesis">3.4. 生成证书和创世区块</a></span><ul><li><span class="section"><a href="#genesis.block">3.4.1. 创建配置文件</a></span><ul><li><span class="section"><a href="#crypto-config.yaml">3.4.1.1. crypto-config.yaml</a></span></li><li><span class="section"><a href="#idp3">3.4.1.2. configtx.yaml</a></span></li></ul></li><li><span class="section"><a href="#idp4">3.4.2. 生成证书</a></span></li><li><span class="section"><a href="#idp5">3.4.3. 生成创世区块</a></span></li><li><span class="section"><a href="#idp6">3.4.4. 生成通道配置文件</a></span></li><li><span class="section"><a href="#idp7">3.4.5.  generate anchor peer transaction</a></span></li></ul></li><li><span class="section"><a href="#idp8">3.5. 清理 Docker 容器</a></span></li></ul></li><li><span class="section"><a href="#ca">4. CA 节点安装</a></span><ul><li><span class="section"><a href="#">4.1. 安装 Docker 镜像</a></span></li><li><span class="section"><a href="#docker-compose-ca.yaml">4.2. docker-compose-ca.yml</a></span></li><li><span class="section"><a href="#ca.up">4.3. 启动 CA 节点</a></span></li></ul></li><li><span class="section"><a href="#couchdb">5. CouchDB 节点</a></span><ul><li><span class="section"><a href="#">5.1. 安装 Docker 镜像</a></span></li><li><span class="section"><a href="#couchdb.docker-compose">5.2. 安装 CouchDB</a></span></li><li><span class="section"><a href="#couchdb.up">5.3. 启动 CouchDB</a></span></li><li><span class="section"><a href="#couchdb.backup">5.4. 备份与恢复 CouchDB </a></span></li></ul></li><li><span class="section"><a href="#orderer">6. Orderer 节点安装</a></span><ul><li><span class="section"><a href="#">6.1. 安装 Docker 镜像</a></span></li><li><span class="section"><a href="#idp9">6.2. docker-compose-orderer.yml</a></span></li><li><span class="section"><a href="#idp10">6.3. 启动 Orderer 节点</a></span></li></ul></li><li><span class="section"><a href="#peer">7. Peer 节点安装</a></span><ul><li><span class="section"><a href="#">7.1. 安装 Docker 镜像</a></span></li><li><span class="section"><a href="#idp11">7.2. docker-compose-peer.yml</a></span></li><li><span class="section"><a href="#peer.up">7.3. 启动 Peer 节点</a></span></li><li><span class="section"><a href="#peel.channel">7.4. 创建 Channel</a></span></li></ul></li><li><span class="section"><a href="#test">8. 验收与测试</a></span><ul><li><span class="section"><a href="#contract.file">8.1. 准备合约文件</a></span></li><li><span class="section"><a href="#contract.deploy">8.2. 安装 chaincode</a></span></li></ul></li><li><span class="section"><a href="#summary">9. 总结</a></span></li></ul></div>
 	
 	<section class="section" id="background"><div class="titlepage"><div><div><h2 class="title" style="clear: both">1. 背景</h2></div></div></div>
 		
@@ -55,16 +59,16 @@
 			部署方案，但无一例外的是，全部安装在一个物理机上。如果是生产环境，我们必须分开不是，首先要做的工作是化整为零，拆解应用，搞明白每个容器的功能和作用。然后我们将应用拆分，独立部署到物理节点上去。</p>
 		<div class="literallayout"><p><br/>
 		<br/>
-     +---------------------------------+		<br/>
+     +---------------------------------+	<br/>
      |      	         SDK               |<br/>
      +---------------------------------+	<br/>
      | golang | nodejs | python | java |<br/>
-     +---------------------------------+			<br/>
-	                  |<br/>
-	                  V<br/>
-       +------------------------------+				<br/>
-       |           fabric-ca          |<br/>
-       +------------------------------+<br/>
+     +---------------------------------+	<br/>
+	       |                     |<br/>
+	       |                     |<br/>
+           |   +--------------+	|			<br/>
+           |   |  fabric-ca   |  |<br/>
+           |   +--------------+  |<br/>
            |                     |<br/>
            V                     V<br/>
 +-------------------+   +-------------------+<br/>
@@ -76,9 +80,9 @@
 | Orderer   |   |           |   | Orderer    |<br/>
 +-----------+   |           |   +------------+<br/>
                 V           V<br/>
-             +-------------------+<br/>
-             |     Couchdb       |<br/>
-             +-------------------+	<br/>
+            +-------------------+<br/>
+            |     Couchdb       |<br/>
+            +-------------------+	<br/>
 		<br/>
 		</p></div>
 		<p>接下来我们要做的工作是将上面拓扑图种的技术点分分击破。</p>
@@ -91,50 +95,127 @@
 		</section>
 		<section class="section" id="hosts"><div class="titlepage"><div><div><h3 class="title">2.2. 准备物理机</h3></div></div></div>
 			
+			<p>CentOS (Minimal ISO)</p>
 			<div class="itemizedlist"><div class="itemizedlist-title">物理机</div><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem">
-					<p>ca 节点，域名：ca.example.com，端口：7054</p>
+					<p>ca 节点，域名：ca.example.com，IP地址：172.16.0.20，端口：7054</p>
 				</li><li class="listitem">
-					<p>orderer 节点，域名 orderer.example.com，端口：7050</p>
+					<p>orderer 节点，域名 orderer.example.com，IP地址：172.16.0.21，端口：7050</p>
 				</li><li class="listitem">
-					<p>peer 节点，域名：peer.example.com，端口：7051、7053</p>
+					<p>peer 节点，域名：peer.example.com，IP地址：172.16.0.22，端口：7051、7053</p>
 				</li><li class="listitem">
-					<p>couchdb 节点，域名 couchdb.example.com，端口：5984</p>
+					<p>couchdb 节点，域名 couchdb.example.com，IP地址：172.16.0.25，端口：5984</p>
 				</li><li class="listitem">
-					<p>tools 节点，域名：tools.example.com</p>
+					<p>tools 节点，域名：tools.example.com，IP地址：172.16.0.20 与 CA 共用一台机器(这里为了节省资源)</p>
 				</li></ul></div>
+			<p>在所有节点上运行下面脚本</p>
+			<pre class="screen">
+			
+curl -s https://raw.githubusercontent.com/oscm/shell/master/virtualization/docker/docker.centos7.ce.sh	 | bash	
+curl -s https://raw.githubusercontent.com/oscm/shell/master/virtualization/docker/docker-compose/docker-compose-1.19.0.sh | bash		
+			
+			</pre>
 		</section>
 	</section>
-	<section class="section" id="genesis"><div class="titlepage"><div><div><h2 class="title" style="clear: both">3. 生成证书和创世区块</h2></div></div></div>
+
+	<section class="section" id="tools"><div class="titlepage"><div><div><h2 class="title" style="clear: both">3. cli 管理节点安装</h2></div></div></div>
 		
-		<p>这里我们需要几个命令（configtxgen configtxlator cryptogen），官方的安装方式：</p>
-		<pre class="screen">
+		<p>Tools 在生成创世区块的时候我们就曾经使用，你可以沿用之前的 tools 节点，或者创建一个 cli
+			节点，这个节点主要是用于管理区块链集群，例如合约部署，调试等等。</p>
+		<section class="section" id=""><div class="titlepage"><div><div><h3 class="title">3.1. 安装 Docker 镜像</h3></div></div></div>
+			
+			<pre class="screen">
+			
+docker pull hyperledger/fabric-tools:x86_64-1.0.5
+docker tag hyperledger/fabric-tools:x86_64-1.0.5 hyperledger/fabric-tools			
+			
+			</pre>
+		</section>
+		<section class="section" id="idp2"><div class="titlepage"><div><div><h3 class="title">3.2. docker-compose-cli.yaml</h3></div></div></div>
+			
+			<pre class="screen">
+			
+version: '3'
+
+networks:
+  basic:
+
+services:
+			
+  cli:
+    container_name: cli
+    image: hyperledger/fabric-tools
+    tty: true
+    environment:
+      - GOPATH=/opt/gopath
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_LOGGING_LEVEL=DEBUG
+      - CORE_PEER_ID=cli
+      - CORE_PEER_ADDRESS=peer0.org1.example.com:7051
+      - CORE_PEER_LOCALMSPID=Org1MSP
+      - CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp
+      - CORE_CHAINCODE_KEEPALIVE=10
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: /bin/bash
+    volumes:
+        - /var/run/:/host/var/run/
+        - ./chaincode/:/opt/gopath/src/github.com/
+        - ./crypto-config:/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/
+        - ~/netkiller:/root/netkiller
+    networks:
+        - basic
+    #depends_on:
+    #  - orderer.example.com
+    #  - peer0.org1.example.com
+    #  - couchdb	
+    extra_hosts:
+    		- "ca.example.com:172.16.0.20"
+		- "orderer.example.com:172.16.0.21"
+		- "peer0.org1.example.com:172.16.0.22"
+		- "couchdb.example.com:172.16.0.25"
+			
+			</pre>
+		</section>
+		<section class="section" id=""><div class="titlepage"><div><div><h3 class="title">3.3. 启动 cli 节点</h3></div></div></div>
+			
+			<pre class="screen">
+			
+[root@localhost netkiller]# docker-compose -f docker-compose-cli.yaml up -d
+			
+			</pre>
+			<p>后面合约的部署将在 cli 节点上进行</p>
+		</section>
+
+		<section class="section" id="genesis"><div class="titlepage"><div><div><h3 class="title">3.4. 生成证书和创世区块</h3></div></div></div>
+			
+			<p>这里我们需要几个命令（configtxgen configtxlator cryptogen），官方的安装方式：</p>
+			<pre class="screen">
 		
 curl -sSL https://goo.gl/byy2Qj | bash -s 1.0.5
 		
-		</pre>
-		<p>无论如何我都安装不成功，可能是（https://goo.gl/byy2Qj）被天朝给墙了。不过我发现 fabric-tools
-			里面有这个工具。</p>
-		<div class="tip"><h3 class="title">提示</h3>
-			<p>经过翻墙发现 https://goo.gl/byy2Qj 地址是 301 到下面地址：</p>
-			<p>
-				<a class="ulink" href="https://raw.githubusercontent.com/hyperledger/fabric/v1.0.5/scripts/bootstrap.sh" target="_top">https://raw.githubusercontent.com/hyperledger/fabric/v1.0.5/scripts/bootstrap.sh</a>
-			</p>
-		</div>
-		<pre class="screen">
+			</pre>
+			<p>无论如何我都安装不成功，可能是（https://goo.gl/byy2Qj）被天朝给墙了。不过我发现 fabric-tools
+				里面有这个工具。</p>
+			<div class="tip"><h3 class="title">提示</h3>
+				<p>经过翻墙发现 https://goo.gl/byy2Qj 地址是 301 到下面地址：</p>
+				<p>
+					<a class="ulink" href="https://raw.githubusercontent.com/hyperledger/fabric/v1.0.5/scripts/bootstrap.sh" target="_top">https://raw.githubusercontent.com/hyperledger/fabric/v1.0.5/scripts/bootstrap.sh</a>
+				</p>
+			</div>
+			<pre class="screen">
 		
 [root@localhost ~]# mkdir netkiller
 [root@localhost ~]# cd netkiller/
 [root@localhost netkiller]# mkdir -p {chaincode,crypto-config,config,artifacts}	
 		
-		</pre>
+			</pre>
 
-		<section class="section" id="genesis.block"><div class="titlepage"><div><div><h3 class="title">3.1. 创建配置文件</h3></div></div></div>
-			
-
-			<section class="section" id="crypto-config.yaml"><div class="titlepage"><div><div><h4 class="title">3.1.1. crypto-config.yaml</h4></div></div></div>
+			<section class="section" id="genesis.block"><div class="titlepage"><div><div><h4 class="title">3.4.1. 创建配置文件</h4></div></div></div>
 				
-				<p>创建证书</p>
-				<pre class="screen">
+
+				<section class="section" id="crypto-config.yaml"><div class="titlepage"><div><div><h5 class="title">3.4.1.1. crypto-config.yaml</h5></div></div></div>
+					
+					<p>创建证书</p>
+					<pre class="screen">
 				
 OrdererOrgs:
   - Name: Orderer
@@ -149,11 +230,11 @@ PeerOrgs:
     Users:
       Count: 1			
 				
-				</pre>
-			</section>
-			<section class="section" id=""><div class="titlepage"><div><div><h4 class="title">3.1.2. configtx.yaml</h4></div></div></div>
-				
-				<pre class="screen">
+					</pre>
+				</section>
+				<section class="section" id="idp3"><div class="titlepage"><div><div><h5 class="title">3.4.1.2. configtx.yaml</h5></div></div></div>
+					
+					<pre class="screen">
 				
 ---
 Profiles:
@@ -221,64 +302,11 @@ Application: &amp;ApplicationDefaults
 
     Organizations:
 				
-				</pre>
+					</pre>
+				</section>
 			</section>
-		</section>
 
-		<section class="section" id="genesis.fabric-tools"><div class="titlepage"><div><div><h3 class="title">3.2. 启动 fabric-tools 容器</h3></div></div></div>
-			
-			<p>创建文件 docker-compose-tools.yml</p>
-			<pre class="screen">
-			
-version: '2'
-
-networks:
-  basic:
-
-services:
-  tools:
-    container_name: tools 
-    image: hyperledger/fabric-tools
-    tty: true
-    environment:
-      - GOPATH=/opt/gopath
-      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
-      - CORE_LOGGING_LEVEL=DEBUG
-      - CORE_PEER_ID=cli
-      - CORE_PEER_ADDRESS=peer0.org1.example.com:7051
-      - CORE_PEER_LOCALMSPID=Org1MSP
-      - CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp
-      - CORE_CHAINCODE_KEEPALIVE=10
-    # working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
-    working_dir: /root/netkiller
-    command: /bin/bash
-    volumes:
-        - /var/run/:/host/var/run/
-        - ~/netkiller:/root/netkiller
-        - ./chaincode/:/opt/gopath/src/github.com/
-        - ./crypto:/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/
-    networks:
-        - basic
-			
-			</pre>
-			<section class="section" id=""><div class="titlepage"><div><div><h4 class="title">3.2.1. 启动 Docker 容器</h4></div></div></div>
-				
-				<p>启动 Docker 容器</p>
-				<pre class="screen">
-				
-[root@localhost netkiller]# docker-compose -f docker-compose-tools.yml up -d
-Creating tools
-				
-				</pre>
-				<p>进入容器</p>
-				<pre class="screen">
-				
-[root@localhost netkiller]# docker-compose -f docker-compose-tools.yml exec tools bash
-root@88e9040d2d2a:/opt/gopath/src/github.com/hyperledger/fabric/peer#				
-				
-				</pre>
-			</section>
-			<section class="section" id=""><div class="titlepage"><div><div><h4 class="title">3.2.2. 生成证书</h4></div></div></div>
+			<section class="section" id="idp4"><div class="titlepage"><div><div><h4 class="title">3.4.2. 生成证书</h4></div></div></div>
 				
 				<p>命令</p>
 				<pre class="screen">
@@ -298,7 +326,7 @@ peerOrganizations
 				
 				</pre>
 			</section>
-			<section class="section" id=""><div class="titlepage"><div><div><h4 class="title">3.2.3. 生成创世区块</h4></div></div></div>
+			<section class="section" id="idp5"><div class="titlepage"><div><div><h4 class="title">3.4.3. 生成创世区块</h4></div></div></div>
 				
 				<pre class="screen">
 				
@@ -311,7 +339,7 @@ root@8f467a88de99:~/netkiller# configtxgen -profile OneOrgOrdererGenesis -output
 				</pre>
 
 			</section>
-			<section class="section" id=""><div class="titlepage"><div><div><h4 class="title">3.2.4. 生成通道配置文件</h4></div></div></div>
+			<section class="section" id="idp6"><div class="titlepage"><div><div><h4 class="title">3.4.4. 生成通道配置文件</h4></div></div></div>
 				
 				<p>命令</p>
 				<pre class="screen">
@@ -331,7 +359,7 @@ root@8f467a88de99:~/netkiller# configtxgen -profile OneOrgChannel -outputCreateC
 				
 				</pre>
 			</section>
-			<section class="section" id=""><div class="titlepage"><div><div><h4 class="title">3.2.5.  generate anchor peer transaction</h4></div></div></div>
+			<section class="section" id="idp7"><div class="titlepage"><div><div><h4 class="title">3.4.5.  generate anchor peer transaction</h4></div></div></div>
 				
 				<p>命令</p>
 				<pre class="screen">
@@ -350,125 +378,85 @@ root@8f467a88de99:~/netkiller# configtxgen -profile OneOrgChannel -outputAnchorP
 2018-02-08 08:46:19.177 UTC [common/configtx/tool] doOutputAnchorPeersUpdate -&gt; INFO 003 Writing anchor peer update
 				
 				</pre>
-			</section>
-			<section class="section" id=""><div class="titlepage"><div><div><h4 class="title">3.2.6. 清理 Docker 容器</h4></div></div></div>
-				
-				<p>至此所需的证书与创世区块都已生产完毕，fabric-tools 容易完成了它的使命，你可以继续保留或者清理干净。</p>
+				<p>至此所有需要生成的配置文件全部生成完毕。</p>
 				<pre class="screen">
+				
+[root@localhost netkiller]# tree -L 4 crypto-config
+crypto-config
+|-- ordererOrganizations
+|   `-- example.com
+|       |-- ca
+|       |   |-- ca.example.com-cert.pem
+|       |   `-- de9204448c9c8e2a72d092f53e8ff069e12dea62001b7b8b9a83ae240d80ed57_sk
+|       |-- msp
+|       |   |-- admincerts
+|       |   |-- cacerts
+|       |   `-- tlscacerts
+|       |-- orderers
+|       |   `-- orderer.example.com
+|       |-- tlsca
+|       |   |-- c0b4dd42bd396d68f468aa07dae8ce944ab2d9832b2593cfafb27e53c69ec5e2_sk
+|       |   `-- tlsca.example.com-cert.pem
+|       `-- users
+|           `-- Admin@example.com
+`-- peerOrganizations
+    `-- org1.example.com
+        |-- ca
+        |   |-- 74023bd84cc5e6957f9bc30b3ebcd6c5b7507016721702a014dd640df265b61a_sk
+        |   `-- ca.org1.example.com-cert.pem
+        |-- msp
+        |   |-- admincerts
+        |   |-- cacerts
+        |   `-- tlscacerts
+        |-- peers
+        |   `-- peer0.org1.example.com
+        |-- tlsca
+        |   |-- 71bb82530580707aa20fa5955beab202f266aa4da4b435bef20741ce5e64abb9_sk
+        |   `-- tlsca.org1.example.com-cert.pem
+        `-- users
+            |-- Admin@org1.example.com
+            `-- User1@org1.example.com
+
+25 directories, 8 files
+				
+				
+				</pre>
+				<p>将config和crypto-config文件加复制到ca,orderer,peer,cli等节点上去。</p>
+			</section>
+
+		</section>
+		<section class="section" id="idp8"><div class="titlepage"><div><div><h3 class="title">3.5. 清理 Docker 容器</h3></div></div></div>
+			
+			<p>至此所需的证书与创世区块都已生产完毕，fabric-tools 容易完成了它的使命，你可以继续保留或者清理干净。</p>
+			<pre class="screen">
 				
 [root@localhost netkiller]# docker-compose -f docker-compose-tools.yml down
 Stopping tools ... done
 Removing tools ... done
 Removing network netkiller_basic
 				
-				</pre>
-				<p>清理 tools 容器</p>
-				<pre class="screen">
+			</pre>
+			<p>清理 tools 容器</p>
+			<pre class="screen">
 				
 docker rm -f $(docker ps -qa)
 				
-				</pre>
-			</section>
+			</pre>
 		</section>
-
 	</section>
-	<section class="section" id="couchdb"><div class="titlepage"><div><div><h2 class="title" style="clear: both">4. CouchDB 节点</h2></div></div></div>
-		
-		<p>整个 Hyperledger Fabric 技术栈中只有这个 CouchDB 是个外来户，看到 CouchDB
-			我就非常兴奋，这是一个NoSQL数据库(它与MongoDB十分类似)，所以CouchDB 100%可以独立运行，且最容易分离。</p>
-		<p>CouchDB 在这里有两个方案可以选择。</p>
-		<div class="itemizedlist"><div class="itemizedlist-title"/><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem">
-				<p>采用 Docker 运行 CouchDB的方案。</p>
-			</li><li class="listitem">
-				<p>采用传统方式物理机上本地安装 CouchDB</p>
-			</li></ul></div>
-		<p>理论两种方案对实际结果没有什么区别，只需提供IP地址，用户名与密码供其他节点访问即可。但实际我们看到 Hyperledger
-			Fabric 使用的镜像是 hyperledger/fabric-couchdb 不清楚是否有修改过 CouchDB 数据库。</p>
-		<p>如果你对 Docker 比较熟悉就采用 Docker
-			方案。如果不熟悉就采用本地安装方式。总之选择一种你能Hold住（掌控）的方案，一旦出现故障，你能第一时间排查并处理。</p>
-
-		<section class="section" id="couchdb.docker-compose"><div class="titlepage"><div><div><h3 class="title">4.1. 安装 CouchDB</h3></div></div></div>
-			
-			<p>下面是 Docker 方案</p>
-			<pre class="screen">
-			
-[root@localhost netkiller]# vim docker-compose-couchdb.yml
-		
-version: '3'
-
-networks:
-  basic:
-
-services:
-  couchdb:
-    container_name: couchdb
-    image: hyperledger/fabric-couchdb
-    # Populate the COUCHDB_USER and COUCHDB_PASSWORD to set an admin user and password
-    # for CouchDB.  This will prevent CouchDB from operating in an "Admin Party" mode.
-    environment:
-      - COUCHDB_USER=admin
-      - COUCHDB_PASSWORD=passw0rd
-    ports:
-      - 172.16.0.17:5984:5984
-    networks:
-      - basic
-			
-			</pre>
-		</section>
-		<section class="section" id="couchdb.up"><div class="titlepage"><div><div><h3 class="title">4.2. 启动 CouchDB</h3></div></div></div>
-			
-			<p>启动 Docker 容器</p>
-			<pre class="screen">
-			
-docker-compose -f docker-compose-couchdb.yml up -d		
-			
-			</pre>
-			<p>访问CouchDB管理界面，http://172.16.0.17:5984/_utils/
-				请使用上面设置的密码进入。若想进入到容器内部可以使用下面命令：</p>
-			<pre class="screen">
-			
-docker-compose -f docker-compose-couchdb.yml exec couchdb bash	
-			
-			</pre>
-			<p>至此 CouchDB 节点部署完毕。</p>
-		</section>
-		<section class="section" id="couchdb.backup"><div class="titlepage"><div><div><h3 class="title">4.3. 备份与恢复 CouchDB </h3></div></div></div>
-			
-			<p>既然是运维区块链，对于运维工作我们最关心的就是如何备份数据，在出现故障的时候恢复数据。</p>
-			<pre class="screen">
-			
-npm install --save couchdb-backup-restore			
-			
-			</pre>
-			<pre class="screen">
-			
-var cbr = require('couchdb-backup-restore');
- 
-var config = {credentials: 'http://localhost:5984'};
- 
-function done(err) {
-  if (err) {
-    return console.error(err);
-  }
-  console.log('all done!');
-}
- 
-// backup 
-cbr.backup(config, done).pipe(fs.createWriteStream('./db-backup.tar.gz'))
-
-// restore 
-fs.createReadStream('./db-backup.tar.gz').pipe(cbr.restore(config, done));
-			
-			</pre>
-			
-		</section>
-
-	</section>
-
-	<section class="section" id="ca"><div class="titlepage"><div><div><h2 class="title" style="clear: both">5. CA 节点安装</h2></div></div></div>
+	<section class="section" id="ca"><div class="titlepage"><div><div><h2 class="title" style="clear: both">4. CA 节点安装</h2></div></div></div>
 		
 		<p>CA 节点需要我们之前生成 crypto-config </p>
-		<section class="section" id="docker-compose-ca.yaml"><div class="titlepage"><div><div><h3 class="title">5.1. docker-compose-ca.yml</h3></div></div></div>
+		<section class="section" id=""><div class="titlepage"><div><div><h3 class="title">4.1. 安装 Docker 镜像</h3></div></div></div>
+			
+			<pre class="screen">
+			
+docker pull hyperledger/fabric-ca:x86_64-1.0.5
+docker tag hyperledger/fabric-ca:x86_64-1.0.5 hyperledger/fabric-ca			
+			
+			</pre>
+		</section>
+		<section class="section" id="docker-compose-ca.yaml"><div class="titlepage"><div><div><h3 class="title">4.2. docker-compose-ca.yml</h3></div></div></div>
 			
 			<pre class="screen">
 			
@@ -496,7 +484,7 @@ services:
 			
 			</pre>
 		</section>
-		<section class="section" id="ca.up"><div class="titlepage"><div><div><h3 class="title">5.2. 启动 CA 节点</h3></div></div></div>
+		<section class="section" id="ca.up"><div class="titlepage"><div><div><h3 class="title">4.3. 启动 CA 节点</h3></div></div></div>
 			
 			<pre class="screen">
 			
@@ -505,10 +493,119 @@ docker-compose -f docker-compose-ca.yaml up -d
 			</pre>
 		</section>
 	</section>
+	<section class="section" id="couchdb"><div class="titlepage"><div><div><h2 class="title" style="clear: both">5. CouchDB 节点</h2></div></div></div>
+		
+		<p>整个 Hyperledger Fabric 技术栈中只有这个 CouchDB 是个外来户，看到 CouchDB
+			我就非常兴奋，这是一个NoSQL数据库(它与MongoDB十分类似)，所以CouchDB 100%可以独立运行，且最容易分离。</p>
+		<p>CouchDB 在这里有两个方案可以选择。</p>
+		<div class="itemizedlist"><div class="itemizedlist-title"/><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem">
+				<p>采用 Docker 运行 CouchDB的方案。</p>
+			</li><li class="listitem">
+				<p>采用传统方式物理机上本地安装 CouchDB</p>
+			</li></ul></div>
+		<p>理论两种方案对实际结果没有什么区别，只需提供IP地址，用户名与密码供其他节点访问即可。但实际我们看到 Hyperledger
+			Fabric 使用的镜像是 hyperledger/fabric-couchdb 不清楚是否有修改过 CouchDB 数据库。</p>
+		<p>如果你对 Docker 比较熟悉就采用 Docker
+			方案。如果不熟悉就采用本地安装方式。总之选择一种你能Hold住（掌控）的方案，一旦出现故障，你能第一时间排查并处理。</p>
+		<section class="section" id=""><div class="titlepage"><div><div><h3 class="title">5.1. 安装 Docker 镜像</h3></div></div></div>
+			
+			<pre class="screen">
+			
+docker pull hyperledger/fabric-couchdb:x86_64-1.0.5
+docker tag hyperledger/fabric-couchdb:x86_64-1.0.5 hyperledger/fabric-couchdb
+			
+			</pre>
+		</section>
+		<section class="section" id="couchdb.docker-compose"><div class="titlepage"><div><div><h3 class="title">5.2. 安装 CouchDB</h3></div></div></div>
+			
+			<p>下面是 Docker 方案</p>
+			<pre class="screen">
+			
+[root@localhost netkiller]# vim docker-compose-couchdb.yml
+		
+version: '3'
+
+networks:
+  basic:
+
+services:
+  couchdb:
+    container_name: couchdb
+    image: hyperledger/fabric-couchdb
+    # Populate the COUCHDB_USER and COUCHDB_PASSWORD to set an admin user and password
+    # for CouchDB.  This will prevent CouchDB from operating in an "Admin Party" mode.
+    environment:
+      - COUCHDB_USER=admin
+      - COUCHDB_PASSWORD=passw0rd
+    ports:
+      - 172.16.0.17:5984:5984
+    networks:
+      - basic
+			
+			</pre>
+		</section>
+		<section class="section" id="couchdb.up"><div class="titlepage"><div><div><h3 class="title">5.3. 启动 CouchDB</h3></div></div></div>
+			
+			<p>启动 Docker 容器</p>
+			<pre class="screen">
+			
+docker-compose -f docker-compose-couchdb.yml up -d		
+			
+			</pre>
+			<p>访问CouchDB管理界面，http://172.16.0.17:5984/_utils/
+				请使用上面设置的密码进入。若想进入到容器内部可以使用下面命令：</p>
+			<pre class="screen">
+			
+docker-compose -f docker-compose-couchdb.yml exec couchdb bash	
+			
+			</pre>
+			<p>至此 CouchDB 节点部署完毕。</p>
+		</section>
+		<section class="section" id="couchdb.backup"><div class="titlepage"><div><div><h3 class="title">5.4. 备份与恢复 CouchDB </h3></div></div></div>
+			
+			<p>既然是运维区块链，对于运维工作我们最关心的就是如何备份数据，在出现故障的时候恢复数据。</p>
+			<pre class="screen">
+			
+npm install --save couchdb-backup-restore			
+			
+			</pre>
+			<pre class="screen">
+			
+var cbr = require('couchdb-backup-restore');
+ 
+var config = {credentials: 'http://localhost:5984'};
+ 
+function done(err) {
+  if (err) {
+    return console.error(err);
+  }
+  console.log('all done!');
+}
+ 
+// backup 
+cbr.backup(config, done).pipe(fs.createWriteStream('./db-backup.tar.gz'))
+
+// restore 
+fs.createReadStream('./db-backup.tar.gz').pipe(cbr.restore(config, done));
+			
+			</pre>
+
+		</section>
+
+	</section>
 	<section class="section" id="orderer"><div class="titlepage"><div><div><h2 class="title" style="clear: both">6. Orderer 节点安装</h2></div></div></div>
 		
 		<p/>
-		<section class="section" id=""><div class="titlepage"><div><div><h3 class="title">6.1. docker-compose-orderer.yml</h3></div></div></div>
+		<section class="section" id=""><div class="titlepage"><div><div><h3 class="title">6.1. 安装 Docker 镜像</h3></div></div></div>
+			
+			<pre class="screen">
+			
+docker pull hyperledger/fabric-orderer:x86_64-1.0.5
+docker tag hyperledger/fabric-orderer:x86_64-1.0.5 hyperledger/fabric-orderer			
+			
+			</pre>
+		</section>
+		<section class="section" id="idp9"><div class="titlepage"><div><div><h3 class="title">6.2. docker-compose-orderer.yml</h3></div></div></div>
 			
 			<pre class="screen">
 			
@@ -541,7 +638,7 @@ services:
 			
 			</pre>
 		</section>
-		<section class="section" id=""><div class="titlepage"><div><div><h3 class="title">6.2. 启动 Orderer 节点</h3></div></div></div>
+		<section class="section" id="idp10"><div class="titlepage"><div><div><h3 class="title">6.3. 启动 Orderer 节点</h3></div></div></div>
 			
 			<pre class="screen">
 			
@@ -554,7 +651,16 @@ docker-compose -f docker-compose-orderer.yaml up -d
 	<section class="section" id="peer"><div class="titlepage"><div><div><h2 class="title" style="clear: both">7. Peer 节点安装</h2></div></div></div>
 		
 		<p/>
-		<section class="section" id=""><div class="titlepage"><div><div><h3 class="title">7.1. docker-compose-peer.yml</h3></div></div></div>
+		<section class="section" id=""><div class="titlepage"><div><div><h3 class="title">7.1. 安装 Docker 镜像</h3></div></div></div>
+			
+			<pre class="screen">
+			
+docker pull hyperledger/fabric-peer:x86_64-1.0.5
+docker tag hyperledger/fabric-peer:x86_64-1.0.5 hyperledger/fabric-peer
+			
+			</pre>
+		</section>
+		<section class="section" id="idp11"><div class="titlepage"><div><div><h3 class="title">7.2. docker-compose-peer.yml</h3></div></div></div>
 			
 			<pre class="screen">
 			
@@ -605,10 +711,11 @@ services:
       - basic
 			
 			</pre>
-			<p>Peer 需要连接到 CouchDB 注意配置项 CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=172.16.0.17:5984 </p>
+			<p>Peer 需要连接到 CouchDB 注意配置项
+				CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=172.16.0.17:5984 </p>
 			<p>同时连接CouchDB的用户与密码要正确</p>
 		</section>
-		<section class="section" id="peer.up"><div class="titlepage"><div><div><h3 class="title">7.2. 启动 Peer 节点</h3></div></div></div>
+		<section class="section" id="peer.up"><div class="titlepage"><div><div><h3 class="title">7.3. 启动 Peer 节点</h3></div></div></div>
 			
 			<pre class="screen">
 			
@@ -616,7 +723,7 @@ services:
 			
 			</pre>
 		</section>
-		<section class="section" id="peel.channel"><div class="titlepage"><div><div><h3 class="title">7.3. 创建 Channel</h3></div></div></div>
+		<section class="section" id="peel.channel"><div class="titlepage"><div><div><h3 class="title">7.4. 创建 Channel</h3></div></div></div>
 			
 			<p>进入 Peer 容器</p>
 			<pre class="screen">
@@ -629,7 +736,9 @@ docker-compose -f docker-compose-peer.yaml exec peer0.org1.example.com bash
 			
 CORE_PEER_LOCALMSPID=Org1MSP
 CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/msp/users/Admin@org1.example.com/msp
-peer channel create -o orderer.example.com:7050 -c mychannel -f /etc/hyperledger/configtx/channel.tx			
+peer channel create -o orderer.example.com:7050 -c mychannel -f /etc/hyperledger/configtx/channel.tx
+
+peer channel create -o 172.16.0.17:7050 -c mychannel -f /etc/hyperledger/configtx/channel.tx
 			
 			</pre>
 			<p>加入到 mychannel</p>
@@ -655,56 +764,271 @@ st t@f39764f58ff7:/opt/gopath/src/github.com/hyperledger/fabric# peer channel li
 			
 			</pre>
 		</section>
-		
+
 	</section>
-	
-	<section class="section" id="tools"><div class="titlepage"><div><div><h2 class="title" style="clear: both">8. Tools 节点安装</h2></div></div></div>
+
+
+	<section class="section" id="test"><div class="titlepage"><div><div><h2 class="title" style="clear: both">8. 验收与测试</h2></div></div></div>
 		
-		<p>Tools 在生成创世区块的时候我们就曾经使用，你可以沿用之前的 tools 简单，或者创建一个 cli 节点，这个节点主要是用于管理区块链集群，例如合约部署，调试等等。</p>
-		<section class="section" id=""><div class="titlepage"><div><div><h3 class="title">8.1. </h3></div></div></div>
+		<section class="section" id="contract.file"><div class="titlepage"><div><div><h3 class="title">8.1. 准备合约文件</h3></div></div></div>
+			
 			
 			<pre class="screen">
 			
-version: '3'
+[root@localhost netkiller]# cat chaincode/fabcar/fabcar.go 
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 
-networks:
-  basic:
+/*
+ * The sample smart contract for documentation topic:
+ * Writing Your First Blockchain Application
+ */
 
-services:
+package main
+
+/* Imports
+ * 4 utility libraries for formatting, handling bytes, reading and writing JSON, and string manipulation
+ * 2 specific Hyperledger Fabric specific libraries for Smart Contracts
+ */
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"strconv"
+
+	"github.com/hyperledger/fabric/core/chaincode/shim"
+	sc "github.com/hyperledger/fabric/protos/peer"
+)
+
+// Define the Smart Contract structure
+type SmartContract struct {
+}
+
+// Define the car structure, with 4 properties.  Structure tags are used by encoding/json library
+type Car struct {
+	Make   string `json:"make"`
+	Model  string `json:"model"`
+	Colour string `json:"colour"`
+	Owner  string `json:"owner"`
+}
+
+/*
+ * The Init method is called when the Smart Contract "fabcar" is instantiated by the blockchain network
+ * Best practice is to have any Ledger initialization in separate function -- see initLedger()
+ */
+func (s *SmartContract) Init(APIstub shim.ChaincodeStubInterface) sc.Response {
+	return shim.Success(nil)
+}
+
+/*
+ * The Invoke method is called as a result of an application request to run the Smart Contract "fabcar"
+ * The calling application program has also specified the particular smart contract function to be called, with arguments
+ */
+func (s *SmartContract) Invoke(APIstub shim.ChaincodeStubInterface) sc.Response {
+
+	// Retrieve the requested Smart Contract function and arguments
+	function, args := APIstub.GetFunctionAndParameters()
+	// Route to the appropriate handler function to interact with the ledger appropriately
+	if function == "queryCar" {
+		return s.queryCar(APIstub, args)
+	} else if function == "initLedger" {
+		return s.initLedger(APIstub)
+	} else if function == "createCar" {
+		return s.createCar(APIstub, args)
+	} else if function == "queryAllCars" {
+		return s.queryAllCars(APIstub)
+	} else if function == "changeCarOwner" {
+		return s.changeCarOwner(APIstub, args)
+	}
+
+	return shim.Error("Invalid Smart Contract function name.")
+}
+
+func (s *SmartContract) queryCar(APIstub shim.ChaincodeStubInterface, args []string) sc.Response {
+
+	if len(args) != 1 {
+		return shim.Error("Incorrect number of arguments. Expecting 1")
+	}
+
+	carAsBytes, _ := APIstub.GetState(args[0])
+	return shim.Success(carAsBytes)
+}
+
+func (s *SmartContract) initLedger(APIstub shim.ChaincodeStubInterface) sc.Response {
+	cars := []Car{
+		Car{Make: "Toyota", Model: "Prius", Colour: "blue", Owner: "Tomoko"},
+		Car{Make: "Ford", Model: "Mustang", Colour: "red", Owner: "Brad"},
+		Car{Make: "Hyundai", Model: "Tucson", Colour: "green", Owner: "Jin Soo"},
+		Car{Make: "Volkswagen", Model: "Passat", Colour: "yellow", Owner: "Max"},
+		Car{Make: "Tesla", Model: "S", Colour: "black", Owner: "Adriana"},
+		Car{Make: "Peugeot", Model: "205", Colour: "purple", Owner: "Michel"},
+		Car{Make: "Chery", Model: "S22L", Colour: "white", Owner: "Aarav"},
+		Car{Make: "Fiat", Model: "Punto", Colour: "violet", Owner: "Pari"},
+		Car{Make: "Tata", Model: "Nano", Colour: "indigo", Owner: "Valeria"},
+		Car{Make: "Holden", Model: "Barina", Colour: "brown", Owner: "Shotaro"},
+	}
+
+	i := 0
+	for i &lt; len(cars) {
+		fmt.Println("i is ", i)
+		carAsBytes, _ := json.Marshal(cars[i])
+		APIstub.PutState("CAR"+strconv.Itoa(i), carAsBytes)
+		fmt.Println("Added", cars[i])
+		i = i + 1
+	}
+
+	return shim.Success(nil)
+}
+
+func (s *SmartContract) createCar(APIstub shim.ChaincodeStubInterface, args []string) sc.Response {
+
+	if len(args) != 5 {
+		return shim.Error("Incorrect number of arguments. Expecting 5")
+	}
+
+	var car = Car{Make: args[1], Model: args[2], Colour: args[3], Owner: args[4]}
+
+	carAsBytes, _ := json.Marshal(car)
+	APIstub.PutState(args[0], carAsBytes)
+
+	return shim.Success(nil)
+}
+
+func (s *SmartContract) queryAllCars(APIstub shim.ChaincodeStubInterface) sc.Response {
+
+	startKey := "CAR0"
+	endKey := "CAR999"
+
+	resultsIterator, err := APIstub.GetStateByRange(startKey, endKey)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	defer resultsIterator.Close()
+
+	// buffer is a JSON array containing QueryResults
+	var buffer bytes.Buffer
+	buffer.WriteString("[")
+
+	bArrayMemberAlreadyWritten := false
+	for resultsIterator.HasNext() {
+		queryResponse, err := resultsIterator.Next()
+		if err != nil {
+			return shim.Error(err.Error())
+		}
+		// Add a comma before array members, suppress it for the first array member
+		if bArrayMemberAlreadyWritten == true {
+			buffer.WriteString(",")
+		}
+		buffer.WriteString("{\"Key\":")
+		buffer.WriteString("\"")
+		buffer.WriteString(queryResponse.Key)
+		buffer.WriteString("\"")
+
+		buffer.WriteString(", \"Record\":")
+		// Record is a JSON object, so we write as-is
+		buffer.WriteString(string(queryResponse.Value))
+		buffer.WriteString("}")
+		bArrayMemberAlreadyWritten = true
+	}
+	buffer.WriteString("]")
+
+	fmt.Printf("- queryAllCars:\n%s\n", buffer.String())
+
+	return shim.Success(buffer.Bytes())
+}
+
+func (s *SmartContract) changeCarOwner(APIstub shim.ChaincodeStubInterface, args []string) sc.Response {
+
+	if len(args) != 2 {
+		return shim.Error("Incorrect number of arguments. Expecting 2")
+	}
+
+	carAsBytes, _ := APIstub.GetState(args[0])
+	car := Car{}
+
+	json.Unmarshal(carAsBytes, &amp;car)
+	car.Owner = args[1]
+
+	carAsBytes, _ = json.Marshal(car)
+	APIstub.PutState(args[0], carAsBytes)
+
+	return shim.Success(nil)
+}
+
+// The main function is only relevant in unit test mode. Only included here for completeness.
+func main() {
+
+	// Create a new Smart Contract
+	err := shim.Start(new(SmartContract))
+	if err != nil {
+		fmt.Printf("Error creating new Smart Contract: %s", err)
+	}
+}
 			
-  cli:
-    container_name: cli
-    image: hyperledger/fabric-tools
-    tty: true
-    environment:
-      - GOPATH=/opt/gopath
-      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
-      - CORE_LOGGING_LEVEL=DEBUG
-      - CORE_PEER_ID=cli
-      - CORE_PEER_ADDRESS=peer0.org1.example.com:7051
-      - CORE_PEER_LOCALMSPID=Org1MSP
-      - CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp
-      - CORE_CHAINCODE_KEEPALIVE=10
-    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
-    command: /bin/bash
-    volumes:
-        - /var/run/:/host/var/run/
-        - ./chaincode/:/opt/gopath/src/github.com/
-        - ./crypto-config:/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/
-    networks:
-        - basic
-    #depends_on:
-    #  - orderer.example.com
-    #  - peer0.org1.example.com
-    #  - couchdb	
+			</pre>
+		</section>
+
+		<section class="section" id="contract.deploy"><div class="titlepage"><div><div><h3 class="title">8.2. 安装 chaincode</h3></div></div></div>
+			
+			<p>安装合约在 tools 节点上进行。</p>
+			<pre class="screen">
+			
+docker-compose -f docker-compose-cli.yaml exec cli bash
+
+CORE_PEER_ADDRESS=172.16.0.17:7051
+CORE_PEER_LOCALMSPID=Org1MSP
+CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp
+
+peer chaincode install -n fabcar -v 1.0 -p github.com/fabcar	
+peer chaincode instantiate -o orderer.example.com:7050 -C mychannel -n fabcar -v 1.0 -c '{"Args":[""]}' -P "OR ('Org1MSP.member','Org2MSP.member')"
+peer chaincode invoke -o orderer.example.com:7050 -C mychannel -n fabcar -c '{"function":"initLedger","Args":[""]}'
+			
+			</pre>
+			<pre class="screen">
+			
+root@a90d0d869dd3:/opt/gopath/src/github.com/hyperledger/fabric/peer# peer chaincode install -n fabcar -v 1.0 -p github.com/fabcar	
+2018-02-09 11:26:28.025 UTC [msp] GetLocalMSP -&gt; DEBU 001 Returning existing local MSP
+2018-02-09 11:26:28.025 UTC [msp] GetDefaultSigningIdentity -&gt; DEBU 002 Obtaining default signing identity
+2018-02-09 11:26:28.025 UTC [chaincodeCmd] checkChaincodeCmdParams -&gt; INFO 003 Using default escc
+2018-02-09 11:26:28.025 UTC [chaincodeCmd] checkChaincodeCmdParams -&gt; INFO 004 Using default vscc
+2018-02-09 11:26:28.139 UTC [golang-platform] getCodeFromFS -&gt; DEBU 005 getCodeFromFS github.com/fabcar
+2018-02-09 11:26:29.394 UTC [golang-platform] func1 -&gt; DEBU 006 Discarding GOROOT package bytes
+2018-02-09 11:26:29.395 UTC [golang-platform] func1 -&gt; DEBU 007 Discarding GOROOT package encoding/json
+2018-02-09 11:26:29.395 UTC [golang-platform] func1 -&gt; DEBU 008 Discarding GOROOT package fmt
+2018-02-09 11:26:29.395 UTC [golang-platform] func1 -&gt; DEBU 009 Discarding provided package github.com/hyperledger/fabric/core/chaincode/shim
+2018-02-09 11:26:29.395 UTC [golang-platform] func1 -&gt; DEBU 00a Discarding provided package github.com/hyperledger/fabric/protos/peer
+2018-02-09 11:26:29.395 UTC [golang-platform] func1 -&gt; DEBU 00b Discarding GOROOT package strconv
+2018-02-09 11:26:29.396 UTC [golang-platform] GetDeploymentPayload -&gt; DEBU 00c done
+2018-02-09 11:26:29.406 UTC [msp/identity] Sign -&gt; DEBU 00d Sign: plaintext: 0A8A070A5C08031A0C08E58AF6D30510...939FFF060000FFFF9C08DC0700200000 
+2018-02-09 11:26:29.406 UTC [msp/identity] Sign -&gt; DEBU 00e Sign: digest: A504EE8048EEE8C77F9E1C39827124474638110FD3980017BCA6D644E3E7EC98 
+2018-02-09 11:26:29.426 UTC [chaincodeCmd] install -&gt; DEBU 00f Installed remotely response:&lt;status:200 payload:"OK" &gt; 
+2018-02-09 11:26:29.427 UTC [main] main -&gt; INFO 010 Exiting.....			
+			
+			</pre>
+			<pre class="screen">
+			
+peer chaincode instantiate -o 172.16.0.17:7050 -C mychannel -n fabcar -v 1.0 -c '{"Args":[""]}' -P "OR ('Org1MSP.member','Org2MSP.member')"			
 			
 			</pre>
 		</section>
 	</section>
-	<section class="section" id="test"><div class="titlepage"><div><div><h2 class="title" style="clear: both">9. 验收与测试</h2></div></div></div>
-		
-	</section>
-	<section class="section" id="summary"><div class="titlepage"><div><div><h2 class="title" style="clear: both">10. 总结</h2></div></div></div>
+	<section class="section" id="summary"><div class="titlepage"><div><div><h2 class="title" style="clear: both">9. 总结</h2></div></div></div>
 		
 	</section>
 </section><div xmlns="" id="disqus_thread"/><script xmlns="">

@@ -1,0 +1,385 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>7.3. cli 管理节点安装</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="home" href="../index.html" title="Netkiller Blockchain 手札" /><link rel="up" href="cluster.html" title="第 7 章 Hyperledger Fabric 运维" /><link rel="prev" href="overview.html" title="7.2. 部署拓扑" /><link rel="next" href="ca.html" title="7.4. CA 节点安装" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">云栖社区</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+		<a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">7.3. cli 管理节点安装</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="overview.html">上一页</a> </td><th width="60%" align="center">第 7 章 Hyperledger Fabric 运维</th><td width="20%" align="right"> <a accesskey="n" href="ca.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="tools"></a>7.3. cli 管理节点安装</h2></div></div></div>
+		
+		<p>Tools 在生成创世区块的时候我们就曾经使用，你可以沿用之前的 tools 节点，或者创建一个 cli
+			节点，这个节点主要是用于管理区块链集群，例如合约部署，调试等等。
+		</p>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id=""></a>7.3.1. 安装 Docker 镜像</h3></div></div></div>
+			
+			<pre class="screen">
+			
+docker pull hyperledger/fabric-tools:x86_64-1.0.5
+docker tag hyperledger/fabric-tools:x86_64-1.0.5 hyperledger/fabric-tools			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp33"></a>7.3.2. docker-compose-cli.yaml</h3></div></div></div>
+			
+			<pre class="screen">
+			
+version: '3'
+
+networks:
+  basic:
+
+services:
+			
+  cli:
+    container_name: cli
+    image: hyperledger/fabric-tools
+    tty: true
+    environment:
+      - GOPATH=/opt/gopath
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_LOGGING_LEVEL=DEBUG
+      - CORE_PEER_ID=cli
+      - CORE_PEER_ADDRESS=peer0.org1.example.com:7051
+      - CORE_PEER_LOCALMSPID=Org1MSP
+      - CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp
+      - CORE_CHAINCODE_KEEPALIVE=10
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: /bin/bash
+    volumes:
+        - /var/run/:/host/var/run/
+        - ./chaincode/:/opt/gopath/src/github.com/
+        - ./crypto-config:/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/
+        - ~/netkiller:/root/netkiller
+    networks:
+        - basic
+    #depends_on:
+    #  - orderer.example.com
+    #  - peer0.org1.example.com
+    #  - couchdb	
+    extra_hosts:
+    		- "ca.example.com:172.16.0.20"
+		- "orderer.example.com:172.16.0.21"
+		- "peer0.org1.example.com:172.16.0.22"
+		- "couchdb.example.com:172.16.0.25"
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id=""></a>7.3.3. 启动 cli 节点</h3></div></div></div>
+			
+			<pre class="screen">
+			
+[root@localhost netkiller]# docker-compose -f docker-compose-cli.yaml up -d
+			
+			</pre>
+			<p>后面合约的部署将在 cli 节点上进行</p>
+		</div>
+
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="genesis"></a>7.3.4. 生成证书和创世区块</h3></div></div></div>
+			
+			<p>这里我们需要几个命令（configtxgen configtxlator cryptogen），官方的安装方式：</p>
+			<pre class="screen">
+		
+curl -sSL https://goo.gl/byy2Qj | bash -s 1.0.5
+		
+			</pre>
+			<p>无论如何我都安装不成功，可能是（https://goo.gl/byy2Qj）被天朝给墙了。不过我发现 fabric-tools
+				里面有这个工具。
+			</p>
+			<div class="tip" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Tip"><tr><td rowspan="2" align="center" valign="top" width="25"><img alt="[提示]" src="/graphics/tip.png" /></td><th align="left">提示</th></tr><tr><td align="left" valign="top">
+				<p>经过翻墙发现 https://goo.gl/byy2Qj 地址是 301 到下面地址：</p>
+				<p>
+					<a class="ulink" href="https://raw.githubusercontent.com/hyperledger/fabric/v1.0.5/scripts/bootstrap.sh" target="_top">https://raw.githubusercontent.com/hyperledger/fabric/v1.0.5/scripts/bootstrap.sh</a>
+				</p>
+			</td></tr></table></div>
+			<pre class="screen">
+		
+[root@localhost ~]# mkdir netkiller
+[root@localhost ~]# cd netkiller/
+[root@localhost netkiller]# mkdir -p {chaincode,crypto-config,config,artifacts}	
+		
+			</pre>
+
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="genesis.block"></a>7.3.4.1. 创建配置文件</h4></div></div></div>
+				
+
+				<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="crypto-config.yaml"></a>7.3.4.1.1. crypto-config.yaml</h5></div></div></div>
+					
+					<p>创建证书</p>
+					<pre class="screen">
+				
+OrdererOrgs:
+  - Name: Orderer
+    Domain: example.com
+    Specs:
+      - Hostname: orderer
+PeerOrgs:
+  - Name: Org1
+    Domain: org1.example.com
+    Template:
+      Count: 1
+    Users:
+      Count: 1			
+				
+					</pre>
+				</div>
+				<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp34"></a>7.3.4.1.2. configtx.yaml</h5></div></div></div>
+					
+					<pre class="screen">
+				
+---
+Profiles:
+
+    OneOrgOrdererGenesis:
+        Orderer:
+            &lt;&lt;: *OrdererDefaults
+            Organizations:
+                - *OrdererOrg
+        Consortiums:
+            SampleConsortium:
+                Organizations:
+                    - *Org1
+    OneOrgChannel:
+        Consortium: SampleConsortium
+        Application:
+            &lt;&lt;: *ApplicationDefaults
+            Organizations:
+                - *Org1
+
+Organizations:
+
+    - &amp;OrdererOrg
+        Name: OrdererOrg
+
+        ID: OrdererMSP
+
+        MSPDir: crypto-config/ordererOrganizations/example.com/msp
+
+    - &amp;Org1
+        Name: Org1MSP
+
+        ID: Org1MSP
+
+        MSPDir: crypto-config/peerOrganizations/org1.example.com/msp
+
+        AnchorPeers:
+            - Host: peer0.org1.example.com
+              Port: 7051
+
+Orderer: &amp;OrdererDefaults
+
+    OrdererType: solo
+
+    Addresses:
+        - orderer.example.com:7050
+
+    BatchTimeout: 2s
+
+    BatchSize:
+
+        MaxMessageCount: 10
+
+        AbsoluteMaxBytes: 99 MB
+
+        PreferredMaxBytes: 512 KB
+
+    Kafka:
+        Brokers:
+            - 127.0.0.1:9092
+
+    Organizations:
+
+Application: &amp;ApplicationDefaults
+
+    Organizations:
+				
+					</pre>
+				</div>
+			</div>
+
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp35"></a>7.3.4.2. 生成证书</h4></div></div></div>
+				
+				<p>命令</p>
+				<pre class="screen">
+				
+cryptogen generate --config=./crypto-config.yaml
+				
+				</pre>
+				<p>演示</p>
+				<pre class="screen">
+				
+root@8f467a88de99:~/netkiller# cryptogen generate --config=./crypto-config.yaml
+org1.example.com
+
+root@8f467a88de99:~/netkiller# ls -1 crypto-config
+ordererOrganizations
+peerOrganizations
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp36"></a>7.3.4.3. 生成创世区块</h4></div></div></div>
+				
+				<pre class="screen">
+				
+root@8f467a88de99:~/netkiller# export FABRIC_CFG_PATH=$PWD				
+root@8f467a88de99:~/netkiller# configtxgen -profile OneOrgOrdererGenesis -outputBlock ./config/genesis.block
+2018-02-08 08:35:30.121 UTC [common/configtx/tool] main -&gt; INFO 001 Loading configuration
+2018-02-08 08:35:30.236 UTC [common/configtx/tool] doOutputBlock -&gt; INFO 002 Generating genesis block
+2018-02-08 08:35:30.238 UTC [common/configtx/tool] doOutputBlock -&gt; INFO 003 Writing genesis block			
+				
+				</pre>
+
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp37"></a>7.3.4.4. 生成通道配置文件</h4></div></div></div>
+				
+				<p>命令</p>
+				<pre class="screen">
+				
+CHANNEL_NAME=mychannel
+configtxgen -profile OneOrgChannel -outputCreateChannelTx ./config/channel.tx -channelID $CHANNEL_NAME				
+				
+				</pre>
+				<p>操作演示</p>
+				<pre class="screen">
+				
+root@8f467a88de99:~/netkiller# CHANNEL_NAME=mychannel
+root@8f467a88de99:~/netkiller# configtxgen -profile OneOrgChannel -outputCreateChannelTx ./config/channel.tx -channelID $CHANNEL_NAME 
+2018-02-08 08:41:08.010 UTC [common/configtx/tool] main -&gt; INFO 001 Loading configuration
+2018-02-08 08:41:08.020 UTC [common/configtx/tool] doOutputChannelCreateTx -&gt; INFO 002 Generating new channel configtx
+2018-02-08 08:41:08.020 UTC [common/configtx/tool] doOutputChannelCreateTx -&gt; INFO 003 Writing new channel tx				
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp38"></a>7.3.4.5.  generate anchor peer transaction</h4></div></div></div>
+				
+				<p>命令</p>
+				<pre class="screen">
+				
+CHANNEL_NAME=mychannel
+configtxgen -profile OneOrgChannel -outputAnchorPeersUpdate ./config/Org1MSPanchors.tx -channelID $CHANNEL_NAME -asOrg Org1MSP				
+				
+				</pre>
+				<p>操作演示</p>
+				<pre class="screen">
+				
+root@8f467a88de99:~/netkiller# CHANNEL_NAME=mychannel
+root@8f467a88de99:~/netkiller# configtxgen -profile OneOrgChannel -outputAnchorPeersUpdate ./config/Org1MSPanchors.tx -channelID $CHANNEL_NAME -asOrg Org1MSP
+2018-02-08 08:46:19.162 UTC [common/configtx/tool] main -&gt; INFO 001 Loading configuration
+2018-02-08 08:46:19.176 UTC [common/configtx/tool] doOutputAnchorPeersUpdate -&gt; INFO 002 Generating anchor peer update
+2018-02-08 08:46:19.177 UTC [common/configtx/tool] doOutputAnchorPeersUpdate -&gt; INFO 003 Writing anchor peer update
+				
+				</pre>
+				<p>至此所有需要生成的配置文件全部生成完毕。</p>
+				<pre class="screen">
+				
+[root@localhost netkiller]# tree -L 4 crypto-config
+crypto-config
+|-- ordererOrganizations
+|   `-- example.com
+|       |-- ca
+|       |   |-- ca.example.com-cert.pem
+|       |   `-- de9204448c9c8e2a72d092f53e8ff069e12dea62001b7b8b9a83ae240d80ed57_sk
+|       |-- msp
+|       |   |-- admincerts
+|       |   |-- cacerts
+|       |   `-- tlscacerts
+|       |-- orderers
+|       |   `-- orderer.example.com
+|       |-- tlsca
+|       |   |-- c0b4dd42bd396d68f468aa07dae8ce944ab2d9832b2593cfafb27e53c69ec5e2_sk
+|       |   `-- tlsca.example.com-cert.pem
+|       `-- users
+|           `-- Admin@example.com
+`-- peerOrganizations
+    `-- org1.example.com
+        |-- ca
+        |   |-- 74023bd84cc5e6957f9bc30b3ebcd6c5b7507016721702a014dd640df265b61a_sk
+        |   `-- ca.org1.example.com-cert.pem
+        |-- msp
+        |   |-- admincerts
+        |   |-- cacerts
+        |   `-- tlscacerts
+        |-- peers
+        |   `-- peer0.org1.example.com
+        |-- tlsca
+        |   |-- 71bb82530580707aa20fa5955beab202f266aa4da4b435bef20741ce5e64abb9_sk
+        |   `-- tlsca.org1.example.com-cert.pem
+        `-- users
+            |-- Admin@org1.example.com
+            `-- User1@org1.example.com
+
+25 directories, 8 files
+				
+				
+				</pre>
+				<p>将config和crypto-config文件加复制到ca,orderer,peer,cli等节点上去。</p>
+			</div>
+
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp39"></a>7.3.5. 清理 Docker 容器</h3></div></div></div>
+			
+			<p>至此所需的证书与创世区块都已生产完毕，fabric-tools 容易完成了它的使命，你可以继续保留或者清理干净。</p>
+			<pre class="screen">
+				
+[root@localhost netkiller]# docker-compose -f docker-compose-tools.yml down
+Stopping tools ... done
+Removing tools ... done
+Removing network netkiller_basic
+				
+			</pre>
+			<p>清理 tools 容器</p>
+			<pre class="screen">
+				
+docker rm -f $(docker ps -qa)
+				
+			</pre>
+		</div>
+	</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="overview.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="cluster.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ca.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">7.2. 部署拓扑 </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 7.4. CA 节点安装</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script><script xmlns="" type="text/javascript" src="/js/q.js" async="async"></script></body></html>
