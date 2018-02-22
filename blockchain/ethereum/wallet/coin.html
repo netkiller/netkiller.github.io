@@ -205,6 +205,91 @@ contract TokenERC20 {
 		<p>进入目标账号查看余额。</p>
 		<div><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="1024"><tr><td><img src="../../images/ethereum/coin/coin9.png" width="1024" /></td></tr></table></div>
 	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="ERC223"></a>9.4.4. ERC223 token standard reference implementation.</h3></div></div></div>
+		
+		<p><a class="ulink" href="https://github.com/Dexaran/ERC223-token-standard" target="_top">https://github.com/Dexaran/ERC223-token-standard</a></p>
+		<p>ERC223是以太坊上最新的代币(token)接口标准,主要是为了解决ERC220代币转账丢失问题</p>
+		<p>ERC220接口以transfer为例:</p>
+		<pre class="programlisting">
+		
+// @notice send `_value` token to `_to` from `msg.sender` 
+// @param _to The address of the recipient 
+// @param _value The amount of token to be transferred 
+// @return Whether the transfer was successful or not 
+function transfer(address _to, uint256 _value) public returns (bool success);
+
+
+		
+		</pre>
+		<p>transfer的功能非常简单，给一个指定地址转多少代币。</p>
+		<p>但是当初设计的时候没有考虑到的一个问题就是如果接收者是一个智能合约,那么合约是没法感知自己收到了多少token的.</p>
+		<p>ERC223 中的方法定义</p> 
+		<pre class="screen">
+		
+function transfer(address _to, uint _value) public returns (bool ok);
+function transfer(address _to, uint _value, bytes _data) public returns (bool ok);
+function transfer(address _to, uint _value, bytes _data, string _custom_fallback)		
+		
+		</pre>
+		<p>除此之外 ERC223 还提供了安全的数学运算方法。</p>
+		<pre class="programlisting">
+		
+pragma solidity ^0.4.11;
+
+
+/**
+ * Math operations with safety checks
+ */
+library SafeMath {
+  function mul(uint a, uint b) internal returns (uint) {
+    uint c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function div(uint a, uint b) internal returns (uint) {
+    // assert(b &gt; 0); // Solidity automatically throws when dividing by 0
+    uint c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint a, uint b) internal returns (uint) {
+    assert(b &lt;= a);
+    return a - b;
+  }
+
+  function add(uint a, uint b) internal returns (uint) {
+    uint c = a + b;
+    assert(c &gt;= a);
+    return c;
+  }
+
+  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
+    return a &gt;= b ? a : b;
+  }
+
+  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
+    return a &lt; b ? a : b;
+  }
+
+  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
+    return a &gt;= b ? a : b;
+  }
+
+  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
+    return a &lt; b ? a : b;
+  }
+
+  function assert(bool assertion) internal {
+    if (!assertion) {
+      throw;
+    }
+  }
+}		
+		
+		</pre>
+	</div>
 </div><div xmlns="" id="disqus_thread"></div><script xmlns="">
 
 var disqus_config = function () {
