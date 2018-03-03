@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>33.2. 食品溯源案例</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="home" href="../index.html" title="Netkiller Architect 手札" /><link rel="up" href="index.html" title="第 33 章 区块链探索" /><link rel="prev" href="index.html" title="第 33 章 区块链探索" /><link rel="next" href="movie.html" title="33.3. 以太坊·电影院场景区块链应用探索" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">云栖社区</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+		<a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">33.2. 食品溯源案例</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><th width="60%" align="center">第 33 章 区块链探索</th><td width="20%" align="right"> <a accesskey="n" href="movie.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="trace"></a>33.2. 食品溯源案例</h2></div></div></div>
+	
+	<p></p>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp220"></a>33.2.1. 背景</h3></div></div></div>
+		
+		<p>需求是通过区块链跟踪产品，实现产品产地，生产，流通等环节溯源。</p>
+		<p>需求归纳，需要实现下面几点：</p>
+		<p>产品具备通用的属性，例如名称，价格，重量，颜色，体积等等</p>
+		<p>生产销售链条跟踪</p>
+		<p>涉及环节，农产品的供应链是一个非常复杂的过程，涉及多方，农业局、卫生局、药监局、工商局、环保局等多个部门交织其中。</p>
+		<p>参与者角色，我们为每个环节的参与者分配一个以太坊账号，例如每个供应商一个账号，每个代理商一个账号。这样任何一方经手后都会使用自己的账号想合约中添加数据。</p>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp221"></a>33.2.2. 合约设计</h3></div></div></div>
+		
+		<p>我们设计一个简单的合约</p>
+		<pre class="programlisting">
+		
+pragma solidity ^0.4.20;
+
+contract Trace {
+
+    enum State { Origin, Factory, QA, Shipping, Received, Pending }
+    
+    string name;
+    uint price;
+    uint weight;
+    bool lock = false;	//合约锁
+    bool close = false;	//合约状态
+    uint number = 1;
+    uint attr_number = 1;
+    
+    mapping (address  =&gt; string) guestbook; //客户留言本	
+
+	struct Attribute {
+	    address owner;	// 供应商
+        string name;		// 属性的名字
+        string date;    	// 生产日期
+        string desc;		// 描述信息
+        
+    }
+    mapping (uint  =&gt; Attribute) attribute;
+
+    struct Logistics {
+        address owner;	// 中转站
+        string date;    // 转运日期
+        State status;   // 状态
+        string message; // 留言信息
+    }
+    mapping (uint  =&gt; Logistics) stations;
+    
+    function Trace(string _name, uint _price, uint _weight) public {
+        name = _name;
+        price = _price;
+        weight = _weight;
+	}
+    // 名称
+    function getName() public view returns(string){
+        return name;
+    }
+    // 价格
+    function getPrice() public view returns(uint){
+        return price;
+    }
+    // 重量
+    function getWeight() public view returns(uint){
+        return weight;
+    }
+    
+     // 增加商品属性
+    function putAttribute(address _owner,string _name, string _date, string _desc ) public{
+        if(lock == false){
+        		Attribute memory item = Attribute(_owner, _name,_date,_desc);
+        		attribute[attr_number] = item;
+        		attr_number = attr_number + 1;
+        }
+    }
+
+	// 获得属性
+    function getAttribute(uint _attr_number) public view returns(address, string, string, string) {
+        require(_attr_number &lt; attr_number);
+        Attribute memory item = attribute[_attr_number];
+        
+		return (item.owner, item.name, item.date, item.desc);
+	}
+    
+    // 增加物流中转信息
+    function putLogistics(address _owner,string _date, State _status, string _message ) public{
+        if(close == false){
+            Logistics memory node = Logistics(_owner,_date,_status,_message);
+            stations[number] = node;
+            number = number + 1;
+            lock = true;
+        }
+        if (_status == State.Received) {
+            close = true;
+        }
+    }
+
+	// 获得中转信息
+    function getLogistics(uint _number) public view returns(address, string, State, string) {
+        require(_number &lt; number);
+
+        Logistics memory node = stations[_number];
+        
+		return (node.owner, node.date, node.status, node.message);
+	}
+	
+	// 或者转中站数量
+	function getLogisticsCount() public view returns(uint){
+	    return number;
+	}
+    
+    // 客户留言
+    	function addGuestbook(address _owner, string message) public{
+	    guestbook[_owner] = message;
+	}
+}
+		
+		</pre>
+		<p>怎样使用这个合约呢？合约部署，需要输入三个参数，分别是名称，价格和装量</p>
+		<pre class="programlisting">
+		
+Trace(string _name, uint _price, uint _weight) 	
+		
+		</pre>
+		<p>产品属性可以在出厂前设置，一旦出厂进入物流阶段就不允许在更改了。</p>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp222"></a>33.2.3. 应用场景一</h3></div></div></div>
+		
+		<p>调用合约案例一，这是没有经过深加工的原产品案例。例如 Trace("山羊肉", 25, 50) </p>
+		<pre class="programlisting">
+		
+var contract;
+Trace.deployed().then(function(instance){contract=instance;});
+contract.getName();
+contract.putAttribute("0x627306090abab3a6e1400e9345bc60c78a8bef57","颜色", "", "黑色")
+contract.putAttribute("0x627306090abab3a6e1400e9345bc60c78a8bef57","产地", "", "内蒙古")
+contract.putAttribute("0x627306090abab3a6e1400e9345bc60c78a8bef57","出生", "2017-01-12", "XXX牧场")
+contract.putAttribute("0x627306090abab3a6e1400e9345bc60c78a8bef57","宰杀", "2018-02-12", "XXX宰杀")
+
+contract.putLogistics("0x627306090abab3a6e1400e9345bc60c78a8bef57","2018-02-20",0,"XXX牧场");
+contract.putLogistics("0x627306090abab3a6e1400e9345bc60c78a8bef57","2018-02-20",1,"XXX屠宰公司");
+contract.putLogistics("0xc5fdf4076b8f3a5357c5e395ab970b5b54098fef","2018-02-22",2,"XXX检验检疫");
+contract.putLogistics("0xf17f52151ebef6c7334fad080c5704d77216b732","2018-02-21",3,"XXX一级经销商");
+contract.putLogistics("0x821aea9a577a9b44299b9c15c88cf3087f3b5544","2018-02-23",3,"XXX二级经销商");
+contract.putLogistics("0x821aea9a577a9b44299b9c15c88cf3087f3b5544","2018-02-24",3,"XXX批发中心");
+contract.putLogistics("0x821aea9a577a9b44299b9c15c88cf3087f3b5544","2018-02-25",3,"XXX超市");
+contract.putLogistics("0x0d1d4e623d10f9fba5db95830f7d3839406c6af2","2018-02-26",4,"用户包裹收到");
+
+contract.getNode(); // 获得物流经过的转运站数量		
+		
+		</pre>
+	</div>
+
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp223"></a>33.2.4. 应用场景二</h3></div></div></div>
+		
+		<p>调用合约案例二，这是深加工的产品案例。例如 Trace("牦牛肉干", 80, 500) </p>
+		<pre class="programlisting">
+		
+var contract;
+Trace.deployed().then(function(instance){contract=instance;});
+contract.getName();
+contract.putAttribute("0x627306090abab3a6e1400e9345bc60c78a8bef57","调和油", "2016-10-10", "银龙鱼牌")
+contract.putAttribute("0x627306090abab3a6e1400e9345bc60c78a8bef57","辣椒粉", "2016-10-30", "西藏XXX公司生产")
+contract.putAttribute("0x627306090abab3a6e1400e9345bc60c78a8bef57","生抽", "2016-01-12", "XXX生抽，XXX生产")
+contract.putAttribute("0x627306090abab3a6e1400e9345bc60c78a8bef57","山梨酸钾", "2017-02-12", "XXX生产")
+contract.putAttribute("0x627306090abab3a6e1400e9345bc60c78a8bef57","防腐剂", "2017-02-12", "XXX生产")
+contract.putAttribute("0x627306090abab3a6e1400e9345bc60c78a8bef57","牦牛肉", "2017-02-12", "XXX牧场")
+
+contract.putLogistics("0x627306090abab3a6e1400e9345bc60c78a8bef57","2018-02-20",0,"XXX牧场");
+contract.putLogistics("0x627306090abab3a6e1400e9345bc60c78a8bef57","2018-02-20",1,"XXX公司生产");
+contract.putLogistics("0xc5fdf4076b8f3a5357c5e395ab970b5b54098fef","2018-02-22",2,"XXX通过QA、QC");
+contract.putLogistics("0xf17f52151ebef6c7334fad080c5704d77216b732","2018-02-21",3,"XXX一级经销商");
+contract.putLogistics("0x821aea9a577a9b44299b9c15c88cf3087f3b5544","2018-02-23",3,"XXX二级经销商");
+contract.putLogistics("0x821aea9a577a9b44299b9c15c88cf3087f3b5544","2018-02-24",3,"XXX批发中心");
+contract.putLogistics("0x821aea9a577a9b44299b9c15c88cf3087f3b5544","2018-02-25",3,"XXX超市");
+contract.putLogistics("0x0d1d4e623d10f9fba5db95830f7d3839406c6af2","2018-02-26",4,"用户包裹收到");
+
+contract.getNode(); // 获得物流经过的转运站数量		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp224"></a>33.2.5. 用户留言</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+contract.addGuestbook("0x0d1d423e623d10f9d10f9d10f9d10f9d10f9fba5","东西好吃，下次还买，给好评");
+		
+		</pre>
+	</div>
+	
+</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="movie.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 33 章 区块链探索 </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 33.3. 以太坊·电影院场景区块链应用探索</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script><script xmlns="" type="text/javascript" src="/js/q.js" async="async"></script></body></html>

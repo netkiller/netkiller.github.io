@@ -50,7 +50,130 @@ require(msg.sender == owner);
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="solidity.is"></a>4.9.3. 继承</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="solidity.interface"></a>4.9.3. interface 接口</h3></div></div></div>
+		
+		<p>接口是抽象的合约，接口中不能实现方法。</p>
+		<div class="itemizedlist"><p class="title"><strong>接口：</strong></p><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem">
+				<p>不能继承其他合约或接口</p>
+			</li><li class="listitem">
+				<p>不能定义构造方法</p>
+			</li><li class="listitem">
+				<p>不能定义变量</p>
+			</li><li class="listitem">
+				<p>不能定义结构体</p>
+			</li><li class="listitem">
+				<p>不能定义枚举</p>
+			</li></ul></div>
+		<p></p>	
+		<pre class="programlisting">
+		
+pragma solidity ^0.4.11;
+
+interface Token {
+    function transfer(address recipient, uint amount) public;
+}
+		
+		</pre>
+	</div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="solidity.library"></a>4.9.4. library 库</h3></div></div></div>
+		
+		<p>定义 library</p>
+		<pre class="programlisting">
+		
+pragma solidity ^0.4.20;
+
+// This is the same code as before, just without comments
+library Set {
+  struct Data { mapping(uint =&gt; bool) flags; }
+
+  function insert(Data storage self, uint value)
+      public
+      returns (bool)
+  {
+      if (self.flags[value])
+        return false; // already there
+      self.flags[value] = true;
+      return true;
+  }
+
+  function remove(Data storage self, uint value)
+      public
+      returns (bool)
+  {
+      if (!self.flags[value])
+          return false; // not there
+      self.flags[value] = false;
+      return true;
+  }
+
+  function contains(Data storage self, uint value)
+      public
+      view
+      returns (bool)
+  {
+      return self.flags[value];
+  }
+}
+
+
+		
+		</pre>
+		<p>调用库中的函数</p>
+		<pre class="programlisting">
+		
+contract C {
+    using Set for Set.Data; // this is the crucial change
+    Set.Data knownValues;
+
+    function register(uint value) public {
+        // Here, all variables of type Set.Data have
+        // corresponding member functions.
+        // The following function call is identical to
+        // `Set.insert(knownValues, value)`
+        require(knownValues.insert(value));
+    }
+}
+		
+		</pre>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp37"></a>4.9.4.1. 使用库来扩展数据类型</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+pragma solidity ^0.4.20;
+
+library Search {
+    function indexOf(uint[] storage self, uint value)
+        public
+        view
+        returns (uint)
+    {
+        for (uint i = 0; i &lt; self.length; i++)
+            if (self[i] == value) return i;
+        return uint(-1);
+    }
+}
+
+contract C {
+    using Search for uint[];
+    uint[] data;
+
+    function append(uint value) public {
+        data.push(value);
+    }
+
+    function replace(uint _old, uint _new) public {
+        // This performs the library function call
+        uint index = data.indexOf(_old);
+        if (index == uint(-1))
+            data.push(_new);
+        else
+            data[index] = _new;
+    }
+}			
+			
+			</pre>
+		</div>
+	</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="solidity.is"></a>4.9.5. 继承</h3></div></div></div>
 			
 			<p>例子 mortal 继承 owned</p>
 			<pre class="programlisting">
