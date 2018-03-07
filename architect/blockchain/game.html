@@ -128,9 +128,10 @@ account5     	| 10
 		</pre>
 		<p>现在你应该看懂了把，代币是流通的，总量是不变的。account1 账号负责币的发行，回收等等工作。</p>
 		<p>同时任何转账将产生区块，历史数据永久记录。</p>
+		<p>下面是一个高级代币合约，地址<a class="ulink" href="https://github.com/ibook/NetkillerAdvancedToken" target="_top">https://github.com/ibook/NetkillerAdvancedToken</a></p>
 		<pre class="programlisting">
 		
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.20;
 
 /******************************************/
 /*       Netkiller ADVANCED TOKEN         */
@@ -138,7 +139,9 @@ pragma solidity ^0.4.21;
 /* Author netkiller &lt;netkiller@msn.com&gt;   */
 /* Home http://www.netkiller.cn           */
 /* Version 2018-03-05                     */
+/* Version 2018-03-06 - Add Global lock   */
 /******************************************/
+
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
 contract NetkillerAdvancedToken {
@@ -146,7 +149,7 @@ contract NetkillerAdvancedToken {
     // Public variables of the token
     string public name;
     string public symbol;
-    uint8 public decimals = 18;
+    uint8 public decimals = 2;
     // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
     
@@ -169,6 +172,8 @@ contract NetkillerAdvancedToken {
     /* This generates a public event on the blockchain that will notify clients */
     event FrozenFunds(address target, bool frozen);
 
+    bool lock = true;
+
     /**
      * Constrctor function
      *
@@ -190,12 +195,22 @@ contract NetkillerAdvancedToken {
         require(msg.sender == owner);
         _;
     }
+
+    modifier isLock {
+        require(!lock);
+	_;
+    }
+    
+    function setLock(bool _lock) onlyOwner {
+        lock = _lock;
+    }
+
     function transferOwnership(address newOwner) onlyOwner public {
         owner = newOwner;
     }
  
     /* Internal transfer, only can be called by this contract */
-    function _transfer(address _from, address _to, uint _value) internal {
+    function _transfer(address _from, address _to, uint _value) isLock internal {
         require (_to != 0x0);                               // Prevent transfer to 0x0 address. Use burn() instead
         require (balanceOf[_from] &gt;= _value);               // Check if the sender has enough
         require (balanceOf[_to] + _value &gt; balanceOf[_to]); // Check for overflows
@@ -367,6 +382,105 @@ contract NetkillerAdvancedToken {
     return true;
   }
     
+}
+		
+		</pre>
+		<p>这个代币合约实现了，增发，减持，全局锁，账号冻结/解冻 等等功能。</p>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id=""></a>33.4.2. 玩家属性与游戏装备</h3></div></div></div>
+		
+		<p>下面的合约实现了游戏玩家上链，上链信息有玩家属性，例如肤色，眼睛，头发，血统等等。身上的穿戴物品包括武器等等。</p>
+		<pre class="programlisting">
+		
+pragma solidity ^0.4.20;
+
+contract Player {
+
+    address public owner;
+    
+    string name;
+    bool lock = false;	//合约锁
+    uint number = 1;
+    uint attr_number = 1;
+    
+    mapping (address  =&gt; string) guestbook; //客户留言本	
+
+	struct Attribute {
+        string key;		// 属性的名字
+        string value;	// 属性值
+        
+    }
+    mapping (uint  =&gt; Attribute) attribute;
+
+    struct Wear {
+        string name;        // 装备名
+        string desciption;  // 信息
+        string attribute;   // 属性，存储json 数据。例如生命+10，魔法+5，冰冻系...
+
+    }
+    mapping (uint  =&gt; Wear) wear;
+    
+    function Player(string _name) public {
+        name = _name;
+	}
+	
+	modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
+	
+    // 名称
+    function getName() public view returns(string){
+        return name;
+    }
+    function setLock(bool _lock) onlyOwner public {
+        lock = _lock;
+    }
+     // 增加人物属性，例如肤色，眼睛，头发等等
+    function putAttribute(string _key, string _value) onlyOwner public{
+        if(lock == false){
+        		Attribute memory item = Attribute(_key, _value);
+        		attribute[attr_number] = item;
+        		attr_number = attr_number + 1;
+        }
+    }
+
+	// 获得属性
+    function getAttribute(uint _attr_number) public view returns(string, string) {
+        require(_attr_number &lt; attr_number);
+        Attribute memory item = attribute[_attr_number];
+        
+		return (item.key, item.value);
+	}
+    
+    // 增加装备信息，穿戴物品，武器，
+    function putWear(string _name, string _description, string _attribute ) onlyOwner public{
+        if(lock == false){
+            Wear memory node = Wear(_name,_description,_attribute);
+            wear[number] = node;
+            number = number + 1;
+            lock = true;
+        }
+    }
+
+	// 获得信息
+    function getWear(uint _number) public view returns(string, string, string) {
+        require(_number &lt; number);
+
+        Wear memory item = wear[_number];
+        
+		return (item.name, item.desciption, item.attribute);
+	}
+	
+	// 数量
+	function getWearCount() public view returns(uint){
+	    return number;
+	}
+    
+    // 客户留言
+    function addGuestbook(address _owner, string message) onlyOwner public{
+	    guestbook[_owner] = message;
+	}
 }		
 		
 		</pre>
