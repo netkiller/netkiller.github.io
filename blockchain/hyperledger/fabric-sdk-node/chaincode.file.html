@@ -1,0 +1,678 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>18.2. Node.js 测试程序</title><link rel="stylesheet" type="text/css" href="../..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="home" href="../../index.html" title="Netkiller Blockchain 手札" /><link rel="up" href="index.html" title="第 18 章 Hyperledger Fabric Client SDK for Node.js" /><link rel="prev" href="index.html" title="第 18 章 Hyperledger Fabric Client SDK for Node.js" /><link rel="next" href="chaincode.install.html" title="18.3. 创建 package.json 文件" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">云栖社区</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+		<a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">18.2. Node.js 测试程序</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><th width="60%" align="center">第 18 章 Hyperledger Fabric Client SDK for Node.js</th><td width="20%" align="right"> <a accesskey="n" href="chaincode.install.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="chaincode.file"></a>18.2. Node.js 测试程序</h2></div></div></div>
+		
+		<pre class="programlisting">
+		
+package main 
+
+/* 
+--------------------------------------------------
+Author: netkiller &lt;netkiller@msn.com&gt;
+Home: http://www.netkiller.cn
+Data: 2018-03-20 11:00 PM
+--------------------------------------------------
+
+CORE_PEER_ADDRESS=peer:7051 CORE_CHAINCODE_ID_NAME=token3:1.0 chaincode/token/token3
+
+peer chaincode install -n token3 -v 1.0 -p chaincodedev/chaincode/token
+peer chaincode instantiate -C myc -n token3 -v 1.0 -c '{"Args":[""]}' -P "OR ('Org1MSP.member','Org2MSP.member')"
+
+
+peer chaincode invoke -C myc -n token3 -c '{"function":"createAccount","Args":["coinbase"]}'
+peer chaincode invoke -C myc -n token3 -v 1.0 -c '{"function":"showAccount","Args":["coinbase"]}'
+peer chaincode invoke -C myc -n token3 -c '{"function":"balanceAll","Args":["coinbase"]}'
+
+peer chaincode invoke -C myc -n token3 -c '{"function":"initCurrency","Args":["Netkiller Token","NKC","1000000","coinbase"]}'
+peer chaincode invoke -C myc -n token3 -c '{"function":"initCurrency","Args":["NEO Token","NEC","1000000","coinbase"]}'
+
+peer chaincode invoke -C myc -n token3 -c '{"function":"setLock","Args":["true"]}'
+peer chaincode invoke -C myc -n token3 -c '{"function":"setLock","Args":["false"]}'
+
+peer chaincode invoke -C myc -n token3 -c '{"function":"mintToken","Args":["NKC","5000","coinbase"]}'
+
+peer chaincode invoke -C myc -n token3 -c '{"function":"createAccount","Args":["netkiller"]}'
+peer chaincode invoke -C myc -n token3 -c '{"function":"transferToken","Args":["coinbase","netkiller","NKC","100"]}'		
+peer chaincode invoke -C myc -n token3 -c '{"function":"balance","Args":["netkiller","NKC"]}'
+
+peer chaincode invoke -C myc -n token3 -c '{"function":"frozenAccount","Args":["netkiller","true"]}'
+
+--------------------------------------------------
+
+*/
+
+import (
+	"encoding/json"
+	"fmt"
+	"strconv"
+
+	"github.com/hyperledger/fabric/core/chaincode/shim"
+	pb "github.com/hyperledger/fabric/protos/peer"
+)
+
+type Msg struct{
+	Status 	bool	`json:"Status"`
+	Code 	int		`json:"Code"`
+	Message string	`json:"Message"`
+}
+
+type Currency struct{
+	TokenName 		string	`json:"TokenName"`
+	TokenSymbol 	string	`json:"TokenSymbol"`
+	TotalSupply 	float64	`json:"TotalSupply"`
+}
+
+type Token struct {
+	Lock		bool	`json:"Lock"`
+	Currency	map[string]Currency	`json:"Currency"`
+}
+
+func (token *Token) transfer (_from *Account, _to *Account, _currency string, _value float64) []byte{
+
+	var rev []byte
+	if (token.Lock){
+		msg := &amp;Msg{Status: false, Code: 0, Message: "锁仓状态，停止一切转账活动"}
+		rev, _ = json.Marshal(msg)
+		return rev
+	}
+	if(_from.Frozen ) {
+		msg := &amp;Msg{Status: false, Code: 0, Message: "From 账号冻结"}
+		rev, _ = json.Marshal(msg)
+		return rev
+	}
+	if( _to.Frozen) {
+		msg := &amp;Msg{Status: false, Code: 0, Message: "To 账号冻结"}
+		rev, _ = json.Marshal(msg)
+		return rev
+	}
+	if(!token.isCurrency(_currency)){
+		msg := &amp;Msg{Status: false, Code: 0, Message: "货币符号不存在"}
+		rev, _ = json.Marshal(msg)
+		return rev
+	}
+	if(_from.BalanceOf[_currency] &gt;= _value){
+		_from.BalanceOf[_currency] -= _value;
+		_to.BalanceOf[_currency] += _value;
+
+		msg := &amp;Msg{Status: true, Code: 0, Message: "转账成功"}
+		rev, _ = json.Marshal(msg)
+		return rev
+	}else{
+		msg := &amp;Msg{Status: false, Code: 0, Message: "余额不足"}
+		rev, _ = json.Marshal(msg)
+		return rev
+	}
+	
+}
+func (token *Token) initialSupply(_name string, _symbol string, _supply float64, _account *Account) []byte{
+	if _,ok := token.Currency[_symbol]; ok {
+		msg := &amp;Msg{Status: false, Code: 0, Message: "代币已经存在"}
+		rev, _ := json.Marshal(msg)
+		return rev
+	}
+
+	if _account.BalanceOf[_symbol] &gt; 0 {
+		msg := &amp;Msg{Status: false, Code: 0, Message: "账号中存在代币"}
+		rev, _ := json.Marshal(msg)
+		return rev
+	}else{
+		token.Currency[_symbol] = Currency{TokenName: _name, TokenSymbol: _symbol, TotalSupply: _supply}
+		_account.BalanceOf[_symbol] = _supply
+
+		msg := &amp;Msg{Status: true, Code: 0, Message: "代币初始化成功"}
+		rev, _ := json.Marshal(msg)
+		return rev
+	}
+
+}
+
+func (token *Token) mint(_currency string, _amount float64, _account *Account) []byte{
+	if(!token.isCurrency(_currency)){
+		msg := &amp;Msg{Status: false, Code: 0, Message: "货币符号不存在"}
+		rev, _ := json.Marshal(msg)
+		return rev
+	}
+	cur := token.Currency[_currency]
+	cur.TotalSupply += _amount;
+	token.Currency[_currency] = cur
+	_account.BalanceOf[_currency] += _amount;
+
+	msg := &amp;Msg{Status: true, Code: 0, Message: "代币增发成功"}
+	rev, _ := json.Marshal(msg)
+	return rev
+	
+}
+func (token *Token) burn(_currency string, _amount float64, _account *Account) []byte{
+	if(!token.isCurrency(_currency)){
+		msg := &amp;Msg{Status: false, Code: 0, Message: "货币符号不存在"}
+		rev, _ := json.Marshal(msg)
+		return rev
+	}
+	if(token.Currency[_currency].TotalSupply &gt;= _amount){
+		cur := token.Currency[_currency]
+		cur.TotalSupply -= _amount;
+		token.Currency[_currency] = cur
+		_account.BalanceOf[_currency] -= _amount;
+
+		msg := &amp;Msg{Status: false, Code: 0, Message: "代币回收成功"}
+		rev, _ := json.Marshal(msg)
+		return rev
+	}else{
+		msg := &amp;Msg{Status: false, Code: 0, Message: "代币回收失败，回收额度不足"}
+		rev, _ := json.Marshal(msg)
+		return rev
+	}
+	
+}
+func (token *Token) isCurrency(_currency string) bool {
+	if _, ok := token.Currency[_currency]; ok {
+		return true
+	}else{
+		return false
+	}
+}
+func (token *Token) setLock(_look bool) bool {
+	token.Lock = _look
+	return token.Lock
+}
+type Account struct {
+	Name			string	`json:"Name"`
+	Frozen			bool	`json:"Frozen"`
+	BalanceOf		map[string]float64	`json:"BalanceOf"`
+}
+func (account *Account) balance (_currency string) map[string]float64{
+	bal	:= map[string]float64{_currency:account.BalanceOf[_currency]}
+	return bal
+}
+
+func (account *Account) balanceAll() map[string]float64{
+	return account.BalanceOf
+}
+
+// -----------
+const TokenKey = "Token"
+
+// Define the Smart Contract structure
+type SmartContract struct {
+	
+}
+
+func (s *SmartContract) Init(stub shim.ChaincodeStubInterface) pb.Response {
+
+	token := &amp;Token{Currency: map[string]Currency{}}
+
+	tokenAsBytes, err := json.Marshal(token)
+	err = stub.PutState(TokenKey, tokenAsBytes)
+	if err != nil {
+		return shim.Error(err.Error())
+	}else{
+		fmt.Printf("Init Token %s \n", string(tokenAsBytes))
+	}
+	return shim.Success(nil)
+}
+
+func (s *SmartContract) Query(stub shim.ChaincodeStubInterface) pb.Response {
+	function, args := stub.GetFunctionAndParameters()
+	if function == "balance" {
+		return s.balance(stub, args)
+	} else if function == "balanceAll" {
+		return s.balanceAll(stub, args)
+	} else if function == "showAccount" {
+		return s.showAccount(stub, args)
+	}
+	return shim.Error("Invalid Smart Contract function name.")
+}
+
+func (s *SmartContract) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
+
+	// Retrieve the requested Smart Contract function and arguments
+	function, args := stub.GetFunctionAndParameters()
+	// Route to the appropriate handler function to interact with the ledger appropriately
+	if function == "initLedger" {
+		return s.initLedger(stub, args)
+	} else if function == "createAccount" {
+		return s.createAccount(stub, args)
+	} else if function == "initCurrency" {
+		return s.initCurrency(stub, args)
+	} else if function == "setLock" {
+		return s.setLock(stub, args)
+	} else if function == "transferToken" {
+		return s.transferToken(stub, args)
+	} else if function == "frozenAccount" {
+		return s.frozenAccount(stub, args)
+	} else if function == "mintToken" {
+		return s.mintToken(stub, args)
+	} else if function == "balance" {
+		return s.balance(stub, args)
+	} else if function == "balanceAll" {
+		return s.balanceAll(stub, args)
+	} else if function == "showAccount" {
+		return s.showAccount(stub, args)
+	} else if function == "showToken" {
+		return s.showToken(stub, args)
+	}
+
+	return shim.Error("Invalid Smart Contract function name.")
+}
+
+func (s *SmartContract) createAccount(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+
+	if len(args) != 1 {
+		return shim.Error("Incorrect number of arguments. Expecting 1")
+	}
+
+	key  := args[0]
+	name  := args[0]
+	existAsBytes,err := stub.GetState(key)
+	fmt.Printf("GetState(%s) %s \n", key, string(existAsBytes))
+	if string(existAsBytes) != "" {
+		fmt.Println("Failed to create account, Duplicate key.")
+		return shim.Error("Failed to create account, Duplicate key.")
+	}
+
+	account := Account{
+		Name: name,
+		Frozen: false,
+		BalanceOf: map[string]float64{}}
+
+	accountAsBytes, _ := json.Marshal(account)
+	err = stub.PutState(key, accountAsBytes)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	fmt.Printf("createAccount %s \n", string(accountAsBytes))
+
+	return shim.Success(accountAsBytes)
+}
+func (s *SmartContract) initLedger(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	return shim.Success(nil)
+}
+func (s *SmartContract) showToken(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	tokenAsBytes,err := stub.GetState(TokenKey)
+	if err != nil {
+		return shim.Error(err.Error())
+	}else{
+		fmt.Printf("GetState(%s)) %s \n", TokenKey, string(tokenAsBytes))
+	}
+	return shim.Success(tokenAsBytes)
+}
+
+func (s *SmartContract) initCurrency(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 4 {
+		return shim.Error("Incorrect number of arguments. Expecting 4")
+	}
+
+	_name  := args[0]
+	_symbol:= args[1]
+	_supply,_:= strconv.ParseFloat(args[2], 64)
+	_account := args[3]
+
+	coinbaseAsBytes,err := stub.GetState(_account)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	fmt.Printf("Coinbase before %s \n", string(coinbaseAsBytes))
+
+	coinbase := &amp;Account{}
+
+	json.Unmarshal(coinbaseAsBytes, &amp;coinbase)
+
+	token := Token{}
+	existAsBytes,err := stub.GetState(TokenKey)
+	if err != nil {
+		return shim.Error(err.Error())
+	}else{
+		fmt.Printf("GetState(%s)) %s \n", TokenKey, string(existAsBytes))
+	}
+	json.Unmarshal(existAsBytes, &amp;token)
+	
+	result := token.initialSupply(_name,_symbol,_supply, coinbase)
+
+	tokenAsBytes, _ := json.Marshal(token)
+	err = stub.PutState(TokenKey, tokenAsBytes)
+	if err != nil {
+		return shim.Error(err.Error())
+	}else{
+		fmt.Printf("Init Token %s \n", string(tokenAsBytes))
+	}
+
+	coinbaseAsBytes, _ = json.Marshal(coinbase)
+	err = stub.PutState(_account, coinbaseAsBytes)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	fmt.Printf("Coinbase after %s \n", string(coinbaseAsBytes))
+
+	
+
+	return shim.Success(result)
+}
+
+func (s *SmartContract) transferToken(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+
+	if len(args) != 4 {
+		return shim.Error("Incorrect number of arguments. Expecting 4")
+	}
+	_from 		:= args[0]
+	_to			:= args[1]
+	_currency 	:= args[2]
+	_amount,_	:= strconv.ParseFloat(args[3], 32)
+	
+	if(_amount &lt;= 0){
+		return shim.Error("Incorrect number of amount")
+	}
+
+	fromAsBytes,err := stub.GetState(_from)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	fmt.Printf("fromAccount %s \n", string(fromAsBytes))
+	fromAccount := &amp;Account{}
+	json.Unmarshal(fromAsBytes, &amp;fromAccount)
+
+	toAsBytes,err := stub.GetState(_to)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	fmt.Printf("toAccount %s \n", string(toAsBytes))
+	toAccount := &amp;Account{}
+	json.Unmarshal(toAsBytes, &amp;toAccount)
+
+	tokenAsBytes,err := stub.GetState(TokenKey)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	fmt.Printf("Token %s \n", string(toAsBytes))
+	token := Token{Currency: map[string]Currency{}}
+	json.Unmarshal(tokenAsBytes, &amp;token)
+
+	result := token.transfer(fromAccount, toAccount, _currency, _amount)
+	fmt.Printf("Result %s \n", string(result))
+
+	fromAsBytes, err = json.Marshal(fromAccount)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	err = stub.PutState(_from, fromAsBytes)
+	if err != nil {
+		return shim.Error(err.Error())
+	}else{
+		fmt.Printf("fromAccount %s \n", string(fromAsBytes))
+	}
+
+	toAsBytes, err = json.Marshal(toAccount)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	err = stub.PutState(_to, toAsBytes)
+	if err != nil {
+		return shim.Error(err.Error())
+	}else{
+		fmt.Printf("toAccount %s \n", string(toAsBytes))
+	}
+
+	return shim.Success(result)
+}
+func (s *SmartContract) mintToken(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	
+	if len(args) != 3 {
+		return shim.Error("Incorrect number of arguments. Expecting 3")
+	}
+	_currency 	:= args[0]
+	_amount,_	:= strconv.ParseFloat(args[1], 32)
+	_account	:= args[2]
+
+	coinbaseAsBytes,err := stub.GetState(_account)
+	if err != nil {
+		return shim.Error(err.Error())
+	}else{
+		fmt.Printf("Coinbase before %s \n", string(coinbaseAsBytes))
+	}
+
+	coinbase := &amp;Account{}
+	json.Unmarshal(coinbaseAsBytes, &amp;coinbase)
+
+	tokenAsBytes,err := stub.GetState(TokenKey)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	fmt.Printf("Token before %s \n", string(tokenAsBytes))
+
+	token := Token{}
+
+	json.Unmarshal(tokenAsBytes, &amp;token)
+	
+	result := token.mint(_currency, _amount, coinbase)
+
+	tokenAsBytes, err = json.Marshal(token)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	err = stub.PutState(TokenKey, tokenAsBytes)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	fmt.Printf("Token after %s \n", string(tokenAsBytes))
+
+	coinbaseAsBytes, _ = json.Marshal(coinbase)
+	err = stub.PutState(_account, coinbaseAsBytes)
+	if err != nil {
+		return shim.Error(err.Error())
+	}else{
+		fmt.Printf("Coinbase after %s \n", string(coinbaseAsBytes))
+	}
+
+	fmt.Printf("mintToken %s \n", string(tokenAsBytes))
+
+	return shim.Success(result)
+}
+
+func (s *SmartContract) setLock(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	
+	if len(args) != 1 {
+		return shim.Error("Incorrect number of arguments. Expecting 2")
+	}
+
+	_look := args[0]
+
+	tokenAsBytes,err := stub.GetState(TokenKey)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	// fmt.Printf("setLock - begin %s \n", string(tokenAsBytes))
+
+	token := Token{}
+
+	json.Unmarshal(tokenAsBytes, &amp;token)
+
+	if(_look == "true"){
+		token.setLock(true)
+	}else{
+		token.setLock(false)
+	}
+
+	tokenAsBytes, err = json.Marshal(token)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	err = stub.PutState(TokenKey, tokenAsBytes)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	fmt.Printf("setLock - end %s \n", string(tokenAsBytes))
+
+	return shim.Success(nil)
+}
+func (s *SmartContract) frozenAccount(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	
+	if len(args) != 2 {
+		return shim.Error("Incorrect number of arguments. Expecting 2")
+	}
+
+	_account	:= args[0]
+	_status		:= args[1]
+
+	accountAsBytes,err := stub.GetState(_account)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	// fmt.Printf("setLock - begin %s \n", string(tokenAsBytes))
+
+	account := Account{}
+
+	json.Unmarshal(accountAsBytes, &amp;account)
+
+	var status bool
+	if(_status == "true"){
+		status = true;
+	}else{
+		status = false
+	}
+
+	account.Frozen = status
+	
+	accountAsBytes, err = json.Marshal(account)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	err = stub.PutState(_account, accountAsBytes)
+	if err != nil {
+		return shim.Error(err.Error())
+	}else{
+		fmt.Printf("frozenAccount - end %s \n", string(accountAsBytes))
+	}
+
+	return shim.Success(nil)
+}
+
+func (s *SmartContract) showAccount(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+
+	if len(args) != 1 {
+		return shim.Error("Incorrect number of arguments. Expecting 1")
+	}
+	_account 	:= args[0]
+
+	accountAsBytes,err := stub.GetState(_account)
+	if err != nil {
+		return shim.Error(err.Error())
+	}else{
+		fmt.Printf("Account balance %s \n", string(accountAsBytes))
+	}
+	return shim.Success(accountAsBytes)
+}
+
+func (s *SmartContract) balance(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+
+	if len(args) != 2 {
+		return shim.Error("Incorrect number of arguments. Expecting 1")
+	}
+	_account 	:= args[0]
+	_currency 	:= args[1]
+
+	accountAsBytes,err := stub.GetState(_account)
+	if err != nil {
+		return shim.Error(err.Error())
+	}else{
+		fmt.Printf("Account balance %s \n", string(accountAsBytes))
+	}
+
+	account := Account{}
+	json.Unmarshal(accountAsBytes, &amp;account)
+	result := account.balance(_currency)
+
+	resultAsBytes, _ := json.Marshal(result)
+	fmt.Printf("%s balance is %s \n", _account, string(resultAsBytes))	
+
+	return shim.Success(resultAsBytes)
+}
+
+func (s *SmartContract) balanceAll(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+
+	if len(args) != 1 {
+		return shim.Error("Incorrect number of arguments. Expecting 1")
+	}
+	_account 	:= args[0]
+
+	accountAsBytes,err := stub.GetState(_account)
+	if err != nil {
+		return shim.Error(err.Error())
+	}else{
+		fmt.Printf("Account balance %s \n", string(accountAsBytes))
+	}
+
+	account := Account{}
+	json.Unmarshal(accountAsBytes, &amp;account)
+	result := account.balanceAll()
+	resultAsBytes, _ := json.Marshal(result)
+	fmt.Printf("%s balance is %s \n", _account, string(resultAsBytes))	
+
+	return shim.Success(resultAsBytes)
+}
+
+// The main function is only relevant in unit test mode. Only included here for completeness.
+func main() {
+
+	// Create a new Smart Contract
+	err := shim.Start(new(SmartContract))
+	if err != nil {
+		fmt.Printf("Error creating new Smart Contract: %s", err)
+	}
+}
+
+		
+		</pre>
+	</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="chaincode.install.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 18 章 Hyperledger Fabric Client SDK for Node.js </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 18.3. 创建 package.json 文件</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script><script xmlns="" type="text/javascript" src="/js/q.js" async="async"></script></body></html>
