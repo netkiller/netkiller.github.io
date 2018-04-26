@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>24.3. 以太坊·电影院场景区块链应用探索</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="home" href="../index.html" title="Netkiller Blockchain 手札" /><link rel="up" href="index.html" title="第 24 章 区块链探索" /><link rel="prev" href="trace.html" title="24.2. 食品安全溯源案例" /><link rel="next" href="game.html" title="24.4. 游戏领域区块链探索" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">云栖社区</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+		<a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">24.3. 以太坊·电影院场景区块链应用探索</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="trace.html">上一页</a> </td><th width="60%" align="center">第 24 章 区块链探索</th><td width="20%" align="right"> <a accesskey="n" href="game.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="movie"></a>24.3. 以太坊·电影院场景区块链应用探索</h2></div></div></div>
+	
+	<p>最近一直在思考区块链在各种场景下的落地问题。</p>
+	<p>下面是电影院场景区块链应用探索，这是我的一个设想，区块链如何在院线场景落地的一些思路。</p>
+	<p>为此我写一个这样的智能合约，实现了构造方法描述一部电影票价，坐位数量，可以实现订票，扣款，退票，还款等功能。</p>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="movie.contact"></a>24.3.1. 合约文件</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+pragma solidity ^0.4.21;
+
+// author: netkiller
+// home: http://www.netkiller.cn
+// QQ:13721218
+
+contract Movie {
+  address public publisher;	//电影院
+  string name;				//影片名称
+  uint price;				//票价
+  uint public seat;			//坐位数量
+  mapping (address =&gt; uint) public audience;
+  
+  bool play = false;			//电影是否已经开播，开播后不允许买票和退票。
+
+  //合约构造方法
+  function Movie(string _name, uint _price, uint _seat) public{
+    publisher = msg.sender;
+    name = _name;
+    price = _price;
+    seat = _seat;
+  }
+  
+  //获取剩余坐位数量
+  function getName() public view returns (string){
+      return name;
+  }
+  
+  //有时需要开放预留坐位，调整坐位数量
+  function changeSeat(uint _seat) public {
+    if (msg.sender != publisher) { return; }
+    if (play == true){ return; }
+    seat = _seat;
+  }
+  
+  //获取剩余坐位数量
+  function getSeat() public view returns (uint){
+      return seat;
+  }
+    
+  //买票方法，参数买票者，票数，买票后扣除用户以太币。
+  function buyTicket(address _audience, uint _ticket) public payable returns (bool success) {
+    if (_ticket &gt;= seat) { return false; }
+    if (play == true){ return false; }
+    uint amount = price * _ticket;	//计算票价
+    
+    if (this.balance &gt;= amount) { 
+        _audience.transfer(_audience.balance - amount);
+        publisher.transfer(publisher.balance + amount);
+        audience[_audience] = _ticket;
+        seat -= _ticket;
+    }
+
+    return true;
+  }
+
+  //退票
+  function refundTicket(address _audience, uint _ticket) public {
+    if (msg.sender != publisher) { return; }
+    if (play == true){ return; }
+    uint amount = price * _ticket;
+    
+    if (audience[_audience] &lt;= _ticket) { 
+      
+      if (publisher.balance &gt;= amount) { 
+        _audience.transfer(_audience.balance + amount);
+        publisher.transfer(publisher.balance - amount);
+        audience[_audience] -= _ticket;
+        seat += _ticket;
+
+      }
+    }
+  }
+  
+  //播放电影，锁定
+  function playMovie() public {
+      play = true;
+  }
+  
+  //销毁合约
+  function destroy() public{ 
+    if (msg.sender == publisher) { 
+      selfdestruct(publisher); 
+    }
+  }
+}
+
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id=""></a>24.3.2. 合约用法</h3></div></div></div>
+		
+		<p>例如现在要上映一部影片步骤是, 首先实例化合约，然后部署合约</p>
+		<pre class="programlisting">
+		
+ 
+Movie("黑客帝国", "25", 80)		
+		
+		</pre>
+		<pre class="programlisting">
+		
+var contract;
+Movie.deployed().then(function(instance){contract=instance;});
+contract.getName(); //获得影片名字
+
+contract.buyTicket("0x627306090abab3a6e1400e9345bc60c78a8bef57",1) // 购买 1 张票
+contract.buyTicket("0x627306090abab3a6ebc60c78a8bef571400e9345",5) // 购买 5 张票
+contract.buyTicket("0xf17f52151EbEF6C7334FAD080c5704D77216b732",2) // 购买 2 张票
+
+...
+...
+contract.refundTicket("0x627306090abab3a6ebc60c78a8bef571400e9345", 2 ) // 退 2 张票
+
+contract.audience.call().then(console.log);
+
+contract.playMovie() // 电影开播，锁定这个合约
+		
+		</pre>
+	</div>
+</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="trace.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="game.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">24.2. 食品安全溯源案例 </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 24.4. 游戏领域区块链探索</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script><script xmlns="" type="text/javascript" src="/js/q.js" async="async"></script></body></html>
