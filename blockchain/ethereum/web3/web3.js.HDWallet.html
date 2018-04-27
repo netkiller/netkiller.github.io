@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>8.13. HD Wallet(Hierarchical Deterministic wallet)</title><link rel="stylesheet" type="text/css" href="../..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="home" href="../../index.html" title="Netkiller Blockchain 手札" /><link rel="up" href="index.html" title="第 8 章 web3.js - 1.0.0" /><link rel="prev" href="web3.example.html" title="8.12. 实用例子" /><link rel="next" href="web3.js.example.html" title="8.14. Express + web3.js 实例" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">云栖社区</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+		<a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">8.13. HD Wallet(Hierarchical Deterministic wallet)</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="web3.example.html">上一页</a> </td><th width="60%" align="center">第 8 章 web3.js - 1.0.0</th><td width="20%" align="right"> <a accesskey="n" href="web3.js.example.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="web3.js.HDWallet"></a>8.13. HD Wallet(Hierarchical Deterministic wallet)</h2></div></div></div>
+		
+		<p></p>
+		<pre class="screen">
+		
+npm install bip39 ethereumjs-wallet ethereumjs-util --save
+		
+		</pre>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp82"></a>8.13.1. 创建项目</h3></div></div></div>
+			
+			<p>导入开发包</p>
+			<pre class="screen">
+			
+var bip39 = require('bip39')
+var hdkey = require('ethereumjs-wallet/hdkey')
+var util = require('ethereumjs-util')
+			
+			</pre>
+			<p>生成 mnemonic code</p>
+			<pre class="screen">
+			
+var mnemonic = bip39.generateMnemonic()
+			
+			</pre>
+			<p>生成 HD Wallet 首先将 mnemonic code 转成 binary二进制的 seed</p>
+			<pre class="screen">
+			
+var seed = bip39.mnemonicToSeed(mnemonic)
+			
+			</pre>
+			<p>生成  Master Key 地址 "m/44'/60'/0'/0/0" 使用 seed 生成  HD Wallet。</p>
+			<pre class="screen">
+			
+var hdwallet = hdkey.fromMasterSeed(seed)
+			
+			</pre>
+			<p>从路径 m/44'/60'/0'/0/0 导入 Master Key 并生成  Wallet 中第一个帐户的第一组 keypair。</p>
+			<pre class="screen">
+			
+var key1 = hdwallet.derivePath("m/44'/60'/0'/0/0")
+			
+			</pre>
+			<p>使用 keypair 中的公钥产生 address。</p>
+			<pre class="screen">
+			
+var address1 = util.pubToAddress(key1._hdkey._publicKey, true)
+			
+			</pre>
+			<p>获得以太坊钱包地址</p>
+			<pre class="screen">
+			
+address1 = util.toChecksumAddress(address1.toString('hex'))
+			
+			</pre>
+			<p>操作演示</p>
+			<pre class="screen">
+			
+[ethereum@netkiller web3.js]$ node
+&gt; var bip39 = require('bip39')
+undefined
+&gt; var hdkey = require('ethereumjs-wallet/hdkey')
+undefined
+&gt; var util = require('ethereumjs-util')
+undefined
+&gt; var mnemonic = bip39.generateMnemonic()
+undefined
+&gt; mnemonic
+'client dune unfair assume level width bind control mad member old crystal'
+&gt; var seed = bip39.mnemonicToSeed(mnemonic)
+undefined
+&gt; seed
+&lt;Buffer 51 12 a3 47 f3 bb b9 24 80 ac 05 6c ce 8c 9f dd b2 98 c8 d3 06 8f 4d 0b 6c 90 86 aa d4 b6 41 36 35 5f b4 42 89 b5 e4 6d 43 9b cf 8d 6a d7 9b 45 3e 5a ... &gt;
+&gt; var hdwallet = hdkey.fromMasterSeed(seed)
+undefined
+&gt; hdwallet
+EthereumHDKey {
+  _hdkey:
+   HDKey {
+     versions: { private: 76066276, public: 76067358 },
+     depth: 0,
+     index: 0,
+     _privateKey: &lt;Buffer 1c 37 00 1b f7 1d a5 de 3a 8a 4c e8 54 2d 69 78 81 f3 aa a9 d5 3e 64 74 bd ea 76 28 44 07 d3 04&gt;,
+     _publicKey: &lt;Buffer 03 77 fc 6b c7 f3 e3 51 01 db 95 0a a9 0f c0 7f 31 40 af 75 f8 7a 4f 5a c3 4c 93 ac cb 44 a3 20 5f&gt;,
+     chainCode: &lt;Buffer 51 fe 32 23 a0 ab aa 10 5d ff 90 28 26 dc fc 86 fc 5f 8c dc 1b b7 39 31 7e 2d b8 a4 77 33 45 3a&gt;,
+     _fingerprint: 1056395940,
+     parentFingerprint: 0,
+     _identifier: &lt;Buffer 3e f7 52 a4 ed 86 00 f7 ac 4d 1a b4 15 1c 0d 87 cd 7d fe de&gt; } }
+&gt; var key1 = hdwallet.derivePath("m/44'/60'/0'/0/0")
+undefined
+&gt; key1
+EthereumHDKey {
+  _hdkey:
+   HDKey {
+     versions: { private: 76066276, public: 76067358 },
+     depth: 5,
+     index: 0,
+     _privateKey: &lt;Buffer f5 92 b7 bf 06 ca 9f d7 69 6b a9 5d 6e d8 e3 57 de 6a 23 79 b6 d5 fe 1f fd 53 c6 b4 b0 63 cd 4a&gt;,
+     _publicKey: &lt;Buffer 02 99 ff bb ea 3d 80 e1 8c d5 54 a1 6e 6a ca b2 4b 7e 69 3d 1d 2d 8a 68 f8 61 bf 18 dc 4a f8 d0 26&gt;,
+     chainCode: &lt;Buffer 5a 9b b2 0e 7a 62 07 b0 82 db e5 5a 1f 17 4b 47 8a 64 cf 40 67 d5 49 09 89 da aa 33 66 00 d7 e6&gt;,
+     _fingerprint: 3510386860,
+     parentFingerprint: 1205114865,
+     _identifier: &lt;Buffer d1 3c 40 ac 09 92 fc d7 a4 14 8e d8 91 d1 a7 21 55 7e b8 e3&gt; } }
+&gt; var address1 = util.pubToAddress(key1._hdkey._publicKey, true)
+undefined
+&gt; address1
+&lt;Buffer 37 2f da 02 e8 a1 ec a5 13 f2 ee 59 01 dc 55 b8 b5 dd 74 11&gt;
+&gt; address1.toString('hex')
+'372fda02e8a1eca513f2ee5901dc55b8b5dd7411'
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp83"></a>8.13.2. 生成第二个钱包</h3></div></div></div>
+			
+			<p>只需递增最后一位数即可 "m/44'/60'/0'/0/1"， "m/44'/60'/0'/0/2"，"m/44'/60'/0'/0/3"</p>
+			<pre class="screen">
+			
+var key2 = hdwallet.derivePath("m/44'/60'/0'/0/1")
+			
+			</pre>
+			<p>使用 keypair 中的公钥产生 address。</p>
+			<pre class="screen">
+			
+var address2 = util.pubToAddress(key2._hdkey._publicKey, true)
+			
+			</pre>
+			<p>获得以太坊钱包地址</p>
+			<pre class="screen">
+			
+address2 = util.toChecksumAddress(address2.toString('hex'))
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp84"></a>8.13.3. Mnemonic Code Converter</h3></div></div></div>
+			
+			<p><a class="ulink" href="https://iancoleman.io/bip39/" target="_top">https://iancoleman.io/bip39/</a></p>
+			<p>输入 mnemonic，选择 ETH - Ethereum</p>
+			<div><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="1024"><tr><td><img src="../../images/ethereum/wallet/hdwallet/mnemonic.png" width="1024" /></td></tr></table></div>
+			<p>系统将计算出钱包地址</p>
+			<div><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="1024"><tr><td><img src="../../images/ethereum/wallet/hdwallet/walletpath.png" width="1024" /></td></tr></table></div>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp85"></a>8.13.4. HD Wallet 例子</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+var bip39 = require('bip39');
+var hdkey = require('ethereumjs-wallet/hdkey');
+var util = require('ethereumjs-util');
+
+mnemonic = 'client dune unfair assume level width bind control mad member old crystal';
+var seed = bip39.mnemonicToSeed(mnemonic);
+var hdwallet = hdkey.fromMasterSeed(seed);
+var key1 = hdwallet.derivePath("m/44'/60'/0'/0/0");
+var address1 = util.pubToAddress(key1._hdkey._publicKey, true);
+var address = util.toChecksumAddress(address1.toString('hex'));
+
+coinbase = "0xaa96686a050e4916afbe9f6d8c5107062fa646dd";
+contractAddress = "0x9ABcF16f6685fE1F79168534b1D30056c90B8A8A"
+
+console.log(address);
+
+fs = require('fs');
+const Web3 = require('web3');
+const HDWalletProvider = require("truffle-hdwallet-provider");
+
+const web3 = new Web3(new HDWalletProvider(mnemonic,'http://localhost:8545'));
+console.log(web3.version)
+
+web3.eth.getBalance("0xaa96686a050e4916afbe9f6d8c5107062fa646dd").then(function(balance){
+      console.log( web3.utils.fromWei(balance) );
+});
+
+web3.eth.getBalance(address).then(function(balance){
+      console.log( web3.utils.fromWei(balance) );
+});
+
+const abi = fs.readFileSync('output/NetkillerToken.abi', 'utf-8');
+const contract = new web3.eth.Contract(JSON.parse(abi), contractAddress, { from: address, gas: 100000});
+
+contract.methods.balanceOf(coinbase).call().then(console.log).catch(console.log);
+contract.methods.balanceOf(address).call().then(console.log).catch(console.log);
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp86"></a>8.13.5. 获得钱包地址和私钥</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+const bip39 = require('bip39');
+const hdkey = require('ethereumjs-wallet/hdkey');
+
+const mnemonic = 'client dune unfair assume level width bind control mad member old crystal';
+const hdwallet = hdkey.fromMasterSeed(bip39.mnemonicToSeed(mnemonic));
+const path = "m/44'/60'/0'/0/0";
+const wallet = hdwallet.derivePath(path).getWallet();
+
+const address = `0x${wallet.getAddress().toString('hex')}`;
+const privateKey = wallet.getPrivateKey().toString('hex');
+// wallet._privKey.toString('hex');
+console.log(`Address: ${address}`);
+console.log(`Private Key: ${privateKey}`);
+
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp87"></a>8.13.6. truffle.js 例子</h3></div></div></div>
+			
+			<pre class="screen">
+			
+npm install truffle-hdwallet-provider
+			
+			</pre>
+			<pre class="programlisting">
+			
+
+var HDWalletProvider = require("truffle-hdwallet-provider");
+
+var mnemonic = "opinion destroy betray ...";
+
+module.exports = {
+  networks: {
+    development: {
+      host: "localhost",
+      port: 8545,
+      network_id: "*" // Match any network id
+    },
+    ropsten: {
+      provider: new HDWalletProvider(mnemonic, "https://ropsten.infura.io/"),
+      network_id: 3
+    }
+  }
+};
+			
+			</pre>
+		</div>
+	</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="web3.example.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="web3.js.example.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">8.12. 实用例子 </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 8.14. Express + web3.js 实例</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script><script xmlns="" type="text/javascript" src="/js/q.js" async="async"></script></body></html>
