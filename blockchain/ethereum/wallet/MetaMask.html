@@ -42,11 +42,148 @@
 			<p>查看 mnemonic 字符串</p>
 			<div><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="800"><tr><td><img src="../../images/ethereum/metamask/save-seed-words.png" width="800" /></td></tr></table></div>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp96"></a>6.2.3. MetaMask Vault Decryptor</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="metamask.addtoken"></a>6.2.3. 添加 Token 币种</h3></div></div></div>
+			
+			<p>有时我们需要添加新币种，还有一个目的是为了接收空投币。</p>
+			<p>只需输入合约地址即可，其他选项会自动填充。</p>
+			<div><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="800"><tr><td><img src="../../images/ethereum/metamask/add-token.png" width="800" /></td></tr></table></div>
+			<p>显示代币数量</p>
+			<div><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="800"><tr><td><img src="../../images/ethereum/metamask/add-token-balance.png" width="800" /></td></tr></table></div>
+			<p>完成代币添加</p>
+			<div><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="800"><tr><td><img src="../../images/ethereum/metamask/add-token-done.png" width="800" /></td></tr></table></div>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp96"></a>6.2.4. MetaMask Vault Decryptor</h3></div></div></div>
 			
 			<p>MetaMask 将钱包数据存储在浏览中  Local Storage 中，这是Chrome 谷歌浏览器特有的 Key,Value数据库。</p>
 			<p>Key 的名字是 metamask-config 将它复制到  <a class="ulink" href="https://metamask.github.io/vault-decryptor/" target="_top">https://metamask.github.io/vault-decryptor/</a> 中可以解密。</p>
 			<p>解密程序的 Github 地址 https://github.com/MetaMask/vault-decryptor</p>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp97"></a>6.2.5. 部署合约</h3></div></div></div>
+			
+			<p>这里假设你已经安装 MetaMask 钱包，并且创建了账号，账号有足够的 ETH 用来创建合约。</p>
+			<p>我们准备一个合约</p>
+			<pre class="screen">
+			
+pragma solidity ^0.4.24;
+
+/******************************************/
+/*       Netkiller ADVANCED TOKEN         */
+/******************************************/
+/* Author netkiller &lt;netkiller@msn.com&gt;   */
+/* Home http://www.netkiller.cn           */
+/* Version 2018-05-23                     */
+/******************************************/
+
+contract NetkillerMiniToken {
+    address public owner;
+    // Public variables of the token
+    string public name;
+    string public symbol;
+    uint public decimals;
+    // 18 decimals is the strongly suggested default, avoid changing it
+    uint256 public totalSupply;
+
+    // This creates an array with all balances
+    mapping (address =&gt; uint256) public balanceOf;
+    mapping (address =&gt; mapping (address =&gt; uint256)) public allowance;
+
+    // This generates a public event on the blockchain that will notify clients
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+
+    /**
+     * Constrctor function
+     *
+     * Initializes contract with initial supply tokens to the creator of the contract
+     */
+    constructor(
+        uint256 initialSupply,
+        string tokenName,
+        string tokenSymbol,
+        uint decimalUnits
+    ) public {
+        owner = msg.sender;
+        name = tokenName;                                   // Set the name for display purposes
+        symbol = tokenSymbol; 
+        decimals = decimalUnits;
+        totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
+        balanceOf[msg.sender] = totalSupply;                // Give the creator all initial token
+    }
+
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
+
+    function transferOwnership(address newOwner) onlyOwner public {
+        if (newOwner != address(0)) {
+            owner = newOwner;
+        }
+    }
+ 
+    /* Internal transfer, only can be called by this contract */
+    function _transfer(address _from, address _to, uint _value) internal {
+        require (_to != 0x0);                               // Prevent transfer to 0x0 address. Use burn() instead
+        require (balanceOf[_from] &gt;= _value);               // Check if the sender has enough
+        require (balanceOf[_to] + _value &gt; balanceOf[_to]); // Check for overflows
+        balanceOf[_from] -= _value;                         // Subtract from the sender
+        balanceOf[_to] += _value;                           // Add the same to the recipient
+        emit Transfer(_from, _to, _value);
+    }
+
+    /**
+     * Transfer tokens
+     *
+     * Send `_value` tokens to `_to` from your account
+     *
+     * @param _to The address of the recipient
+     * @param _value the amount to send
+     */
+    function transfer(address _to, uint256 _value) public {
+        _transfer(msg.sender, _to, _value);
+    }
+
+    /**
+     * Transfer tokens from other address
+     *
+     * Send `_value` tokens to `_to` in behalf of `_from`
+     *
+     * @param _from The address of the sender
+     * @param _to The address of the recipient
+     * @param _value the amount to send
+     */
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        require(_value &lt;= allowance[_from][msg.sender]);     // Check allowance
+        allowance[_from][msg.sender] -= _value;
+        _transfer(_from, _to, _value);
+        return true;
+    }
+
+    /**
+     * Set allowance for other address
+     *
+     * Allows `_spender` to spend no more than `_value` tokens in your behalf
+     *
+     * @param _spender The address authorized to spend
+     * @param _value the max amount they can spend
+     */
+    function approve(address _spender, uint256 _value) public returns (bool success) {
+        allowance[msg.sender][_spender] = _value;
+        emit Approval(msg.sender, _spender, _value);
+        return true;
+    }
+}
+			
+			</pre>
+			<p>现在打开 https://remix.ethereum.org/</p>
+			<div><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="800"><tr><td><img src="../../images/ethereum/metamask/remix.png" width="800" /></td></tr></table></div>
+			<p>点击“+”加号创建合约，合约名称NetkillerToken, 编译合约。进入 “Run” 选项卡运行合约</p>
+			<div><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="800"><tr><td><img src="../../images/ethereum/metamask/remix-transact.png" width="800" /></td></tr></table></div>
+			<p>Environment 设置为 Injected Web3 这时可以看到 MetaMask 中的账号以及余额, 然后设置构造方法，最后点击“transact”按钮开始部署合约。</p>
+			<div><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="800"><tr><td><img src="../../images/ethereum/metamask/remix-metamask.png" width="800" /></td></tr></table></div>
+			<p>确认手续费</p>
+			<div><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="800"><tr><td><img src="../../images/ethereum/metamask/remix-console.png" width="800" /></td></tr></table></div>
+			<p>remix 显示出TX Hash 表示完成。</p>
 		</div>
 	</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
 

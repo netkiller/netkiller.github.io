@@ -4,13 +4,14 @@
 	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
 	    <a xmlns="" href="/journal/index.html">杂文</a> |
 	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
-	    <a xmlns="" href="http://netkiller-github-com.iteye.com/">ITEYE 博客</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">云栖社区</a> |
 	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
 	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
 	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
 	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+		<a xmlns="" href="https://github.com/netkiller">Github</a> |
 	    <a xmlns="" href="/search.html">Search</a> |
-		<a xmlns="" href="mailto:netkiller@msn.com">Email</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">4.5. Java crypt</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="crypt.mysql.html">Prev</a> </td><th width="60%" align="center">Chapter 4. DES crypt() 专题</th><td width="20%" align="right"> <a accesskey="n" href="grub-md5-crypt.html">Next</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="crypt.java"></a>4.5. Java crypt</h2></div></div></div>
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">4.5. Java crypt</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="crypt.mysql.html">Prev</a> </td><th width="60%" align="center">Chapter 4. DES crypt() 专题</th><td width="20%" align="right"> <a accesskey="n" href="grub-md5-crypt.html">Next</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="crypt.java"></a>4.5. Java crypt</h2></div></div></div>
 		
 		<div class="literallayout"><p><br />
 <br />
@@ -123,7 +124,83 @@ public class crypt {<br />
 <br />
 };<br />
 		</p></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp18"></a>4.5.1. Java 8 DES</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+package cn.netkiller.security;
 
+import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
+import java.util.Base64;
+
+import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.DESKeySpec;
+
+public class DES {
+
+	public DES() {
+		// TODO Auto-generated constructor stub
+	}
+
+	public static String encrypt(String text, String password) {
+		try {
+			SecureRandom random = new SecureRandom();
+			DESKeySpec desKey = new DESKeySpec(password.getBytes());
+			// 创建一个密匙工厂，然后用它把DESKeySpec转换成
+			SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("DES");
+			SecretKey securekey = keyFactory.generateSecret(desKey);
+			// Cipher对象实际完成加密操作
+			Cipher cipher = Cipher.getInstance("DES");
+			// 用密匙初始化Cipher对象
+			cipher.init(Cipher.ENCRYPT_MODE, securekey, random);
+			// 现在，获取数据并加密
+			// 正式执行加密操作
+
+			return Base64.getEncoder().encodeToString(cipher.doFinal(text.getBytes(StandardCharsets.UTF_8)));
+		} catch (Throwable e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	private static String decrypt(String text, String password) throws Exception {
+		try {
+			// DES算法要求有一个可信任的随机数源
+			SecureRandom random = new SecureRandom();
+			// 创建一个DESKeySpec对象
+			DESKeySpec desKey = new DESKeySpec(password.getBytes());
+			// 创建一个密匙工厂
+			SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("DES");
+			// 将DESKeySpec对象转换成SecretKey对象
+			SecretKey securekey = keyFactory.generateSecret(desKey);
+			// Cipher对象实际完成解密操作
+			Cipher cipher = Cipher.getInstance("DES");
+			// 用密匙初始化Cipher对象
+			cipher.init(Cipher.DECRYPT_MODE, securekey, random);
+			// 真正开始解密操作
+			return new String(cipher.doFinal(Base64.getDecoder().decode(text)), StandardCharsets.UTF_8);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	public static void main(String[] args) throws Exception {
+		// TODO Auto-generated method stub
+		String en = DES.encrypt("Helloworld!!!", "www.netkiller.cn");
+		String de = DES.decrypt(en, "www.netkiller.cn");
+		System.out.println(en);
+		System.out.println(de);
+
+	}
+
+}			
+			
+			</pre>
+		</div>
 	</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
 
 var disqus_config = function () {
