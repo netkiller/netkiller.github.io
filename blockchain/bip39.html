@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>1.16. BIP39协议:使用助记词生成确定性钱包</title><link rel="stylesheet" type="text/css" href="/docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="home" href="index.html" title="Netkiller Blockchain 手札" /><link rel="up" href="blockchain.html" title="第 1 章 区块链" /><link rel="prev" href="ch01s15.html" title="1.15. 共识机制" /><link rel="next" href="solution/index.html" title="第 2 章 区块链探索" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">云栖社区</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+		<a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">1.16. BIP39协议:使用助记词生成确定性钱包</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ch01s15.html">上一页</a> </td><th width="60%" align="center">第 1 章 区块链</th><td width="20%" align="right"> <a accesskey="n" href="solution/index.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="bip39"></a>1.16. BIP39协议:使用助记词生成确定性钱包</h2></div></div></div>
+		
+		<div class="literallayout"><p><br />
+		<br />
+BIP:39<br />
+层：应用层<br />
+标题：使用助记词生成确定性钱包秘钥<br />
+作者：Marek Palatinus &lt;slush@satoshilabs.com&gt;<br />
+     Pavol Rusnak &lt;stick@satoshilabs.com&gt;<br />
+     Aaron Voisine &lt;voisine@gmail.com&gt;<br />
+     Sean Bowe &lt;ewillbefull@gmail.com&gt;<br />
+状态：已经被提议<br />
+类型：标准化跟踪<br />
+创建日期：2013-09-10<br />
+译者：kimziv<br />
+		<br />
+		</p></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="摘要"></a>1.16.1. 摘要</h3></div></div></div>
+			
+			<p>这个BIP描述了使用助记码或者助记句子（简称助记词）--一组便于记忆的单词来生成确定性钱包。</p>
+			<p>这个BIP由两部分构成：生成助记词和把生成的助记词转化成一个二进制种子。这个种子后面会更急类似于BIP32的方法生成确定性钱包。</p>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="动机"></a>1.16.2. 动机</h3></div></div></div>
+			
+			<p> 与处理原始的二进制或者十六进制的钱包种子相比，在人机交互过程中助记词是更胜一筹的。这些助记单词可以被写在纸上或者通过电话说出来。			</p>
+			<p>本指南旨在通过人类可读的转录来传输计算机生成的随机性。并不是将用户创建的句子（也称为脑钱包）处理到钱包种子中的方法。</p>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="生成助记词"></a>1.16.3. 生成助记词</h3></div></div></div>
+			
+			<p>助记符必须以32位的倍数编码熵。随着熵的安全性提高，同时句子的长度也在增加。我们将初始熵长度称为ENT。ENT允许的大小为128-256位。</p>
+			<p>首先，生成ENT位的初始熵。通过取第一个生成的校验和</p>
+			<div class="literallayout"><p><br />
+			<br />
+ENT/32			<br />
+			<br />
+			</p></div>
+			<p>它的SHA256哈希的位。该校验和附加到初始熵的末尾。接下来，这些连接的比特位被分成多个11位的组，每个组用从0-2047的数字编码，用作单词表的索引。最后，我们将这些数字转换为单词，并将加入的所有单词组成助记句。</p>
+			<p>下表描述了初始熵长度（ENT），校验和长度（CS）和生成助记词（MS）的长度之间的关系。</p>
+			<div class="literallayout"><p><br />
+			<br />
+CS = ENT / 32<br />
+MS = (ENT + CS) / 11			<br />
+			<br />
+			</p></div>
+			<pre class="screen">
+			
+ENT		CS		ENT + CS	MS
+------------------------------
+128		4		132			12
+160		5		165			15
+192		6		198			18
+224		7		231			21
+256		8		264			24			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="单词表"></a>1.16.4. 单词表</h3></div></div></div>
+			
+			<div class="itemizedlist"><p class="title"><strong>理想的单词列表具有以下特点：</strong></p><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem">
+					<p>智能选词</p>
+					<p>单词列表以这种方式创建：输入前四个字母来就足以明确地标识这个单词；</p>
+				</li><li class="listitem">
+					<p>避免相似的单词</p>
+					<p>"build" and "built", "woman" and "women", or "quick" and "quickly" 这样的词对，不仅使记忆困难，而且更容易出错，更难猜到；</p>
+				</li><li class="listitem">
+					<p>排序的单词列表</p>
+					<p>排序的单词列表允许更有效地查找代码字（即，实现可以使用二分搜索而不是线性搜索）</p>
+					<p>这也允许使用字典树（前缀树），例如用于更好的压缩</p>
+				</li></ul></div>
+			<p>单词表可以包含本土字符，但必须使用规范化形式兼容性分解（NFKD）以UTF-8编码。</p>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="从助记词到种子"></a>1.16.5. 从助记词到种子</h3></div></div></div>
+			
+			<p>用户可以决定用密码保护他们的助词。如果密码不存在，则使用空字符串“”代替。</p>
+			<p>要通过助记词创建一个二进制种子，我们使用助记符作为密码（UTF-8 NFKD）和字符串“mnemonic”+ passphrase 作为盐（再次以UTF-8 NFKD）来调用PBKDF2函数。迭代计数设置为2048，HMAC-SHA512用作伪随机函数。派生密钥的长度为512位（= 64字节）。</p>
+			<p>该种子可以随后用于使用BIP-0032或类似方法产生确定性钱包。</p>
+			<p>助记词转换为二进制种子完全独立于生成这个助记词。这导致相当简单的代码; 助记词结构没有约束，客户可以自由地实现自己的单词列表，甚至是整个助记词的生成器，允许字典列表中的输入错误检测或其他用途的灵活性。</p>
+			<p>虽然使用的助记词可能不是通过“生成助记词”部分中描述的算法生成的，但这是不建议的，软件必须使用单词表计算助记词的校验和，如果无效则发出警告。</p>
+			<p>所描述的方法还提供似乎可信的可否认性，因为每个密码短语产生一个有效的种子（因此产生确定性钱包），但是只有正确的那一个才能使所需的钱包可用。		</p>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="单词列表"></a>1.16.6. 单词列表</h3></div></div></div>
+			
+			<p>
+				<a class="ulink" href="https://github.com/bitcoin/bips/blob/master/bip-0039/bip-0039-wordlists.md" target="_top">https://github.com/bitcoin/bips/blob/master/bip-0039/bip-0039-wordlists.md</a>
+			</p>
+			<p>如果一个 HD 钱包助记词是 12 个单词，一共有 2048 个单词可能性，如何算出随机的生成的助记词可能性是一个排列问题，根据公式： n!/( n - r )! ，既 2048!/(2048-12)! = 5.2715379713014884760003093175282e+39。 </p>
+			<div class="orderedlist"><p class="title"><strong>Wordlists</strong></p><ol class="orderedlist" type="1"><li class="listitem">
+					<p>
+						English
+						<a class="ulink" href="https://github.com/bitcoin/bips/blob/master/bip-0039/english.txt" target="_top">https://github.com/bitcoin/bips/blob/master/bip-0039/english.txt</a>
+					</p>
+				</li><li class="listitem">
+					<p>
+						Japanese
+						<a class="ulink" href="https://github.com/bitcoin/bips/blob/master/bip-0039/japanese.txt" target="_top">https://github.com/bitcoin/bips/blob/master/bip-0039/japanese.txt</a>
+					</p>
+				</li><li class="listitem">
+					<p>
+						Korean
+						<a class="ulink" href="https://github.com/bitcoin/bips/blob/master/bip-0039/korean.txt" target="_top">https://github.com/bitcoin/bips/blob/master/bip-0039/korean.txt</a>
+					</p>
+				</li><li class="listitem">
+					<p>
+						Spanish
+						<a class="ulink" href="https://github.com/bitcoin/bips/blob/master/bip-0039/spanish.txt" target="_top">https://github.com/bitcoin/bips/blob/master/bip-0039/spanish.txt</a>
+					</p>
+				</li><li class="listitem">
+					<p>
+						Chinese (Simplified)
+						<a class="ulink" href="https://github.com/bitcoin/bips/blob/master/bip-0039/chinese_simplified.txt" target="_top">https://github.com/bitcoin/bips/blob/master/bip-0039/chinese_simplified.txt</a>
+					</p>
+				</li><li class="listitem">
+					<p>
+						Chinese (Traditional)
+						<a class="ulink" href="https://github.com/bitcoin/bips/blob/master/bip-0039/chinese_traditional.txt" target="_top">https://github.com/bitcoin/bips/blob/master/bip-0039/chinese_traditional.txt</a>
+					</p>
+				</li><li class="listitem">
+					<p>
+						French
+						<a class="ulink" href="https://github.com/bitcoin/bips/blob/master/bip-0039/french.txt" target="_top">https://github.com/bitcoin/bips/blob/master/bip-0039/french.txt</a>
+					</p>
+				</li><li class="listitem">
+					<p>
+						Italian
+						<a class="ulink" href="https://github.com/bitcoin/bips/blob/master/bip-0039/italian.txt" target="_top">https://github.com/bitcoin/bips/blob/master/bip-0039/italian.txt</a>
+					</p>
+				</li></ol></div>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="开发库"></a>1.16.7. 开发库</h3></div></div></div>
+			
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id=""></a>1.16.7.1. Node.js</h4></div></div></div>
+				
+				<p>
+					<a class="ulink" href="https://www.npmjs.com/package/bip39" target="_top">https://www.npmjs.com/package/bip39</a>
+				</p>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp13"></a>1.16.7.2. Python</h4></div></div></div>
+				
+				<p>
+					<a class="ulink" href="https://github.com/trezor/python-mnemonic" target="_top">https://github.com/trezor/python-mnemonic</a>
+				</p>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="其他实现"></a>1.16.7.3. 其他实现</h4></div></div></div>
+				
+				<pre class="screen">
+				
+Elixir: https://github.com/izelnakri/mnemonic
+
+Objective-C: https://github.com/nybex/NYMnemonic
+
+Haskell: https://github.com/haskoin/haskoin
+
+.NET C# (PCL): https://github.com/Thashiznets/BIP39.NET
+
+.NET C# (PCL): https://github.com/NicolasDorier/NBitcoin
+
+JavaScript: https://github.com/bitpay/bitcore-mnemonic, https://github.com/bitcoinjs/bip39 (used by blockchain.info)
+
+Ruby: https://github.com/sreekanthgs/bip_mnemonic
+
+Rust: https://github.com/infincia/bip39-rs
+
+Swift: https://github.com/CikeQiu/CKMnemonic
+
+C++: https://github.com/libbitcoin/libbitcoin/blob/master/include/bitcoin/bitcoin/wallet/mnemonic.hpp
+
+C (with Python/Java/Javascript bindings): https://github.com/ElementsProject/libwally-core				
+				
+				</pre>
+			</div>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id=""></a>1.16.8. Netkiller 助记词词库</h3></div></div></div>
+			
+			<p>HD Wallet 采用 2048 个单词，或者汉字作为助记词，这些词库对外公开，很多钱包仅仅使用path第一个地址并且没有加密。如果你知道某个用户的助记词中的11各词的排列顺序，那么我们就可以通过穷举方法，算出所有地址的私钥，如果碰巧找到了已经在使用的地址。就可以将里面的ETH全部转走。</p>
+			<p>为了增加 HD Wallet 的安全，我做了一个词库，这个词库不对外公开，并且使用的汉字均是不常用汉字。只能复制粘贴，几乎很难使用输入法输入该汉字。</p>
+			<p>同时path 还做了分层，和索引地址。分层采用时间维度，索引采用随机数， Seed 做加密处理。助记词共 15 个汉字。</p>
+			<p>效果如下</p>
+			<pre class="programlisting">
+			
+汉字助记词：欈 戀 髎 響 麢 戵 邎 蠢 鶖 躒 蠈 鰘 譥 趱 巆
+地址：0x4949225eab0121d1e0b0eeb286a12b04ff596471
+私钥：b5ce4ac958fbdcd385d6ae850c1870c6da7b990981363c25036a31ba06be6636
+
+汉字助记词：霼 彎 曤 纀 鸇 鷔 鶹 纚 鱱 讁 艣 鼴 黭 纒 贛
+地址：0x430097d16819108068a7af22a116285e54bc3e6b
+私钥：3b78431a43a2c69e861870f0eff1d54d3965247ca5e588a9f907904f9ea5b822
+
+汉字助记词：聾 鱦 骥 鬘 鰕 蘲 韃 鏻 雤 鑀 瓤 蘣 壥 躠 罋
+地址：0x641fd58728cf08bc8795d41cfd3885a4f1c8dced
+私钥：b7c2ff2a39e3a534e6e89288b05b4a283b10b34b2dfca2b336676729c7a68ad1
+
+汉字助记词：轕 鶼 瀝 钁 麝 鸑 灙 纞 躐 嚹 櫞 鱁 贑 癠 躤
+地址：0xae6ad7cf3e31556bc7262e25fba2ebad9954d08b
+私钥：c989fe5c108b0bd33e5731919e09c30c639a4ff29fb4e66fe3052975855181f6
+
+汉字助记词：鰵 鐗 鱇 彏 鱞 鷮 鼯 矃 曟 鬙 衢 斅 櫜 鸒 襨
+地址：0x7fc6bca55c51ab3b4266d8f67d63c196ac874d93
+私钥：53e755075653a64867f885e702ca0a2612bdd13ec2bed0df647bf568a639bc46			
+			
+			</pre>
+		</div>
+	</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ch01s15.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="blockchain.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="solution/index.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">1.15. 共识机制 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 2 章 区块链探索</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script><script xmlns="" type="text/javascript" src="/js/q.js" async="async"></script></body></html>
