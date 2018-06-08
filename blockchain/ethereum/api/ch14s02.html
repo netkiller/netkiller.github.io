@@ -11,9 +11,9 @@
 	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
 		<a xmlns="" href="https://github.com/netkiller">Github</a> |
 	    <a xmlns="" href="/search.html">Search</a> |
-	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">14.2. 账号</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><th width="60%" align="center">第 14 章 Ethereum Developer APIs</th><td width="20%" align="right"> <a accesskey="n" href="ch14s03.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp339"></a>14.2. 账号</h2></div></div></div>
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">14.2. 账号</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><th width="60%" align="center">第 14 章 Ethereum Developer APIs</th><td width="20%" align="right"> <a accesskey="n" href="ch14s03.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp349"></a>14.2. 账号</h2></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp240"></a>14.2.1. 余额</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp249"></a>14.2.1. 余额</h3></div></div></div>
 			
 			<p>获得账号的余额</p>
 			<pre class="screen">
@@ -22,15 +22,281 @@ https://api.etherscan.io/api?module=account&amp;action=balance&amp;address=0xddb
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp241"></a>14.2.2. 查询区块</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp250"></a>14.2.2. 查询区块</h3></div></div></div>
 			
 			<pre class="screen">
 			
 http://api.etherscan.io/api?module=account&amp;action=txlist&amp;address=0x3e827461Cc53ed7c75A29187CfF39629FCAE3661&amp;startblock=0&amp;endblock=99999999&amp;sort=asc&amp;apikey=RT5JW37AKEZVSW3C91Z86IGI2FF7JDPF1N
 			
 			</pre>
+			<p>Spring boot 2.0.2 实现交易记录查询</p>
+			<pre class="programlisting">
+			
+package cn.netkiller.api.restful;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
+
+@RestController
+public class TransactionsRestController {
+	private static final Logger logger = LoggerFactory.getLogger(TransactionsRestController.class);
+
+	private static final String url = "http://api.etherscan.io/api?module={module}&amp;action={action}&amp;address={address}&amp;startblock={startblock}&amp;endblock={endblock}&amp;sort={sort}&amp;apikey={apikey}";
+
+	@Autowired
+	public TestRestController() {
+		// TODO Auto-generated constructor stub
+	}
+
+	@GetMapping("/block/{startblock}/{endblock}/{address}")
+	public TransactionsResponse block(@PathVariable String startblock, @PathVariable String endblock, @PathVariable String address) {
+		return this.getTransactionsByAddress(startblock, endblock, address);
+	}
+
+	private TransactionsResponse getTransactionsByAddress(String startblock, String endblock, String address) {
+		Map&lt;String, String&gt; params = new HashMap&lt;String, String&gt;();
+		params.put("module", "account");
+		params.put("action", "txlist");
+		params.put("address", address);
+		params.put("startblock", startblock);
+		params.put("endblock", endblock);
+		params.put("sort", "asc");
+		params.put("apikey", "RT5JW37AKEZVSW3C91Z86IGI2FF7JDPF1N");
+		RestTemplate restTemplate = new RestTemplate();
+		TransactionsResponse result = restTemplate.getForObject(url, TransactionsResponse.class, params);
+		logger.info(params.toString());
+		logger.info(result.toString());
+		return result;
+	}
+}
+
+class Transactions {
+
+	private String blockNumber;
+	private String timeStamp;
+	private String hash;
+	private String nonce;
+	private String blockHash;
+	private String transactionIndex;
+	private String from;
+	private String to;
+	private String value;
+	private String gas;
+	private String gasPrice;
+	private String isError;
+	private String txreceipt_status;
+	private String input;
+	private String contractAddress;
+	private String cumulativeGasUsed;
+	private String gasUsed;
+	private String confirmations;
+
+	public Transactions() {
+	}
+
+	public String getBlockNumber() {
+		return blockNumber;
+	}
+
+	public void setBlockNumber(String blockNumber) {
+		this.blockNumber = blockNumber;
+	}
+
+	public String getTimeStamp() {
+		return timeStamp;
+	}
+
+	public void setTimeStamp(String timeStamp) {
+		this.timeStamp = timeStamp;
+	}
+
+	public String getHash() {
+		return hash;
+	}
+
+	public void setHash(String hash) {
+		this.hash = hash;
+	}
+
+	public String getNonce() {
+		return nonce;
+	}
+
+	public void setNonce(String nonce) {
+		this.nonce = nonce;
+	}
+
+	public String getBlockHash() {
+		return blockHash;
+	}
+
+	public void setBlockHash(String blockHash) {
+		this.blockHash = blockHash;
+	}
+
+	public String getTransactionIndex() {
+		return transactionIndex;
+	}
+
+	public void setTransactionIndex(String transactionIndex) {
+		this.transactionIndex = transactionIndex;
+	}
+
+	public String getFrom() {
+		return from;
+	}
+
+	public void setFrom(String from) {
+		this.from = from;
+	}
+
+	public String getTo() {
+		return to;
+	}
+
+	public void setTo(String to) {
+		this.to = to;
+	}
+
+	public String getValue() {
+		return value;
+	}
+
+	public void setValue(String value) {
+		this.value = value;
+	}
+
+	public String getGas() {
+		return gas;
+	}
+
+	public void setGas(String gas) {
+		this.gas = gas;
+	}
+
+	public String getGasPrice() {
+		return gasPrice;
+	}
+
+	public void setGasPrice(String gasPrice) {
+		this.gasPrice = gasPrice;
+	}
+
+	public String getIsError() {
+		return isError;
+	}
+
+	public void setIsError(String isError) {
+		this.isError = isError;
+	}
+
+	public String getTxreceipt_status() {
+		return txreceipt_status;
+	}
+
+	public void setTxreceipt_status(String txreceipt_status) {
+		this.txreceipt_status = txreceipt_status;
+	}
+
+	public String getInput() {
+		return input;
+	}
+
+	public void setInput(String input) {
+		this.input = input;
+	}
+
+	public String getContractAddress() {
+		return contractAddress;
+	}
+
+	public void setContractAddress(String contractAddress) {
+		this.contractAddress = contractAddress;
+	}
+
+	public String getCumulativeGasUsed() {
+		return cumulativeGasUsed;
+	}
+
+	public void setCumulativeGasUsed(String cumulativeGasUsed) {
+		this.cumulativeGasUsed = cumulativeGasUsed;
+	}
+
+	public String getGasUsed() {
+		return gasUsed;
+	}
+
+	public void setGasUsed(String gasUsed) {
+		this.gasUsed = gasUsed;
+	}
+
+	public String getConfirmations() {
+		return confirmations;
+	}
+
+	public void setConfirmations(String confirmations) {
+		this.confirmations = confirmations;
+	}
+
+	@Override
+	public String toString() {
+		return "Transactions [blockNumber=" + blockNumber + ", timeStamp=" + timeStamp + ", hash=" + hash + ", nonce=" + nonce + ", blockHash=" + blockHash + ", transactionIndex=" + transactionIndex + ", from=" + from + ", to=" + to + ", value=" + value + ", gas=" + gas + ", gasPrice=" + gasPrice + ", isError=" + isError + ", txreceipt_status=" + txreceipt_status + ", input=" + input + ", contractAddress=" + contractAddress + ", cumulativeGasUsed=" + cumulativeGasUsed + ", gasUsed=" + gasUsed + ", confirmations=" + confirmations + "]";
+	}
+
+}
+
+class TransactionsResponse {
+	private String status;
+	private String message;
+	private List&lt;Transactions&gt; result = new ArrayList&lt;Transactions&gt;();
+
+	public TransactionsResponse() {
+	}
+
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
+	}
+
+	public String getMessage() {
+		return message;
+	}
+
+	public void setMessage(String message) {
+		this.message = message;
+	}
+
+	public List&lt;Transactions&gt; getResult() {
+		return result;
+	}
+
+	public void setResult(List&lt;Transactions&gt; result) {
+		this.result = result;
+	}
+
+	@Override
+	public String toString() {
+		return "TransactionsResponse [status=" + status + ", message=" + message + ", result=" + result + "]";
+	}
+
+}			
+			
+			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp242"></a>14.2.3. 查询区块</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp251"></a>14.2.3. 查询区块</h3></div></div></div>
 			
 			<pre class="screen">
 			

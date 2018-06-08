@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>7.3. Netkiller Crowdsale Contract</title><link rel="stylesheet" type="text/css" href="../..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="home" href="../../index.html" title="Netkiller Blockchain 手札" /><link rel="up" href="index.html" title="第 7 章 Token" /><link rel="prev" href="token.solidity.0.4.23.html" title="7.2. ERC20 Token Solidity 0.4.23" /><link rel="next" href="token.sample.html" title="7.4. 参考案例" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">云栖社区</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+		<a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">7.3. Netkiller Crowdsale Contract</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="token.solidity.0.4.23.html">上一页</a> </td><th width="60%" align="center">第 7 章 Token</th><td width="20%" align="right"> <a accesskey="n" href="token.sample.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp340"></a>7.3. Netkiller Crowdsale Contract</h2></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp121"></a>7.3.1. Solidity 0.4.24</h3></div></div></div>
+			
+		
+			<pre class="programlisting">
+			
+pragma solidity ^0.4.24;
+
+/******************************************/
+/*      Netkiller Crowdsale Contract      */
+/******************************************/
+/* Author netkiller &lt;netkiller@msn.com&gt;   */
+/* Home http://www.netkiller.cn           */
+/* Version 2018-06-07 - Solc ver: 0.4.24  */
+/******************************************/
+
+interface token {
+    function transfer(address receiver, uint amount) external;
+}
+
+contract Crowdsale {
+    address public beneficiary;
+    uint public fundingGoal;
+    uint public amountRaised;
+    uint public deadline;
+    uint public price;
+    token public tokenReward;
+    mapping(address =&gt; uint256) public balanceOf;
+    bool fundingGoalReached = false;
+    bool crowdsaleClosed = false;
+
+    event GoalReached(address recipient, uint totalAmountRaised);
+    event FundTransfer(address backer, uint amount, bool isContribution);
+
+    /**
+     * Constructor function
+     *
+     * Setup the owner
+     */
+    constructor(
+        address ifSuccessfulSendTo,
+        uint fundingGoalInEthers,
+        uint durationInMinutes,
+        uint etherCostOfEachToken,
+        address addressOfTokenUsedAsReward
+    ) public {
+        beneficiary = ifSuccessfulSendTo;
+        fundingGoal = fundingGoalInEthers * 1 ether;
+        deadline = now + durationInMinutes * 1 minutes;
+        price = etherCostOfEachToken * 1 ether;
+        tokenReward = token(addressOfTokenUsedAsReward);
+    }
+
+    /**
+     * Fallback function
+     *
+     * The function without name is the default function that is called whenever anyone sends funds to a contract
+     */
+    function () payable public{
+        require(!crowdsaleClosed);
+        uint amount = msg.value;
+        balanceOf[msg.sender] += amount;
+        amountRaised += amount;
+        tokenReward.transfer(msg.sender, amount / price);
+        emit FundTransfer(msg.sender, amount, true);
+    }
+
+    modifier afterDeadline() { if (now &gt;= deadline) _; }
+
+    /**
+     * Check if goal was reached
+     *
+     * Checks if the goal or time limit has been reached and ends the campaign
+     */
+    function checkGoalReached() afterDeadline public{
+        if (amountRaised &gt;= fundingGoal){
+            fundingGoalReached = true;
+            emit GoalReached(beneficiary, amountRaised);
+        }
+        crowdsaleClosed = true;
+    }
+
+
+    /**
+     * Withdraw the funds
+     *
+     * Checks to see if goal or time limit has been reached, and if so, and the funding goal was reached,
+     * sends the entire amount to the beneficiary. If goal was not reached, each contributor can withdraw
+     * the amount they contributed.
+     */
+    function safeWithdrawal() afterDeadline public{
+        if (!fundingGoalReached) {
+            uint amount = balanceOf[msg.sender];
+            balanceOf[msg.sender] = 0;
+            if (amount &gt; 0) {
+                if (msg.sender.send(amount)) {
+                    emit FundTransfer(msg.sender, amount, false);
+                } else {
+                    balanceOf[msg.sender] = amount;
+                }
+            }
+        }
+
+        if (fundingGoalReached &amp;&amp; beneficiary == msg.sender) {
+            if (beneficiary.send(amountRaised)) {
+                emit FundTransfer(beneficiary, amountRaised, false);
+            } else {
+                //If we fail to send the funds to beneficiary, unlock funders balance
+                fundingGoalReached = false;
+            }
+        }
+    }
+}
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp122"></a>7.3.2. Solidity 0.4.21</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+pragma solidity ^0.4.21;
+
+interface token {
+    function transfer(address receiver, uint amount) external;
+}
+
+contract Crowdsale {
+    address public beneficiary; // 募资成功后的收款地址
+    uint public fundingGoal;    // 募资额度
+    uint public amountRaised;   // 参与数量
+    uint public deadline;       // 募资截止期
+
+    uint public price;          // token 与以太坊的汇率, token卖多少钱
+    token public tokenReward;   // 要卖的token
+
+    mapping(address =&gt; uint256) public balanceOf;
+
+    bool fundingGoalReached = false;    // 众筹是否达到目标
+    bool crowdsaleClosed = false;       // 众筹是否结束
+
+    /**
+    * 事件可以用来跟踪信息
+    **/
+    event GoalReached(address recipient, uint totalAmountRaised);
+    event FundTransfer(address backer, uint amount, bool isContribution);
+
+    /**
+     * 构造函数, 设置相关属性
+     */
+    function Crowdsale(
+        address ifSuccessfulSendTo,
+        uint fundingGoalInEthers,
+        uint durationInMinutes,
+        uint finneyCostOfEachToken,
+        address addressOfTokenUsedAsReward) public {
+            beneficiary = ifSuccessfulSendTo;					//募资成功后的收款账号
+            fundingGoal = fundingGoalInEthers * 1 ether;		//募资额度
+            deadline = now + durationInMinutes * 1 minutes;		//募资时间
+            price = finneyCostOfEachToken * 1 finney;			//每个代币的价格, 这里为了方便使用了单位finney及值为：1 （1 ether = 1000 finney）
+            tokenReward = token(addressOfTokenUsedAsReward);   	// 代币合约地址。传入已发布的 token 合约的地址来创建实例
+    }
+
+    /**
+     * 无函数名的Fallback函数，
+     * 在向合约转账时，这个函数会被调用
+     */
+    function () payable public {
+        require(!crowdsaleClosed);
+        uint amount = msg.value;
+        balanceOf[msg.sender] += amount;
+        amountRaised += amount;
+        tokenReward.transfer(msg.sender, amount / price);
+        emit FundTransfer(msg.sender, amount, true);
+    }
+
+    /**
+    *  定义函数修改器modifier
+    * 用于在函数执行前检查某种前置条件（判断通过之后才会继续执行该方法）
+    * _ 表示继续执行之后的代码
+    **/
+    modifier afterDeadline() { if (now &gt;= deadline) _; }
+
+    /**
+     * 判断众筹是否完成融资目标， 这个方法使用了afterDeadline函数修改器
+     *
+     */
+    function checkGoalReached() afterDeadline public{
+        if (amountRaised &gt;= fundingGoal) {
+            fundingGoalReached = true;
+            emit GoalReached(beneficiary, amountRaised);
+        }
+        crowdsaleClosed = true;
+    }
+
+
+    /**
+     * 完成融资目标时，融资款发送到收款方
+     * 未完成融资目标时，执行退款
+     *
+     */
+    function safeWithdrawal() afterDeadline public{
+        if (!fundingGoalReached) {
+            uint amount = balanceOf[msg.sender];
+            balanceOf[msg.sender] = 0;
+            if (amount &gt; 0) {
+                if (msg.sender.send(amount)) {
+                    emit FundTransfer(msg.sender, amount, false);
+                } else {
+                    balanceOf[msg.sender] = amount;
+                }
+            }
+        }
+
+        if (fundingGoalReached &amp;&amp; beneficiary == msg.sender) {
+            if (beneficiary.send(amountRaised)) {
+                emit FundTransfer(beneficiary, amountRaised, false);
+            } else {
+                //If we fail to send the funds to beneficiary, unlock funders balance
+                fundingGoalReached = false;
+            }
+        }
+    }
+}			
+			
+			</pre>
+		</div>
+	</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="token.solidity.0.4.23.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="token.sample.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">7.2. ERC20 Token Solidity 0.4.23 </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 7.4. 参考案例</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script><script xmlns="" type="text/javascript" src="/js/q.js" async="async"></script></body></html>
