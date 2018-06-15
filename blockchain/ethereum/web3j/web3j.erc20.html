@@ -36,8 +36,18 @@
 	}				
 				
 			</pre>
+			<p>合约 balance 是不含小数点的，因为不同合约采用的小数点位数不同，无法使用以太坊单位直接换算。可以使用下面方法添加小数：</p>
+			<pre class="programlisting">
+			
+	public BigDecimal formatBalance(BigInteger balance, int decimal) {
+		BigDecimal value = new BigDecimal(balance);
+		value = value.divide(BigDecimal.TEN.pow(decimal));
+		return value;
+	}			
+			
+			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id=""></a>11.14.2. </h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp257"></a>11.14.2. name</h3></div></div></div>
 			
 			<pre class="programlisting">
 			
@@ -75,7 +85,7 @@
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id=""></a>11.14.3. 合约转账</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp258"></a>11.14.3. 合约转账</h3></div></div></div>
 			
 			<pre class="programlisting">
 			
@@ -122,6 +132,100 @@
 	}
 			
 			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id=""></a>11.14.4. 完整的 ERC20 代币开发库</h3></div></div></div>
+			
+			<p>这是一个万能的代币接口，只要知道合约地址，即可操作该合约。传统做法是使用web3j 命令将 .sol 编译成 Java Class 但这种类只能操作自己的合约。</p>
+			<pre class="programlisting">
+			
+package cn.netkiller.wallet.ethereum;
+
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.concurrent.ExecutionException;
+
+import org.web3j.protocol.core.methods.request.Transaction;
+import org.web3j.protocol.core.methods.response.TransactionReceipt;
+import org.web3j.tx.Contract;
+
+public class TestToken {
+
+	public TestToken() {
+		// TODO Auto-generated constructor stub
+	}
+
+	@SuppressWarnings("deprecation")
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+
+		try {
+			Token token = new Token("0xb3cedc76e75fcd278c988b22963c2f35c99c10b7", "166970EDB022C717B3ECCADAB6558537228FFBDE1F68AC063A06790967F2BC3A");
+			String owner = token.getOwner();
+			System.out.println("代币创建者：" + owner);
+
+			String name = token.getName();
+			System.out.println("代币名称：" + name);
+
+			String symbol = token.getSymbol();
+			System.out.println("代币符号：" + symbol);
+
+			int decimal = token.getDecimals();
+			System.out.println("小数位数：" + decimal);
+
+			BigInteger totalSupply = token.getTotalSupply();
+			System.out.println("发行总量：" + totalSupply);
+
+			BigInteger tokenBalance = token.getTokenBalance("0x22c57F0537414FD95b9f0f08f1E51d8b96F14029");
+			System.out.println("代币余额:" + tokenBalance);
+
+			BigDecimal val = token.formatBalance(tokenBalance, decimal);
+			System.out.println("格式化后：" + val);
+
+			String transactionHash = token.sendTransaction("0xCdF0253d8362d6c3334c8F28A6BFd74c90d03d92", BigInteger.valueOf(10));
+			System.out.println("代币转账：" + transactionHash);
+			TransactionReceipt transactionReceipt = token.getTransactionReceipt("0xece52bdbc6d4fa0c8eba7578a7c6e537883265199fa07ef8e5b1038e4bcdefb9");
+			System.out.println("转账状态：" + transactionReceipt.toString());
+
+			String hash = token.setApprove("0xCdF0253d8362d6c3334c8F28A6BFd74c90d03d92", BigInteger.valueOf(100));
+			System.out.println("设置授信：" + hash);
+
+			BigInteger value = token.getAllowance("0x22c57F0537414FD95b9f0f08f1E51d8b96F14029", "0xCdF0253d8362d6c3334c8F28A6BFd74c90d03d92");
+			System.out.println("查询授信：" + value);
+
+			Token token1 = new Token("0xb3cedc76e75fcd278c988b22963c2f35c99c10b7", "8D160B668E63CC04CEE44C398C184121D63C3F5D189671D985A6FB3719FB1B5E");
+			System.out.println("授信转出：" + token1.sendTransactionFrom("0x22c57F0537414FD95b9f0f08f1E51d8b96F14029", "0xCdF0253d8362d6c3334c8F28A6BFd74c90d03d92", BigInteger.valueOf(20)));
+
+			// System.out.println(token1.getAllowance("0x22c57F0537414FD95b9f0f08f1E51d8b96F14029", "0xCdF0253d8362d6c3334c8F28A6BFd74c90d03d92"));
+		} catch (InterruptedException | ExecutionException | IOException e) {
+			e.printStackTrace();
+
+		}
+
+	}
+
+}
+			
+			
+			</pre>
+			<p>运行结果</p>
+			<pre class="screen">
+			
+代币创建者：0x22c57f0537414fd95b9f0f08f1e51d8b96f14029
+代币名称：Netkiller Test Coin
+代币符号：NTC
+小数位数：4
+发行总量：1000000000000
+代币余额:999999999430
+格式化后：99999999.943
+代币转账：0xe851f682457672f2ca5ddbc3ad276dd9fa56ea81e838cf9a4b1eb8c97d0d98fd
+转账状态：TransactionReceipt{transactionHash='0xece52bdbc6d4fa0c8eba7578a7c6e537883265199fa07ef8e5b1038e4bcdefb9', transactionIndex='0x13', blockHash='0x2642b35670872a0e024d30ab2393b6bd4f7dab449bf4fc3eac067e2677cbc085', blockNumber='0x344a79', cumulativeGasUsed='0x806f54', gasUsed='0x8fee', contractAddress='null', root='null', status='0x1', from='0x22c57f0537414fd95b9f0f08f1e51d8b96f14029', to='0xb3cedc76e75fcd278c988b22963c2f35c99c10b7', logs=[Log{removed=false, logIndex='0xa', transactionIndex='0x13', transactionHash='0xece52bdbc6d4fa0c8eba7578a7c6e537883265199fa07ef8e5b1038e4bcdefb9', blockHash='0x2642b35670872a0e024d30ab2393b6bd4f7dab449bf4fc3eac067e2677cbc085', blockNumber='0x344a79', address='0xb3cedc76e75fcd278c988b22963c2f35c99c10b7', data='0x000000000000000000000000000000000000000000000000000000000000000a', type='null', topics=[0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef, 0x00000000000000000000000022c57f0537414fd95b9f0f08f1e51d8b96f14029, 0x000000000000000000000000cdf0253d8362d6c3334c8f28a6bfd74c90d03d92]}], logsBloom='0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000008020000001000000000000000000000000000800000000000000000000000000000000000000000000000000000000010000000000000000000004000000000000000000000000000800000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000002000000000000000400000000000000002000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'}
+设置授信：0x2a6c32b5939de91d9f06f7b73913433ee0b28642a3afc095454a7dcd59da3234
+查询授信：100
+授信转出：0x29f4824b35c47a0fc18adf2d8c72c902a3c518f249bc4235aace804e5a9f17df			
+			
+			</pre>
+			<p>如需代码，有偿提供，请联系作者。</p>
 		</div>
 	</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
 
