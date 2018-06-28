@@ -1,0 +1,344 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>1.9. fastcgi</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><meta name="keywords" content="lamp,lnmp,famp,fnmp, cgi,fastcgi,wsgi, apache,lighttpd,nginx,tomcat, awstatus, webalizer" /><link rel="home" href="../index.html" title="Netkiller Linux Web 手札" /><link rel="up" href="index.html" title="第 1 章 Nginx" /><link rel="prev" href="ngx_http_proxy_module.html" title="1.8. Proxy" /><link rel="next" href="module.html" title="1.10. Nginx module" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">云栖社区</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+		<a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">1.9. fastcgi</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ngx_http_proxy_module.html">上一页</a> </td><th width="60%" align="center">第 1 章 Nginx</th><td width="20%" align="right"> <a accesskey="n" href="module.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="fastcgi"></a>1.9. fastcgi</h2></div></div></div>
+	
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="fastcgi.spawn-fcgi"></a>1.9.1. spawn-fcgi</h3></div></div></div>
+		
+		<p>config php fastcgi</p>
+		<pre class="screen">
+		
+sudo vim /etc/nginx/sites-available/default
+
+        location ~ \.php$ {
+                fastcgi_pass   127.0.0.1:9000;
+                fastcgi_index  index.php;
+                fastcgi_param  SCRIPT_FILENAME  /scripts$fastcgi_script_name;
+                include fastcgi_params;
+        }
+		
+		</pre>
+		<p>Spawn-fcgi</p>
+		<p>We still need a script to start our fast cgi processes. We will extract one from Lighttpd. and then disable start script of lighttpd</p>
+		<pre class="screen">
+$ sudo apt-get install lighttpd
+$ sudo chmod -x /etc/init.d/lighttpd
+		</pre>
+
+		<pre class="screen">
+$ sudo touch /usr/bin/php-fastcgi
+$ sudo vim /usr/bin/php-fastcgi
+
+#!/bin/sh
+/usr/bin/spawn-fcgi -a 127.0.0.1 -p 9000 -u www-data -f /usr/bin/php5-cgi
+		</pre>
+		<p>fastcgi daemon</p>
+		<pre class="screen">
+		
+$ sudo touch /etc/init.d/nginx-fastcgi
+$ sudo chmod +x /usr/bin/php-fastcgi
+$ sudo vim /etc/init.d/nginx-fastcgi
+
+This is also a new empty file, add the following and save:
+
+#!/bin/bash
+PHP_SCRIPT=/usr/bin/php-fastcgi
+RETVAL=0
+case "$1" in
+start)
+$PHP_SCRIPT
+RETVAL=$?
+;;
+stop)
+killall -9 php
+RETVAL=$?
+;;
+restart)
+killall -9 php
+$PHP_SCRIPT
+RETVAL=$?
+;;
+*)
+echo "Usage: nginx-fastcgi {start|stop|restart}"
+exit 1
+;;
+esac
+exit $RETVAL
+
+We need to change some permissions to make this all work.
+$ sudo chmod +x /etc/init.d/nginx-fastcgi
+		
+		</pre>
+		<p>create a test file</p>
+		<pre class="screen">
+		
+sudo vim /var/www/nginx-default/index.php
+&lt;?php echo phpinfo(); ?&gt;
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="fastcgi.php-fpm"></a>1.9.2. php-fpm</h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp41"></a>1.9.2.1. php5-fpm</h4></div></div></div>
+			
+			<pre class="screen">
+sudo apt-get install php5-cli php5-cgi php5-fpm
+			</pre>
+			<pre class="screen">
+/etc/init.d/php5-fpm start
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="php-fpm"></a>1.9.2.2. 编译 php-fpm</h4></div></div></div>
+			
+			<pre class="screen">
+			
+./configure --prefix=/srv/php-5.3.8 \
+--with-config-file-path=/srv/php-5.3.8/etc \
+--with-config-file-scan-dir=/srv/php-5.3.8/etc/conf.d \
+--enable-fpm \
+--with-fpm-user=www \
+--with-fpm-group=www \
+--with-pear \
+--with-curl \
+--with-gd \
+--with-jpeg-dir \
+--with-png-dir \
+--with-freetype-dir \
+--with-xpm-dir \
+--with-iconv \
+--with-mcrypt \
+--with-mhash \
+--with-zlib \
+--with-xmlrpc \
+--with-xsl \
+--with-openssl \
+--with-mysql=/srv/mysql-5.5.16-linux2.6-i686 \
+--with-mysqli=/srv/mysql-5.5.16-linux2.6-i686/bin/mysql_config \
+--with-pdo-mysql=/srv/mysql-5.5.16-linux2.6-i686 \
+--with-sqlite=shared \
+--with-pdo-sqlite=shared \
+--disable-debug \
+--enable-zip \
+--enable-sockets \
+--enable-soap \
+--enable-mbstring \
+--enable-magic-quotes \
+--enable-inline-optimization \
+--enable-gd-native-ttf \
+--enable-xml \
+--enable-ftp \
+--enable-exif \
+--enable-wddx \
+--enable-bcmath \
+--enable-calendar \
+--enable-sqlite-utf8 \
+--enable-shmop \
+--enable-dba \
+--enable-sysvsem \
+--enable-sysvshm \
+--enable-sysvmsg
+
+make &amp;&amp; make install
+			
+			</pre>
+			<p>如果出现 fpm 编译错误，取消--with-mcrypt 可以编译成功。</p>
+			<pre class="screen">
+# cp sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm
+# chmod 755 /etc/init.d/php-fpm
+# ln -s /srv/php-5.3.5 /srv/php
+# cp /srv/php/etc/php-fpm.conf.default /srv/php/etc/php-fpm.conf
+# cp php.ini-production /srv/php/etc/php.ini
+			</pre>
+			<pre class="screen">
+groupadd -g 80 www
+adduser -o --home /www --uid 80 --gid 80 -c "Web User" www
+			</pre>
+			<p>php-fpm.conf</p>
+			<pre class="screen">
+# grep -v ';' /srv/php-5.3.5/etc/php-fpm.conf | grep -v "^$"
+[global]
+pid = run/php-fpm.pid
+error_log = log/php-fpm.log
+[www]
+listen = 127.0.0.1:9000
+
+user = www
+group = www
+pm = dynamic
+pm.max_children = 2048
+pm.start_servers = 20
+pm.min_spare_servers = 5
+pm.max_spare_servers = 35
+
+pm.max_requests = 500
+			</pre>
+			<pre class="screen">
+chkconfig --add php-fpm
+			</pre>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp42"></a>1.9.2.2.1. php-fpm 状态</h5></div></div></div>
+				
+				<pre class="screen">
+    location /nginx_status {
+        stub_status on;
+        access_log   off;
+        allow 202.82.21.12;
+        deny all;
+    }
+    location ~ ^/(status|ping)$ {
+        access_log off;
+        allow 202.82.21.12;
+        deny all;
+        fastcgi_pass 127.0.0.1:9000;
+		fastcgi_param SCRIPT_FILENAME $fastcgi_script_name;
+        include fastcgi_params;
+    }		
+				</pre>
+			</div>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="fastcgi_pass"></a>1.9.2.3. fastcgi_pass</h4></div></div></div>
+			
+			<pre class="screen">
+   location ~ ^(.+\.php)(.*)$
+   {
+	fastcgi_pass 127.0.0.1:9000;
+	fastcgi_index   index.php;
+	fastcgi_split_path_info ^(.+\.php)(.*)$;
+	fastcgi_param   SCRIPT_FILENAME $document_root$fastcgi_script_name;
+	fastcgi_param   PATH_INFO       $fastcgi_path_info;
+	fastcgi_param   PATH_TRANSLATED $document_root$fastcgi_path_info;
+	include fastcgi_params;
+    }			
+			</pre>
+			<p>Unix Socket</p>
+			<pre class="screen">
+location ~ .*\.(php|php5)?$  {
+	#fastcgi_pass  127.0.0.1:9000;
+	fastcgi_pass   unix:/dev/shm/php-fpm.sock;
+	fastcgi_index index.php;
+	include fastcgi.conf;
+}
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp43"></a>1.9.2.4. nginx example</h4></div></div></div>
+			
+			<pre class="screen">
+			
+server {
+    listen       80;
+    listen 443 ssl http2;
+    server_name  cms.netkiller.cn;
+
+    ssl_certificate ssl/netkiller.cn.crt;
+    ssl_certificate_key ssl/netkiller.cn.key;
+    ssl_session_cache shared:SSL:20m;
+    ssl_session_timeout 60m;
+
+    charset utf-8;
+    access_log  /var/log/nginx/cms.netkiller.cn.access.log  main;
+
+    error_page  497              https://$host$uri?$args;
+
+    if ($scheme = http) {
+        return 301 https://$server_name$request_uri;
+    }
+
+    location ~ ^/wp-content/uploads/.*\.php$ {
+	deny all;
+    }
+
+    location / {
+        root   /opt/netkiller.cn/cms.netkiller.cn;
+        index  index.html index.php;
+    }
+
+    #error_page  404              /404.html;
+
+    # redirect server error pages to the static page /50x.html
+    #
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html;
+    }
+
+    # proxy the PHP scripts to Apache listening on 127.0.0.1:80
+    #
+    #location ~ \.php$ {
+    #    proxy_pass   http://127.0.0.1;
+    #}
+
+    # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
+    #
+    location ~ \.php$ {
+        root           /opt/netkiller.cn/cms.netkiller.cn;
+        fastcgi_pass   127.0.0.1:9000;
+        fastcgi_index  index.php;
+        fastcgi_param  SCRIPT_FILENAME  /opt/netkiller.cn/cms.netkiller.cn$fastcgi_script_name;
+        include        fastcgi_params;
+    }
+
+    # deny access to .htaccess files, if Apache's document root
+    # concurs with nginx's one
+    #
+    #location ~ /\.ht {
+    #    deny  all;
+    #}
+
+}			
+			
+			</pre>
+		</div>
+	</div>
+</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ngx_http_proxy_module.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="module.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">1.8. Proxy </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 1.10. Nginx module</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script><script xmlns="" type="text/javascript" src="/js/q.js" async="async"></script></body></html>

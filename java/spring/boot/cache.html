@@ -15,7 +15,7 @@
 		
 		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="redis"></a>5.21.1. Spring boot with Redis</h4></div></div></div>
 			
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp190"></a>5.21.1.1. maven</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp193"></a>5.21.1.1. maven</h5></div></div></div>
 				
 				<pre class="programlisting">
 				
@@ -26,7 +26,7 @@
 				
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp191"></a>5.21.1.2. application.properties</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp194"></a>5.21.1.2. application.properties</h5></div></div></div>
 				
 				<pre class="programlisting">
 				
@@ -42,7 +42,7 @@ spring.redis.timeout=0
 				
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp192"></a>5.21.1.3. JUnit</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp195"></a>5.21.1.3. JUnit</h5></div></div></div>
 				
 				<pre class="programlisting">
 				
@@ -61,7 +61,7 @@ public class ApplicationTests {
 				
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp193"></a>5.21.1.4. Controller</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp196"></a>5.21.1.4. Controller</h5></div></div></div>
 				
 				<p>stringRedisTemplate模板用于存储key,value为字符串的数据</p>
 				<pre class="programlisting">
@@ -108,7 +108,7 @@ public class Example {
 }
 				
 				</pre>
-				<div class="example"><a id="idp451"></a><p class="title"><strong>例 5.4. RedisTemplate</strong></p><div class="example-contents">
+				<div class="example"><a id="idp461"></a><p class="title"><strong>例 5.4. RedisTemplate</strong></p><div class="example-contents">
 					
 					<pre class="programlisting">
 					
@@ -147,9 +147,139 @@ public class Example {
 				</div></div><br class="example-break" />
 			</div>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="cacheable"></a>5.21.2. @Cacheable</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="redis.pubsub"></a>5.21.2. Redis Pub/Sub</h4></div></div></div>
 			
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp194"></a>5.21.2.1. maven</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp197"></a>5.21.2.1. Redis配置类</h5></div></div></div>
+				
+				<pre class="programlisting">
+				
+package cn.netkiller.wallet.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.listener.ChannelTopic;
+import org.springframework.data.redis.listener.RedisMessageListenerContainer;
+import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
+
+import cn.netkiller.wallet.redis.RedisMessageSubscriber;
+
+@Configuration
+public class RedisConfig {
+
+	public RedisConfig() {
+	}
+
+	@Bean
+	public StringRedisTemplate stringRedisTemplate(RedisConnectionFactory connectionFactory) {
+		StringRedisTemplate redisTemplate = new StringRedisTemplate();
+		redisTemplate.setConnectionFactory(connectionFactory);
+		return redisTemplate;
+	}
+
+	@Bean
+	public MessageListenerAdapter messageListener() {
+		return new MessageListenerAdapter(new RedisMessageSubscriber());
+	}
+
+	@Bean
+	public ChannelTopic topic() {
+		return new ChannelTopic("demo");
+	}
+
+	@Bean
+	public RedisMessageListenerContainer redisContainer(RedisConnectionFactory connectionFactory, MessageListenerAdapter messageListener) {
+		RedisMessageListenerContainer container = new RedisMessageListenerContainer();
+
+		container.setConnectionFactory(connectionFactory);
+		container.addMessageListener(messageListener(), topic());
+		container.addMessageListener(messageListener(), new ChannelTopic("test"));
+		return container;
+	}
+
+}
+
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp198"></a>5.21.2.2. 订阅和发布类</h5></div></div></div>
+				
+				<pre class="programlisting">
+				
+package cn.netkiller.wallet.redis;
+
+import java.nio.charset.StandardCharsets;
+
+import org.springframework.data.redis.connection.Message;
+import org.springframework.data.redis.connection.MessageListener;
+
+public class RedisMessageSubscriber implements MessageListener {
+	public void onMessage(final Message message, final byte[] pattern) {
+		System.out.println("Topic : " + new String(message.getChannel(), StandardCharsets.UTF_8));
+		System.out.println("Message : " + message.toString());
+	}
+}
+
+				
+				</pre>
+				<pre class="programlisting">
+				
+package cn.netkiller.wallet.redis;
+
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.listener.ChannelTopic;
+
+public class RedisMessagePublisher {
+
+	private final StringRedisTemplate redisTemplate;
+
+	private final ChannelTopic topic;
+
+	public RedisMessagePublisher(StringRedisTemplate redisTemplate, ChannelTopic topic) {
+		this.redisTemplate = redisTemplate;
+		this.topic = topic;
+	}
+
+	public void publish(String message) {
+		redisTemplate.convertAndSend(topic.getTopic(), message);
+	}
+}
+								
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp199"></a>5.21.2.3. 消息发布演示</h5></div></div></div>
+				
+				<pre class="programlisting">
+				
+	@Autowired
+	private StringRedisTemplate stringRedisTemplate;
+	
+	@GetMapping("/pub/demo")
+	public String pub() {
+
+		RedisMessagePublisher publisher = new RedisMessagePublisher(stringRedisTemplate, new ChannelTopic("demo"));
+		String message = "Message " + UUID.randomUUID();
+		publisher.publish(message);
+		return message;
+	}
+
+	@GetMapping("/pub/test")
+	public String pub(@RequestParam String message) {
+
+		RedisMessagePublisher publisher = new RedisMessagePublisher(stringRedisTemplate, new ChannelTopic("test"));
+		publisher.publish(message);
+		return message;
+	}				
+				
+				</pre>
+			</div>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="cacheable"></a>5.21.3. @Cacheable</h4></div></div></div>
+			
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp200"></a>5.21.3.1. maven</h5></div></div></div>
 				
 				<pre class="programlisting">
 				
@@ -160,7 +290,7 @@ public class Example {
 				
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp195"></a>5.21.2.2. Controller</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp201"></a>5.21.3.2. Controller</h5></div></div></div>
 				
 				<p>缓存返回结果</p>
 				<pre class="programlisting">
