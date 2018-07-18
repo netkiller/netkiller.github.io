@@ -1,0 +1,422 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>6.7. 智能合约数据库操作 CURD</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="home" href="../index.html" title="Netkiller Blockchain 手札" /><link rel="up" href="eos.contract.html" title="第 6 章 智能合约开发" /><link rel="prev" href="contract.dice.html" title="6.6. dice" /><link rel="next" href="eos.devel.html" title="第 7 章 EOS Dapp 开发" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">云栖社区</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+		<a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">6.7. 智能合约数据库操作 CURD</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="contract.dice.html">上一页</a> </td><th width="60%" align="center">第 6 章 智能合约开发</th><td width="20%" align="right"> <a accesskey="n" href="eos.devel.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp426"></a>6.7. 智能合约数据库操作 CURD</h2></div></div></div>
+	
+	
+	<p>为了方便调试合约</p>
+	<p>找到config.ini中的配置项contracts-console = false 改为 true</p>
+	<pre class="screen">
+		
+[root@netkiller ~]# vim ~/.local/share/eosio/nodeos/config/config.ini
+
+# print contract's output to console (eosio::chain_plugin)
+contracts-console = true
+		
+	</pre>
+	<p>这样 eosio::print() 输出的内容才会显示在控制台上。</p>
+
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id=""></a>6.7.1. 创建一个新项目</h3></div></div></div>
+		
+		<pre class="screen">
+		
+eosiocpp -n project		
+		
+		</pre>
+
+	</div>
+
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id=""></a>6.7.2. 创建结构体</h3></div></div></div>
+		
+		<p>例如我们需要这样一个数据结构</p>
+		<pre class="screen">
+		
+{
+	id,
+	description,
+	completed
+}		
+		
+		</pre>
+		<p>结构体定义如下</p>
+		<pre class="programlisting">
+		
+struct todo {
+	uint64_t id;
+	std::string description;
+	uint64_t completed;
+
+	uint64_t primary_key() const { return id; }
+	EOSLIB_SERIALIZE(todo, (id)(description)(completed))
+};		
+		
+		</pre>
+		<p>primary_key() 相当与数据中的主键。</p>
+		<p>定义一个表</p>
+		<pre class="programlisting">
+		
+typedef eosio::multi_index&lt;N(todos), todo&gt; todo_table;
+todo_table todos;	
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id=""></a>6.7.3. 插入数据操作</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+void create(account_name author, const uint32_t id, const std::string&amp; description) {
+	todos.emplace(author, [&amp;](auto&amp; new_todo) {
+		new_todo.id  = id;
+		new_todo.description = description;
+		new_todo.completed = 0;
+	});		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id=""></a>6.7.4. 修改数据操作</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+void complete(account_name author, const uint32_t id) {
+      auto todo_lookup = todos.find(id);
+      eosio_assert(todo_lookup != todos.end(), "Todo does not exist");
+
+      todos.modify(todo_lookup, author, [&amp;](auto&amp; modifiable_todo) {
+        modifiable_todo.completed = 1;
+      });
+
+      eosio::print("todo#", id, " marked as complete");
+    }		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id=""></a>6.7.5. 删除数据操作</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+void destroy(account_name author, const uint32_t id) {
+	auto todo_lookup = todos.find(id);
+	todos.erase(todo_lookup);
+
+	eosio::print("todo#", id, " destroyed");
+}		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id=""></a>6.7.6. 完整的合约例子</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+#include &lt;eosiolib/eosio.hpp&gt;
+#include &lt;string&gt;
+
+namespace eosio {
+using std::string;
+  class netkiller : public contract {
+     public:
+           netkiller( account_name self ):contract(self){}
+
+           void create(account_name author, string title, string content);
+           void change(account_name author, uint64_t post_id, string title, string content);
+           void remove(account_name author, uint64_t post_id);
+           void find(uint64_t post_id, account_name author);
+
+     private:
+
+           struct da {
+                 uint64_t     post_id;
+                 account_name poster;
+                 string       title;
+                 string       content;
+
+                 uint64_t primary_key()const { return post_id; }
+                 account_name get_poster() const { return poster; }
+
+                 EOSLIB_SERIALIZE(da, (post_id)(poster)(title)(content))
+           };
+           typedef eosio::multi_index&lt;N(data), da, indexed_by&lt;N(byposter), const_mem_fun&lt;da, account_name, &amp;da::get_poster&gt;&gt; &gt; article;
+  };
+}
+		
+		
+		</pre>
+		<pre class="programlisting">
+		
+#include "netkiller.hpp"
+
+namespace eosio {
+
+    void netkiller::create(account_name author, string title, string content)
+    {
+        require_auth( author );
+        article datable( _self, _self);
+        datable.emplace(author, [&amp;]( da &amp; d){
+            d.title = title;
+            d.content = content;
+            d.post_id = datable.available_primary_key();
+            d.poster = author;
+        });
+    }
+
+    void netkiller::change(account_name author, uint64_t post_id, string title, string content)
+    {
+        require_auth(author);
+        article datable( _self, author);
+        auto post = datable.find(post_id);
+        eosio_assert(post-&gt;poster == author, "netkiller");
+        datable.modify(post, author, [&amp;](auto&amp; p){
+            if (title != "")
+                p.title = title;
+            if (content != "")
+                p.content = content;
+        });
+    }
+
+    void netkiller::remove(account_name author, uint64_t post_id)
+    {
+        require_auth(author);
+        article datable( _self, author);
+        auto post = datable.find(post_id);
+        eosio::print(post-&gt;title.c_str());
+
+        eosio_assert(post-&gt;poster == author, "The author is invlide");
+        datable.erase(post);
+    }
+
+    void netkiller::find(uint64_t post_id, account_name author){
+        article datable(_self, _self);
+        auto post_da = datable.find( post_id);
+        eosio::print("Post_id: ", post_da-&gt;post_id, "  Post_Tile: ", post_da-&gt;title.c_str(), " Content: ", post_da-&gt;content.c_str());
+
+        auto poster_index = datable.template get_index&lt;N(byposter)&gt;();
+        auto pos = poster_index.find( author );
+
+        for (; pos != poster_index.end(); pos++)
+        {
+            eosio::print("content:", pos-&gt;content.c_str(), " post_id:", pos-&gt;post_id, " title:", pos-&gt;title.c_str());
+        }
+    }
+
+}
+EOSIO_ABI(eosio::netkiller, (create)(change)(remove)(find))
+
+		
+		</pre>
+		<pre class="programlisting">
+		
+		</pre>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp117"></a>6.7.6.1. 编译</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+eosiocpp -o cms.wast cms.cpp	
+eosiocpp -g cms.abi cms.cpp
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp118"></a>6.7.6.2. 启动EOS私链开发环境</h4></div></div></div>
+			
+			<pre class="screen">
+		
+nodeos -e -p eosio --plugin eosio::chain_api_plugin --plugin eosio::history_api_plugin --plugin eosio::wallet_api_plugin		
+		
+			</pre>
+		</div>
+
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp119"></a>6.7.6.3. 创建合约账号</h4></div></div></div>
+			
+			<p>这里我们创建一个账号，用这个账号部署合约，该账号是合约所有者。</p>
+			<p>创建秘钥对</p>
+			<pre class="screen">
+				
+[root@netkiller ~]# cleos wallet unlock		
+				
+[root@netkiller ~]# cleos create key
+Private key: 5HxCWNbTEADKbvdRBgeENXhxReHMQbVuPL5mumDqGCzmkPo5yy3
+Public key: EOS7WEcxxHcmM7w7DHB56N6qQ2toMrdudYjeDTZb6LtL9g77MXzR4
+				
+			</pre>
+			<p>导入私钥</p>
+			<pre class="screen">
+				
+[root@netkiller ~]# cleos wallet import 5HxCWNbTEADKbvdRBgeENXhxReHMQbVuPL5mumDqGCzmkPo5yy3
+imported private key for: EOS7WEcxxHcmM7w7DHB56N6qQ2toMrdudYjeDTZb6LtL9g77MXzR4		
+	
+[root@netkiller ~]# cleos wallet keys | grep EOS7WEcxxHcmM7w7DHB56N6qQ2toMrdudYjeDTZb6LtL9g77MXzR4
+  "EOS7WEcxxHcmM7w7DHB56N6qQ2toMrdudYjeDTZb6LtL9g77MXzR4",	
+				
+			</pre>
+			<p>创建账号 neo</p>
+			<pre class="screen">
+				
+[root@netkiller ~]# cleos create account eosio contract.cms EOS7WEcxxHcmM7w7DHB56N6qQ2toMrdudYjeDTZb6LtL9g77MXzR4 EOS7WEcxxHcmM7w7DHB56N6qQ2toMrdudYjeDTZb6LtL9g77MXzR4
+executed transaction: f04ba09f633dffbf97321c6d2e021192082383908fa690dc40032cd98a1bfd89  200 bytes  390 us
+#         eosio &lt;= eosio::newaccount            "0000000000ea305590af0119999b274501000000010003588ecdc868696f500c7782dbf0da3b298830e67ea9b810469819d...
+warning: transaction executed locally, but may not be confirmed by the network yet
+				
+			</pre>
+			<p>contract.art 就是我们合约账号，我们使用 contract 前缀来区分他是合约账号。</p>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp120"></a>6.7.6.4. 部署合约</h4></div></div></div>
+			
+			<p></p>
+			<pre class="screen">
+		
+[root@netkiller eos]# cleos wallet unlock
+password: Unlocked: default
+
+[root@netkiller eos]# cleos set contract contract.cms cms
+Reading WAST/WASM from cms/cms.wasm...
+Using already assembled WASM...
+Publishing contract...
+executed transaction: 8a72e29389e170807daaf41e9c9e70ac4eff2f2f129ca22ef55ca9443768dedf  7176 bytes  1311 us
+#         eosio &lt;= eosio::setcode               "80250219999b27450000c3770061736d0100000001b2011b60037f7e7e0060027f7e0060057f7e7e7f7f0060047f7e7f7f0...
+#         eosio &lt;= eosio::setabi                "80250219999b27459d020e656f73696f3a3a6162692f312e30000506637265617465000306617574686f72046e616d65057...
+warning: transaction executed locally, but may not be confirmed by the network yet
+		
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp121"></a>6.7.6.5. 创建</h4></div></div></div>
+			
+			<pre class="screen">
+		
+cleos push action contract.cms create '{"author":"contract.cms","title":"hello","content":"helloworld!!!"}' -p contract.cms
+
+[root@netkiller eos]# cleos push action contract.art create '{"author":"contract.art","title":"hello","content":"helloworld!!!"}' -p contract.art
+executed transaction: b6cab608fb4e7fa17a7f893848f3516e1bfd231769ad7d7226b0a099f309a771  120 bytes  899 us
+#  contract.art &lt;= contract.art::create         {"author":"contract.cms","title":"hello","content":"helloworld!!!"}
+warning: transaction executed locally, but may not be confirmed by the network yet
+		
+			</pre>
+
+			<pre class="screen">
+			
+[root@netkiller eos]# cleos push action contract.cms create '{"author":"neo","title":"hello","content":"helloworld!!!"}' -p neo
+executed transaction: 90cb81b11386514b450e1a609f0e1e2633f6a4e40d453c127811e5cd33b46a5a  120 bytes  755 us
+#  contract.art &lt;= contract.art::create         {"author":"neo","title":"hello","content":"helloworld!!!"}
+warning: transaction executed locally, but may not be confirmed by the network yet		
+			
+			</pre>
+			<p>下面我们来查询一下刚刚插入的数据：</p>
+			<pre class="screen">
+		
+
+		
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp122"></a>6.7.6.6. 查找</h4></div></div></div>
+			
+			<p>find</p>
+			<pre class="screen">
+			
+[root@netkiller eos]# cleos push action contract.cms find '{"id":0}' -p contract.cms
+executed transaction: b3cba4d001fcb49a88926be208fa7bee59d557b0ed8a2bd12e65bdd3ff69c61e  104 bytes  486 us
+#  contract.cms &lt;= contract.cms::find           {"id":0}
+&gt;&gt; id: 0 Tile: hello Content: helloworld!!!			
+			
+			</pre>
+			<p>query</p>
+			<pre class="screen">
+			
+[root@netkiller eos]# cleos push action contract.cms query '{"author":"contract.cms", "id":0}' -p contract.cms 
+executed transaction: c81a0d21634f4942f7d65dd49efcf5cf7cd739a049968b5f9b0eaad7de4c688c  112 bytes  583 us
+#  contract.cms &lt;= contract.cms::query          {"author":"contract.cms","id":0}
+&gt;&gt; Post_id: 0  Post_Tile: hello Content: helloworld!!!content:helloworld!!! id:0 title:hello
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp123"></a>6.7.6.7. 修改</h4></div></div></div>
+			
+			<p>修改表中的数据</p>
+			<pre class="screen">
+			
+[root@netkiller eos]# cleos push action contract.cms change '{"author":"contract.cms","id":0,"title":"word","content":"china"}' -p contract.cms
+executed transaction: 073205e4e3e30699a81394ee622aa84d568958919801b364d809ff34f4ca8412  120 bytes  553 us
+#  contract.cms &lt;= contract.cms::change         {"author":"contract.cms","id":0,"title":"word","content":"china"}
+			
+			</pre>
+			<p>检查数据修改情况</p>
+			<pre class="screen">
+			
+[root@netkiller eos]# cleos push action contract.cms find '{"id":0}' -p contract.cms
+executed transaction: 300fe2c93cf2cfebcdd0524e0629a96b3011b0592be2119d001f38807c1c378b  104 bytes  498 us
+#  contract.cms &lt;= contract.cms::find           {"id":0}
+&gt;&gt; id: 0 Tile: word Content: china			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp124"></a>6.7.6.8. 删除</h4></div></div></div>
+			
+			<pre class="screen">
+			
+[root@netkiller eos]# cleos push action contract.cms remove '{"author":"contract.cms","id":0}' -p contract.cms
+executed transaction: eeee8ff799c58d5e3a246ccec8d80c47599ad947d4581611d9a668abee53c0b5  112 bytes  770 us
+#  contract.cms &lt;= contract.cms::remove         {"author":"contract.cms","id":0}
+&gt;&gt; word		
+			
+			</pre>
+			<p>检查被删除的数据，提示 Error 3070002: Runtime Error Processing WASM 表示找不到该记录。</p>
+			<pre class="screen">
+			
+[root@netkiller eos]# cleos push action contract.cms find '{"id":0}' -p contract.cms
+Error 3070002: Runtime Error Processing WASM			
+			
+			</pre>
+		</div>
+	</div>
+
+
+</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="contract.dice.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="eos.contract.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="eos.devel.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">6.6. dice </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 7 章 EOS Dapp 开发</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script><script xmlns="" type="text/javascript" src="/js/q.js" async="async"></script></body></html>
