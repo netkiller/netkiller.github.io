@@ -2166,7 +2166,9 @@ In --- 等价于 SQL 中的 "in"，比如 findByUsernameIn(Collection&lt;String&
 NotIn --- 等价于 SQL 中的 "not in"，比如 findByUsernameNotIn(Collection&lt;String&gt; userList) ，方法的参数可以是 Collection 类型，也可以是数组或者不定长
 		
 		</pre>
-		<pre class="programlisting">
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id=""></a>5.3.5.1. findByXXX</h5></div></div></div>
+			
+			<pre class="programlisting">
 		
 	@Autowired
 	private ArticleRepository articleRepository;
@@ -2198,8 +2200,35 @@ NotIn --- 等价于 SQL 中的 "not in"，比如 findByUsernameNotIn(Collection&
 		return tmp.get(0).getTitle();
 	}
 		
-		</pre>
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="eunm"></a>5.3.5.1. 传递枚举参数</h5></div></div></div>
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp226"></a>5.3.5.2. Boolean</h5></div></div></div>
+			
+			<pre class="programlisting">
+			
+package cn.netkiller.wallet.repository.fcoin;
+
+import java.util.List;
+
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.repository.CrudRepository;
+
+import cn.netkiller.wallet.domain.fcoin.Fcoin;;
+
+public interface FcoinRepository extends CrudRepository&lt;Fcoin, String&gt; {
+
+	Fcoin findOneByAddress(String address);
+
+	int countByAirdropFalse();
+
+	List&lt;Fcoin&gt; findByAirdrop(boolean airdrop, Pageable pageable);
+
+}
+
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="eunm"></a>5.3.5.3. 传递枚举参数</h5></div></div></div>
 			
 			<pre class="programlisting">
 			
@@ -2227,7 +2256,7 @@ public interface StatisticsHistoryRepostitory extends CrudRepository&lt;Statisti
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="pageable"></a>5.3.5.2. 翻页操作</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="pageable"></a>5.3.5.4. 翻页操作</h5></div></div></div>
 			
 			<pre class="programlisting">
 			
@@ -2259,8 +2288,20 @@ public interface RecentReadRepostitory extends CrudRepository&lt;RecentRead, Lon
 	}
 			
 			</pre>
+			<p>注意 PageRequest(int page, int size) 在新版 Spring boot 2.x 中已经废弃请使用 PageRequest.of(page, size) 替代</p>
+			<pre class="programlisting">
+			
+List&lt;Fcoin&gt; fcoins = fcoinRepository.findByAirdrop(false, PageRequest.of(0, size));
+			
+			</pre>
+			<pre class="screen">
+			
+PageRequest(int page, int size, Sort sort)  Deprecated. 
+use PageRequest.of(int, int, Sort) instead.			
+			
+			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="sort"></a>5.3.5.3. 排序操作操作</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="sort"></a>5.3.5.5. 排序操作操作</h5></div></div></div>
 			
 			<pre class="programlisting">
 			
@@ -2275,7 +2316,7 @@ repostitory.findByName("Neo", sort);
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="OrderBy"></a>5.3.5.4. OrderBy</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="OrderBy"></a>5.3.5.6. OrderBy</h5></div></div></div>
 			
 			<pre class="programlisting">
 			
@@ -2285,9 +2326,9 @@ List&lt;RecentRead&gt; findByMemberIdOrderByIdDesc(int memberId, Pageable pageab
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="Query"></a>5.3.5.5. Query</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="Query"></a>5.3.5.7. Query</h5></div></div></div>
 			
-			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp226"></a>5.3.5.5.1. 参数传递</h6></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp227"></a>5.3.5.7.1. 参数传递</h6></div></div></div>
 				
 				<pre class="programlisting">
 				
@@ -2329,7 +2370,7 @@ public interface PersonRepository extends JpaRepository&lt;Person, Long&gt; {
 				
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id=""></a>5.3.5.5.2. 原生 SQL</h6></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp228"></a>5.3.5.7.2. 原生 SQL</h6></div></div></div>
 				
 				<pre class="programlisting">
 				
@@ -2340,8 +2381,17 @@ public interface UserRepository extends JpaRepository&lt;User, Long&gt; {
 }
 				
 				</pre>
+				<p>insert ignore</p>
+				<pre class="programlisting">
+				
+	@Modifying
+    @Query(value = "insert ignore into emp(create, modified, user_id, user_name, user_nickname, user_mail) values(?1, ?2, ?3, ?4, ?5, ?6)", nativeQuery = true)
+    void insertIgnoreEmployee(Timestamp create, Timestamp modified, String userId, String name, String nickname, String mail);
+				
+				
+				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp227"></a>5.3.5.5.3. @Query 与 Pageagble</h6></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp229"></a>5.3.5.7.3. @Query 与 Pageagble</h6></div></div></div>
 				
 				<p>
 					<a class="ulink" href="https://docs.spring.io/spring-data/jpa/docs/current/reference/html/#_native_queries" target="_top">https://docs.spring.io/spring-data/jpa/docs/current/reference/html/#_native_queries</a>
@@ -2518,10 +2568,52 @@ public interface TransactionHistoryRepository extends CrudRepository&lt;Transact
 				
 				</pre>
 			</div>
+			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp230"></a>5.3.5.7.4. 返回指定字段</h6></div></div></div>
+				
+				<p>通过实体返回数据有时结果集非常庞大，可能会影响性能，这时我们只需要返回指定字段即可。</p>
+				<pre class="programlisting">
+				
+@Query(value = "select u.userName, ui.name, ui.gender, ui.description from UserInfo ui, User u where u.id = ui.userId")
+public List&lt;Object&gt; getCustomField();
+								
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp231"></a>5.3.5.7.5. 返回指定的模型</h6></div></div></div>
+				
+				<p>临时写一个新的模型</p>
+				<pre class="programlisting">
+				
+public class MyModel implements Serializable {
+
+    private String userName;
+    private String name;
+    private String gender;
+    private String description;
+
+    public MyModel() {};
+
+    public MyModel(String userName, String name, String gender, String description) {
+        this.userName = userName;
+        this.name = name;
+        this.gender = gender;
+        this.description = description;
+    }
+}
+				
+				</pre>
+				<p>使用构造方法赋值</p>
+				<pre class="programlisting">
+				
+@Query(value = "select new cn.netkiller.model.MyModel(u.userName, ui.name, ui.gender, ui.description) from UserInfo ui, User u where u.id = ui.userId")
+public List&lt;MyModel&gt; getAllRecord();
+				
+				</pre>
+				
+			</div>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="Transactional"></a>5.3.5.6. @Transactional</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="Transactional"></a>5.3.5.8. @Transactional</h5></div></div></div>
 			
-			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp228"></a>5.3.5.6.1. 删除更新需要 @Transactional 注解</h6></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp232"></a>5.3.5.8.1. 删除更新需要 @Transactional 注解</h6></div></div></div>
 				
 				<pre class="programlisting">
 				
@@ -2562,7 +2654,7 @@ public interface RecentReadRepostitory extends CrudRepository&lt;RecentRead, Int
 				
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp229"></a>5.3.5.6.2. 回滚操作</h6></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp233"></a>5.3.5.8.2. 回滚操作</h6></div></div></div>
 				
 				<pre class="programlisting">
 				
@@ -2583,7 +2675,7 @@ public interface RecentReadRepostitory extends CrudRepository&lt;RecentRead, Int
 				</pre>
 			</div>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="@Lock"></a>5.3.5.7. 锁 @Lock</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="@Lock"></a>5.3.5.9. 锁 @Lock</h5></div></div></div>
 			
 			<pre class="programlisting">
 			
