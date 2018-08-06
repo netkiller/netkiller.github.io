@@ -375,6 +375,63 @@ Error 3070002: Runtime Error Processing WASM
 		</div>
 	</div>
 
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="available_primary_key()"></a>6.7.7. 序列主键</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+#include &lt;eosiolib/eosio.hpp&gt;
+
+using namespace eosio;
+
+class vehicle : public eosio::contract {
+public:
+    /// @abi table
+    struct service_rec {
+        uint64_t        pkey;
+        account_name    customer;
+        uint32_t        date;
+        uint32_t        odometer;
+
+        auto primary_key() const { return pkey; }
+
+        account_name get_customer() const { return customer; }
+
+        EOSLIB_SERIALIZE(service_rec, (pkey)(customer)(date)(odometer))
+    };
+
+    typedef multi_index&lt;N(service), service_rec&gt; service_table_type;
+
+    using contract::contract;
+
+    /// @abi action
+    void exec(account_name owner, account_name customer) {
+        
+        service_table_type service_table(current_receiver(), owner);
+        uint64_t pkeyf;
+        service_table.emplace(owner, [&amp;](auto &amp;s_rec) {
+            s_rec.pkey = service_table.available_primary_key();	// 主键自增
+            pkeyf = s_rec.pkey;
+            print(pkeyf);// 打印主键内容
+            s_rec.customer = customer;
+            s_rec.date = 2000;
+            s_rec.odometer = 100;
+        });
+        
+        print("Hello, ", name{customer});
+        service_rec result = service_table.get(pkeyf);
+        print("_", result.pkey);
+        print("_", result.customer);
+        print("_", result.date);
+        print("_", result.odometer);
+    }
+
+};
+
+EOSIO_ABI(vehicle, (exec))		
+		
+		</pre>
+		<p></p>
+	</div>
 
 </div><div xmlns="" id="disqus_thread"></div><script xmlns="">
 
