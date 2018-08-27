@@ -1,0 +1,328 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>2.24. Spring boot with Oauth2 jwt</title><link rel="stylesheet" type="text/css" href="../..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config" /><link rel="home" href="../../index.html" title="Netkiller Spring Cloud 手札" /><link rel="up" href="index.html" title="第 2 章 Spring Boot" /><link rel="prev" href="oauth2.html" title="2.23. Spring boot with Oauth2" /><link rel="next" href="oauth2.jwt.keypair.html" title="2.25. Spring boot with Oauth2 jwt 非对称证书" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">云栖社区</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+		<a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">2.24. Spring boot with Oauth2 jwt</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="oauth2.html">上一页</a> </td><th width="60%" align="center">第 2 章 Spring Boot</th><td width="20%" align="right"> <a accesskey="n" href="oauth2.jwt.keypair.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="oauth2.jwt"></a>2.24. Spring boot with Oauth2 jwt</h3></div></div></div>
+	
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp102"></a>2.24.1. Maven</h4></div></div></div>
+		
+		<pre class="screen">
+		
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-security&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.security.oauth&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-security-oauth2&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.security&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-security-jwt&lt;/artifactId&gt;
+		&lt;/dependency&gt;	
+		
+		</pre>
+		<p>如果是 Springboot 2.0.4 需要制定版本号</p>
+		<pre class="screen">
+		
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.security.oauth&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-security-oauth2&lt;/artifactId&gt;
+			&lt;version&gt;2.3.3.RELEASE&lt;/version&gt;
+		&lt;/dependency&gt;
+
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.security&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-security-jwt&lt;/artifactId&gt;
+			&lt;version&gt;1.0.9.RELEASE&lt;/version&gt;
+		&lt;/dependency&gt;
+		
+		&lt;dependency&gt;
+			&lt;groupId&gt;javax.xml.bind&lt;/groupId&gt;
+			&lt;artifactId&gt;jaxb-api&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;com.sun.xml.bind&lt;/groupId&gt;
+			&lt;artifactId&gt;jaxb-impl&lt;/artifactId&gt;
+			&lt;version&gt;2.3.0&lt;/version&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;com.sun.xml.bind&lt;/groupId&gt;
+			&lt;artifactId&gt;jaxb-core&lt;/artifactId&gt;
+			&lt;version&gt;2.3.0&lt;/version&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;com.sun.activation&lt;/groupId&gt;
+			&lt;artifactId&gt;javax.activation&lt;/artifactId&gt;
+			&lt;version&gt;1.2.0&lt;/version&gt;
+		&lt;/dependency&gt;
+		
+		
+		</pre>
+	</div>
+	
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp103"></a>2.24.2. Authorization Server</h4></div></div></div>
+		
+		<pre class="programlisting">
+		
+package api.config;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
+import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
+import org.springframework.security.oauth2.config.annotation.web.configuration.EnableAuthorizationServer;
+import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerEndpointsConfigurer;
+import org.springframework.security.oauth2.provider.token.DefaultTokenServices;
+import org.springframework.security.oauth2.provider.token.TokenStore;
+import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
+import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
+
+@Configuration
+@EnableAuthorizationServer
+public class AuthorizationServerConfigurer extends AuthorizationServerConfigurerAdapter {
+
+	@Autowired
+	@Qualifier("userDetailsService")
+	private UserDetailsService userDetailsService;
+
+	@Autowired
+	private AuthenticationManager authenticationManager;
+
+	@Value("${oauth.tokenTimeout:3600}")
+	private int expiration;
+
+	@Bean
+	public PasswordEncoder passwordEncoder() {
+		return new BCryptPasswordEncoder();
+	}
+
+	// @Override
+	// public void configure(AuthorizationServerSecurityConfigurer oauthServer) throws Exception {
+	// oauthServer.tokenKeyAccess("isAnonymous() || hasAuthority('ROLE_TRUSTED_CLIENT')");
+	// oauthServer.checkTokenAccess("hasAuthority('ROLE_TRUSTED_CLIENT')");
+	// }
+
+	@Override
+	public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
+		clients.inMemory().withClient("api").secret(passwordEncoder().encode("secret")).accessTokenValiditySeconds(expiration).refreshTokenValiditySeconds(expiration).scopes("read", "write").authorizedGrantTypes("password", "refresh_token").authorities("USER").resourceIds("blockchain");
+	}
+
+	@Override
+	public void configure(AuthorizationServerEndpointsConfigurer configurer) throws Exception {
+		configurer.tokenStore(tokenStore()).accessTokenConverter(accessTokenConverter());
+		configurer.authenticationManager(authenticationManager);
+		configurer.userDetailsService(userDetailsService);
+	}
+
+	@Bean
+	public TokenStore tokenStore() {
+		return new JwtTokenStore(accessTokenConverter());
+	}
+
+	@Bean
+	public JwtAccessTokenConverter accessTokenConverter() {
+		JwtAccessTokenConverter converter = new JwtAccessTokenConverter();
+		converter.setSigningKey("123");
+		return converter;
+	}
+
+	@Bean
+	@Primary
+	public DefaultTokenServices tokenServices() {
+		DefaultTokenServices defaultTokenServices = new DefaultTokenServices();
+		defaultTokenServices.setTokenStore(tokenStore());
+		defaultTokenServices.setSupportRefreshToken(true);
+		return defaultTokenServices;
+	}
+
+}		
+		
+		</pre>
+</div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp104"></a>2.24.3. Resource Server</h4></div></div></div>
+		
+		<pre class="programlisting">
+		
+package api.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.security.oauth2.config.annotation.web.configuration.EnableResourceServer;
+import org.springframework.security.oauth2.config.annotation.web.configuration.ResourceServerConfigurerAdapter;
+import org.springframework.security.oauth2.config.annotation.web.configurers.ResourceServerSecurityConfigurer;
+import org.springframework.security.oauth2.provider.token.DefaultTokenServices;
+import org.springframework.security.oauth2.provider.token.TokenStore;
+import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
+import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
+
+@Configuration
+@EnableResourceServer
+public class ResourceServerConfigurer extends ResourceServerConfigurerAdapter {
+	public ResourceServerConfigurer() {
+		// TODO Auto-generated constructor stub
+	}
+
+	@Override
+	public void configure(ResourceServerSecurityConfigurer resources) {
+		resources.resourceId("blockchain");
+		resources.tokenServices(tokenServices());
+		
+	}
+
+	@Bean
+	public TokenStore tokenStore() {
+		return new JwtTokenStore(accessTokenConverter());
+	}
+
+	@Bean
+	public JwtAccessTokenConverter accessTokenConverter() {
+		JwtAccessTokenConverter converter = new JwtAccessTokenConverter();
+		converter.setSigningKey("123");
+		return converter;
+	}
+
+	@Bean
+	@Primary
+	public DefaultTokenServices tokenServices() {
+		DefaultTokenServices defaultTokenServices = new DefaultTokenServices();
+		defaultTokenServices.setTokenStore(tokenStore());
+		return defaultTokenServices;
+	}
+
+}		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp105"></a>2.24.4. Web Security</h4></div></div></div>
+		
+		<pre class="programlisting">
+		
+package api.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.builders.WebSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+
+@Configuration
+@EnableWebSecurity
+@EnableGlobalMethodSecurity(prePostEnabled = true)
+public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
+
+	@Override
+	public void configure(WebSecurity web) throws Exception {
+		web.ignoring().antMatchers("/login");
+	}
+
+	@Override
+	public void configure(HttpSecurity http) throws Exception {
+		// http.antMatcher("/**").authorizeRequests().anyRequest().authenticated();
+		http.authorizeRequests().antMatchers(HttpMethod.OPTIONS).permitAll().anyRequest().authenticated().and().httpBasic().and().csrf().disable();
+	}
+
+	@Bean
+	@Override
+	public AuthenticationManager authenticationManagerBean() throws Exception {
+		return super.authenticationManagerBean();
+	}
+
+}		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp106"></a>2.24.5. 插入数据</h4></div></div></div>
+		
+		<p></p>
+		<pre class="screen">
+		
+INSERT INTO `user` (username, password, enabled) VALUES ('netkiller@msn.com', '$2a$10$Cyj3hM39V34r5pMeQ.Y9peuUqYMBSvsJ7GTBgp4.stWaTtWMboYGS', true);		
+		
+		</pre>
+
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp107"></a>2.24.6. 使用 CURL 测试 JWT</h4></div></div></div>
+		
+		<pre class="screen">
+		
+neo@MacBook-Pro ~ % curl -X POST --user 'api:secret' -d 'grant_type=password&amp;username=netkiller@msn.com&amp;password=123456' http://localhost:8080/oauth/token
+{"access_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsicmVzb3VyY2UiXSwiZXhwIjoxNTM1MTE4MzYxLCJ1c2VyX25hbWUiOiJuZXRraWxsZXJAbXNuLmNvbSIsImp0aSI6ImM5YzA4ODczLWZlMTctNGM2My05MDA1LTIzZGJlNTE1NTQ0YiIsImNsaWVudF9pZCI6ImFwaSIsInNjb3BlIjpbInJlYWQiLCJ3cml0ZSJdfQ.ydxJQKtdBNWHELL8_aXVoZETNMygXs8T1HQ5XWDBELA","token_type":"bearer","refresh_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsicmVzb3VyY2UiXSwidXNlcl9uYW1lIjoibmV0a2lsbGVyQG1zbi5jb20iLCJzY29wZSI6WyJyZWFkIiwid3JpdGUiXSwiYXRpIjoiYzljMDg4NzMtZmUxNy00YzYzLTkwMDUtMjNkYmU1MTU1NDRiIiwiZXhwIjoxNTM1MTE4MzYxLCJqdGkiOiI3ODJiNmY2NC0xYzdiLTQ0YWYtOThlZC1iZDk3Y2QzYzE1NjEiLCJjbGllbnRfaWQiOiJhcGkifQ.16QUHOrVPUBF97E_972AcLA83zEK7UzaI424PeAmX6E","expires_in":3599,"scope":"read write","jti":"c9c08873-fe17-4c63-9005-23dbe515544b"}
+		
+		</pre>
+		<p>复制 access_token 粘贴到 Authorization: Bearer 后面</p>
+		<pre class="screen">
+		
+neo@MacBook-Pro ~ % curl -H "Accept: application/json" -H "Content-Type: application/json" -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsiYmxvY2tjaGFpbiJdLCJleHAiOjE1MzUxMTkyMTUsInVzZXJfbmFtZSI6Im5ldGtpbGxlckBtc24uY29tIiwianRpIjoiZTNjYmIxNTItYmFkZS00MGM1LTkxOGItZjJjMzZiYTBiMTE2IiwiY2xpZW50X2lkIjoiYXBpIiwic2NvcGUiOlsicmVhZCIsIndyaXRlIl19.ophWAvIT1ZmWCIQyAgyuzmQ98TJsN49OeR3CBSJ_X54" -X GET http://localhost:8080/test/mongo
+{"id":"5b800709e18a211e83c7f355","name":"Netkiller"}		
+		
+		</pre>
+	</div>
+</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="oauth2.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="oauth2.jwt.keypair.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">2.23. Spring boot with Oauth2 </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 2.25. Spring boot with Oauth2 jwt 非对称证书</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script><script xmlns="" type="text/javascript" src="/js/q.js" async="async"></script></body></html>

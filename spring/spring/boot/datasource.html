@@ -1,0 +1,386 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>2.16. 数据源配置</title><link rel="stylesheet" type="text/css" href="../..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config" /><link rel="home" href="../../index.html" title="Netkiller Spring Cloud 手札" /><link rel="up" href="index.html" title="第 2 章 Spring Boot" /><link rel="prev" href="postgresql.html" title="2.15. Spring boot with PostgreSQL" /><link rel="next" href="redis.html" title="2.17. Spring boot with Redis" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">云栖社区</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+		<a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">2.16. 数据源配置</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="postgresql.html">上一页</a> </td><th width="60%" align="center">第 2 章 Spring Boot</th><td width="20%" align="right"> <a accesskey="n" href="redis.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="datasource"></a>2.16. 数据源配置</h3></div></div></div>
+	
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id=""></a>2.16.1. 多数据源配置</h4></div></div></div>
+		
+
+		<pre class="programlisting">
+		
+package cn.netkiller.project.config;
+
+import javax.sql.DataSource;
+
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.jdbc.DataSourceBuilder;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.transaction.PlatformTransactionManager;
+
+@Configuration
+public class DataSourceConfig {
+	
+	@Bean(name = "wwwDataSource")
+	@Qualifier("wwwDataSource")
+	@ConfigurationProperties(prefix = "spring.datasource.www")
+	public DataSource wwwDataSource() {
+		return DataSourceBuilder.create().build();
+	}
+	
+	@Bean(name = "apiDataSource")
+	@Qualifier("apiDataSource")
+	@ConfigurationProperties(prefix = "spring.datasource.api")
+	public DataSource apiDataSource() {
+		return DataSourceBuilder.create().build();
+	}
+
+	@Bean(name = "cmsDataSource")
+	@Qualifier("cmsDataSource")
+	@Primary
+	@ConfigurationProperties(prefix = "spring.datasource.cms")
+	public DataSource cmsDataSource() {
+		return DataSourceBuilder.create().build();
+	}
+
+	@Bean 
+	PlatformTransactionManager transactionManager() {
+		return new DataSourceTransactionManager(apiDataSource());
+	}
+
+	@Bean(name = "wwwJdbcTemplate")
+	public JdbcTemplate wwwJdbcTemplate(@Qualifier("wwwDataSource") DataSource dataSource) {
+		return new JdbcTemplate(dataSource);
+	}	
+	
+	@Bean(name = "appJdbcTemplate")
+	public JdbcTemplate appJdbcTemplate(@Qualifier("apiDataSource") DataSource dataSource) {
+		return new JdbcTemplate(dataSource);
+	}
+
+	@Bean(name = "cmsJdbcTemplate")
+	public JdbcTemplate cmsJdbcTemplate(@Qualifier("cmsDataSource") DataSource dataSource) {
+		return new JdbcTemplate(dataSource);
+	}
+}
+		
+		</pre>
+		<p>对应 application.properties 的配置方法</p>
+		<pre class="screen">
+		
+spring.datasource.www.driver-class-name=com.mysql.jdbc.Driver
+spring.datasource.www.url=jdbc:mysql://localhost:3306/www?useUnicode=true&amp;characterEncoding=UTF-8&amp;serverTimezone=UTC&amp;useSSL=false
+spring.datasource.www.username=www
+spring.datasource.www.password=passw0rd
+spring.datasource.www.max-idle=10
+spring.datasource.www.max-wait=10000
+spring.datasource.www.min-idle=5
+spring.datasource.www.initial-size=5
+spring.datasource.www.validation-query=SELECT 1
+spring.datasource.www.test-on-borrow=false
+spring.datasource.www.test-while-idle=true
+spring.datasource.www.time-between-eviction-runs-millis=18800
+spring.datasource.www.jdbc-interceptors=ConnectionState;SlowQueryReport(threshold=0)
+
+spring.datasource.api.driver-class-name=com.mysql.jdbc.Driver
+spring.datasource.api.url=jdbc:mysql://localhost:3306/api?useUnicode=true&amp;characterEncoding=UTF-8&amp;serverTimezone=UTC&amp;useSSL=false
+spring.datasource.api.username=api
+spring.datasource.api.password=passw0rd
+spring.datasource.api.max-idle=10
+spring.datasource.api.max-wait=10000
+spring.datasource.api.min-idle=5
+spring.datasource.api.initial-size=5
+spring.datasource.api.validation-query=SELECT 1
+spring.datasource.api.test-on-borrow=false
+spring.datasource.api.test-while-idle=true
+spring.datasource.api.time-between-eviction-runs-millis=18800
+spring.datasource.api.jdbc-interceptors=ConnectionState;SlowQueryReport(threshold=0)		
+		
+		</pre>
+		<p>选择数据库</p>
+		<pre class="programlisting">
+		
+	@Autowired
+	@Qualifier("apiJdbcTemplate")
+	JdbcTemplate jdbcTempalte;		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id=""></a>2.16.2. JPA 多数据源</h4></div></div></div>
+		
+		<p>多个 JPA 数据配置非常简单，请参考下面的例子。注意两点，第一点是设置Repository的位置：</p>
+		<pre class="screen">
+		
+@EnableJpaRepositories(
+        entityManagerFactoryRef="entityManagerFactoryPrimary",
+        transactionManagerRef="transactionManagerPrimary",
+        basePackages= { "cn.netkiller.repository.primary" }) //设置Repository所在位置
+		
+		</pre>
+		<p>第二点是设置 Domain 位置，与 Repository 成套出现</p>
+		<pre class="screen">
+		
+	public LocalContainerEntityManagerFactoryBean entityManagerFactoryPrimary (EntityManagerFactoryBuilder builder) {
+        return builder
+                .dataSource(primaryDataSource)
+                .properties(getVendorProperties(primaryDataSource))
+                .packages("cn.netkiller.domain.primary") //设置实体类所在包
+                .persistenceUnit("primaryPersistenceUnit")
+                .build();
+    }		
+		
+		</pre>
+
+		<p>首先配置第一组数据源。</p>
+		<pre class="programlisting">
+		
+package cn.netkiller.project.config;
+		
+@Configuration
+@EnableTransactionManagement
+@EnableJpaRepositories(
+        entityManagerFactoryRef="entityManagerFactoryPrimary",
+        transactionManagerRef="transactionManagerPrimary",
+        basePackages= { "cn.netkiller.repository.primary" }) //设置Repository所在位置
+public class PrimaryConfig {
+
+    @Autowired @Qualifier("primaryDataSource")
+    private DataSource primaryDataSource;
+
+    @Primary
+    @Bean(name = "entityManagerPrimary")
+    public EntityManager entityManager(EntityManagerFactoryBuilder builder) {
+        return entityManagerFactoryPrimary(builder).getObject().createEntityManager();
+    }
+
+    @Primary
+    @Bean(name = "entityManagerFactoryPrimary")
+    public LocalContainerEntityManagerFactoryBean entityManagerFactoryPrimary (EntityManagerFactoryBuilder builder) {
+        return builder
+                .dataSource(primaryDataSource)
+                .properties(getVendorProperties(primaryDataSource))
+                .packages("cn.netkiller.domain.primary") //设置实体类所在包
+                .persistenceUnit("primaryPersistenceUnit")
+                .build();
+    }
+
+    @Autowired
+    private JpaProperties jpaProperties;
+
+    private Map&lt;String, String&gt; getVendorProperties(DataSource dataSource) {
+        return jpaProperties.getHibernateProperties(dataSource);
+    }
+
+    @Primary
+    @Bean(name = "transactionManagerPrimary")
+    public PlatformTransactionManager transactionManagerPrimary(EntityManagerFactoryBuilder builder) {
+        return new JpaTransactionManager(entityManagerFactoryPrimary(builder).getObject());
+    }
+
+}		
+		
+		</pre>
+		<p>设置第二组数据源</p>
+		<pre class="programlisting">
+		
+package cn.netkiller.project.config;
+		
+@Configuration
+@EnableTransactionManagement
+@EnableJpaRepositories(
+        entityManagerFactoryRef="entityManagerFactorySecondary",
+        transactionManagerRef="transactionManagerSecondary",
+        basePackages= { "cn.netkiller.repository.secondary" }) //设置Repository所在位置
+public class SecondaryConfig {
+
+    @Autowired @Qualifier("secondaryDataSource")
+    private DataSource secondaryDataSource;
+
+    @Bean(name = "entityManagerSecondary")
+    public EntityManager entityManager(EntityManagerFactoryBuilder builder) {
+        return entityManagerFactorySecondary(builder).getObject().createEntityManager();
+    }
+
+    @Bean(name = "entityManagerFactorySecondary")
+    public LocalContainerEntityManagerFactoryBean entityManagerFactorySecondary (EntityManagerFactoryBuilder builder) {
+        return builder
+                .dataSource(secondaryDataSource)
+                .properties(getVendorProperties(secondaryDataSource))
+                .packages("cn.netkiller.repository.domain.secondary") //设置Domain实体类所在位置
+                .persistenceUnit("secondaryPersistenceUnit")
+                .build();
+    }
+
+    @Autowired
+    private JpaProperties jpaProperties;
+
+    private Map&lt;String, String&gt; getVendorProperties(DataSource dataSource) {
+        return jpaProperties.getHibernateProperties(dataSource);
+    }
+
+    @Bean(name = "transactionManagerSecondary")
+    PlatformTransactionManager transactionManagerSecondary(EntityManagerFactoryBuilder builder) {
+        return new JpaTransactionManager(entityManagerFactorySecondary(builder).getObject());
+    }
+
+}
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="pool"></a>2.16.3. Connection and Statement Pooling</h4></div></div></div>
+		
+		<p>注意：下面的实例仅限 Spring boot 2.0.2.RELEASE</p>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="tomcat"></a>2.16.3.1. org.apache.tomcat.jdbc.pool.DataSource</h5></div></div></div>
+			
+			<p>默认连接池，可以忽略配置</p>
+			<pre class="programlisting">
+				spring.datasource.type = org.apache.tomcat.jdbc.pool.DataSource
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="druid"></a>2.16.3.2. druid</h5></div></div></div>
+			
+			<p>pom.xml</p>
+			<pre class="programlisting">
+			
+		&lt;dependency&gt;
+			&lt;groupId&gt;com.alibaba&lt;/groupId&gt;
+			&lt;artifactId&gt;druid&lt;/artifactId&gt;
+			&lt;version&gt;1.0.24&lt;/version&gt;
+		&lt;/dependency&gt;
+			
+			</pre>
+			<p>application.properties</p>
+			<pre class="programlisting">
+			
+spring.datasource.type=com.alibaba.druid.pool.DruidDataSource
+spring.datasource.initialSize=5
+spring.datasource.minIdle=5
+spring.datasource.maxActive=20
+spring.datasource.maxWait=60000
+spring.datasource.timeBetweenEvictionRunsMillis=60000 
+spring.datasource.minEvictableIdleTimeMillis=300000
+spring.datasource.validationQuery=SELECT 1 FROM DUAL
+spring.datasource.testWhileIdle=true
+spring.datasource.testOnBorrow=false
+spring.datasource.testOnReturn=false 
+spring.datasource.poolPreparedStatements=true
+spring.datasource.maxPoolPreparedStatementPerConnectionSize=20
+spring.datasource.filters=stat,wall,log4j
+spring.datasource.connectionProperties=druid.stat.mergeSql=true;druid.stat.slowSqlMillis=5000
+#spring.datasource.useGlobalDataSourceStat=true		
+
+spring.datasource.driver-class-name=com.mysql.jdbc.Driver
+spring.datasource.url=jdbc:mysql://192.168.6.1:3306/test
+spring.datasource.username=inf
+spring.datasource.password=inf
+spring.jpa.database=MYSQL
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp57"></a>2.16.3.3. c3p0 - JDBC3 Connection and Statement Pooling</h5></div></div></div>
+			
+			<p>pom.xml</p>
+			<pre class="programlisting">
+			
+		&lt;dependency&gt;
+		    &lt;groupId&gt;org.hibernate&lt;/groupId&gt;
+		    &lt;artifactId&gt;hibernate-c3p0&lt;/artifactId&gt;
+		    &lt;version&gt;4.3.6.Final&lt;/version&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+		    &lt;groupId&gt;c3p0&lt;/groupId&gt;
+		    &lt;artifactId&gt;c3p0&lt;/artifactId&gt;
+		    &lt;version&gt;0.9.1.2&lt;/version&gt;
+		&lt;/dependency&gt;
+			
+			</pre>
+			<p>application.properties</p>
+			<pre class="programlisting">
+			
+spring.datasource.type=com.mchange.v2.c3p0.ComboPooledDataSource
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="dbcp2"></a>2.16.3.4. dbcp2</h5></div></div></div>
+			
+			<pre class="programlisting">
+			
+spring.datasource.type = org.apache.commons.dbcp2.BasicDataSource			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="bonecp"></a>2.16.3.5. bonecp</h5></div></div></div>
+			
+			<pre class="programlisting">
+			
+spring.datasource.type = com.jolbox.bonecp.BoneCPDataSource		
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="dbcp2"></a>2.16.3.6. dbcp2</h5></div></div></div>
+			
+			<pre class="programlisting">
+			
+spring.datasource.type = org.apache.commons.dbcp2.BasicDataSource			
+			
+			</pre>
+		</div>
+	</div>
+</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="postgresql.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="redis.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">2.15. Spring boot with PostgreSQL </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 2.17. Spring boot with Redis</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script><script xmlns="" type="text/javascript" src="/js/q.js" async="async"></script></body></html>
