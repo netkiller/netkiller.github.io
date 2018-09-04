@@ -1,0 +1,381 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>2.11. Spring boot with Session share</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config" /><link rel="home" href="../index.html" title="Netkiller Spring Cloud 手札" /><link rel="up" href="index.html" title="第 2 章 Spring Boot" /><link rel="prev" href="RestTemplate.html" title="2.10. String boot with RestTemplate" /><link rel="next" href="mongodb.html" title="2.12. Spring boot with MongoDB" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">云栖社区</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+		<a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">2.11. Spring boot with Session share</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="RestTemplate.html">上一页</a> </td><th width="60%" align="center">第 2 章 Spring Boot</th><td width="20%" align="right"> <a accesskey="n" href="mongodb.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="session"></a>2.11. Spring boot with Session share</h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp34"></a>2.11.1. Redis</h4></div></div></div>
+			
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp31"></a>2.11.1.1. Maven</h5></div></div></div>
+				
+				<p>增加下面代码到pom.xml</p>
+				<pre class="programlisting">
+				
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-data-redis&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.session&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-session-data-redis&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+				
+				</pre>
+				<p>pom.xml 文件</p>
+				<pre class="programlisting">
+				
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"&gt;
+	&lt;modelVersion&gt;4.0.0&lt;/modelVersion&gt;
+
+	&lt;groupId&gt;cn.netkiller&lt;/groupId&gt;
+	&lt;artifactId&gt;deploy&lt;/artifactId&gt;
+	&lt;version&gt;0.0.1-SNAPSHOT&lt;/version&gt;
+	&lt;packaging&gt;jar&lt;/packaging&gt;
+
+	&lt;name&gt;deploy.netkiller.cn&lt;/name&gt;
+	&lt;description&gt;Deploy project for Spring Boot&lt;/description&gt;
+
+	&lt;parent&gt;
+		&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+		&lt;artifactId&gt;spring-boot-starter-parent&lt;/artifactId&gt;
+		&lt;version&gt;2.0.2.RELEASE&lt;/version&gt;
+		&lt;relativePath /&gt; &lt;!-- lookup parent from repository --&gt;
+	&lt;/parent&gt;
+
+	&lt;properties&gt;
+		&lt;project.build.sourceEncoding&gt;UTF-8&lt;/project.build.sourceEncoding&gt;
+		&lt;project.reporting.outputEncoding&gt;UTF-8&lt;/project.reporting.outputEncoding&gt;
+		&lt;java.version&gt;1.8&lt;/java.version&gt;
+	&lt;/properties&gt;
+
+	&lt;dependencies&gt;
+		&lt;!-- &lt;dependency&gt; &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt; &lt;artifactId&gt;spring-boot-starter-actuator&lt;/artifactId&gt; &lt;/dependency&gt; --&gt;
+		&lt;!-- &lt;dependency&gt; &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt; &lt;artifactId&gt;spring-boot-starter-data-jpa&lt;/artifactId&gt; &lt;/dependency&gt; --&gt;
+		&lt;!-- &lt;dependency&gt; &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt; &lt;artifactId&gt;spring-boot-starter-data-mongodb&lt;/artifactId&gt; &lt;/dependency&gt; --&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-data-redis&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-data-redis&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.session&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-session-data-redis&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+		&lt;!-- &lt;dependency&gt; &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt; &lt;artifactId&gt;spring-boot-starter-jdbc&lt;/artifactId&gt; &lt;/dependency&gt; --&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-security&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-web&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-websocket&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.webjars&lt;/groupId&gt;
+			&lt;artifactId&gt;webjars-locator&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.webjars&lt;/groupId&gt;
+			&lt;artifactId&gt;sockjs-client&lt;/artifactId&gt;
+			&lt;version&gt;1.0.2&lt;/version&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.webjars&lt;/groupId&gt;
+			&lt;artifactId&gt;stomp-websocket&lt;/artifactId&gt;
+			&lt;version&gt;2.3.3&lt;/version&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.webjars&lt;/groupId&gt;
+			&lt;artifactId&gt;bootstrap&lt;/artifactId&gt;
+			&lt;version&gt;3.3.7&lt;/version&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.webjars&lt;/groupId&gt;
+			&lt;artifactId&gt;jquery&lt;/artifactId&gt;
+			&lt;version&gt;3.1.0&lt;/version&gt;
+		&lt;/dependency&gt;
+
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-test&lt;/artifactId&gt;
+			&lt;scope&gt;test&lt;/scope&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.apache.tomcat.embed&lt;/groupId&gt;
+			&lt;artifactId&gt;tomcat-embed-jasper&lt;/artifactId&gt;
+			&lt;scope&gt;provided&lt;/scope&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;javax.servlet&lt;/groupId&gt;
+			&lt;artifactId&gt;jstl&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;mysql&lt;/groupId&gt;
+			&lt;artifactId&gt;mysql-connector-java&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;junit&lt;/groupId&gt;
+			&lt;artifactId&gt;junit&lt;/artifactId&gt;
+			&lt;scope&gt;test&lt;/scope&gt;
+		&lt;/dependency&gt;
+
+	&lt;/dependencies&gt;
+
+	&lt;build&gt;
+		&lt;plugins&gt;
+			&lt;plugin&gt;
+				&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+				&lt;artifactId&gt;spring-boot-maven-plugin&lt;/artifactId&gt;
+			&lt;/plugin&gt;
+		&lt;/plugins&gt;
+	&lt;/build&gt;
+
+	&lt;repositories&gt;
+		&lt;repository&gt;
+			&lt;id&gt;spring-snapshots&lt;/id&gt;
+			&lt;name&gt;Spring Snapshots&lt;/name&gt;
+			&lt;url&gt;https://repo.spring.io/snapshot&lt;/url&gt;
+			&lt;snapshots&gt;
+				&lt;enabled&gt;true&lt;/enabled&gt;
+			&lt;/snapshots&gt;
+		&lt;/repository&gt;
+		&lt;repository&gt;
+			&lt;id&gt;spring-milestones&lt;/id&gt;
+			&lt;name&gt;Spring Milestones&lt;/name&gt;
+			&lt;url&gt;https://repo.spring.io/milestone&lt;/url&gt;
+			&lt;snapshots&gt;
+				&lt;enabled&gt;false&lt;/enabled&gt;
+			&lt;/snapshots&gt;
+		&lt;/repository&gt;
+	&lt;/repositories&gt;
+	&lt;pluginRepositories&gt;
+		&lt;pluginRepository&gt;
+			&lt;id&gt;spring-snapshots&lt;/id&gt;
+			&lt;name&gt;Spring Snapshots&lt;/name&gt;
+			&lt;url&gt;https://repo.spring.io/snapshot&lt;/url&gt;
+			&lt;snapshots&gt;
+				&lt;enabled&gt;true&lt;/enabled&gt;
+			&lt;/snapshots&gt;
+		&lt;/pluginRepository&gt;
+		&lt;pluginRepository&gt;
+			&lt;id&gt;spring-milestones&lt;/id&gt;
+			&lt;name&gt;Spring Milestones&lt;/name&gt;
+			&lt;url&gt;https://repo.spring.io/milestone&lt;/url&gt;
+			&lt;snapshots&gt;
+				&lt;enabled&gt;false&lt;/enabled&gt;
+			&lt;/snapshots&gt;
+		&lt;/pluginRepository&gt;
+	&lt;/pluginRepositories&gt;
+
+&lt;/project&gt;
+				
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp32"></a>2.11.1.2. application.properties</h5></div></div></div>
+				
+				<p>spring.session.store-type=redis 将Session 存储在Redis中</p>
+				<pre class="programlisting">
+				
+spring.redis.database=0
+spring.redis.host=192.168.4.1
+spring.redis.port=6379
+#spring.redis.password=
+spring.redis.pool.max-active=8
+spring.redis.pool.max-wait=30
+spring.redis.pool.max-idle=8
+spring.redis.pool.min-idle=0
+spring.redis.timeout=10
+
+spring.session.store-type=redis
+				
+				</pre>
+
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp33"></a>2.11.1.3. Application</h5></div></div></div>
+				
+				<pre class="programlisting">
+				
+package cn.netkiller;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.session.data.redis.config.annotation.web.http.EnableRedisHttpSession;
+
+@SpringBootApplication
+@EnableAutoConfiguration
+@ComponentScan
+@EnableMongoRepositories
+@EnableJpaRepositories
+@EnableScheduling
+public class Application {
+
+	public static void main(String[] args) {
+		SpringApplication.run(Application.class, args);
+
+	}
+}
+				
+				</pre>
+				<p>RedisHttpSessionConfig.java</p>
+				<pre class="programlisting">
+				
+package cn.netkiller.config;
+
+import org.springframework.context.annotation.Configuration;
+import org.springframework.session.data.redis.config.annotation.web.http.EnableRedisHttpSession;
+
+@Configuration
+@EnableRedisHttpSession
+public class RedisHttpSessionConfig {
+
+	public RedisHttpSessionConfig() {
+		// TODO Auto-generated constructor stub
+	}
+
+}				
+				
+				</pre>
+			</div>
+
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp35"></a>2.11.2. 测试 Session</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+package cn.netkiller.web;
+
+import java.util.Date;
+
+import javax.servlet.http.HttpSession;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+@Controller
+public class TestController {
+
+	public TestController() {
+		// TODO Auto-generated constructor stub
+	}
+
+	@RequestMapping("/session/set")
+	@ResponseBody
+	public String set(HttpSession session) {
+		String key = "test";
+		session.setAttribute(key, new Date());
+		return key;
+	}
+
+	@RequestMapping("/session/get")
+	@ResponseBody
+	public String get(HttpSession session) {
+		String value = (String) session.getAttribute("test").toString();
+		return value;
+	}
+
+}
+			
+			</pre>
+			<p>keys spring:session:* 查看 Session Key</p>
+			<pre class="screen">
+						
+$ telnet 192.168.4.1 6379
+Connecting to 192.168.4.1:6379...
+Connection established.
+To escape to local shell, press 'Ctrl+Alt+]'.
+keys spring:session:*
+*7
+$68
+spring:session:sessions:expires:a510f46f-0a2f-4649-af05-34bd750562c1
+$40
+spring:session:expirations:1476100200000
+$40
+spring:session:expirations:1476098400000
+$60
+spring:session:sessions:f6494a2f-591e-42ba-b381-ce2596f4046d
+$60
+spring:session:sessions:a510f46f-0a2f-4649-af05-34bd750562c1
+$112
+spring:session:index:org.springframework.session.FindByIndexNameSessionRepository.PRINCIPAL_NAME_INDEX_NAME:user
+$60
+spring:session:sessions:627018c8-243e-43ac-87b9-fc07f130c899
+				
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp36"></a>2.11.3. JDBC</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+spring.session.store-type=jdbc
+spring.session.jdbc.table-name=SESSIONS			
+			
+			</pre>
+		</div>
+	</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="RestTemplate.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="mongodb.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">2.10. String boot with RestTemplate </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 2.12. Spring boot with MongoDB</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script><script xmlns="" type="text/javascript" src="/js/q.js" async="async"></script></body></html>

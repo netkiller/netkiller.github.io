@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>3.3. @Scheduled 计划任务</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config" /><link rel="home" href="../index.html" title="Netkiller Spring Cloud 手札" /><link rel="up" href="index.html" title="第 3 章 Spring MVC" /><link rel="prev" href="RestController.html" title="3.2. @RestController" /><link rel="next" href="view.html" title="3.4. View" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">云栖社区</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+		<a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">3.3. @Scheduled 计划任务</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="RestController.html">上一页</a> </td><th width="60%" align="center">第 3 章 Spring MVC</th><td width="20%" align="right"> <a accesskey="n" href="view.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="scheduled"></a>3.3. @Scheduled 计划任务</h3></div></div></div>
+	
+	<p></p>
+	<p>cron表达式使用空格分隔的时间元素。</p>
+	<pre class="screen">
+		
+字段   允许值   允许的特殊字符
+秒	 	0-59	 	, - * /
+分	 	0-59	 	, - * /
+小时	 	0-23	 	, - * /
+日期	 	1-31	 	, - * ? / L W C
+月份	 	1-12 或者 JAN-DEC	 	, - * /
+星期	 	1-7 或者 SUN-SAT	 	, - * ? / L C #
+年（可选）	 	留空, 1970-2099	 	, - * /		
+
+按顺序依次为
+
+秒（0~59）
+
+分钟（0~59）
+
+小时（0~23）
+
+天（月）（0~31，但是你需要考虑你月的天数）
+
+月（0~11）
+
+天（星期）（1~7 1=SUN 或 SUN，MON，TUE，WED，THU，FRI，SAT）
+
+7.年份（1970－2099）
+
+
+其中每个元素可以是一个值(如6),一个连续区间(9-12),一个间隔时间(8-18/4)(/表示每隔4小时),一个列表(1,3,5),通配符。由于"月份中的日期"和"星期中的日期"这两个元素互斥的,必须要对其中一个设置?.
+
+0 0 10,14,16 * * ? 每天上午10点，下午2点，4点
+0 0/30 9-17 * * ?   朝九晚五工作时间内每半小时
+0 0 12 ? * WED 表示每个星期三中午12点 
+"0 0 12 * * ?" 每天中午12点触发 
+"0 15 10 ? * *" 每天上午10:15触发 
+"0 15 10 * * ?" 每天上午10:15触发 
+"0 15 10 * * ? *" 每天上午10:15触发 
+"0 15 10 * * ? 2005" 2005年的每天上午10:15触发 
+"0 * 14 * * ?" 在每天下午2点到下午2:59期间的每1分钟触发 
+"0 0/5 14 * * ?" 在每天下午2点到下午2:55期间的每5分钟触发 
+"0 0/5 14,18 * * ?" 在每天下午2点到2:55期间和下午6点到6:55期间的每5分钟触发 
+"0 0-5 14 * * ?" 在每天下午2点到下午2:05期间的每1分钟触发 
+"0 10,44 14 ? 3 WED" 每年三月的星期三的下午2:10和2:44触发 
+"0 15 10 ? * MON-FRI" 周一至周五的上午10:15触发 
+"0 15 10 15 * ?" 每月15日上午10:15触发 
+"0 15 10 L * ?" 每月最后一日的上午10:15触发 
+"0 15 10 ? * 6L" 每月的最后一个星期五上午10:15触发 
+"0 15 10 ? * 6L 2002-2005" 2002年至2005年的每月的最后一个星期五上午10:15触发 
+"0 15 10 ? * 6#3" 每月的第三个星期五上午10:15触发 
+
+有些子表达式能包含一些范围或列表
+
+例如：子表达式（天（星期））可以为 “MON-FRI”，“MON，WED，FRI”，“MON-WED,SAT”
+
+“*”字符代表所有可能的值
+
+因此，“*”在子表达式（月）里表示每个月的含义，“*”在子表达式（天（星期））表示星期的每一天
+
+
+“/”字符用来指定数值的增量
+
+例如：在子表达式（分钟）里的“0/15”表示从第0分钟开始，每15分钟
+
+         在子表达式（分钟）里的“3/20”表示从第3分钟开始，每20分钟（它和“3，23，43”）的含义一样
+
+
+“？”字符仅被用于天（月）和天（星期）两个子表达式，表示不指定值
+
+当2个子表达式其中之一被指定了值以后，为了避免冲突，需要将另一个子表达式的值设为“？”
+
+ 
+
+“L” 字符仅被用于天（月）和天（星期）两个子表达式，它是单词“last”的缩写
+
+但是它在两个子表达式里的含义是不同的。
+
+在天（月）子表达式中，“L”表示一个月的最后一天
+
+在天（星期）自表达式中，“L”表示一个星期的最后一天，也就是SAT
+
+如果在“L”前有具体的内容，它就具有其他的含义了
+
+例如：“6L”表示这个月的倒数第６天，“ＦＲＩＬ”表示这个月的最一个星期五
+
+注意：在使用“L”参数时，不要指定列表或范围，因为这会导致问题
+
+		
+	</pre>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp185"></a>3.3.1. 每3秒钟一运行一次</h4></div></div></div>
+		
+		<pre class="screen">
+			
+@Component
+@EnableScheduling
+public class MyTask {
+
+    @Scheduled(cron="*/3 * * * * *")
+    public void myTaskMethod(){
+        //do something
+    }
+}
+			
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp186"></a>3.3.2. 凌晨23点运行</h4></div></div></div>
+		
+		<pre class="programlisting">
+			
+	@Scheduled(cron = "0 0 23 * * ?")
+	private void cleanNewToday() {
+		long begin = System.currentTimeMillis();
+        
+		redisTemplate.delete("news:today");
+    
+        long end = System.currentTimeMillis();
+		logger.info("Schedule clean redis {} 耗时 {} 秒", "cleanNewFlash()", (end-begin) / 1000 );
+	}
+			
+		</pre>
+	</div>
+</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="RestController.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="view.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">3.2. @RestController </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 3.4. View</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script><script xmlns="" type="text/javascript" src="/js/q.js" async="async"></script></body></html>
