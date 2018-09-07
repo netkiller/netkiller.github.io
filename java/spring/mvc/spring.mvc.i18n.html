@@ -13,7 +13,7 @@
 	    <a xmlns="" href="/search.html">Search</a> |
 	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">6.5. i18n 国际化</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="view.html">上一页</a> </td><th width="60%" align="center">第 6 章 Spring MVC</th><td width="20%" align="right"> <a accesskey="n" href="properties.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="spring.mvc.i18n"></a>6.5. i18n 国际化</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp294"></a>6.5.1. 在 appliction.properties 中配置启用 i18n</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp300"></a>6.5.1. 在 appliction.properties 中配置启用 i18n</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -22,19 +22,35 @@ spring.messages.encoding=UTF-8
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp295"></a>6.5.2. 创建语言包文件</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp301"></a>6.5.2. 创建语言包文件</h4></div></div></div>
 			
+			<p>创建默认语言包文件 message.properties，当匹配不到语言时使用默认配置</p>
+			<pre class="screen">
+			
+member.name=Name
+			
+			</pre>
 			<p>message_en_US.properties</p>
 			<pre class="screen">
 			
 member.name=Name
 			
 			</pre>
-		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp296"></a>6.5.3. 控制器重引用语言包</h4></div></div></div>
-			
+			<p>message_zh_CN.properties</p>
 			<pre class="screen">
 			
+member.name=姓名
+			
+			</pre>
+			<p>注意：Eclipse 需要安装 properties 编辑工具，否则中文会自动转换成UTF8编码，无法直接阅读。</p>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp302"></a>6.5.3. 控制器重引用语言包</h4></div></div></div>
+			
+			<p>RestController</p>
+			<pre class="programlisting">
+			
+@RestController
+public class HomeController {
 	@Autowired
 	private MessageSource messageSource;
 
@@ -43,6 +59,73 @@ member.name=Name
 		String message = messageSource.getMessage("member.name", null, LocaleContextHolder.getLocale());
 		return message;
 	}
+}
+			
+			</pre>
+			<p>Controller</p>
+			<pre class="programlisting">
+			
+package cn.netkiller.controller;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.context.MessageSource;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.ui.Model;
+import java.util.Locale;
+
+@Controller
+public class HomeController {
+
+    @Autowired
+    private MessageSource messageSource;
+
+    @RequestMapping(value = "/", method = RequestMethod.GET)
+    public String index(Locale locale, Model model){
+
+        // add parametrized message from controller
+        String welcome = messageSource.getMessage("welcome.message", new Object[]{"Neo Chan"}, locale);
+        model.addAttribute("message", welcome);
+        
+        // obtain locale from LocaleContextHolder
+        Locale currentLocale = LocaleContextHolder.getLocale();
+        model.addAttribute("locale", currentLocale);
+        model.addAttribute("startMeeting", "10:30");
+        
+        return "index";
+    }
+
+}			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp303"></a>6.5.4. 参数传递</h4></div></div></div>
+			
+			<p>有时定义语言包会出现一种情况，一个句子中可能存在变量。例如：</p>
+			<p>恭喜你 XXXX 您已成为我们的会员</p>
+			<p>这样的需求，如果丁一两个key处理起来会非常麻烦。这里可以定义一个变量，通过参数传递来修改一句话中间的部分。</p>
+			<pre class="screen">
+			
+welcome=Welcom to {0}
+			
+			</pre>
+			<pre class="screen">
+			
+	@GetMapping("/lang/args")
+	public String welcome() {
+		String[] args = { "China" };
+		String message = messageSource.getMessage("welcome", args, LocaleContextHolder.getLocale());
+
+		return message;
+	}
+			
+			</pre>
+			<p>参数以此类推 {0}, {1} ...... {n}</p>
+			<pre class="screen">
+			
+String welcome = messageSource.getMessage("welcome.message", new Object[]{"Neo chen"}, locale);			
 			
 			</pre>
 		</div>

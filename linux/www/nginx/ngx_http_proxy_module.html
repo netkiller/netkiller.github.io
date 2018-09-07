@@ -569,7 +569,56 @@ proxy_set_header X-Forwarded-URI $request_uri;
 	
 	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="proxy.example"></a>46.8.14. example</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp436"></a>46.8.14.1. upstream 实例</h4></div></div></div>
+		<p>/api/ 走代理，其他页面走 Nginx</p>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp436"></a>46.8.14.1. 代理特定目录</h4></div></div></div>
+			
+			<pre class="screen">
+			
+server {
+    listen 443 ssl http2;
+    server_name  www.netkiller.cn netkiller.cn;
+
+    ssl_certificate ssl/netkiller.cn.crt;
+    ssl_certificate_key ssl/netkiller.cn.key;
+    ssl_session_cache shared:SSL:20m;
+    ssl_session_timeout 60m;
+
+    charset utf-8;
+    #access_log  /var/log/nginx/host.access.log  main;
+
+    location / {
+        root   /opt/netkiller.cn/www.netkiller.cn;
+        index  index.html;
+    }
+
+    location ^~ /api/ {	
+	proxy_pass http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+		proxy_set_header    Host    $host;
+		break;
+    }
+
+    #error_page  404              /404.html;
+
+    # redirect server error pages to the static page /50x.html
+    #
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html;
+    }
+
+    # deny access to .htaccess files, if Apache's document root
+    # concurs with nginx's one
+    #
+    location ~ /\.ht {
+        deny  all;
+    }
+
+}
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp437"></a>46.8.14.2. upstream 实例</h4></div></div></div>
 			
 			<pre class="screen">
 127.0.0.1 		api.example.com
@@ -614,7 +663,7 @@ server {
 }
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp437"></a>46.8.14.2. Tomcat 实例</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp438"></a>46.8.14.3. Tomcat 实例</h4></div></div></div>
 			
 			<pre class="screen">
 server {
@@ -682,7 +731,7 @@ server {
 			<p>上面的jsessionid处理方式</p>
 		</div>
 
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="proxy.live800"></a>46.8.14.3. Nginx -&gt; Nginx -&gt; Tomcat</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="proxy.live800"></a>46.8.14.4. Nginx -&gt; Nginx -&gt; Tomcat</h4></div></div></div>
 			
 			<p>背景各种原因需要再Nginx前面再增加一层Nginx虽然需求很变态，本着学习的目的试了试。</p>
 			<p>这里还使用了 http2 加速 nginx ssl http2 -&gt; nginx ssl http2 -&gt; Tomcat 8080</p>
@@ -723,7 +772,7 @@ server {
 			<p>如果是443你需要挂在证书，需要透传cookie给目的主机，否则你将无法支持Session，应用程序需要从 X-Forwarded-For 获取IP地址。</p>
 		</div>
 	
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp438"></a>46.8.14.4. Proxy 处理 Cookie</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp439"></a>46.8.14.5. Proxy 处理 Cookie</h4></div></div></div>
 			
 			<p>下面是一个通过 proxy_pass 代理live800的案例，我们需要处理几个地方：</p>
 			<p>Host头处理，Cookie传递，替换原因页面中的域名，替换文件有html,css,xml,css,js</p>
@@ -746,7 +795,7 @@ server {
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp439"></a>46.8.14.5. Proxy 添加 CORS 头</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp440"></a>46.8.14.6. Proxy 添加 CORS 头</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -778,7 +827,7 @@ server {
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp440"></a>46.8.14.6. 通过 Proxy 汉化 restful 接口</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp441"></a>46.8.14.7. 通过 Proxy 汉化 restful 接口</h4></div></div></div>
 			
 			<p>通过 proxy 汉化 restful 接口返回的 json 字符串。</p>
 			<p>背景，有这样一个需求，前端HTML5通过ajax与restful交互，ajax会显示接口返回json数据，由于js做了混淆无法修改与restful交互的逻辑，但是json反馈结果需要汉化。</p>
@@ -824,7 +873,7 @@ neo@netkiller ~/workspace/Developer/Python % curl http://api.netkiller.cn/restfu
 			</pre>
 			<p>现在我们看到效果是 "message":"用户验证错误"</p>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id=""></a>46.8.14.7. HTTP2 proxy_pass http://</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="http2.proxy_pass"></a>46.8.14.8. HTTP2 proxy_pass http://</h4></div></div></div>
 			
 			<pre class="screen">
 			
