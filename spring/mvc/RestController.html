@@ -387,7 +387,40 @@ public class UploadRestController {
 }
 		
 		</pre>
-		<pre class="screen">
+		<p>由于上传文件名可能存在空格等特殊字符，这里使用UUID替代文件名</p>
+		<pre class="programlisting">
+		
+	@PostMapping(value = "/file")
+	public RestfulResponse file(@RequestParam("file") MultipartFile[] files) {
+		List&lt;Object&gt; filelist = new ArrayList&lt;Object&gt;();
+		try {
+
+			for (MultipartFile file : files) {
+			
+				UUID uuid = UUID.randomUUID();
+				String filename = String.format("%s/%s.%s", folder, uuid.toString(), this.getExtensionName(filename));
+
+				File tmpfile = new File(filename);
+				String filepath = tmpfile.getPath();
+				System.out.println(filepath);
+				file.transferTo(tmpfile);
+				filelist.add(tmpfile.toString());
+			}
+			return new RestfulResponse(true, 0, null, filelist);
+		} catch (Exception e) {
+			return new RestfulResponse(false, 0, e.getMessage(), null);
+		}
+	}
+
+	private String getExtensionName(String filename) {
+		if ((filename != null) &amp;&amp; (filename.length() &gt; 0)) {
+			int dot = filename.lastIndexOf('.');
+			if ((dot &gt; -1) &amp;&amp; (dot &lt; (filename.length() - 1))) {
+				return filename.substring(dot + 1);
+			}
+		}
+		return filename;
+	}	
 		
 		</pre>
 		
