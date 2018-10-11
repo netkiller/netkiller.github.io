@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>1.6. Redis 通信协议</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="home" href="../index.html" title="Netkiller NoSQL 手札" /><link rel="up" href="index.html" title="第 1 章 Redis" /><link rel="prev" href="cluster.html" title="1.5. Redis Cluster" /><link rel="next" href="phpredisadmin.html" title="1.7. phpRedisAdmin" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>第 6 章 Redis 通信协议</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="home" href="../index.html" title="Netkiller NoSQL 手札" /><link rel="up" href="index.html" title="部分 I. Redis" /><link rel="prev" href="cluster.html" title="第 5 章 Redis Cluster" /><link rel="next" href="ch06s02.html" title="6.2. 监控" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
 		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
 	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
 	    <a xmlns="" href="/journal/index.html">杂文</a> |
@@ -11,41 +11,21 @@
 	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
 		<a xmlns="" href="https://github.com/netkiller">Github</a> |
 	    <a xmlns="" href="/search.html">Search</a> |
-	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">1.6. Redis 通信协议</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="cluster.html">上一页</a> </td><th width="60%" align="center">第 1 章 Redis</th><td width="20%" align="right"> <a accesskey="n" href="phpredisadmin.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="protocol"></a>1.6. Redis 通信协议</h2></div></div></div>
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">第 6 章 Redis 通信协议</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="cluster.html">上一页</a> </td><th width="60%" align="center">部分 I. Redis</th><td width="20%" align="right"> <a accesskey="n" href="ch06s02.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="chapter"><div class="titlepage"><div><div><h2 class="title"><a id="protocol"></a>第 6 章 Redis 通信协议</h2></div></div></div><div class="toc"><p><strong>目录</strong></p><dl class="toc"><dt><span class="section"><a href="protocol.html#idp9">6.1. 切换DB</a></span></dt><dt><span class="section"><a href="ch06s02.html">6.2. 监控</a></span></dt></dl></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp9"></a>1.6.1. 切换DB</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp9"></a>6.1. 切换DB</h2></div></div></div>
 			
 			<p>select n 切换DB， n表示数据库ID</p>
 			<pre class="screen">
-# telnet 192.168.41.160 6379
-Trying 192.168.41.160...
-Connected to 192.168.41.160.
-Escape character is '^]'.
-select 1
-+OK
+				# telnet 192.168.41.160 6379
+				Trying 192.168.41.160...
+				Connected to 192.168.41.160.
+				Escape character is '^]'.
+				select 1
+				+OK
 			</pre>
-		</div>	
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp10"></a>1.6.2. 监控</h3></div></div></div>
-			
-			<p>telnet方式</p>
-			<pre class="screen">
-# telnet 172.18.52.13 6379
-Trying 172.18.52.163...
-Connected to 172.18.52.13.
-Escape character is '^]'.
-MONITOR
-+OK
-+1425454378.190210 "MONITOR"
-+1425454381.165317 "GET" "admin:633"
-+1425454381.165725 "SET" "admin:633" "{\"id\":\"633\",\"username\":\"7209\",\"password\":\"eea5981a4fd021b8d78f8431084ba760\",\"status\":\"N\",\"belong_user_id\":\"133\",\"level_id\":\"67\",\"create_time\":1425454381,\"session_id\":\"l1s609t9gq8nj7vc94hb1i3s25\"}"
-+1425454381.166088 "EXPIRE" "admin:633" "3600"
-+1425454387.956387 "GET" "admin:633"			
-			</pre>
-			<p>使用 nc 监控状态</p>
-			<pre class="screen">
-# (echo -en "MONITOR\r\n"; sleep 10) | nc 172.18.52.13 6379
-			</pre>			
-		</div>		
+		</div>
+		
 	</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
 
 var disqus_config = function () {
@@ -59,7 +39,7 @@ s.src = '//netkiller.disqus.com/embed.js';
 s.setAttribute('data-timestamp', +new Date());
 (d.head || d.body).appendChild(s);
 })();
-</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="cluster.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="phpredisadmin.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">1.5. Redis Cluster </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 1.7. phpRedisAdmin</td></tr></table></div><script xmlns="">
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="cluster.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ch06s02.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 5 章 Redis Cluster </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 6.2. 监控</td></tr></table></div><script xmlns="">
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
   (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
   m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)

@@ -27,7 +27,7 @@
 		&lt;dependency&gt;
 			&lt;groupId&gt;org.apache.httpcomponents&lt;/groupId&gt;
 			&lt;artifactId&gt;httpclient&lt;/artifactId&gt;
-			&lt;version&gt;4.5.2&lt;/version&gt;
+			&lt;version&gt;4.5.6&lt;/version&gt;
 		&lt;/dependency&gt;
 
 	&lt;/dependencies&gt;
@@ -50,7 +50,7 @@
 		</div>
 		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="post"></a>25.2.2. HTTP POST 操作</h3></div></div></div>
 			
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp486"></a>25.2.2.1. Post Data</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp494"></a>25.2.2.1. Post Data</h4></div></div></div>
 				
 				<pre class="programlisting">
 				
@@ -127,7 +127,7 @@ public class HttpClientPost {
 				
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp487"></a>25.2.2.2. POST RAW 数据</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp495"></a>25.2.2.2. POST RAW 数据</h4></div></div></div>
 				
 			
 				<pre class="programlisting">
@@ -176,10 +176,87 @@ public class HTTPREST {
 				
 				</pre>
 			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="httpclient.post.gbk"></a>25.2.2.3. POST GBK 编码得数据</h4></div></div></div>
+				
+				<p>有些国内短信运营商发送短信的接口只能接收 GBK 编码，下面就是一个POST GBK编码数据的范例。</p>
+				<pre class="programlisting">
+				
+package api.test.sms;
+
+import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+
+import org.apache.http.Consts;
+import org.apache.http.HttpEntity;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
+
+public class SMS {
+
+	public SMS() {
+		// TODO Auto-generated constructor stub
+	}
+
+	public void sendSMS(String mobile, String message) throws ClientProtocolException, IOException {
+
+		String url = "http://api.netkiller.cn/sms/v2/send";
+
+		SimpleDateFormat sdf = new SimpleDateFormat("MMddHHmmss");
+		String timestamp = sdf.format(Calendar.getInstance().getTime());
+
+		CloseableHttpClient httpclient = HttpClients.createDefault();
+
+		List&lt;NameValuePair&gt; params = new ArrayList&lt;NameValuePair&gt;();
+		params.add(new BasicNameValuePair("apikey", "2863300994052170feb"));
+		params.add(new BasicNameValuePair("mobile", mobile));
+		params.add(new BasicNameValuePair("content", message));
+
+		UrlEncodedFormEntity urlEncodedFormEntity = new UrlEncodedFormEntity(params, "GBK");
+		System.out.println(urlEncodedFormEntity.toString());
+
+		HttpPost httpPost = new HttpPost(url);
+		httpPost.setEntity(urlEncodedFormEntity);
+
+		CloseableHttpResponse response = httpclient.execute(httpPost);
+
+		HttpEntity entity = response.getEntity();
+		String responseBody = EntityUtils.toString(entity, "UTF-8");
+
+		System.out.println(params.toString());
+		System.out.println(response.getStatusLine());
+		System.out.println(responseBody.toString());
+		response.close();
+
+	}
+
+	public static void main(String[] args) throws ClientProtocolException, IOException {
+		// TODO Auto-generated method stub
+		SMS sms = new SMS();
+		String message = String.format("您的验证码是%s，在%s分钟内输入有效。如非本人操作请忽略此短信。", 8888, 10);
+		sms.sendSMS("13113668800", message);
+	}
+
+}
+
+				
+				</pre>
+			</div>
 		</div>
 		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="ssl"></a>25.2.3. HTTPS</h3></div></div></div>
 			
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp488"></a>25.2.3.1. Get https 接口</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp496"></a>25.2.3.1. Get https 接口</h4></div></div></div>
 				
 				<p>环境 Nginx SSL(openssl自颁发)，nginx 通过proxy_pass连接  Tomcat</p>
 				<p>下面是 nginx 配置</p>
@@ -251,7 +328,7 @@ public class NginxAndOpenSSLAndTomcatAndHttpclient {
 				<p>如果遇到配置问题，可以看一下<a class="ulink" href="/www/index.html" target="_top">《Netkiller Linux Web 手札》</a></p>
 			
 			 </div>
-			 <div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp489"></a>25.2.3.2. POST json 数据</h4></div></div></div>
+			 <div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp497"></a>25.2.3.2. POST json 数据</h4></div></div></div>
 			 	
 			 	<pre class="programlisting">
 			 	

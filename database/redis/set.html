@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>34.13. set 无序字符集合</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><meta name="keywords" content="MySQL, PostgreSQL, Oracle, NoSQL, ER, TokyoCabinet/Tyrant, Memcache, Membase, Redis, Flare, Voldemort, LevelDB, MongoDB, GreenSQL, RDBMS, ORDBMS" /><link rel="home" href="../index.html" title="Netkiller Database 手札" /><link rel="up" href="redis-cli.html" title="第 34 章 redis-cli - Command-line client to redis-server" /><link rel="prev" href="redis.list.html" title="34.12. LIST 数据类型" /><link rel="next" href="zset.html" title="34.14. zset (有序集合)" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">云栖社区</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+		<a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">34.13. set 无序字符集合</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="redis.list.html">上一页</a> </td><th width="60%" align="center">第 34 章 redis-cli - Command-line client to redis-server</th><td width="20%" align="right"> <a accesskey="n" href="zset.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="set"></a>34.13. set 无序字符集合</h2></div></div></div>
+			
+			<p>Set和List类型不同的是，Set集合中不允许出现重复的元素，和List类型相比，Set类型在功能上还存在着一个非常重要的特性，即在服务器端完成多个Sets之间的聚合计算操作，如unions、intersections和differences。由于这些操作均在服务端完成，因此效率极高，而且也节省了大量的网络IO开销。</p>
+			<p>1. SADD/SMEMBERS/SCARD/SISMEMBER:</p>
+			<pre class="screen">
+			
+    #插入测试数据，由于该键set:test之前并不存在，因此参数中的三个成员都被正常插入。
+    redis 127.0.0.1:6379&gt; sadd set:test a b c
+    (integer) 3
+    #由于参数中的a在set:test中已经存在，因此本次操作仅仅插入了d和e两个新成员。
+    redis 127.0.0.1:6379&gt; sadd set:test a d e
+    (integer) 2
+    #判断a是否已经存在，返回值为1表示存在。
+    redis 127.0.0.1:6379&gt; sismember set:test a
+    (integer) 1
+    #判断f是否已经存在，返回值为0表示不存在。
+    redis 127.0.0.1:6379&gt; sismember set:test f
+    (integer) 0
+    #通过smembers命令查看插入的结果，从结果可以，输出的顺序和插入顺序无关。
+    redis 127.0.0.1:6379&gt; smembers set:test
+    1) "c"
+    2) "d"
+    3) "a"
+    4) "b"
+    5) "e"
+    #获取Set集合中元素的数量。
+    redis 127.0.0.1:6379&gt; scard set:test
+    (integer) 5
+    			
+			</pre>
+			<p>2. SPOP/SREM/SRANDMEMBER/SMOVE:</p>
+			<pre class="screen">
+			
+    #删除该键，便于后面的测试。
+    redis 127.0.0.1:6379&gt; del set:test
+    (integer) 1
+    #为后面的示例准备测试数据。
+    redis 127.0.0.1:6379&gt; sadd set:test a b c d
+    (integer) 4
+    #查看Set中成员的位置。
+    redis 127.0.0.1:6379&gt; smembers set:test
+    1) "c"
+    2) "d"
+    3) "a"
+    4) "b"
+    #从结果可以看出，该命令确实是随机的返回了某一成员。
+    redis 127.0.0.1:6379&gt; srandmember set:test
+    "c"
+    #Set中尾部的成员b被移出并返回，事实上b并不是之前插入的第一个或最后一个成员。
+    redis 127.0.0.1:6379&gt; spop set:test
+    "b"
+    #查看移出后Set的成员信息。
+    redis 127.0.0.1:6379&gt; smembers set:test
+    1) "c"
+    2) "d"
+    3) "a"
+    #从Set中移出a、d和f三个成员，其中f并不存在，因此只有a和d两个成员被移出，返回为2。
+    redis 127.0.0.1:6379&gt; srem set:test a d f
+    (integer) 2
+    #查看移出后的输出结果。
+    redis 127.0.0.1:6379&gt; smembers set:test
+    1) "c"
+    #为后面的smove命令准备数据。
+    redis 127.0.0.1:6379&gt; sadd set:test a b
+    (integer) 2
+    redis 127.0.0.1:6379&gt; sadd set:test2 c d
+    (integer) 2
+    #将a从set:test移到set:test2，从结果可以看出移动成功。
+    redis 127.0.0.1:6379&gt; smove set:test set:test2 a
+    (integer) 1
+    #再次将a从set:test移到set:test2，由于此时a已经不是set:test的成员了，因此移动失败并返回0。
+    redis 127.0.0.1:6379&gt; smove set:test set:test2 a
+    (integer) 0
+    #分别查看set:test和set:test2的成员，确认移动是否真的成功。
+    redis 127.0.0.1:6379&gt; smembers set:test
+    1) "b"
+    redis 127.0.0.1:6379&gt; smembers set:test2
+    1) "c"
+    2) "d"
+    3) "a"
+    			
+			</pre>
+			<p>3. SDIFF/SDIFFSTORE/SINTER/SINTERSTORE:</p>
+			<pre class="screen">
+			
+    #为后面的命令准备测试数据。
+    redis 127.0.0.1:6379&gt; sadd set:test a b c d
+    (integer) 4
+    redis 127.0.0.1:6379&gt; sadd set:test2 c
+    (integer) 1
+    redis 127.0.0.1:6379&gt; sadd set:test3 a c e
+    (integer) 3
+    #set:test和set:test2相比，a、b和d三个成员是两者之间的差异成员。再用这个结果继续和set:test3进行差异比较，b和d是set:test3不存在的成员。
+    redis 127.0.0.1:6379&gt; sdiff set:test set:test2 set:test3
+    1) "d"
+    2) "b"
+    #将3个集合的差异成员存在在diffkey关联的Set中，并返回插入的成员数量。
+    redis 127.0.0.1:6379&gt; sdiffstore diffkey set:test set:test2 set:test3
+    (integer) 2
+    #查看一下sdiffstore的操作结果。
+    redis 127.0.0.1:6379&gt; smembers diffkey
+    1) "d"
+    2) "b"
+    #从之前准备的数据就可以看出，这三个Set的成员交集只有c。
+    redis 127.0.0.1:6379&gt; sinter set:test set:test2 set:test3
+    1) "c"
+    #将3个集合中的交集成员存储到与interkey关联的Set中，并返回交集成员的数量。
+    redis 127.0.0.1:6379&gt; sinterstore interkey set:test set:test2 set:test3
+    (integer) 1
+    #查看一下sinterstore的操作结果。
+    redis 127.0.0.1:6379&gt; smembers interkey
+    1) "c"
+    #获取3个集合中的成员的并集。    
+    redis 127.0.0.1:6379&gt; sunion set:test set:test2 set:test3
+    1) "b"
+    2) "c"
+    3) "d"
+    4) "e"
+    5) "a"
+    #将3个集合中成员的并集存储到unionkey关联的set中，并返回并集成员的数量。
+    redis 127.0.0.1:6379&gt; sunionstore unionkey set:test set:test2 set:test3
+    (integer) 5
+    #查看一下suiionstore的操作结果。
+    redis 127.0.0.1:6379&gt; smembers unionkey
+    1) "b"
+    2) "c"
+    3) "d"
+    4) "e"
+    5) "a"
+			
+			</pre>
+		</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="redis.list.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="redis-cli.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="zset.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">34.12. LIST 数据类型 </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 34.14. zset (有序集合)</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script><script xmlns="" type="text/javascript" src="/js/q.js" async="async"></script></body></html>
