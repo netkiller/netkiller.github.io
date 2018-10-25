@@ -249,7 +249,7 @@ public class PrintWriterTest {
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="file.binary"></a>1.10.12. 二进制文件操作入门</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="file.binary"></a>1.10.12. 二进制文件</h3></div></div></div>
 		
 		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="binary.int"></a>1.10.12.1. 理解二进制文件</h4></div></div></div>
 			
@@ -438,7 +438,7 @@ neo@MacBook-Pro ~/workspace/netkiller % xxd -c 1 -b netkiller.bin
 00000000: 01100001  a			
 			
 			</pre>
-			<p>从 ASCII 表中查出 01100001	十进制 97 十六进制	 61 对应字母 	a</p>
+			<p>从 ASCII 表中查出 01100001 十进制 97 十六进制 61 对应字母 a</p>
 			<p>写入一段字符串</p>
 			<pre class="programlisting">
 			
@@ -1011,10 +1011,13 @@ neo@MacBook-Pro ~/workspace/netkiller % xxd -c 8 -b netkiller.bin
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="binary.exmaple"></a>1.10.12.10. 所有类型演示一遍</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="binary.exmaple"></a>1.10.12.10. 二进制文件操作演示</h4></div></div></div>
 			
-			<pre class="programlisting">
-			
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp48"></a>1.10.12.10.1. 所有类型演示一遍</h5></div></div></div>
+				
+
+				<pre class="programlisting">
+				
 		String filename = "netkiller.bin";
 		DataOutputStream out = new DataOutputStream(new FileOutputStream(filename));
 		out.writeInt(1024);
@@ -1055,12 +1058,12 @@ neo@MacBook-Pro ~/workspace/netkiller % xxd -c 8 -b netkiller.bin
 		System.out.println(name);
 		System.out.println(in.readUTF());
 		System.out.println(in.readUTF());		
-			
-			</pre>
-			<p>需要注意的一点是 out.writeChars("陈景峰"); 写入char字符串，在读取的时候你需要知道字符串的长度。然后循环取出char数据。</p>
-			<p>二进制文件内容</p>
-			<pre class="screen">
-			
+				
+				</pre>
+				<p>需要注意的一点是 out.writeChars("陈景峰"); 写入char字符串，在读取的时候你需要知道字符串的长度。然后循环取出char数据。</p>
+				<p>二进制文件内容</p>
+				<pre class="screen">
+				
 neo@MacBook-Pro ~/workspace/netkiller % xxd -c 8 -b netkiller.bin
 00000000: 00000000 00000000 00000100 00000000 00000000 11111111 00000000 00000000  ........
 00000008: 00000000 00010111 01001000 01110110 11101000 00000000 01000000 01001000  ..Hv..@H
@@ -1075,11 +1078,11 @@ neo@MacBook-Pro ~/workspace/netkiller % xxd -c 8 -b netkiller.bin
 00000050: 01110010 00101110 01100011 01101110 10001111 11011001 01100110 00101111  r.cn..f/
 00000058: 01100111 00000000 01010100 00001110 01001110 00000000 10001000 01001100  g.T.N..L
 00000060: 00000000 00001101 00000000 00001010                                      ....			
-			
-			</pre>
-			<p>16 进制编辑器更好阅读一些</p>
-			<pre class="screen">
-			
+				
+				</pre>
+				<p>16 进制编辑器更好阅读一些</p>
+				<pre class="screen">
+				
 neo@MacBook-Pro ~/workspace/netkiller % hexdump -C netkiller.bin 
 00000000  00 00 04 00 00 ff 00 00  00 17 48 76 e8 00 40 48  |..........Hv..@H|
 00000010  f5 c3 40 09 21 fb 54 43  ce 28 01 00 a5 96 48 66  |..@.!.TC.(....Hf|
@@ -1089,8 +1092,61 @@ neo@MacBook-Pro ~/workspace/netkiller % hexdump -C netkiller.bin
 00000050  72 2e 63 6e 8f d9 66 2f  67 00 54 0e 4e 00 88 4c  |r.cn..f/g.T.N..L|
 00000060  00 0d 00 0a                                       |....|
 00000064			
-			
-			</pre>
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp49"></a>1.10.12.10.2. 检查文件是否是 png 文件</h5></div></div></div>
+				
+				<pre class="programlisting">
+				
+package cn.netkiller.io;
+
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Arrays;
+
+public class PngFile {
+
+	private static InputStream inputStream;
+
+	public PngFile() {
+	}
+
+	public static void main(String[] args) throws FileNotFoundException {
+
+		int[] pngSignature = { 137, 80, 78, 71, 13, 10, 26, 10 };
+
+		try {
+			inputStream = new FileInputStream("/Users/neo/Downloads/NBRC.png");
+
+			byte[] headerBytes = new byte[8];
+			inputStream.read(headerBytes);
+
+			// for (byte b : headerBytes) {
+			// System.out.println(b);
+			// }
+
+			int[] pngHeader = new int[8];
+
+			for (int i = 0; i &lt; headerBytes.length; i++) {
+				pngHeader[i] = (int) headerBytes[i] &amp; 0xff;
+			}
+
+			if (Arrays.equals(pngHeader, pngSignature)) {
+				System.out.println("This is a PNG file! ");
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+	}
+
+}				
+				
+				</pre>
+			</div>
 		</div>
 	</div>
 </div><div xmlns="" id="disqus_thread"></div><script xmlns="">
