@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>15.3. Activity 文件</title><link rel="stylesheet" type="text/css" href="/docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><meta name="keywords" content="Android, Google Play" /><link rel="home" href="index.html" title="Netkiller Android 手札" /><link rel="up" href="android.nfc.html" title="第 15 章 NFC (Near field communication)" /><link rel="prev" href="nfc.loyout.html" title="15.2. Loyout 文件" /><link rel="next" href="android.faq.html" title="第 16 章 " /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">云栖社区</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+		<a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">15.3. Activity 文件</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="nfc.loyout.html">上一页</a> </td><th width="60%" align="center">第 15 章 NFC (Near field communication)</th><td width="20%" align="right"> <a accesskey="n" href="android.faq.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="nfc.Activity"></a>15.3. Activity 文件</h2></div></div></div>
+		
+		<pre class="programlisting">
+		
+package cn.netkiller.nfc;
+
+
+import android.nfc.FormatException;
+import android.nfc.NdefRecord;
+import android.support.annotation.NonNull;
+import android.support.design.widget.BottomNavigationView;
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+
+import android.app.PendingIntent;
+import android.content.Intent;
+import android.nfc.NdefMessage;
+import android.nfc.NfcAdapter;
+
+import android.nfc.Tag;
+import android.nfc.tech.Ndef;
+import android.os.Parcelable;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
+import android.widget.CompoundButton;
+import android.widget.Switch;
+import android.widget.TextView;
+
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.math.BigInteger;
+import java.util.UUID;
+
+public class MainActivity extends AppCompatActivity {
+
+    private NfcAdapter nfcAdapter;
+    private PendingIntent pendingIntent;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        final TextView status = (TextView) findViewById(R.id.status);
+
+        nfcAdapter = NfcAdapter.getDefaultAdapter(this);
+
+        if (nfcAdapter == null) {
+            System.out.println("**** NFC ERROR ****");
+            status.setText("NFC is not available.");
+            return;
+        } else if (!nfcAdapter.isEnabled()) {
+            status.setText("请开启系统NFC功能");
+        }
+
+        status.setText("Start...");
+
+        pendingIntent = PendingIntent.getActivity(this, 0, new Intent(this, getClass()).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), 0);
+
+
+        final Switch switchWrite = (Switch) findViewById(R.id.switchWrite);
+
+        switchWrite.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+
+                if (isChecked) {
+                    status.setText(switchWrite.getTextOn().toString());
+                } else {
+                    status.setText(switchWrite.getTextOff().toString());
+                }
+            }
+        });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        nfcAdapter.enableForegroundDispatch(this, pendingIntent, null, null);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        nfcAdapter.disableForegroundDispatch(this);
+    }
+
+
+    //当窗口的创建模式是singleTop或singleTask时调用，用于取代onCreate方法
+    //当NFC标签靠近手机，建立连接后调用
+    @Override
+    public void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+
+        TextView status = (TextView) findViewById(R.id.status);
+        TextView type = (TextView) findViewById(R.id.nfcTag);
+        TextView size = (TextView) findViewById(R.id.size);
+        TextView uidTextView = (TextView) findViewById(R.id.uid);
+        TextView ndefMessage = (TextView) findViewById(R.id.ndefMessage);
+        TextView schema = (TextView) findViewById(R.id.schema);
+        TextView charset = (TextView) findViewById(R.id.charset);
+        TextView language = (TextView) findViewById(R.id.language);
+        TextView ndefWrite = (TextView) findViewById(R.id.ndefWrite);
+        Switch switchWrite = (Switch) findViewById(R.id.switchWrite);
+
+
+        Tag tag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
+
+        if (switchWrite.isChecked()) {
+
+            UUID uuid = UUID.randomUUID();
+            try {
+                write(uuid.toString(), tag);
+                ndefWrite.setText(uuid.toString());
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (FormatException e) {
+                e.printStackTrace();
+            }
+
+        }
+
+        if (NfcAdapter.ACTION_NDEF_DISCOVERED.equals(intent.getAction())) {
+            status.setText("Read NDEF Message...");
+
+            byte[] uid = tag.getId();
+            BigInteger n = new BigInteger(uid);
+            String hex = n.toString(16);
+            uidTextView.setText(hex);
+
+            Ndef ndef = Ndef.get(tag);
+            String log = ndef.getType() + "\n最大数据容量：" + ndef.getMaxSize() + " bytes\n\n";
+            System.out.println(log);
+            type.setText(ndef.getType());
+            size.setText(ndef.getMaxSize() + " bytes");
+
+            Parcelable[] rawMessages = intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES);
+            if (rawMessages != null) {
+                NdefMessage[] messages = new NdefMessage[rawMessages.length];
+                for (int i = 0; i &lt; rawMessages.length; i++) {
+                    messages[i] = (NdefMessage) rawMessages[i];
+                }
+                byte[] payload = messages[0].getRecords()[0].getPayload();
+
+                try {
+
+                    String tagId = new String(messages[0].getRecords()[0].getType());
+                    schema.setText(tagId);
+
+                    String encoding = ((payload[0] &amp; 128) == 0) ? "UTF-8" : "UTF-16";
+                    charset.setText(encoding);
+
+                    int languageCodeLength = payload[0] &amp; 0x3f;
+                    String languageCode = new String(payload, 1, languageCodeLength, "US-ASCII");
+
+
+//                    String lang = new String(payload, 1, payload[0] &amp; 0063, "US-ASCII");
+                    language.setText(languageCode);
+
+//                    String text = new String(messages[0].getRecords()[0].getPayload());
+                    String text = new String(payload, languageCodeLength + 1, payload.length - languageCodeLength - 1, encoding);
+                    ndefMessage.setText(text);
+
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                }
+
+            }
+
+        } else {
+            status.setText("NOT NDEF Messages tag");
+        }
+    }
+
+
+    private void write(String text, Tag tag) throws IOException, FormatException {
+        NdefRecord[] records = {createRecord(text)};
+        NdefMessage message = new NdefMessage(records);
+        // Get an instance of Ndef for the tag.
+        Ndef ndef = Ndef.get(tag);
+        // Enable I/O
+        ndef.connect();
+        // Write the message
+        ndef.writeNdefMessage(message);
+        // Close the connection
+        ndef.close();
+    }
+
+    private NdefRecord createRecord(String text) throws UnsupportedEncodingException {
+        String lang = "en";
+        byte[] textBytes = text.getBytes();
+        byte[] langBytes = lang.getBytes("US-ASCII");
+        int langLength = langBytes.length;
+        int textLength = textBytes.length;
+        byte[] payload = new byte[1 + langLength + textLength];
+
+        // set status byte (see NDEF spec for actual bits)
+        payload[0] = (byte) langLength;
+
+        // copy langbytes and textbytes into payload
+        System.arraycopy(langBytes, 0, payload, 1, langLength);
+        System.arraycopy(textBytes, 0, payload, 1 + langLength, textLength);
+
+        NdefRecord recordNFC = new NdefRecord(NdefRecord.TNF_WELL_KNOWN, NdefRecord.RTD_TEXT, new byte[0], payload);
+
+        return recordNFC;
+    }
+
+}		
+		
+		</pre>
+	</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="nfc.loyout.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="android.nfc.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="android.faq.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">15.2. Loyout 文件 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 16 章 </td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script><script xmlns="" type="text/javascript" src="/js/q.js" async="async"></script></body></html>
