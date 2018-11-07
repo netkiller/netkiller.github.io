@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>第 44 章 Service</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="home" href="../index.html" title="Netkiller Java 手札" /><link rel="up" href="index.html" title="部分 II. Android 9 Pie" /><link rel="prev" href="broadcast.local.html" title="43.4. 本地广播" /><link rel="next" href="service.thread.html" title="44.2. Service 中启动线程" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">云栖社区</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+		<a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">第 44 章 Service</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="broadcast.local.html">上一页</a> </td><th width="60%" align="center">部分 II. Android 9 Pie</th><td width="20%" align="right"> <a accesskey="n" href="service.thread.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="chapter"><div class="titlepage"><div><div><h2 class="title"><a id="android.service"></a>第 44 章 Service</h2></div></div></div><div class="toc"><p><strong>目录</strong></p><dl class="toc"><dt><span class="section"><a href="android.service.html#service.basic">44.1. Service的基本用法</a></span></dt><dd><dl><dt><span class="section"><a href="android.service.html#service.manifest">44.1.1. manifest 文件</a></span></dt><dt><span class="section"><a href="android.service.html#service.myservice">44.1.2. 创建 Service</a></span></dt><dt><span class="section"><a href="android.service.html#service.layout">44.1.3. Layout 代码</a></span></dt><dt><span class="section"><a href="android.service.html#service.activity">44.1.4. Activity 代码</a></span></dt></dl></dd><dt><span class="section"><a href="service.thread.html">44.2. Service 中启动线程</a></span></dt><dt><span class="section"><a href="service.activity.html">44.3. Service和Activity通信</a></span></dt><dd><dl><dt><span class="section"><a href="service.activity.html#idp518">44.3.1. Layout</a></span></dt><dt><span class="section"><a href="service.activity.html#idp519">44.3.2. Service</a></span></dt><dt><span class="section"><a href="service.activity.html#idp520">44.3.3. Activity</a></span></dt></dl></dd></dl></div>
+	
+	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="service.basic"></a>44.1. Service的基本用法</h2></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="service.manifest"></a>44.1.1. manifest 文件</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="cn.netkiller.service"&gt;
+
+    &lt;application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme"&gt;
+        &lt;activity android:name=".MainActivity"&gt;
+            &lt;intent-filter&gt;
+                &lt;action android:name="android.intent.action.MAIN" /&gt;
+
+                &lt;category android:name="android.intent.category.LAUNCHER" /&gt;
+            &lt;/intent-filter&gt;
+        &lt;/activity&gt;
+
+        &lt;service
+            android:name=".MyService"
+            android:enabled="true"
+            android:exported="true"&gt;&lt;/service&gt;
+    &lt;/application&gt;
+
+&lt;/manifest&gt;			
+			
+			</pre>
+			<p>这段代码不是手工加入的，只需在 Android Studio 中选择 File - New - Service - Service 创建 Service 会自动加入下面代码</p>
+			<pre class="programlisting">
+			
+&lt;service
+            android:name=".MyService"
+            android:enabled="true"
+            android:exported="true"&gt;&lt;/service&gt;			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="service.myservice"></a>44.1.2. 创建 Service</h3></div></div></div>
+			
+			<p>在 Android Studio 中选择 File - New - Service - Service 创建 Service</p>
+			<p>MyService继承自Service，并重写父类的onCreate()、onStartCommand()和onDestroy()方法</p>
+			<pre class="programlisting">
+			
+package cn.netkiller.service;
+
+import android.app.Service;
+import android.content.Intent;
+import android.os.IBinder;
+import android.util.Log;
+
+public class MyService extends Service {
+    public MyService() {
+    }
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        Log.d("Service", "onCreate() executed");
+        Log.d("Service", "MyService thread id is " + Thread.currentThread().getId());
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.d("Service", "onStartCommand() executed");
+        return super.onStartCommand(intent, flags, startId);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        Log.d("Service", "onDestroy() executed");
+    }
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        // TODO: Return the communication channel to the service.
+        throw new UnsupportedOperationException("Not yet implemented");
+    }
+}
+
+			
+			</pre>
+			<p>onCreate() Service 创建的时候执行，已经创建的Service不会再执行</p>
+			<p>onStartCommand() 任何时候，只要执行 startService(intent); 便会执行</p>
+			<p>onDestroy() 停止的时候执行</p>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="service.layout"></a>44.1.3. Layout 代码</h3></div></div></div>
+			
+			<p>在布局文件中加入了两个按钮，一个用于启动Service，一个用于停止Service</p>
+			<pre class="programlisting">
+			
+&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity"&gt;
+
+    &lt;LinearLayout
+        android:layout_width="368dp"
+        android:layout_height="229dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.0"&gt;
+
+        &lt;Button
+            android:id="@+id/startService"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Start service" /&gt;
+
+        &lt;Button
+            android:id="@+id/stopService"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Stop service" /&gt;
+    &lt;/LinearLayout&gt;
+
+&lt;/android.support.constraint.ConstraintLayout&gt;			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="service.activity"></a>44.1.4. Activity 代码</h3></div></div></div>
+			
+			<p></p>
+			<pre class="programlisting">
+			
+package cn.netkiller.service;
+
+import android.content.Intent;
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+
+    private Button startService;
+    private Button stopService;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        startService = (Button) findViewById(R.id.startService);
+        stopService = (Button) findViewById(R.id.stopService);
+        startService.setOnClickListener(this);
+        stopService.setOnClickListener(this);
+
+        Log.d("Service", "MainActivity thread id is " + Thread.currentThread().getId());
+
+    }
+
+    @Override
+    public void onClick(View v) {
+        Intent intent;
+        switch (v.getId()) {
+            case R.id.startService:
+                intent = new Intent(this, MyService.class);
+                startService(intent);
+                break;
+            case R.id.stopService:
+                intent = new Intent(this, MyService.class);
+                stopService(intent);
+                break;
+            default:
+                break;
+        }
+    }
+}
+			
+			</pre>
+		</div>
+	</div>
+	
+	
+</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="broadcast.local.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="service.thread.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">43.4. 本地广播 </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 44.2. Service 中启动线程</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script><script xmlns="" type="text/javascript" src="/js/q.js" async="async"></script></body></html>
