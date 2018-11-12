@@ -1000,7 +1000,7 @@ server {
 		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="expires"></a>1.3.5.7. expires</h4></div></div></div>
 			
 			<p>expires 格式</p>
-			<div class="example"><a id="idp147"></a><p class="title"><strong>例 1.1. Expires Examples</strong></p><div class="example-contents">
+			<div class="example"><a id="idp151"></a><p class="title"><strong>例 1.1. Expires Examples</strong></p><div class="example-contents">
 				
 				<pre class="screen">
 					expires 1 January, 1970, 00:00:01 GMT;
@@ -1077,7 +1077,7 @@ server {
 				}
 			</pre>
 
-			<div class="example"><a id="idp148"></a><p class="title"><strong>例 1.2. nginx expires</strong></p><div class="example-contents">
+			<div class="example"><a id="idp152"></a><p class="title"><strong>例 1.2. nginx expires</strong></p><div class="example-contents">
 				
 				<pre class="screen">
 					location ~ .*\.(gif|jpg|jpeg|png|bmp|swf|ico)$ {
@@ -1371,25 +1371,31 @@ $ 匹配输入字符串的结束位置。
 		
 
 		</pre>
-		<pre class="screen">
-		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp22"></a>1.3.6.1. 处理泛解析</h4></div></div></div>
+			
+			<pre class="screen">
+			
+	if ($host ~ '(.*)\.example\.com' ) {
+		set $subdomain $1;
+		rewrite "^/(.*)$" /$subdomain/$1;
+	}		
+			
+			</pre>	
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp23"></a>1.3.6.2. 处理扩展名</h4></div></div></div>
+			
+			<pre class="screen">
+			
 	location ~* \.(js|css|jpg|jpeg|gif|png|swf)$ {
 		if (!-f $request_filename){
 			rewrite /(.*) http://images.example.com/$1;
 		}
 	}		
-		
+			
 
-		</pre>
-		<pre class="screen">
-		
-	if ($host ~ '(.*)\.static\.example\.com' ) {
-		set $subdomain $1;
-		rewrite "^/(.*)$" /$subdomain/$1;
-	}		
-		
-		</pre>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp22"></a>1.3.6.1. http get 参数处理</h4></div></div></div>
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp24"></a>1.3.6.3. http get 参数处理</h4></div></div></div>
 			
 			<p>需求如下</p>
 			<pre class="screen">
@@ -1444,18 +1450,55 @@ Connection: keep-alive
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp23"></a>1.3.6.2. 正则取非</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp25"></a>1.3.6.4. 正则取非</h4></div></div></div>
 			
 			<p>需求如下，除了2015年保留，其他所有页面重定向到新页面</p>
 			<pre class="screen">
 				rewrite ^/promotion/(?!2015\/)(.*) https://www.netkiller.cn/promotion.html permanent;
 			</pre>
 		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp26"></a>1.3.6.5. 去掉扩展名</h4></div></div></div>
+			
+			<p>需求</p>
+			<pre class="screen">
+			
+http://www.example.com/article/10	=&gt;	http://www.example.com/article/10.html			
+			
+			</pre>
+			<pre class="screen">
+			
+location / {
+    if (!-e $request_filename){
+        rewrite ^(.*)$ /$1.html last;
+        break;
+    }
+}			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp27"></a>1.3.6.6. 添加扩展名</h4></div></div></div>
+			
+			<p></p>
+			<pre class="screen">
+			
+原地址 http://ipfs.netkiller.cn/ipfs/QmcA1Fsrt6jGTVqAUNZBqaprMEdFaFkmkzA5s2M6mF85UC
+目标地址： http://ipfs.netkiller.cn/ipfs/QmcA1Fsrt6jGTVqAUNZBqaprMEdFaFkmkzA5s2M6mF85UC.mp4
+			
+			</pre>
+			<pre class="screen">
+			
+    location / {
+        rewrite ^/(.*)\.mp4$ /$1 last;
+        proxy_pass      http://127.0.0.1:8080;
+    }
+			
+			</pre>
+		</div>
 	</div>
 
 	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="http2"></a>1.3.7. HTTP2 配置 SSL证书</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp24"></a>1.3.7.1. 自颁发证书</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp28"></a>1.3.7.1. 自颁发证书</h4></div></div></div>
 			
 			<p>创建自颁发证书，SSL有两种证书模式，单向认证和双向认证，下面是单向认证模式。</p>
 			<pre class="screen">
@@ -1573,9 +1616,9 @@ Email Address []:netkiller@msn.com
 		</div>
 		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="ssl.each"></a>1.3.7.5. SSL 双向认证</h4></div></div></div>
 			
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp31"></a>1.3.7.5.1. 生成证书</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp35"></a>1.3.7.5.1. 生成证书</h5></div></div></div>
 				
-				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp25"></a>1.3.7.5.1.1. CA</h6></div></div></div>
+				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp29"></a>1.3.7.5.1.1. CA</h6></div></div></div>
 					
 					<pre class="screen">
 					
@@ -1590,7 +1633,7 @@ openssl req -new -x509 -days 3650 -key ca.key -out ca.crt
 					
 					</pre>
 				</div>
-				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp26"></a>1.3.7.5.1.2. 服务器端</h6></div></div></div>
+				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp30"></a>1.3.7.5.1.2. 服务器端</h6></div></div></div>
 					
 					<p>服务器端证书</p>
 					<pre class="screen">
@@ -1607,7 +1650,7 @@ openssl x509 -req -sha256 -in server.csr -CA ca.crt -CAkey ca.key -CAcreateseria
 					
 					</pre>
 				</div>
-				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp27"></a>1.3.7.5.1.3. 客户端</h6></div></div></div>
+				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp31"></a>1.3.7.5.1.3. 客户端</h6></div></div></div>
 					
 
 					<p>生成客户端证书</p>
@@ -1624,14 +1667,14 @@ openssl ca -in client.csr -cert ca.crt -keyfile ca.key -out client.crt -days 365
 					
 					</pre>
 				</div>
-				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp28"></a>1.3.7.5.1.4. 浏览器证书</h6></div></div></div>
+				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp32"></a>1.3.7.5.1.4. 浏览器证书</h6></div></div></div>
 					
 					<p>生成浏览器证书</p>
 					<pre class="screen">
 						openssl pkcs12 -export -inkey client.key -in client.crt -out client.pfx
 					</pre>
 				</div>
-				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp29"></a>1.3.7.5.1.5. SOAP 证书</h6></div></div></div>
+				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp33"></a>1.3.7.5.1.5. SOAP 证书</h6></div></div></div>
 					
 					<pre class="screen">
 						cat client.crt client.key &gt; soap.pem
@@ -1646,9 +1689,9 @@ openssl ca -in client.csr -cert ca.crt -keyfile ca.key -out client.crt -days 365
 					
 					</pre>
 				</div>
-				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp30"></a>1.3.7.5.1.6. 过程演示</h6></div></div></div>
+				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp34"></a>1.3.7.5.1.6. 过程演示</h6></div></div></div>
 					
-					<div class="example"><a id="idp149"></a><p class="title"><strong>例 1.3. Nginx SSL 双向认证，证书生成过程</strong></p><div class="example-contents">
+					<div class="example"><a id="idp153"></a><p class="title"><strong>例 1.3. Nginx SSL 双向认证，证书生成过程</strong></p><div class="example-contents">
 						
 						<pre class="screen">
 						
@@ -1716,7 +1759,7 @@ Getting CA Private Key
 					</div></div><br class="example-break" />
 				</div>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp32"></a>1.3.7.5.2. Nginx 配置</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp36"></a>1.3.7.5.2. Nginx 配置</h5></div></div></div>
 				
 				<p></p>
 				<pre class="screen">
@@ -1752,7 +1795,7 @@ server {
 					root@VM_7_221_centos /etc/nginx % systemctl restart nginx
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp33"></a>1.3.7.5.3. 测试双向认证</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp37"></a>1.3.7.5.3. 测试双向认证</h5></div></div></div>
 				
 				<p>首先直接请求</p>
 				<pre class="screen">
@@ -1798,7 +1841,7 @@ http {
 }
 		
 		</pre>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp34"></a>1.3.8.1. weight 权重配置</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp38"></a>1.3.8.1. weight 权重配置</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -1810,7 +1853,7 @@ http {
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp35"></a>1.3.8.2. backup 实现热备</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp39"></a>1.3.8.2. backup 实现热备</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -2407,7 +2450,7 @@ proxy_pass_request_headers on;
 	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="proxy.example"></a>1.3.9.15. example</h4></div></div></div>
 		
 		<p>/api/ 走代理，其他页面走 Nginx</p>
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp36"></a>1.3.9.15.1. 代理特定目录</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp40"></a>1.3.9.15.1. 代理特定目录</h5></div></div></div>
 			
 			<pre class="screen">
 			
@@ -2455,7 +2498,7 @@ server {
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp37"></a>1.3.9.15.2. upstream 实例</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp41"></a>1.3.9.15.2. upstream 实例</h5></div></div></div>
 			
 			<pre class="screen">
 127.0.0.1 		api.example.com
@@ -2500,7 +2543,7 @@ server {
 }
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp38"></a>1.3.9.15.3. Tomcat 实例</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp42"></a>1.3.9.15.3. Tomcat 实例</h5></div></div></div>
 			
 			<pre class="screen">
 server {
@@ -2609,7 +2652,7 @@ server {
 			<p>如果是443你需要挂在证书，需要透传cookie给目的主机，否则你将无法支持Session，应用程序需要从 X-Forwarded-For 获取IP地址。</p>
 		</div>
 	
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp39"></a>1.3.9.15.5. Proxy 处理 Cookie</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp43"></a>1.3.9.15.5. Proxy 处理 Cookie</h5></div></div></div>
 			
 			<p>下面是一个通过 proxy_pass 代理live800的案例，我们需要处理几个地方：</p>
 			<p>Host头处理，Cookie传递，替换原因页面中的域名，替换文件有html,css,xml,css,js</p>
@@ -2632,7 +2675,7 @@ server {
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp40"></a>1.3.9.15.6. Proxy 添加 CORS 头</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp44"></a>1.3.9.15.6. Proxy 添加 CORS 头</h5></div></div></div>
 			
 			<pre class="screen">
 			
@@ -2664,7 +2707,7 @@ server {
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp41"></a>1.3.9.15.7. 通过 Proxy 汉化 restful 接口</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp45"></a>1.3.9.15.7. 通过 Proxy 汉化 restful 接口</h5></div></div></div>
 			
 			<p>通过 proxy 汉化 restful 接口返回的 json 字符串。</p>
 			<p>背景，有这样一个需求，前端HTML5通过ajax与restful交互，ajax会显示接口返回json数据，由于js做了混淆无法修改与restful交互的逻辑，但是json反馈结果需要汉化。</p>
@@ -2779,7 +2822,62 @@ server {
 }
 			
 			</pre>
-		</div>		
+		</div>	
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="nginx.ipfs"></a>1.3.9.15.9. IPFS</h5></div></div></div>
+			
+			<pre class="screen">
+			
+mkdir -p /var/cache/nginx/ipfs
+chown nginx:root /var/cache/nginx/ipfs			
+			
+			</pre>
+			<pre class="screen">
+			
+proxy_cache_path /var/cache/nginx/ipfs keys_zone=ipfs:4096m;
+server {
+    listen       80;
+    server_name  localhost;
+
+    #charset koi8-r;
+    access_log  /var/log/nginx/ipfs.access.log;
+
+    location / {
+	proxy_pass      http://127.0.0.1:8080;
+        proxy_cache ipfs;
+        proxy_cache_valid  200 30d;
+	    expires max;
+    }
+
+    location ~* .+.(mp4)$ {
+        rewrite ^/(.*)\.mp4$ /$1 last;
+        proxy_pass      http://127.0.0.1:8080;
+        proxy_cache ipfs;
+        proxy_cache_valid  200 30d;
+        expires max;
+        mp4;
+    }
+
+    #error_page  404              /404.html;
+
+    # redirect server error pages to the static page /50x.html
+    #
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html;
+    }
+
+}			
+			
+			</pre>
+			<p>查看缓存情况</p>
+			<pre class="screen">
+			
+[root@netkiller ~]# find /var/cache/nginx/ipfs/
+/var/cache/nginx/ipfs/
+/var/cache/nginx/ipfs/47c3015c7a497f26f650a817f5a179ab			
+			
+			</pre>
+		</div>	
 	</div>
 </div>
 	
@@ -2861,7 +2959,7 @@ sudo vim /var/www/nginx-default/index.php
 	</div>
 	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="fastcgi.php-fpm"></a>1.3.10.2. php-fpm</h4></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp42"></a>1.3.10.2.1. php5-fpm</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp46"></a>1.3.10.2.1. php5-fpm</h5></div></div></div>
 			
 			<pre class="screen">
 sudo apt-get install php5-cli php5-cgi php5-fpm
@@ -2957,7 +3055,7 @@ pm.max_requests = 500
 			<pre class="screen">
 chkconfig --add php-fpm
 			</pre>
-			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp43"></a>1.3.10.2.2.1. php-fpm 状态</h6></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idp47"></a>1.3.10.2.2.1. php-fpm 状态</h6></div></div></div>
 				
 				<pre class="screen">
     location /nginx_status {
@@ -3001,7 +3099,7 @@ location ~ .*\.(php|php5)?$  {
 }
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp44"></a>1.3.10.2.4. nginx example</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp48"></a>1.3.10.2.4. nginx example</h5></div></div></div>
 			
 			<pre class="screen">
 			
