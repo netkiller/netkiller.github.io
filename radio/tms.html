@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>1.5. Mototrbo 数字电台短信协议分析</title><link rel="stylesheet" type="text/css" href="/docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><meta name="keywords" content="Amateur Radio, ham, ham radio, icom, yaesu, kenwood,, cw,ssb,usb,lsb,am,fm,rtty,fsk,afsk,psk31, fdma,tdma,cdma, " /><link rel="home" href="index.html" title="Netkiller Amateur Radio 手札" /><link rel="up" href="repeater.html" title="第 1 章 数字中继" /><link rel="prev" href="link.html" title="1.4. Link Establishment(建立IP链路)" /><link rel="next" href="tunnel.html" title="第 2 章 通过电台建立TCP/IP链路" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">云栖社区</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+		<a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="/search.html">Search</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">1.5. Mototrbo 数字电台短信协议分析</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="link.html">上一页</a> </td><th width="60%" align="center">第 1 章 数字中继</th><td width="20%" align="right"> <a accesskey="n" href="tunnel.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="tms"></a>1.5. Mototrbo 数字电台短信协议分析</h2></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id=""></a>1.5.1. IP Address 与 Radio ID 相互转换</h3></div></div></div>
+			
+
+			<p>DMR 网络</p>
+			<p>Mototrbo DMR 实际上就是 TCP/IP网络的延伸。我们可以理解为就是一个TCP/IP网络。</p>
+			<p>首先Radio ID （八位数字）就是 IP地址的后三位,色码就是IP地址的第一位。例如 12 色码对应IP地址就是 12.0.0.0</p>
+			<p>色码加上RadioID通过算法就能实现 Radio ID 与 IP 地址的相互转换,组呼可以理解为通过子网掩码控制广播域，在相同子网下的IP地址可以接收组播信息。</p>
+			<p>代码如下：</p>
+			<pre class="screen">
+		
+class Protocol():
+	def __init__(self, buffer = None):
+		self.buffer = buffer
+	def header(self):
+	   return(self.message)
+	def message(self):
+		return(self.message)
+	def id2ip(self, cai, id):
+		return (str(cai)+"."+str((id &gt;&gt; 16) &amp; 0xff) +'.'+ str((id &gt;&gt; 8) &amp; 0xff) + '.' + str(id &amp; 0xff));
+	def ip2id(self, ipaddr):
+		a, b, c, d = ipaddr.split('.');
+		return ((int(b) &lt;&lt; 16) + (int(c) &lt;&lt; 8 ) + int(d))		
+		
+			</pre>
+			<p>id2ip 是Radio ID 转 IP 地址，算法如下</p>
+			<pre class="screen">
+		
+(str(cai)+"."+str((id &gt;&gt; 16) &amp; 0xff) +'.'+ str((id &gt;&gt; 8) &amp; 0xff) + '.' + str(id &amp; 0xff))
+		
+			</pre>
+			<p>ip2id 是 IP 地址 转 Radio ID</p>
+			<pre class="screen">
+		
+a, b, c, d = ipaddr.split('.')
+((int(b) &lt;&lt; 16) + (int(c) &lt;&lt; 8 ) + int(d))	
+		
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id=""></a>1.5.2. 检查 Radio 状态</h3></div></div></div>
+			
+			<p>判断电台是否开机</p>
+			<p>数字电台使用的多了，就不想喊CQ了，直接进入通信录，找到朋友，检查状态。如果对方在线就会出现一个绿色的"对号",同时对方也会振铃。</p>
+			<p>其实我们判断电台是否开机很简单。每个电台都是一计算机终端，色码 + Radio ID 就能算出对方的IP 地址，然后直接 ping 对方的IP地址就可以了。</p>
+			<pre class="screen">
+			
+工具程序地址： https://github.com/netkiller/Mototrbo/blob/master/Mototrbo.py
+
+#直接 ping IP 地址             
+os.system("ping %s" % self.options.ping) 
+
+# ping radio id 需要做一次转换            
+os.system("ping %s" % protocol.id2ip(int(self.options.cai), int(self.options.online)))
+		
+		
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp8"></a>1.5.3. TMS 短信协议分析</h3></div></div></div>
+			
+			<div><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="NaN"><tr><td><img src="images/mototrbo/MototrboTMS.png" width="NaN" /></td></tr></table></div>
+			<p>头部：0x00开始，然后是短信内容的长度，0x0e 0x00 分割，然后是序号,最后是 0x04 结尾 内容：\r回车符,0x00,换行符\n,信息内容，0x00结束,短信的字符集是 utf-16</p>
+			<p>一条完整短信最终协议包如下：</p>
+			<pre class="screen">
+			
+b'\x00\x14\xe0\x00\x88\x04\r\x00\n\x00B\x00G\x007\x00N\x00Y\x00T\x00'			
+			
+			</pre>
+			<p>上面短信的内容就是 BG7NYT </p>
+			<p>短信发送</p>
+			<pre class="screen">
+			
+class TMS(Protocol):
+	def __init__(self, buffer = None):
+		super().__init__(buffer)
+		self.port = 4007
+		if buffer :
+			self.header = self.buffer[:6]
+			self.message = self.buffer[6:]
+	def encode(self, msg):
+		return(msg.encode('utf-16').replace(b'\xff\xfe', b'\x00'))
+
+	def decode(self, msg = None):
+		if msg :
+			return( msg.replace(b'\x00', b'\xff\xfe', 1).decode('utf-16') )
+		else:
+			return( self.message.decode('utf-16') )
+	def sequence(self):
+		return(self.header[4:5])
+	def lenght(self):
+		return (len(self.message))
+	def sendtoip(self, ipaddr, sms):
+		import socket
+		sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
+		message = self.encode(sms)
+		length = len(message)+7
+		#print(hex(length))
+		protocol = b'\x00'+ bytes([length])+ b'\xe0\x00\x88\x04\r\x00\n' + message
+		#print(protocol)		
+		sock.sendto(protocol, (ipaddr, self.port))
+	def sendtoid(self, cai, radioid, sms):
+		ipaddr = self.id2ip(cai, radioid)
+		self.sendtoip(ipaddr, sms)
+	def debug(self):
+		protocol = b'\x00\x14\xe0\x00\x88\x04\r\x00\n\x00B\x00G\x007\x00N\x00Y\x00T\x00'
+		tms = TMS(protocol)
+		
+		#print(tms.id2ip(7558888))
+		#print(tms.ip2id('12.115.86.232'))
+		#print(tms.ip2id('12.115.86.12'))
+		#print(tms.ip2id('12.115.52.56'))
+		#print(tms.ip2id('192.168.11.1'))
+		#print(tms.id2ip(11012865))
+		print(tms.message)
+		
+		print(tms.lenght())
+		
+		print(tms.encode('BG7NYT'))
+		print(tms.decode(tms.encode('BG7NYT')))
+		
+		tmp = TMS(b'\x00\x16\xe0\x00\x83\x04\r\x00\n\x00B\x00e\x00l\x00i\x00e\x00v\x00e\x00')
+		print(tmp.decode())
+		print('= Send')
+
+		#.replace(b'\x00', b'')
+		#header = protocol[:6]
+		#message = protocol[9:]
+		#print(tms.decode(message))				
+			
+			</pre>
+			<p>编码和解码</p>
+			<p>因为我们目前计算机通常使用UTF-8字符集，所以短信需要编码为 UTF-16 才能发送，否则在终端上看到的是乱码。 同理计算机收到来自电台的短信也需要解码 UTF-16才能阅读。代码如下</p>
+			<pre class="screen">
+			
+	def encode(self, msg):
+		return(msg.encode('utf-16').replace(b'\xff\xfe', b'\x00'))
+
+	def decode(self, msg = None):
+		if msg :
+			return( msg.replace(b'\x00', b'\xff\xfe', 1).decode('utf-16') )
+		else:
+			return( self.message.decode('utf-16') )			
+			
+			</pre>
+			<p>短信的发送</p>
+			<p>发送短信很简单,通过色码 + Radio ID　计算出对方的IP地址。UDP协议与对方IP地址建立连接，然后发送,代码如下：</p>
+			<pre class="screen">
+			
+	def sendtoip(self, ipaddr, sms):
+		import socket
+		sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
+		message = self.encode(sms)
+		length = len(message)+7
+		#print(hex(length))
+		protocol = b'\x00'+ bytes([length])+ b'\xe0\x00\x88\x04\r\x00\n' + message
+		#print(protocol)		
+		sock.sendto(protocol, (ipaddr, self.port))			
+			
+			</pre>
+			<p>程序运行后对方的电台就会收到你的短信。</p>
+			<p>到此为止，我也曾经尝试分析 ARS，LRRP ......等等协议，很想实现ARS将GPS坐标抓出来，放到地图上，实现aprs.is那样的功能。 逆向工程太复杂，放弃了。</p>
+			<p>相关软件：https://github.com/netkiller/Mototrbo</p>
+		</div>
+	</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="link.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="repeater.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="tunnel.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">1.4. Link Establishment(建立IP链路) </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 2 章 通过电台建立TCP/IP链路</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script><script xmlns="" type="text/javascript" src="/js/q.js" async="async"></script></body></html>
