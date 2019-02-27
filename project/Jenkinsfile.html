@@ -1040,6 +1040,69 @@ node('master') {
 			
 			</pre>
 		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="stage"></a>6.3.2.9. input</h4></div></div></div>
+			
+			<pre class="screen">
+			
+node {
+    stage('Git') {
+        def branch = input message: 'input branch name for this job', ok: 'ok', parameters: [string(defaultValue: 'master', description: 'branch name', name: 'branch')]
+        echo branch
+    }
+}			
+			
+			</pre>
+			<pre class="screen">
+			
+node {
+    stage('Git') {
+        def result = input message: 'input branch name for this job', ok: 'ok', parameters: [string(defaultValue: 'master', description: 'branch name', name: 'branch'), string(defaultValue: '', description: 'commit to switch', name: 'commit')]
+
+        echo result.branch
+        echo result.commit
+    }
+}
+
+node {
+    stage('Git') {
+        def result = input message: 'input branch name for this job', ok: 'ok', parameters: [string(defaultValue: 'master', description: 'branch name', name: 'branch'), string(defaultValue: '', description: 'commit to switch', name: 'commit')]
+
+        sh "echo ${result.branch}"
+        sh "echo ${result.commit}"
+    }
+}
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="stage.if"></a>6.3.2.10. if 条件判断</h4></div></div></div>
+			
+			<pre class="screen">
+			
+node {
+    dir('/var/www') {
+        stage('Git') {
+            if(fileExists('project')) {
+                dir('project') {
+                    sh 'git fetch origin'
+                    sh 'git checkout master'
+                    sh 'git pull'
+                }
+            } else {
+                sh 'git clone git@git.netkiller.cn:neo/project.git project'
+            }
+        }
+    }
+}			
+			
+			</pre>
+			
+			<pre class="screen">
+				
+			
+			
+			</pre>
+		</div>
+
 	</div>
 	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="pipeline.steps"></a>6.3.3. Steps</h3></div></div></div>
 		
@@ -1161,6 +1224,7 @@ sleep(time:3,unit:"SECONDS")
 		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="steps.checkout"></a>6.3.4.1. checkout</h4></div></div></div>
 			
 			<p>https://github.com/jenkinsci/workflow-scm-step-plugin/blob/master/README.md</p>
+			<p>下面配置适用与 Webhook 方式</p>
 			<pre class="screen">
 			
 	stage('checkout') {
@@ -1169,6 +1233,14 @@ sleep(time:3,unit:"SECONDS")
                           userRemoteConfigs: [[url: env.GIT_REPO_URL]]], changelog: true, poll: true)
       }
     }			
+			
+			</pre>
+			<p>从 URL 获取代码</p>
+			<pre class="screen">
+			
+node {
+   checkout ([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '', url: 'https://github.com/bg7nyt/java.git']]])   
+}			
 			
 			</pre>
 		</div>
