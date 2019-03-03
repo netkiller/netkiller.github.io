@@ -44,7 +44,7 @@ curl -s https://raw.githubusercontent.com/oscm/shell/master/lang/java/maven/mave
 	</div>
 	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="cli"></a>2.3.2. Maven 命令</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id=""></a>2.3.2.1. 参数</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="-D"></a>2.3.2.1. 参数</h4></div></div></div>
 			
 			<p>多线程下载 -Dmaven.artifact.threads=10 默认是 5</p>
 			<pre class="screen">
@@ -940,7 +940,7 @@ $ ls ~/.m2
   &lt;/dependency&gt;
 			
 			</pre>
-			<div class="example"><a id="idp549"></a><p class="title"><strong>例 2.1. Maven properties</strong></p><div class="example-contents">
+			<div class="example"><a id="idp551"></a><p class="title"><strong>例 2.1. Maven properties</strong></p><div class="example-contents">
 				
 				<p>pom.xml 文件</p>
 				<pre class="screen">
@@ -1252,10 +1252,369 @@ $ ls ~/.m2
 			</div>
 		</div>
 	</div>
-
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="plugins"></a>2.3.5. plugins</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="maven.module"></a>2.3.5. Maven Module</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="maven-compiler-plugin"></a>2.3.5.1. maven-compiler-plugin</h4></div></div></div>
+		<p>对于大型互联网项目，不可能把所有代码都放在一个项目目录下，常常会将一个项目拆分成多个子项目</p>
+		<div class="orderedlist"><p class="title"><strong>例如一个电商系统</strong></p><ol class="orderedlist" type="1"><li class="listitem">网站</li><li class="listitem">资讯中心</li><li class="listitem">商品中心</li><li class="listitem">物流中心</li><li class="listitem">订单中心</li><li class="listitem">客服中心</li><li class="listitem">后台</li></ol></div>
+		<p>在开发过程中常常会遇到这种需求，有一个部分代码是共用的，所有项目都会使用到。所以需要将这部分代码独立成一个项目。</p>
+		<p>测试目录深度</p>
+		<pre class="screen">
+		
+Project
+    |
+    |--- common -&gt; https://example.com/xxxx/common.git
+    |     | ---pom.xml
+    |--- project1
+    |     |--- pom.xml
+    |--- project2
+    |     |--- pom.xml
+    |---pom.xml	
+		
+		</pre>
+		<p>common 是公共项目，独立仓库。通过git submodule 技术挂载到项目目录。project1，project2 构建依赖 common 项目产生的 jar 包。</p>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp90"></a>2.3.5.1. Parent</h4></div></div></div>
+			
+			<div class="example"><a id="idp552"></a><p class="title"><strong>例 2.2. Maven parent</strong></p><div class="example-contents">
+				
+				<pre class="screen">
+				
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"&gt;
+	&lt;modelVersion&gt;4.0.0&lt;/modelVersion&gt;
+
+	&lt;groupId&gt;demo&lt;/groupId&gt;
+	&lt;artifactId&gt;maven&lt;/artifactId&gt;
+	&lt;version&gt;0.0.1-SNAPSHOT&lt;/version&gt;
+	&lt;packaging&gt;pom&lt;/packaging&gt;
+
+	&lt;name&gt;maven&lt;/name&gt;
+	&lt;url&gt;http://maven.apache.org&lt;/url&gt;
+
+	&lt;properties&gt;
+		&lt;project.build.sourceEncoding&gt;UTF-8&lt;/project.build.sourceEncoding&gt;
+		&lt;maven.compiler.source&gt;11&lt;/maven.compiler.source&gt;
+		&lt;maven.compiler.target&gt;${maven.compiler.source}&lt;/maven.compiler.target&gt;
+		&lt;junit.jupiter.version&gt;5.4.0&lt;/junit.jupiter.version&gt;
+	&lt;/properties&gt;
+
+	&lt;dependencies&gt;
+
+
+	&lt;/dependencies&gt;
+	&lt;modules&gt;
+		&lt;module&gt;project1&lt;/module&gt;
+		&lt;module&gt;project2&lt;/module&gt;
+		&lt;module&gt;common&lt;/module&gt;
+	&lt;/modules&gt;
+	&lt;build&gt;
+
+		&lt;plugins&gt;
+			&lt;plugin&gt;
+				&lt;artifactId&gt;maven-surefire-plugin&lt;/artifactId&gt;
+				&lt;version&gt;3.0.0-M3&lt;/version&gt;
+			&lt;/plugin&gt;
+			&lt;plugin&gt;
+				&lt;artifactId&gt;maven-compiler-plugin&lt;/artifactId&gt;
+				&lt;version&gt;3.8.0&lt;/version&gt;
+			&lt;/plugin&gt;
+
+		&lt;/plugins&gt;
+	&lt;/build&gt;
+&lt;/project&gt;
+				
+				</pre>
+			</div></div><br class="example-break" />
+			<p>注意</p>
+			<pre class="screen">
+			
+&lt;packaging&gt;pom&lt;/packaging&gt; 必须是 pom			
+			
+			</pre>
+			<p>项目下面的子模块</p>
+			<pre class="screen">
+			
+    &lt;modules&gt;
+		&lt;module&gt;project1&lt;/module&gt;
+		&lt;module&gt;project2&lt;/module&gt;
+		&lt;module&gt;common&lt;/module&gt;
+    &lt;/modules&gt;			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id=""></a>2.3.5.2. 公共项目 common</h4></div></div></div>
+			
+			<div class="example"><a id="idp553"></a><p class="title"><strong>例 2.3. watir-webdriver example</strong></p><div class="example-contents">
+				
+
+				<pre class="screen">
+				
+&lt;?xml version="1.0"?&gt;
+&lt;project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"&gt;
+	&lt;modelVersion&gt;4.0.0&lt;/modelVersion&gt;
+	&lt;parent&gt;
+		&lt;groupId&gt;demo&lt;/groupId&gt;
+		&lt;artifactId&gt;maven&lt;/artifactId&gt;
+		&lt;version&gt;0.0.1-SNAPSHOT&lt;/version&gt;
+	&lt;/parent&gt;
+	&lt;groupId&gt;demo&lt;/groupId&gt;
+	&lt;artifactId&gt;common&lt;/artifactId&gt;
+	&lt;version&gt;0.0.1-SNAPSHOT&lt;/version&gt;
+	&lt;name&gt;common&lt;/name&gt;
+	&lt;url&gt;http://maven.apache.org&lt;/url&gt;
+	&lt;properties&gt;
+		&lt;project.build.sourceEncoding&gt;UTF-8&lt;/project.build.sourceEncoding&gt;
+	&lt;/properties&gt;
+	&lt;dependencies&gt;
+
+	&lt;/dependencies&gt;
+&lt;/project&gt;
+				
+				</pre>
+			</div></div><br class="example-break" />
+			<p>添加 parent 标签, 声明项目的父子关系</p>
+			<pre class="screen">
+			
+    &lt;parent&gt;
+		&lt;groupId&gt;demo&lt;/groupId&gt;
+		&lt;artifactId&gt;maven&lt;/artifactId&gt;
+		&lt;version&gt;0.0.1-SNAPSHOT&lt;/version&gt;
+    &lt;/parent&gt;			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp91"></a>2.3.5.3. 常规项目</h4></div></div></div>
+			
+			<pre class="screen">
+			
+&lt;?xml version="1.0"?&gt;
+&lt;project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"&gt;
+	&lt;modelVersion&gt;4.0.0&lt;/modelVersion&gt;
+	&lt;parent&gt;
+		&lt;groupId&gt;demo&lt;/groupId&gt;
+		&lt;artifactId&gt;maven&lt;/artifactId&gt;
+		&lt;version&gt;0.0.1-SNAPSHOT&lt;/version&gt;
+	&lt;/parent&gt;
+	&lt;groupId&gt;demo&lt;/groupId&gt;
+	&lt;artifactId&gt;project1&lt;/artifactId&gt;
+	&lt;version&gt;0.0.1-SNAPSHOT&lt;/version&gt;
+	&lt;name&gt;project1&lt;/name&gt;
+	&lt;url&gt;http://maven.apache.org&lt;/url&gt;
+	&lt;properties&gt;
+		&lt;project.build.sourceEncoding&gt;UTF-8&lt;/project.build.sourceEncoding&gt;
+	&lt;/properties&gt;
+	&lt;dependencies&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;demo&lt;/groupId&gt;
+			&lt;artifactId&gt;common&lt;/artifactId&gt;
+			&lt;version&gt;0.0.1-SNAPSHOT&lt;/version&gt;
+		&lt;/dependency&gt;
+	&lt;/dependencies&gt;
+&lt;/project&gt;
+			
+			
+			</pre>
+			<p>声明项目的父子关系</p>
+			<pre class="screen">
+			
+    &lt;parent&gt;
+		&lt;groupId&gt;demo&lt;/groupId&gt;
+		&lt;artifactId&gt;maven&lt;/artifactId&gt;
+		&lt;version&gt;0.0.1-SNAPSHOT&lt;/version&gt;
+	&lt;/parent&gt;			
+			
+			</pre>
+			<p>由于 project1 依赖 common 加入下面依赖</p>
+			<pre class="screen">
+			
+		&lt;dependency&gt;
+			&lt;groupId&gt;demo&lt;/groupId&gt;
+			&lt;artifactId&gt;common&lt;/artifactId&gt;
+			&lt;version&gt;0.0.1-SNAPSHOT&lt;/version&gt;
+		&lt;/dependency&gt;			
+			
+			</pre>
+			<p>project2 跟 project1 类似</p>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id=""></a>2.3.5.4. 现在测试效果</h4></div></div></div>
+			
+			<p>在父项目目录运行 mvn package</p>
+			<pre class="screen">
+			
+neo@MacBook-Pro ~/workspace/maven % mvn package
+[INFO] Scanning for projects...
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Build Order:
+[INFO] 
+[INFO] maven                                                              [pom]
+[INFO] common                                                             [jar]
+[INFO] project1                                                           [jar]
+[INFO] project2                                                           [jar]
+[INFO] 
+[INFO] -----------------------------&lt; demo:maven &gt;-----------------------------
+[INFO] Building maven 0.0.1-SNAPSHOT                                      [1/4]
+[INFO] --------------------------------[ pom ]---------------------------------
+[INFO] 
+[INFO] ----------------------------&lt; demo:common &gt;-----------------------------
+[INFO] Building common 0.0.1-SNAPSHOT                                     [2/4]
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- maven-resources-plugin:2.6:resources (default-resources) @ common ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] skip non existing resourceDirectory /Users/neo/workspace/maven/common/src/main/resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.8.0:compile (default-compile) @ common ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- maven-resources-plugin:2.6:testResources (default-testResources) @ common ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] skip non existing resourceDirectory /Users/neo/workspace/maven/common/src/test/resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.8.0:testCompile (default-testCompile) @ common ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- maven-surefire-plugin:3.0.0-M3:test (default-test) @ common ---
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 0, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] --- maven-jar-plugin:2.4:jar (default-jar) @ common ---
+[INFO] Building jar: /Users/neo/workspace/maven/common/target/common-0.0.1-SNAPSHOT.jar
+[INFO] META-INF/maven/demo/common/pom.xml already added, skipping
+[INFO] META-INF/maven/demo/common/pom.properties already added, skipping
+[INFO] 
+[INFO] ---------------------------&lt; demo:project1 &gt;----------------------------
+[INFO] Building project1 0.0.1-SNAPSHOT                                   [3/4]
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- maven-resources-plugin:2.6:resources (default-resources) @ project1 ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] skip non existing resourceDirectory /Users/neo/workspace/maven/project1/src/main/resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.8.0:compile (default-compile) @ project1 ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- maven-resources-plugin:2.6:testResources (default-testResources) @ project1 ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] skip non existing resourceDirectory /Users/neo/workspace/maven/project1/src/test/resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.8.0:testCompile (default-testCompile) @ project1 ---
+[INFO] Changes detected - recompiling the module!
+[INFO] Compiling 1 source file to /Users/neo/workspace/maven/project1/target/test-classes
+[INFO] 
+[INFO] --- maven-surefire-plugin:3.0.0-M3:test (default-test) @ project1 ---
+[INFO] 
+[INFO] --- maven-jar-plugin:2.4:jar (default-jar) @ project1 ---
+[INFO] Building jar: /Users/neo/workspace/maven/project1/target/project1-0.0.1-SNAPSHOT.jar
+[INFO] META-INF/maven/demo/project1/pom.xml already added, skipping
+[INFO] META-INF/maven/demo/project1/pom.properties already added, skipping
+[INFO] 
+[INFO] ---------------------------&lt; demo:project2 &gt;----------------------------
+[INFO] Building project2 0.0.1-SNAPSHOT                                   [4/4]
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- maven-resources-plugin:2.6:resources (default-resources) @ project2 ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] skip non existing resourceDirectory /Users/neo/workspace/maven/project2/src/main/resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.8.0:compile (default-compile) @ project2 ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- maven-resources-plugin:2.6:testResources (default-testResources) @ project2 ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] skip non existing resourceDirectory /Users/neo/workspace/maven/project2/src/test/resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.8.0:testCompile (default-testCompile) @ project2 ---
+[INFO] Changes detected - recompiling the module!
+[INFO] Compiling 1 source file to /Users/neo/workspace/maven/project2/target/test-classes
+[INFO] 
+[INFO] --- maven-surefire-plugin:3.0.0-M3:test (default-test) @ project2 ---
+[INFO] 
+[INFO] --- maven-jar-plugin:2.4:jar (default-jar) @ project2 ---
+[INFO] Building jar: /Users/neo/workspace/maven/project2/target/project2-0.0.1-SNAPSHOT.jar
+[INFO] META-INF/maven/demo/project2/pom.xml already added, skipping
+[INFO] META-INF/maven/demo/project2/pom.properties already added, skipping
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Summary for maven 0.0.1-SNAPSHOT:
+[INFO] 
+[INFO] maven .............................................. SUCCESS [  0.006 s]
+[INFO] common ............................................. SUCCESS [  2.317 s]
+[INFO] project1 ........................................... SUCCESS [  0.539 s]
+[INFO] project2 ........................................... SUCCESS [  0.101 s]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  3.115 s
+[INFO] Finished at: 2019-02-28T17:03:29+08:00
+[INFO] ------------------------------------------------------------------------
+neo@MacBook-Pro ~/workspace/maven % 	
+			
+			</pre>
+			<p>我们可以看到有三个包产生</p>
+			<pre class="screen">
+			
+neo@MacBook-Pro ~/workspace/maven % find . -iname '*.jar'
+./project1/target/project1-0.0.1-SNAPSHOT.jar
+./common/target/common-0.0.1-SNAPSHOT.jar
+./project2/target/project2-0.0.1-SNAPSHOT.jar			
+			
+			</pre>
+			<p>我们也可以单独编译子项目</p>
+			<pre class="screen">
+			
+neo@MacBook-Pro ~/workspace/maven/project1 % mvn package
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ---------------------------&lt; demo:project1 &gt;----------------------------
+[INFO] Building project1 0.0.1-SNAPSHOT
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- maven-resources-plugin:2.6:resources (default-resources) @ project1 ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] skip non existing resourceDirectory /Users/neo/workspace/maven/project1/src/main/resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.8.0:compile (default-compile) @ project1 ---
+[INFO] Changes detected - recompiling the module!
+[INFO] Compiling 1 source file to /Users/neo/workspace/maven/project1/target/classes
+[INFO] 
+[INFO] --- maven-resources-plugin:2.6:testResources (default-testResources) @ project1 ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] skip non existing resourceDirectory /Users/neo/workspace/maven/project1/src/test/resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.8.0:testCompile (default-testCompile) @ project1 ---
+[INFO] Changes detected - recompiling the module!
+[INFO] Compiling 1 source file to /Users/neo/workspace/maven/project1/target/test-classes
+[INFO] 
+[INFO] --- maven-surefire-plugin:3.0.0-M3:test (default-test) @ project1 ---
+[INFO] 
+[INFO] --- maven-jar-plugin:2.4:jar (default-jar) @ project1 ---
+[INFO] Building jar: /Users/neo/workspace/maven/project1/target/project1-0.0.1-SNAPSHOT.jar
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  2.015 s
+[INFO] Finished at: 2019-02-28T17:09:18+08:00
+[INFO] ------------------------------------------------------------------------
+			
+			</pre>
+			<p>共享库 common-0.0.1-SNAPSHOT.jar 已经安装到 ～/.m2 目录下。</p>
+			<pre class="screen">
+			
+neo@MacBook-Pro ~/workspace/maven/project1 % find ~/.m2 -iname 'common-0.0.1-SNAPSHOT.jar'
+/Users/neo/.m2/repository/demo/common/0.0.1-SNAPSHOT/common-0.0.1-SNAPSHOT.jar		
+			
+			</pre>
+		</div>
+
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="plugins"></a>2.3.6. plugins</h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="maven-compiler-plugin"></a>2.3.6.1. maven-compiler-plugin</h4></div></div></div>
 			
 			<p>配置默认的jdk版本</p>
 			<pre class="screen">
@@ -1351,7 +1710,7 @@ $ ls ~/.m2
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="maven-war-plugin"></a>2.3.5.2. maven-war-plugin</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="maven-war-plugin"></a>2.3.6.2. maven-war-plugin</h4></div></div></div>
 			
 			<p>设置 war 文件名 warName</p>
 			<pre class="screen">
@@ -1375,7 +1734,7 @@ $ ls ~/.m2
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="maven-antrun-plugin"></a>2.3.5.3. maven-antrun-plugin</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="maven-antrun-plugin"></a>2.3.6.3. maven-antrun-plugin</h4></div></div></div>
 			
 			<p>查看可用的pom定义</p>
 			<pre class="screen">
@@ -1444,7 +1803,7 @@ The build.xml:
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="maven-install-plugin"></a>2.3.5.4. maven-install-plugin</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="maven-install-plugin"></a>2.3.6.4. maven-install-plugin</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -1475,7 +1834,7 @@ The build.xml:
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="maven-surefire-plugin"></a>2.3.5.5. maven-surefire-plugin</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="maven-surefire-plugin"></a>2.3.6.5. maven-surefire-plugin</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -1490,7 +1849,7 @@ The build.xml:
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="maven-deploy-plugin"></a>2.3.5.6. maven-deploy-plugin</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="maven-deploy-plugin"></a>2.3.6.6. maven-deploy-plugin</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -1504,7 +1863,7 @@ The build.xml:
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="maven-jar-plugin"></a>2.3.5.7. maven-jar-plugin</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="maven-jar-plugin"></a>2.3.6.7. maven-jar-plugin</h4></div></div></div>
 			
 			<p>指定jar创建目录，下面配置运行 mvn package 后将在 target 目录下创建一个 project 目录。
 			</p>
@@ -1541,7 +1900,7 @@ The build.xml:
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="maven-dependency-plugin"></a>2.3.5.8. maven-dependency-plugin</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="maven-dependency-plugin"></a>2.3.6.8. maven-dependency-plugin</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -1569,7 +1928,7 @@ The build.xml:
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="spring-boot-maven-plugin"></a>2.3.5.9. spring-boot-maven-plugin</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="spring-boot-maven-plugin"></a>2.3.6.9. spring-boot-maven-plugin</h4></div></div></div>
 			
 			<pre class="screen">
 			
