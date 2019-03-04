@@ -47,6 +47,18 @@ dockerfile - 使用源码根目录下面的Dockerfile构建容器来运行
 			</div>
 			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="agent.docker"></a>6.3.1.1.2. docker</h5></div></div></div>
 				
+				<p><a class="ulink" href="https://jenkins.io/doc/book/pipeline/docker/" target="_top">https://jenkins.io/doc/book/pipeline/docker/</a></p>
+				<p>添加 jenkins 用户到 docker 组</p>
+				<pre class="screen">
+				
+[root@localhost ~]# gpasswd -a jenkins docker
+Adding user jenkins to group docker
+
+[root@localhost ~]# cat /etc/group | grep ^docker
+docker:x:993:jenkins	
+				
+				</pre>
+
 				<pre class="screen">
 				
 pipeline {
@@ -72,9 +84,22 @@ pipeline {
             }
         }
     }
-}				
+}
+
+pipeline {
+    agent {
+        docker { image 'php:latest' }
+    }
+    stages {
+        stage('Test') {
+            steps {
+                sh 'php --version'
+            }
+        }
+    }
+}
 				
-				</pre>
+				</pre>				
 			</div>
 		</div>
 		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="pipeline.stages"></a>6.3.1.2. stages</h4></div></div></div>
@@ -107,9 +132,9 @@ pipeline {
 		</div>
 
 
-		
 
-		
+
+
 
 
 
@@ -176,12 +201,12 @@ pipeline {
         }
 			
 			</pre>
-</div>
+		</div>
 
 
-		
 
-		
+
+
 
 		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="pipeline.environment"></a>6.3.1.5. 设置环境变量</h4></div></div></div>
 			
@@ -260,8 +285,8 @@ pipeline {
 			
 			</pre>
 		</div>
-		
-		
+
+
 		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="pipeline.options"></a>6.3.1.7. options</h4></div></div></div>
 			
 			<p>还能定义一些管道特定的选项，介绍几个常用的：</p>
@@ -273,7 +298,7 @@ retry - 直到成功的重试次数options { retry(3) }
 timestamps - 控制台输出前面加时间戳options { timestamps() }			
 			
 			</pre>
-	</div>
+		</div>
 		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="pipeline.triggers"></a>6.3.1.8. triggers</h4></div></div></div>
 			
 			<p>触发器指令定义了这个管道何时该执行，就可以定义两种cron和pollSCM</p>
@@ -1095,7 +1120,7 @@ node {
 }			
 			
 			</pre>
-			
+
 			<pre class="screen">
 				
 			
@@ -1214,13 +1239,13 @@ sleep(time:3,unit:"SECONDS")
 			
 			</pre>
 		</div>
-		
-		
-		
+
+
+
 	</div>
 	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="pipeline.scm"></a>6.3.4. 版本控制</h3></div></div></div>
 		
-	
+
 		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="steps.checkout"></a>6.3.4.1. checkout</h4></div></div></div>
 			
 			<p>https://github.com/jenkinsci/workflow-scm-step-plugin/blob/master/README.md</p>
@@ -1326,7 +1351,7 @@ node {
 	</div>
 	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="pipeline.workspace"></a>6.3.6. 工作区</h3></div></div></div>
 		
-		
+
 		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="pipeline.dir"></a>6.3.6.1. 变更目录</h4></div></div></div>
 			
 			<pre class="screen">
@@ -1390,7 +1415,7 @@ if (fileExists('file')) {
 			
 			</pre>
 		</div>
-		
+
 		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="steps.cleanWs"></a>6.3.6.4. 清理工作区</h4></div></div></div>
 			
 			<pre class="screen">
@@ -1439,12 +1464,194 @@ if (fileExists('file')) {
         }				
 			
 			</pre>
-			
+
 		</div>
-		
-		
+
+
 	</div>
-	
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="Jenkinsfile.example"></a>6.3.7. Jenkinsfile Pipeline Example ()</h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp31"></a>6.3.7.1. Maven 子模块范例</h4></div></div></div>
+			
+			<p>
+				Maven 子模块创建方法
+				<a class="ulink" href="https://www.netkiller.cn/java/build/maven.html#maven.module" target="_top">https://www.netkiller.cn/java/build/maven.html#maven.module</a>
+			</p>
+			<p>目录结构</p>
+			<pre class="screen">
+			
+Project
+    |
+    |--- common (Shared)
+    |     | ---pom.xml
+    |--- project1 (depend common)
+    |     |--- pom.xml
+    |--- project2 (depend common)
+    |     |--- pom.xml
+    |---pom.xml	
+					
+			
+			</pre>
+			<p>构建 父项目</p>
+			<pre class="screen">
+			
+pipeline {
+    agent {
+        label "default"
+    }
+    stages  {
+        
+        stage("检出") {
+            steps {
+                checkout(
+                  [$class: 'GitSCM', branches: [[name: env.GIT_BUILD_REF]], 
+                  userRemoteConfigs: [[url: env.GIT_REPO_URL]]]
+                )
+            }
+        }
+
+        stage("构建") {
+            steps {
+                echo "构建中..."
+              	sh 'mvn package -Dmaven.test.skip=true' // mvn 示例
+                archiveArtifacts artifacts: '**/target/*.jar', fingerprint: true // 收集构建产物              	
+                echo "构建完成."
+            }
+        }
+
+        stage("测试") {
+            steps {
+                echo "单元测试中..."
+                // 请在这里放置您项目代码的单元测试调用过程，例如:
+                sh 'mvn test' // mvn 示例
+                echo "单元测试完成."
+                junit '**/target/surefire-reports/*.xml' // 收集单元测试报告的调用过程
+            }
+        }
+
+        stage("部署") {
+            steps {
+                echo "部署中..."
+                echo "部署完成"
+            }
+        }
+    }
+}
+			
+			</pre>
+			<p>构建共享项目</p>
+			<pre class="screen">
+			
+pipeline {
+    agent {
+        label "default"
+    }
+    stages  {
+        
+        stage("检出") {
+            steps {
+                checkout(
+                  [$class: 'GitSCM', branches: [[name: env.GIT_BUILD_REF]], 
+                  userRemoteConfigs: [[url: env.GIT_REPO_URL]]]
+                )
+            }
+        }
+
+        stage("构建") {
+            steps {
+                echo "构建中..."
+                dir(path: 'common') {
+              		sh 'mvn package -Dmaven.test.skip=true' // mvn 示例
+              		archiveArtifacts artifacts: '**/target/*.jar', fingerprint: true // 收集构建产物
+              	}
+                echo "构建完成."
+            }
+        }
+
+        stage("测试") {
+            steps {
+                echo "单元测试中..."
+                sh 'mvn test' // mvn 示例
+                echo "单元测试完成."
+                junit 'target/surefire-reports/*.xml' // 收集单元测试报告的调用过程
+            }
+        }
+
+        stage("部署") {
+            steps {
+                echo "部署中..."
+                dir(path: 'common') {
+                	sh 'mvn install'
+                }
+                echo "部署完成"
+            }
+        }
+    }
+}			
+			
+			</pre>
+			<p>构建 project1 和 project2</p>
+			<pre class="screen">
+			
+pipeline {
+    agent {
+        label "default"
+    }
+    stages  {
+        
+        stage("检出") {
+            steps {
+                checkout(
+                  [$class: 'GitSCM', branches: [[name: env.GIT_BUILD_REF]], 
+                  userRemoteConfigs: [[url: env.GIT_REPO_URL]]]
+                )
+            }
+        }
+		stage("共享库") {
+            steps {
+                echo "构建中..."
+                dir(path: 'common') {
+              		sh 'mvn install -Dmaven.test.skip=true' // mvn 示例
+              		archiveArtifacts artifacts: '**/target/*.jar', fingerprint: true // 收集构建产物
+              	}
+                echo "构建完成."
+            }
+        }
+        stage("构建") {
+            steps {
+                echo "构建中..."
+	            dir(path: 'project1') {
+    	            sh 'mvn package -Dmaven.test.skip=true' // mvn 示例
+   		            archiveArtifacts artifacts: '**/target/*.jar', fingerprint: true // 收集构建产物
+                }
+                echo "构建完成."
+                
+            }
+        }
+
+        stage("测试") {
+            steps {
+                echo "单元测试中..."
+                sh 'mvn test' // mvn 示例
+                echo "单元测试完成."
+                junit 'target/surefire-reports/*.xml' // 收集单元测试报告的调用过程
+            }
+        }
+
+        stage("部署") {
+            steps {
+                echo "部署中..."
+                // 部署脚本
+                echo "部署完成"
+            }
+        }
+    }
+}			
+			
+			</pre>
+		</div>
+
+	</div>
 </div><div xmlns="" id="disqus_thread"></div><script xmlns="">
 
 var disqus_config = function () {
