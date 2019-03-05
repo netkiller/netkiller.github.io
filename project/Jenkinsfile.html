@@ -20,89 +20,8 @@
 		<p>
 			<a class="ulink" href="https://jenkins.io/doc/pipeline/examples/" target="_top">https://jenkins.io/doc/pipeline/examples/</a>
 		</p>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="pipeline.agent"></a>6.3.1.1. agent</h4></div></div></div>
-			
-			<p>agent 指令指定整个管道或某个特定的stage的执行环境。它的参数可用使用：</p>
-			<pre class="screen">
-			
-agent: 
-any - 任意一个可用的agent
-none - 如果放在pipeline顶层，那么每一个stage都需要定义自己的agent指令
-label - 在jenkins环境中指定标签的agent上面执行，比如agent { label 'my-defined-label' }
-node - agent { node { label 'labelName' } } 和 label一样，但是可用定义更多可选项
-docker - 指定在docker容器中运行
-dockerfile - 使用源码根目录下面的Dockerfile构建容器来运行				
-			
-			</pre>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="agent.label"></a>6.3.1.1.1. label</h5></div></div></div>
-				
-
-				<pre class="screen">
-				
-	agent {
-        label "java-8"
-    }
-				
-				</pre>
-			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="agent.docker"></a>6.3.1.1.2. docker</h5></div></div></div>
-				
-				<p><a class="ulink" href="https://jenkins.io/doc/book/pipeline/docker/" target="_top">https://jenkins.io/doc/book/pipeline/docker/</a></p>
-				<p>添加 jenkins 用户到 docker 组</p>
-				<pre class="screen">
-				
-[root@localhost ~]# gpasswd -a jenkins docker
-Adding user jenkins to group docker
-
-[root@localhost ~]# cat /etc/group | grep ^docker
-docker:x:993:jenkins	
-				
-				</pre>
-
-				<pre class="screen">
-				
-pipeline {
-    agent { docker { image 'maven:3.3.3' } }
-    stages {
-        stage('build') {
-            steps {
-                sh 'mvn --version'
-            }
-        }
-    }
-}
-				
-				</pre>
-				<pre class="screen">
-				
-pipeline {
-    agent { docker { image 'php' } }
-    stages {
-        stage('build') {
-            steps {
-                sh 'php --version'
-            }
-        }
-    }
-}
-
-pipeline {
-    agent {
-        docker { image 'php:latest' }
-    }
-    stages {
-        stage('Test') {
-            steps {
-                sh 'php --version'
-            }
-        }
-    }
-}
-				
-				</pre>				
-			</div>
-		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="pipeline.stages"></a>6.3.1.2. stages</h4></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="pipeline.stages"></a>6.3.1.1. stages</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -140,7 +59,7 @@ pipeline {
 
 
 
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="pipeline.script"></a>6.3.1.3. script</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="pipeline.script"></a>6.3.1.2. script</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -171,7 +90,7 @@ pipeline {
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="pipeline.junit"></a>6.3.1.4. junit</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="pipeline.junit"></a>6.3.1.3. junit</h4></div></div></div>
 			
 			<p>junit4</p>
 			<pre class="screen">
@@ -203,12 +122,7 @@ pipeline {
 			</pre>
 		</div>
 
-
-
-
-
-
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="pipeline.environment"></a>6.3.1.5. 设置环境变量</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="pipeline.environment"></a>6.3.1.4. 设置环境变量</h4></div></div></div>
 			
 			<p>environment定义键值对的环境变量</p>
 			<pre class="screen">
@@ -259,15 +173,41 @@ pipeline {
 			
 			</pre>
 		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="pipeline.withEnv"></a>6.3.1.5. withEnv</h4></div></div></div>
+			
+			<pre class="screen">
+			
+env.PROJECT_DIR='src/netkiller'			
+node {
+    withEnv(["GOPATH=$WORKSPACE"]) {
+        stage('Init gopath') {
+            sh 'mkdir -p $GOPATH/{bin,pkg,src}'
+        }
+        
+        stage('Build go proejct') {      
+            sh 'cd ${PROJECT_DIR}; go test &amp;&amp; go build &amp;&amp; go install'
+        }
+    }
+}
+			
+			</pre>
+			<pre class="screen">
+			
+node {
+     git 'https://github.com/netkiller/api.git'
+     withEnv(["PATH+MAVEN=${tool 'm3'}/bin"]) {
+          sh "mvn -B –Dmaven.test.failure.ignore=true clean package"
+     }
+     stash excludes: 'target/', includes: '**', name: 'source'
+}			
+			
+			</pre>
+		</div>
 		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="pipeline.parameters"></a>6.3.1.6. parameters</h4></div></div></div>
 			
 			<p>参数指令，触发这个管道需要用户指定的参数，然后在step中通过params对象访问这些参数。</p>
 			<pre class="screen">
 			
-
-
-
-
 // Declarative //
 pipeline {
     agent any
@@ -430,8 +370,24 @@ error '执行出错'
 
 		</div>
 
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id=""></a>6.3.1.13. </h4></div><div><h5 class="subtitle">withCredentials: Bind credentials to variables</h5></div></div></div>
+			
+			
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id=""></a>6.3.1.13.1. </h5></div></div></div>
+				
+				<pre class="screen">
+				
+node {
+   withCredentials([string(credentialsId: 'token', variable: 'TOKEN')]) {
+        sh('echo $TOKEN')
+   }
+}				
+				
+				</pre>
+			</div>
+		</div>
 
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="pipeline.sshpass"></a>6.3.1.13. Jenkins pipeline 中使用 sshpass 实现 scp, ssh 远程运行</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="pipeline.sshpass"></a>6.3.1.14. Jenkins pipeline 中使用 sshpass 实现 scp, ssh 远程运行</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -512,7 +468,7 @@ pipeline {
 }			
 			
 			</pre>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id=""></a>6.3.1.13.1. </h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id=""></a>6.3.1.14.1. </h5></div></div></div>
 				
 				<pre class="screen">
 				
@@ -1129,9 +1085,147 @@ node {
 		</div>
 
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="pipeline.steps"></a>6.3.3. Steps</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="pipeline.agent"></a>6.3.3. agent</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="pipeline.parallel"></a>6.3.3.1. parallel 平行执行</h4></div></div></div>
+		<p>agent 指令指定整个管道或某个特定的stage的执行环境。它的参数可用使用：</p>
+		<pre class="screen">
+		
+agent: 
+any - 任意一个可用的agent
+none - 如果放在pipeline顶层，那么每一个stage都需要定义自己的agent指令
+label - 在jenkins环境中指定标签的agent上面执行，比如agent { label 'my-defined-label' }
+node - agent { node { label 'labelName' } } 和 label一样，但是可用定义更多可选项
+docker - 指定在docker容器中运行
+dockerfile - 使用源码根目录下面的Dockerfile构建容器来运行				
+		
+		</pre>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="agent.label"></a>6.3.3.1. label</h4></div></div></div>
+			
+
+			<pre class="screen">
+			
+	agent {
+        label "java-8"
+    }
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="agent.docker"></a>6.3.3.2. docker</h4></div></div></div>
+			
+			<p>
+				<a class="ulink" href="https://jenkins.io/doc/book/pipeline/docker/" target="_top">https://jenkins.io/doc/book/pipeline/docker/</a>
+			</p>
+			<p>添加 jenkins 用户到 docker 组</p>
+			<pre class="screen">
+			
+[root@localhost ~]# gpasswd -a jenkins docker
+Adding user jenkins to group docker
+
+[root@localhost ~]# cat /etc/group | grep ^docker
+docker:x:993:jenkins	
+			
+			</pre>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp31"></a>6.3.3.2.1. 指定docker 镜像</h5></div></div></div>
+				
+			<pre class="screen">
+			
+pipeline {
+    agent { docker { image 'maven:3.3.3' } }
+    stages {
+        stage('build') {
+            steps {
+                sh 'mvn --version'
+            }
+        }
+    }
+}
+			
+			</pre>
+			<pre class="screen">
+			
+pipeline {
+    agent { docker { image 'php' } }
+    stages {
+        stage('build') {
+            steps {
+                sh 'php --version'
+            }
+        }
+    }
+}
+
+pipeline {
+    agent {
+        docker { image 'php:latest' }
+    }
+    stages {
+        stage('Test') {
+            steps {
+                sh 'php --version'
+            }
+        }
+    }
+}
+			
+			</pre>
+			</div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="docker.args"></a>6.3.3.2.2. args 参数</h5></div></div></div>
+			
+			<p>挂在 /root/.m2 目录</p>
+			<pre class="screen">
+			
+pipeline {
+    agent {
+        docker {
+            image 'maven:latest'
+            args '-v $HOME/.m2:/root/.m2'
+        }
+    }
+    stages {
+        stage('Build') {
+            steps {
+                sh 'mvn -B'
+            }
+        }
+    }
+}			
+			
+			</pre>
+			</div>
+			
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="agent.dockerfile"></a>6.3.3.3. </h4></div></div></div>
+			
+			<p>创建 Dockerfile 文件</p>
+			<pre class="screen">
+			
+FROM node:7-alpine
+
+RUN apk add -U subversion
+			
+			</pre>
+			<p>创建 Jenkinsfile 文件</p>
+			<pre class="screen">
+			
+// Jenkinsfile (Declarative Pipeline)
+pipeline {
+    agent { dockerfile true }
+    stages {
+        stage('Test') {
+            steps {
+                sh 'node --version'
+                sh 'svn --version'
+            }
+        }
+    }
+}
+			
+			</pre>
+		</div>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="pipeline.steps"></a>6.3.4. Steps</h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="pipeline.parallel"></a>6.3.4.1. parallel 平行执行</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -1159,7 +1253,7 @@ node {
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="pipeline.echo"></a>6.3.3.2. echo</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="pipeline.echo"></a>6.3.4.2. echo</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -1169,7 +1263,7 @@ node {
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="steps.catchError"></a>6.3.3.3. catchError 捕获错误</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="steps.catchError"></a>6.3.4.3. catchError 捕获错误</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -1194,7 +1288,7 @@ node {
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="pipeline.sleep"></a>6.3.3.4. 睡眠</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="pipeline.sleep"></a>6.3.4.4. 睡眠</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -1210,7 +1304,7 @@ sleep(time:3,unit:"SECONDS")
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="steps.timeout"></a>6.3.3.5. </h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="steps.timeout"></a>6.3.4.5. </h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -1225,7 +1319,7 @@ sleep(time:3,unit:"SECONDS")
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="steps.timestamps"></a>6.3.3.6. 时间截</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="steps.timestamps"></a>6.3.4.6. 时间截</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -1243,10 +1337,10 @@ sleep(time:3,unit:"SECONDS")
 
 
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="pipeline.scm"></a>6.3.4. 版本控制</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="pipeline.scm"></a>6.3.5. 版本控制</h3></div></div></div>
 		
 
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="steps.checkout"></a>6.3.4.1. checkout</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="steps.checkout"></a>6.3.5.1. checkout</h4></div></div></div>
 			
 			<p>https://github.com/jenkinsci/workflow-scm-step-plugin/blob/master/README.md</p>
 			<p>下面配置适用与 Webhook 方式</p>
@@ -1269,7 +1363,7 @@ node {
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="pipeline.git"></a>6.3.4.2. Git</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="pipeline.git"></a>6.3.5.2. Git</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -1282,9 +1376,9 @@ node {
 			</pre>
 		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="Nodes and Processes"></a>6.3.5. 节点与过程</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="Nodes and Processes"></a>6.3.6. 节点与过程</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="pipeline.sh"></a>6.3.5.1. sh</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="pipeline.sh"></a>6.3.6.1. sh</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -1305,7 +1399,7 @@ node {
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="pipeline.bat"></a>6.3.5.2. Windows 批处理脚本</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="pipeline.bat"></a>6.3.6.2. Windows 批处理脚本</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -1317,7 +1411,7 @@ node {
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="steps.ws"></a>6.3.5.3. 分配工作空间</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="steps.ws"></a>6.3.6.3. 分配工作空间</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -1332,7 +1426,7 @@ node {
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="steps.node"></a>6.3.5.4. node</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="steps.node"></a>6.3.6.4. node</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -1349,10 +1443,10 @@ node {
 		</div>
 
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="pipeline.workspace"></a>6.3.6. 工作区</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="pipeline.workspace"></a>6.3.7. 工作区</h3></div></div></div>
 		
 
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="pipeline.dir"></a>6.3.6.1. 变更目录</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="pipeline.dir"></a>6.3.7.1. 变更目录</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -1368,7 +1462,7 @@ node {
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="pipeline.fileExists"></a>6.3.6.2. </h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="pipeline.fileExists"></a>6.3.7.2. </h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -1400,7 +1494,7 @@ if (fileExists('file')) {
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="steps.ws"></a>6.3.6.3. 分配工作区</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="steps.ws"></a>6.3.7.3. 分配工作区</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -1416,7 +1510,7 @@ if (fileExists('file')) {
 			</pre>
 		</div>
 
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="steps.cleanWs"></a>6.3.6.4. 清理工作区</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="steps.cleanWs"></a>6.3.7.4. 清理工作区</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -1428,7 +1522,7 @@ if (fileExists('file')) {
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="steps.deleteDir"></a>6.3.6.5. 递归删除目录</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="steps.deleteDir"></a>6.3.7.5. 递归删除目录</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -1440,7 +1534,7 @@ if (fileExists('file')) {
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="steps.writeFile"></a>6.3.6.6. 写文件</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="steps.writeFile"></a>6.3.7.6. 写文件</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -1453,7 +1547,7 @@ if (fileExists('file')) {
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="steps.readFile"></a>6.3.6.7. 读文件</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="steps.readFile"></a>6.3.7.7. 读文件</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -1469,9 +1563,9 @@ if (fileExists('file')) {
 
 
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="Jenkinsfile.example"></a>6.3.7. Jenkinsfile Pipeline Example ()</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="Jenkinsfile.example"></a>6.3.8. Jenkinsfile Pipeline Example ()</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp31"></a>6.3.7.1. Maven 子模块范例</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp32"></a>6.3.8.1. Maven 子模块范例</h4></div></div></div>
 			
 			<p>
 				Maven 子模块创建方法
