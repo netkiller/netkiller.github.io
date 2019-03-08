@@ -1192,9 +1192,56 @@ pipeline {
 			
 			</pre>
 			</div>
-			
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="docker.withRegistry"></a>6.3.3.2.3. 构建镜像</h5></div></div></div>
+				
+				<pre class="screen">
+				
+node {
+    checkout scm
+
+    docker.withRegistry('http://hub.netkiller.cn:5000') {
+
+        def customImage = docker.build("project/api:1.0")
+
+        /* Push the container to the custom Registry */
+        customImage.push()
+    }
+}				
+				
+				</pre>
+				<p>容器内运行脚本</p>
+				<pre class="screen">
+				
+node {
+    checkout scm
+
+    def customImage = docker.build("my-image:${env.BUILD_ID}")
+
+    customImage.inside {
+        sh 'make test'
+    }
+}
+				
+				</pre>
+				
+				<pre class="screen">
+				
+		dir ('example') {
+            /* 构建镜像 */
+            def customImage = docker.build("example-group/example:${params.VERSION}")
+
+            /* hub.netkiller.cn是你的Docker Registry */
+            docker.withRegistry('https://hub.netkiller.cn/', 'docker-registry') {
+                /* Push the container to the custom Registry */
+                // push 指定版本
+                customImage.push('latest')
+            }
+        }				
+				
+				</pre>
+			</div>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="agent.dockerfile"></a>6.3.3.3. </h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="agent.dockerfile"></a>6.3.3.3. Dockerfile</h4></div></div></div>
 			
 			<p>创建 Dockerfile 文件</p>
 			<pre class="screen">
