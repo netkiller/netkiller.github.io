@@ -12,9 +12,9 @@
 	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
 	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
 	    <a xmlns="" href="//www.netkiller.cn/home/video.html">视频教程</a> |
-	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">6.6. Jenkinsfile Pipeline Example</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="jenkins.plugins.html">上一页</a> </td><th width="60%" align="center">第 6 章 Jenkins</th><td width="20%" align="right"> <a accesskey="n" href="../sonarqube.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="Jenkinsfile.example"></a>6.6. Jenkinsfile Pipeline Example</h2></div></div></div>
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">6.6. Jenkinsfile Pipeline Example</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="jenkins.plugins.html">上一页</a> </td><th width="60%" align="center">第 6 章 Jenkins</th><td width="20%" align="right"> <a accesskey="n" href="../sonarqube.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="Jenkinsfile.example"></a>6.6. Jenkinsfile Pipeline Example</h3></div></div></div>
 	
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp36"></a>6.6.1. Maven 子模块范例</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp39"></a>6.6.1. Maven 子模块范例</h4></div></div></div>
 		
 		<p>
 			Maven 子模块创建方法
@@ -193,7 +193,151 @@ pipeline {
 			
 		</pre>
 	</div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp40"></a>6.6.2. 使用指定镜像构建</h4></div></div></div>
+		
+		<pre class="screen">
+		
+pipeline {
+    agent any
+    stages {
+        stage("Checkout") {
+            steps {
+                sh 'ci-init'
+                checkout(
+                        [$class           : 'GitSCM', branches: [[name: env.GIT_BUILD_REF]],
+                         userRemoteConfigs: [[url: env.GIT_REPO_URL]]]
+                )
+            }
+        }
 
+
+        stage("Compile") {
+
+            // 构建的 docker 镜像
+            agent {
+                docker { image 'maven' }
+            }
+
+            steps {
+                echo "构建中..."
+                sh 'mvn -v'
+                sh 'mvn compile'
+            }
+        }
+
+
+        stage('Test') {
+
+            agent {
+                docker { image 'maven' }
+            }
+
+            steps {
+                echo '单元测试...'
+                sh 'mvn test'
+                junit 'target/surefire-reports/*.xml'
+            }
+
+        }
+
+        stage("Deploy") {
+            steps {
+                echo "部署中..."
+                echo "部署完成"
+            }
+        }
+    }
+}		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="exampel.docker"></a>6.6.3. 命令行制作 Docker 镜像</h4></div></div></div>
+		
+		<pre class="screen">
+		
+pipeline {
+    agent any
+    stages {
+
+        stage('Build') {
+
+            steps {
+                echo '编译中...'
+                // 编译 docker 镜像
+                sh "docker build $tag $contextPath"
+            }
+
+        }
+
+        stage('Push Image') {
+
+            steps {
+
+                sh "echo ${REGISTRY_PASS} | docker login -u ${REGISTRY_USER} --password-stdin ${REGISTRY_URL}"
+                sh "docker tag ${image} ${registry_image}"
+                sh "docker push ${registry_image}"
+                
+            }
+
+        }
+     
+    }
+}		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="example.yarn"></a>6.6.4. Yarn</h4></div></div></div>
+		
+		<pre class="screen">
+		
+pipeline {
+    agent {
+        label "default"
+    }
+    stages  {
+        
+        stage("检出") {
+            steps {
+                checkout(
+                  [$class: 'GitSCM', branches: [[name: env.GIT_BUILD_REF]], 
+                  userRemoteConfigs: [[url: env.GIT_REPO_URL]]]
+                )
+            }
+        }
+		stage("环境") {
+          	steps {
+              	sh 'apt install -y apt-transport-https'
+              	sh "curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -"
+              	sh 'echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list'
+              	sh 'cat /etc/apt/sources.list.d/yarn.list'
+              	sh 'apt update &amp;&amp; apt install -y yarn'
+              	sh 'yarn --version'
+            }
+        }
+        stage("构建") {
+            steps {
+                echo "构建中..."
+                sh 'yarn add webpack'
+                sh 'node -v'
+            }
+        }
+
+        stage("测试") {
+            steps {
+                echo "单元测试中..."
+            }
+        }
+
+        stage("部署") {
+            steps {
+                // sh './deploy.sh'
+            }
+        }
+    }
+}		
+		
+		</pre>
+	</div>
 </div><div xmlns="" id="disqus_thread"></div><script xmlns="">
 
 var disqus_config = function () {
