@@ -23,7 +23,7 @@
 			<a class="ulink" href="http://jk.netkiller.cn/blue/" target="_top">http://jk.netkiller.cn/blue/</a>
 		</p>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id=""></a>6.5.2. Locale Plugin (国际化插件)</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="jenkins.locale"></a>6.5.2. Locale Plugin (国际化插件)</h4></div></div></div>
 		
 		<p>安装Locale Plugin, 重启生效。</p>
 		<pre class="screen">
@@ -103,8 +103,9 @@ mkdir target/classes
 	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="jenkins.Docker"></a>6.5.4. Docker</h4></div><div><h5 class="subtitle">This plugin integrates Jenkins with Docker</h5></div></div></div>
 		
 		
+		<p><a class="ulink" href="https://jenkins.io/doc/book/pipeline/docker/" target="_top">https://jenkins.io/doc/book/pipeline/docker/</a></p>
 		<pre class="screen">
-	
+		
 vim /lib/systemd/system/docker.service
 
 ExecStart=/usr/bin/dockerd -H fd://
@@ -112,17 +113,23 @@ ExecStart=/usr/bin/dockerd -H fd://
 改为
 
 ExecStart=/usr/bin/dockerd -H fd:// -H unix:///var/run/docker.sock -H tcp://0.0.0.0:2375
-	
+		
+		</pre>
+		<p>吧 jenkins 用户添加到 docker 组</p>
+		<pre class="screen">
+		
+gpasswd -a jenkins docker		
+		
 		</pre>
 		<p>重启 docker</p>
 		<pre class="screen">
-	
+				
 systemctl daemon-reload
 systemctl restart docker
 
 如果是 Docker 方式运行 Jenkins 需要启动 jenkins
 docker start jenkins	
-	
+		
 		</pre>
 		<p>参考例子</p>
 		<pre class="programlisting">
@@ -164,7 +171,7 @@ StartLimitInterval=60s
 WantedBy=multi-user.target	
 	
 		</pre>
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp38"></a>6.5.4.1. 设置 Docker 主机和代理</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp41"></a>6.5.4.1. 设置 Docker 主机和代理</h5></div></div></div>
 			
 			<div><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="NaN"><tr><td><img src="../images/jenkins/docker/docker-add.png" width="NaN" /></td></tr></table></div>
 			<p>输入 Docker 主机的IP地址，类似 tcp://172.16.0.10:2375</p>
@@ -173,7 +180,7 @@ WantedBy=multi-user.target
 			<div><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="NaN"><tr><td><img src="../images/jenkins/docker/docker-test.png" width="NaN" /></td></tr></table></div>
 			<div><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="NaN"><tr><td><img src="../images/jenkins/docker/docker-agent.png" width="NaN" /></td></tr></table></div>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp39"></a>6.5.4.2. 持久化</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp42"></a>6.5.4.2. 持久化</h5></div></div></div>
 			
 			<p>例如持续集成过程中，我们不希望每次都从 maven 镜像下载编译依赖的包，或者构建物我们需要永久保留等等，这时就需要做持久化</p>
 			<div><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="NaN"><tr><td><img src="../images/jenkins/docker/container.png" width="NaN" /></td></tr></table></div>
@@ -182,7 +189,7 @@ WantedBy=multi-user.target
 			<p>当持续机构运行完毕 docker 容器被清理，但是 /opt/maven 并不会被清理，下次构建时，在将它挂载到 /root/.m2 即可。</p>
 		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="JaCoCo"></a>6.5.5. JaCoCo</h4></div><div><h5 class="subtitle">This plugin integrates JaCoCo code coverage reports to Jenkins.</h5></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="jenkins.JaCoCo"></a>6.5.5. JaCoCo</h4></div><div><h5 class="subtitle">This plugin integrates JaCoCo code coverage reports to Jenkins.</h5></div></div></div>
 		
 		
 		<p>https://jenkins.io/doc/pipeline/steps/jacoco/</p>
@@ -243,9 +250,146 @@ node {
 			</pre>
 		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="jenkins.kubernetes"></a>6.5.6. Kubernetes 插件</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp43"></a>6.5.6. SSH Pipeline Steps</h4></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp40"></a>6.5.6.1. Kubernetes</h5></div></div></div>
+		<p>使用说明: https://github.com/jenkinsci/ssh-steps-plugin#pipeline-steps</p>
+		<pre class="screen">
+		
+!groovy
+def getHost(){
+    def remote = [:]
+    remote.name = 'mysql'
+    remote.host = '192.168.8.108'
+    remote.user = 'root'
+    remote.port = 22
+    remote.password = 'qweasd'
+    remote.allowAnyHosts = true
+    return remote
+}
+pipeline {
+    agent {label 'master'}
+    environment{
+        def server = ''
+    }   
+    stages {
+        stage('init-server'){
+            steps {
+                script {                 
+                   server = getHost()                                   
+                }
+            }
+        }
+        stage('use'){
+            steps {
+                script {
+                  sshCommand remote: server, command: """                 
+                  if test ! -d aaa/ccc ;then mkdir -p aaa/ccc;fi;cd aaa/ccc;rm -rf ./*;echo 'aa' &gt; aa.log
+                  """
+                }
+            }
+        }
+    }
+}
+####################################
+node {
+  def remote = [:]
+  remote.name = 'test'
+  remote.host = 'test.domain.com'
+  remote.user = 'root'
+  remote.password = 'password'
+  remote.allowAnyHosts = true
+  stage('Remote SSH') {
+    sshCommand remote: remote, command: "ls -lrt"
+    sshCommand remote: remote, command: "for i in {1..5}; do echo -n \"Loop \$i \"; date ; sleep 1; done"
+  }
+}
+node {
+  def remote = [:]
+  remote.name = 'test'
+  remote.host = 'test.domain.com'
+  remote.user = 'root'
+  remote.password = 'password'
+  remote.allowAnyHosts = true
+  stage('Remote SSH') {
+    writeFile file: 'abc.sh', text: 'ls -lrt'
+    sshScript remote: remote, script: "abc.sh"
+  }
+}
+node {
+  def remote = [:]
+  remote.name = 'test'
+  remote.host = 'test.domain.com'
+  remote.user = 'root'
+  remote.password = 'password'
+  remote.allowAnyHosts = true
+  stage('Remote SSH') {
+    writeFile file: 'abc.sh', text: 'ls -lrt'
+    sshPut remote: remote, from: 'abc.sh', into: '.'
+  }
+}
+node {
+  def remote = [:]
+  remote.name = 'test'
+  remote.host = 'test.domain.com'
+  remote.user = 'root'
+  remote.password = 'password'
+  remote.allowAnyHosts = true
+  stage('Remote SSH') {
+    sshGet remote: remote, from: 'abc.sh', into: 'abc_get.sh', override: true
+  }
+}
+node {
+  def remote = [:]
+  remote.name = 'test'
+  remote.host = 'test.domain.com'
+  remote.user = 'root'
+  remote.password = 'password'
+  remote.allowAnyHosts = true
+  stage('Remote SSH') {
+    sshRemove remote: remote, path: "abc.sh"
+  }
+}
+def remote = [:]
+remote.name = "node-1"
+remote.host = "10.000.000.153"
+remote.allowAnyHosts = true
+node {
+    withCredentials([sshUserPrivateKey(credentialsId: 'sshUser', keyFileVariable: 'identity', passphraseVariable: '', usernameVariable: 'userName')]) {
+        remote.user = userName
+        remote.identityFile = identity
+        stage("SSH Steps Rocks!") {
+            writeFile file: 'abc.sh', text: 'ls'
+            sshCommand remote: remote, command: 'for i in {1..5}; do echo -n \"Loop \$i \"; date ; sleep 1; done'
+            sshPut remote: remote, from: 'abc.sh', into: '.'
+            sshGet remote: remote, from: 'abc.sh', into: 'bac.sh', override: true
+            sshScript remote: remote, script: 'abc.sh'
+            sshRemove remote: remote, path: 'abc.sh'
+        }
+    }
+}
+################################		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp44"></a>6.5.7. Rancher</h4></div></div></div>
+		
+		<p><a class="ulink" href="https://plugins.jenkins.io/rancher" target="_top">https://plugins.jenkins.io/rancher</a></p>
+		<p><a class="ulink" href="https://jenkins.io/doc/pipeline/steps/rancher/" target="_top">https://jenkins.io/doc/pipeline/steps/rancher/</a></p>
+		<p>创建 Rancher API</p>
+		<p>在Jenkins的Credentials中添加一个类型为Username with password的认证，username和password分别对应于上一步生成的Access Key和Secret Key，如下图</p>
+		<p>然后在语法生成器中，找到rancher进行如下图的配置：</p>
+		<p>设置 environmentId ，找到你的集群，点击进入，看到URL https://rancher.netkiller.cn/v3/clusters/c-mx88f，“c-mx88f” 就是 environmentId</p>
+		<pre class="screen">
+		
+stage('Rancher') {
+    rancher confirm: false, credentialId: 'b56bd9b2-3277-4072-baae-08d73aa26549', endpoint: 'https://rancher.netkiller.cn/v2', environmentId: 'test', environments: '', image: '*/demo:1.0.0', ports: '', service: 'jenkins/demo', timeout: 50
+}		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="jenkins.kubernetes"></a>6.5.8. Kubernetes 插件</h4></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp45"></a>6.5.8.1. Kubernetes</h5></div></div></div>
 			
 			<p>
 				<a class="ulink" href="https://plugins.jenkins.io/kubernetes" target="_top">https://plugins.jenkins.io/kubernetes</a>
@@ -266,7 +410,7 @@ podTemplate(label: label) {
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp41"></a>6.5.6.2. Kubernetes :: Pipeline :: Kubernetes Steps</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp46"></a>6.5.8.2. Kubernetes :: Pipeline :: Kubernetes Steps</h5></div></div></div>
 			
 			<pre class="screen">
 			
@@ -274,11 +418,11 @@ podTemplate(label: label) {
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp42"></a>6.5.6.3. Kubernetes Continuous Deploy</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp47"></a>6.5.8.3. Kubernetes Continuous Deploy</h5></div></div></div>
 			
 			<p><a class="ulink" href="https://plugins.jenkins.io/kubernetes-cd" target="_top">https://plugins.jenkins.io/kubernetes-cd</a></p>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="Kubernetes Cli"></a>6.5.6.4. Kubernetes Cli</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="Kubernetes Cli"></a>6.5.8.4. Kubernetes Cli</h5></div></div></div>
 			
 			<p>
 				:
@@ -286,6 +430,93 @@ podTemplate(label: label) {
 			</p>
 		</div>
 
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp48"></a>6.5.9. HTTP Request Plugin</h4></div></div></div>
+		
+		<pre class="screen">
+		
+GET https://&lt;rancher_server&gt;/v3/project/&lt;project_id&gt;/workloads/deployment:&lt;rancher_namespace&gt;:&lt;rancher_service&gt; # 获取一个服务的详细信息
+GET https://&lt;rancher_server&gt;/v3/project/&lt;project_id&gt;/pods/?workloadId=deployment:&lt;rancher_namespace&gt;:&lt;rancher_service&gt; # 获取服务的所有容器信息
+DELETE https://&lt;rancher_server&gt;/v3/project/&lt;project_id&gt;/pods/&lt;rancher_namespace&gt;:&lt;container_name&gt; # 根据容器名删除容器
+PUT https://&lt;rancher_server&gt;/v3/project/&lt;project_id&gt;/workloads/deployment:&lt;rancher_namespace&gt;:&lt;rancher_service&gt; # 更新服务	
+		
+		</pre>
+		<pre class="screen">
+		
+// 查询服务信息
+def response = httpRequest acceptType: 'APPLICATION_JSON', authentication: "${RANCHER_API_KEY}", contentType: 'APPLICATION_JSON', httpMode: 'GET', responseHandle: 'LEAVE_OPEN', timeout: 10, url: "${rancherUrl}/workloads/deployment:${rancherNamespace}:${rancherService}"
+def serviceInfo = new JsonSlurperClassic().parseText(response.content)
+response.close()
+
+def dockerImage = imageName+":"+imageTag
+if (dockerImage.equals(serviceInfo.containers[0].image)) {
+    // 如果镜像名未改变，直接删除原容器
+    // 查询容器名称
+    response = httpRequest acceptType: 'APPLICATION_JSON', authentication: "${RANCHER_API_KEY}", contentType: 'APPLICATION_JSON', httpMode: 'GET', responseHandle: 'LEAVE_OPEN', timeout: 10, url: "${rancherUrl}/pods/?workloadId=deployment:${rancherNamespace}:${rancherService}"
+    def podsInfo = new JsonSlurperClassic().parseText(response.content)
+    def containerName = podsInfo.data[0].name
+    response.close()
+    // 删除容器
+    httpRequest acceptType: 'APPLICATION_JSON', authentication: "${RANCHER_API_KEY}", contentType: 'APPLICATION_JSON', httpMode: 'DELETE', responseHandle: 'NONE', timeout: 10, url: "${rancherUrl}/pods/${rancherNamespace}:${containerName}"
+    
+} else {
+    // 如果镜像名改变，使用新镜像名更新容器
+    serviceInfo.containers[0].image = dockerImage
+    // 更新
+    def updateJson = new JsonOutput().toJson(serviceInfo)
+    httpRequest acceptType: 'APPLICATION_JSON', authentication: "${RANCHER_API_KEY}", contentType: 'APPLICATION_JSON', httpMode: 'PUT', requestBody: "${updateJson}", responseHandle: 'NONE', timeout: 10, url: "${rancherUrl}/workloads/deployment:${rancherNamespace}:${rancherService}"
+}		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="skip-certificate-check"></a>6.5.10. Skip Certificate Check plugin</h4></div></div></div>
+		
+		<p><a class="ulink" href="https://wiki.jenkins.io/display/JENKINS/Skip+Certificate+Check+plugin" target="_top">https://wiki.jenkins.io/display/JENKINS/Skip+Certificate+Check+plugin</a></p>
+		<pre class="screen">
+		
+[root@localhost ~]# tail -f /var/log/jenkins/jenkins.log
+
+javax.net.ssl.SSLPeerUnverifiedException: peer not authenticated
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp49"></a>6.5.11. Android Sign Plugin</h4></div></div></div>
+		
+		<p>Android Sign Plugin 依赖 Credentials Plugin，因为 Credentials Plugin 只支持 PKCS#12 格式的证书，所以先需要将生成好的 JKS 证书转换为 PKCS#12 格式：</p>
+		<pre class="screen">
+		
+keytool -importkeystore -srckeystore netkiller.jks -srcstoretype JKS -deststoretype PKCS12 -destkeystore netkiller.p12
+		
+		</pre>
+		<p>复制代码添加类型为 credential，选择上传证书文件，将 PKCS#12 证书上传到并配置好 ID，本项目中使用了 ANDROID_SIGN_KEY_STORE 作为 ID。</p>
+		<pre class="screen">
+		
+pipeline {
+    ...
+
+    stages {
+        ...
+
+        stage("Sign APK") {
+            steps {
+                echo 'Sign APK'
+                signAndroidApks(
+                    keyStoreId: "ANDROID_SIGN_KEY_STORE",
+                    keyAlias: "tomczhen",
+                    apksToSign: "**/*-prod-release-unsigned.apk",
+                    archiveSignedApks: false,
+                    archiveUnsignedApks: false
+                )
+            }
+        }
+
+        ...
+    }
+
+    ...
+}		
+		
+		</pre>
 	</div>
 </div><div xmlns="" id="disqus_thread"></div><script xmlns="">
 

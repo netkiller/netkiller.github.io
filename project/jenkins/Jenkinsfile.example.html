@@ -14,7 +14,7 @@
 	    <a xmlns="" href="//www.netkiller.cn/home/video.html">视频教程</a> |
 	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">6.6. Jenkinsfile Pipeline Example</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="jenkins.plugins.html">上一页</a> </td><th width="60%" align="center">第 6 章 Jenkins</th><td width="20%" align="right"> <a accesskey="n" href="../sonarqube.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="Jenkinsfile.example"></a>6.6. Jenkinsfile Pipeline Example</h3></div></div></div>
 	
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp43"></a>6.6.1. Maven 子模块范例</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp50"></a>6.6.1. Maven 子模块范例</h4></div></div></div>
 		
 		<p>
 			Maven 子模块创建方法
@@ -193,7 +193,7 @@ pipeline {
 			
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp44"></a>6.6.2. 使用指定镜像构建</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp51"></a>6.6.2. 使用指定镜像构建</h4></div></div></div>
 		
 		<pre class="screen">
 		
@@ -285,6 +285,84 @@ pipeline {
 }		
 		
 		</pre>
+		<pre class="screen">
+		
+pipeline {
+
+    agent any
+    
+    stages {
+        stage("Checkout") {
+          steps {
+            checkout([
+              $class: 'GitSCM',
+              branches: [[name: env.GIT_COMMIT]],
+              extensions: [[$class: 'PruneStaleBranch']],
+              userRemoteConfigs: [[
+                url: env.GIT_REPO_URL,
+                refspec: "+refs/heads/*:refs/remotes/origin/*"
+              ]]
+            ])
+
+            sh '''
+                #!/bin/bash
+                echo ${GIT_COMMIT}
+                echo ${REF}
+                echo ${GIT_LOCAL_BRANCH}
+            '''
+          }
+        }
+
+        stage('Build') {
+            steps{
+                echo "Building begin"
+                script{
+                    // 设置镜像名                
+                    env.BUILD_MODULE = "common"
+                    env.DOCKER_IMAGE_TAG = env.BUILD_MODULE + ':' + env.GIT_COMMIT
+                    env.DOCKER_REMOTE_IMAGE_TAG = "${env.REGISTRY_URL}/${env.DOCKER_IMAGE_TAG}"
+
+                    sh "docker login ${DOCKER_REGISTER_URL} -u ${DOCKER_REPOSITORY_USERNAME} -p ${DOCKER_REPOSITORY_PASSWORD}"
+
+                    def statusCode = sh(script:"docker pull ${DOCKER_REMOTE_IMAGE_TAG}", returnStatus:true)
+                    
+					// 判断该镜像在仓库是否存在
+                    if (statusCode != 0) {
+
+                        sh '''
+                        #!/bin/bash
+
+                        # build docker image
+                        docker build . -f Dockerfile -t ${DOCKER_IMAGE_TAG}
+
+                        # tag docker image
+                        docker tag ${DOCKER_IMAGE_TAG} ${DOCKER_REMOTE_IMAGE_TAG}
+
+                    }
+                }
+                echo "Build end"
+            }
+        }
+
+        stage('Deploy') {
+            steps{
+                echo "Deploying begin"
+                script{
+                        # push to
+                        docker push ${DOCKER_REMOTE_IMAGE_TAG}
+
+                        # rm
+                        docker rmi ${DOCKER_IMAGE_TAG}
+                        docker rmi ${DOCKER_REMOTE_IMAGE_TAG}
+                        '''
+                }
+                echo "Deploy end"
+            }
+        }
+    }
+}		
+		
+		</pre>
 	</div>
 	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="example.yarn"></a>6.6.4. Yarn</h4></div></div></div>
 		
@@ -331,6 +409,142 @@ pipeline {
         stage("部署") {
             steps {
                 // sh './deploy.sh'
+            }
+        }
+    }
+}		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="jenkins.pipeline.android"></a>6.6.5. Android</h4></div></div></div>
+		
+		<p>进入项目目录，找到 local.properties 文件，打开文件</p>
+		<pre class="screen">
+		
+## This file is automatically generated by Android Studio.
+# Do not modify this file -- YOUR CHANGES WILL BE ERASED!
+#
+# This file should *NOT* be checked into Version Control Systems,
+# as it contains information specific to your local configuration.
+#
+# Location of the SDK. This is only used by Gradle.
+# For customization when using a Version Control System, please read the
+# header note.
+sdk.dir=/Users/neo/Library/Android/sdk		
+		
+		</pre>
+		<p>sdk.dir 是 Android SDK 存放目录，进入该目录</p>
+		<pre class="screen">
+		
+neo@MacBook-Pro ~ % ll /Users/neo/Library/Android/sdk/        
+total 0
+drwxr-xr-x   3 neo  staff    96B Oct 23 09:56 build-tools
+drwxr-xr-x  18 neo  staff   576B Oct 23 09:55 emulator
+drwxr-xr-x   6 neo  staff   192B Oct 23 10:21 extras
+drwxr-xr-x   3 neo  staff    96B Oct 23 11:35 fonts
+drwxr-xr-x   4 neo  staff   128B Oct 23 11:00 licenses
+drwxr-xr-x   3 neo  staff    96B Oct 23 09:55 patcher
+drwxr-xr-x  19 neo  staff   608B Oct 23 09:56 platform-tools
+drwxr-xr-x   4 neo  staff   128B Oct 23 10:23 platforms
+drwxr-xr-x  24 neo  staff   768B Oct 23 10:57 skins
+drwxr-xr-x   4 neo  staff   128B Oct 23 10:23 sources
+drwxr-xr-x   4 neo  staff   128B Oct 24 15:06 system-images
+drwxr-xr-x  14 neo  staff   448B Oct 23 09:55 tools
+
+neo@MacBook-Pro ~ % ll /Users/neo/Library/Android/sdk/licenses
+total 16
+-rw-r--r--  1 neo  staff    41B Oct 23 10:23 android-sdk-license
+-rw-r--r--  1 neo  staff    41B Oct 23 11:00 android-sdk-preview-license
+
+neo@MacBook-Pro ~ % cat /Users/neo/Library/Android/sdk/licenses/android-sdk-license 
+
+d56f5187479451eabf01fb78af6dfcb131a6481e	
+		
+		</pre>
+		<p>/Users/neo/Library/Android/sdk/licenses/android-sdk-license 便是当前 Android SDK License 文件</p>
+		<p>如果你安装了多个版本的 SDK，例如 android-26， android-27， android-28 可以看到三行字串。</p>
+		<pre class="screen">
+		
+24333f8a63b6825ea9c5514f83c2829b004d1fee 这是 Android 8.0 - android-26
+d56f5187479451eabf01fb78af6dfcb131a6481e 这是 Android 9.0 - android-28
+		
+		</pre>
+		<pre class="screen">
+		
+pipeline {
+  	agent any
+    stages  {
+        
+        stage("Checkout") {
+            steps {
+                checkout(
+                  [$class: 'GitSCM', branches: [[name: env.GIT_BUILD_REF]], 
+                  userRemoteConfigs: [[url: env.GIT_REPO_URL]]]
+                )
+            }
+        }
+		
+      	stage("Android SDK") {
+            steps {
+              	script{
+	                if (fileExists('sdk-tools-linux-4333796.zip')) {
+	    				echo 'Android SDK 已安装'
+					} else {
+	    				echo '安装 Android SDK'
+
+                		sh '''
+# rm -rf sdk-tools-linux-4333796.* tools platforms platform-tools
+wget https://dl.google.com/android/repository/sdk-tools-linux-4333796.zip
+unzip sdk-tools-linux-4333796.zip
+         				'''
+              	
+              			sh 'yes|tools/bin/sdkmanager --licenses'
+              			//sh 'yes|tools/bin/sdkmanager "platform-tools" "build-tools;26.0.3" "platforms;android-26"'	// andorid 8.0	
+	              		//sh 'yes|tools/bin/sdkmanager "platform-tools" "platforms;android-27"' // andorid 8.1
+	              		sh 'yes|tools/bin/sdkmanager "platform-tools" "platforms;android-28"'	// andorid 9.0
+	              		sh '(while sleep 3; do echo "y"; done) | tools/android update sdk -u'
+	              
+	              		sh 'tools/bin/sdkmanager --list'
+                	}
+               	}	
+              	echo '安装 Android SDK License'
+              	writeFile(file: 'platforms/licenses/android-sdk-license', text: '''
+8933bad161af4178b1185d1a37fbf41ea5269c55
+24333f8a63b6825ea9c5514f83c2829b004d1fee
+d56f5187479451eabf01fb78af6dfcb131a6481e
+ 					''')
+				sh 'ls -1 platforms'
+            }
+        }
+
+        stage("Build") {
+            steps {
+              	echo "构建中..."
+                sh './gradlew'
+              	echo "构建完成."
+            }
+        }
+        stage("Test") {
+            steps {
+                echo "单元测试中..."
+                sh './gradlew test'
+                echo "单元测试完成."
+                //junit 'app/build/test-results/*/*.xml'
+            }
+        }      
+      	stage("Package") {
+            steps {
+                sh './gradlew assemble'
+                // 收集构建产物
+                archiveArtifacts artifacts: 'app/build/outputs/apk/*/*.apk', fingerprint: true 
+            }
+        }
+
+        stage("Deploy") {
+            steps {
+                echo "部署中..."
+                // sh './deploy.sh' // 自研部署脚本
+                echo "部署完成"
             }
         }
     }
