@@ -16,6 +16,18 @@
 	
 	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="oauth2.doc"></a>9.9.1. Oauth2 协议</h3></div></div></div>
 		
+		<p></p>
+		<pre class="screen">
+		
+授权模式
+oauth2.0提供了四种授权模式，开发者可以根据自己的业务情况自由选择。
+
+授权码授权模式（Authorization Code Grant）
+隐式授权模式（Implicit Grant）
+密码授权模式（Resource Owner Password Credentials Grant）
+客户端凭证授权模式（Client Credentials Grant）		
+		
+		</pre>
 		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="oauth.token"></a>9.9.1.1. token</h4></div></div></div>
 			
 			<div class="literallayout"><p><br />
@@ -35,17 +47,287 @@
 				所以当用户访问时,由client直接向资源服务器获取access_token并访问资源即可.
 			</pre>
 		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp434"></a>9.9.1.3. 授权码授权模式（Authorization Code Grant）</h4></div></div></div>
+			
+			<pre class="screen">
+			
+（A）用户访问客户端，客户端将用户引导向认证服务器。
+（B）用户选择是否给予客户端授权。
+（C）如用户给予授权，认证服务器将用户引导向客户端指定的redirection uri，同时加上授权码code。
+（D）客户端收到code后，通过后台的服务器向认证服务器发送code和redirection uri。
+（E）认证服务器验证code和redirection uri，确认无误后，响应客户端访问令牌（access token）和刷新令牌（refresh token）。
+请求示例
+（A）步骤：客户端申请认证的URI
+
+https://www.example.com/oauth/authorize?response_type=code&amp;client_id=CLIENT_ID&amp;redirect_uri=CALLBACK_URL&amp;scope=read&amp;state=xxx
+
+参数说明：
+response_type：授权类型，必选项，此处的值固定为"code"　　
+client_id：客户端的ID，必选项　　
+redirect_uri：重定向URI，必选项　　
+scope：申请的权限范围，可选项　　
+state：任意值，认证服务器会原样返回,用于抵制CSRF(跨站请求伪造)攻击。
+
+（C）步骤：服务器回应客户端的URI
+https://client.example.com/cb?code=SplxlOBeZQQYbYS6WxSbIA&amp;state=xxx
+
+参数说明：
+code：授权码，必选项。授权码有效期通常设为10分钟，一次性使用。该码与客户端ID、重定向URI以及用户，是一一对应关系。　　
+state：原样返回客户端传的该参数的值。
+
+（D）步骤：客户端向认证服务器申请令牌
+https://www.example.com/oauth/token?client_id=CLIENT_ID&amp;grant_type=authorization_code&amp;code=AUTHORIZATION_CODE&amp;redirect_uri=CALLBACK_URL
+
+参数说明：
+client_id：表示客户端ID，必选项。　　
+grant_type：表示使用的授权模式，必选项，此处的值固定为"authorization_code"。　　
+code：表示上一步获得的授权码，必选项。　　
+redirect_uri：表示重定向URI，必选项，且必须与A步骤中的该参数值保持一致。
+
+注意：协议里没有提及client_secret参数，建议可以使用此参数进行客户端的二次验证。
+（E）步骤：响应（D）步骤的数据
+{ "access_token":"2YotnFZFEjr1zCsicMWpAA", "token_type":"example", "expires_in":3600, "refresh_token":"tGzv3JOkF0XG5Qx2TlKWIA", "example_parameter":"example_value" }
+
+参数说明：
+access_token：访问令牌，必选项。　　
+token_type：令牌类型，该值大小写不敏感，必选项。　　
+expires_in：过期时间，单位为秒。如果省略该参数，必须其他方式设置过期时间。　　
+refresh_token：更新令牌，用来获取下一次的访问令牌，可选项。　　
+scope：权限范围，如果与客户端申请的范围一致，此项可省略。
+
+使用场景
+
+授权码模式是最常见的一种授权模式，在oauth2.0内是最安全和最完善的。
+适用于所有有Server端的应用，如Web站点、有Server端的手机客户端。
+可以得到较长期限授权。
+			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp435"></a>9.9.1.4. 密码模式（Resource Owner Password Credentials Grant）</h4></div></div></div>
+			
+			<pre class="screen">
+			
+密码模式（Resource Owner Password Credentials Grant）
+流程介绍
+
+
+
+
+
+
+
+
+（A）用户向客户端提供用户名和密码。
+（B）客户端将用户名和密码发给认证服务器，向后者请求令牌。
+（C）认证服务器确认无误后，向客户端提供访问令牌。
+请求示例
+（B）步骤：客户端发出https请求
+
+https://www.example.com/token?grant_type=password&amp;username=USERNAME&amp;password=PASSWORD&amp;client_id=CLIENT_ID
+
+参数说明
+grant_type：授权类型，此处的值固定为"password"，必选项。　　
+username：用户名，必选项。　　
+password：用户的密码，必选项。　　
+scope：权限范围，可选项。
+
+（C）步骤：向客户端响应（B）步骤的数据
+{ "access_token":"2YotnFZFEjr1zCsicMWpAA", "token_type":"example", "expires_in":3600, "refresh_token":"tGzv3JOkF0XG5Qx2TlKWIA" }
+
+参数说明
+access_token：访问令牌，必选项。　　
+token_type：令牌类型，该值大小写不敏感，必选项。　　
+expires_in：过期时间，单位为秒。如果省略该参数，必须其他方式设置过期时间。　　
+refresh_token：更新令牌，用来获取下一次的访问令牌，可选项。
+
+使用场景
+
+这种模式适用于用户对应用程序高度信任的情况。比如是用户操作系统的一部分。
+认证服务器只有在其他授权模式无法执行的情况下，才能考虑使用这种模式。
+			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp436"></a>9.9.1.5. 客户端凭证模式（Client Credentials Grant）</h4></div></div></div>
+			
+			<pre class="screen">
+			
+客户端凭证模式（Client Credentials Grant）
+流程介绍
+
+
+（A）客户端向认证服务器进行身份认证，并要求一个访问令牌。
+（B）认证服务器确认无误后，向客户端提供访问令牌。
+请求示例
+（A）步骤：客户端发送https请求
+
+https://www.example.com/token?grant_type=client_credentials&amp;client_id=CLIENT_ID
+
+参数说明
+granttype：表示授权类型，此处的值固定为"client_credentials"，必选项。　　scope：表示权限范围，可选项。
+
+（B）步骤：向客户端响应（A）步骤的数据
+{ "access_token":"2YotnFZFEjr1zCsicMWpAA", "token_type":"example", "expires_in":3600, "example_parameter":"example_value" }
+
+参数说明：
+access_token：访问令牌，必选项。　　
+token_type：令牌类型，该值大小写不敏感，必选项。　　
+expires_in：过期时间，单位为秒。如果省略该参数，必须其他方式设置过期时间。　　
+example_parameter：其它参数，可选项。 
+
+使用场景
+
+客户端模式应用于应用程序想要以自己的名义与授权服务器以及资源服务器进行互动。
+例如使用了第三方的静态文件服务
+		
+			
+			</pre>
+		</div>
+
+
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp437"></a>9.9.1.6. 刷新 TOKEN 方式</h4></div></div></div>
+			
+			<pre class="screen">
+		
+刷新TOKEN
+从上面的四种授权流程可以看出，最终的目的是要获取用户的授权令牌（access_token）。而且授权令牌（access_token）的权限也非常之大，
+所以在协议中明确表示要设置授权令牌（access_token）的有效期。那么当授权令牌（access_token）过期要怎么办呢，协议里提出了一个刷新token的流程。
+流程介绍
+
+
+
+
+
+
+
+
+（A）--（D）通过授权流程获取access_token，并调用业务api接口。
+（F）当调用业务api接口时响应“Invalid Token Error”时。
+（G）调用刷新access_token接口，使用参数refresh_token（如果平台方提供，否则需要用户重新进行授权流程）。
+（H）响应最新的access_token及refresh_token。
+请求示例
+（G）步骤：客户端调用刷新token接口
+
+https://www.example.com/v1/oauth/token?grant_type=refresh_token&amp;client_id=CLIENT_ID&amp;client_secret=CLIENT_SECRET&amp;refresh_token=REFRESH_TOKEN
+
+参数说明
+client_id：客户端的ID，必选项。　　
+client_secret：客户端的密钥，必选项。　　
+grant_type：表示使用的授权模式，此处的值固定为"refreshtoken"，必选项。　　refresh_token：表示早前收到的更新令牌，必选项。
+
+（H）步骤：响应客户端数据
+{ "access_token":"2YotnFZFEjr1zCsicMWpAA", "token_type":"example", "expires_in":3600, "refresh_token":"tGzv3JOkF0XG5Qx2TlKWIA", "example_parameter":"example_value" }
+
+参数说明
+access_token：访问令牌，必选项。　　
+token_type：令牌类型，该值大小写不敏感，必选项。　　
+expires_in：过期时间，单位为秒。如果省略该参数，必须其他方式设置过期时间。　　
+refresh_token：更新令牌，用来获取下一次的访问令牌，可选项。　　
+scope：权限范围，如果与客户端申请的范围一致，此项可省略。
+
+
+说明：建议将access_token和refresh_token的过期时间保存下来，每次调用平台方的业务api前先对access_token和refresh_token进行一下时间判断，如果过期则执行刷新access_token或重新授权操作。refersh_token如果过期就只能让用户重新授权。
+
+好，到此oauth2.0的四种授权流程及令牌的刷新流程已经介绍完了，下面来从oauth2.0的安全性上来介绍一下。
+
+		
+			</pre>
+		</div>
 	</div>
-	
-	
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="oauth2.password"></a>9.9.2. Spring boot with Oauth2 - Password</h3></div></div></div>
+
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="oauth2.authorization_code"></a>9.9.2. authorization_code</h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp443"></a>9.9.2.1. 验证服务器器</h4></div></div></div>
+			
+
+			<pre class="screen">
+			
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-web&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.cloud&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-cloud-starter-oauth2&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.cloud&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-cloud-starter-security&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-thymeleaf&lt;/artifactId&gt;
+		&lt;/dependency&gt;		
+			
+			</pre>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp438"></a>9.9.2.1.1. </h5></div></div></div>
+				
+				<pre class="screen">
+				
+		
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp439"></a>9.9.2.1.2. </h5></div></div></div>
+				
+				<pre class="screen">
+			
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp440"></a>9.9.2.1.3. </h5></div></div></div>
+				
+				<pre class="programlisting">
+			
+			
+			
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp441"></a>9.9.2.1.4. </h5></div></div></div>
+				
+				<pre class="programlisting">
+			
+			
+			
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp442"></a>9.9.2.1.5. 测试</h5></div></div></div>
+				
+				<pre class="programlisting">
+				
+http://localhost:8080/oauth/authorize?response_type=code&amp;client_id=sso&amp;redirect_uri=http://localhost:8082/callback&amp;scope=app
+http://localhost:8080/oauth/token?client_id=sso&amp;grant_type=authorization_code&amp;redirect_uri=http://localhost:8082/callback&amp;code=ZzLi3w
+
+localhost:8082/admin&amp;code=ZzLi3w
+
+localhost:8080/oauth/authorize?response_type=code&amp;client_id=client&amp;redirect_uri=http://www.netkiller.cn&amp;state=123
+
+localhost:8080/oauth/authorize?response_type=code&amp;client_id=sso&amp;redirect_uri=http://localhost:8082/test&amp;scope=app
+
+
+
+
+http://localhost:8080/oauth/token?client_id=sso&amp;grant_type=authorization_code&amp;redirect_uri=http://localhost:8082&amp;code=8z5J9L
+
+http://localhost:8080/oauth/authorize?response_type=code&amp;client_id=sso&amp;redirect_uri=http://localhost:8080&amp;scope=app
+
+http://www.netkiller.cn/?code=eX6IMV&amp;state=123		
+http://localhost:18084/oauth/token?client_id=client&amp;grant_type=authorization_code&amp;redirect_uri=http://api.netkiller.cn&amp;code=bzxoHn			
+				
+				</pre>
+			</div>
+		</div>
+	</div>
+
+
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="oauth2.password"></a>9.9.3. Spring boot with Oauth2 - Password</h3></div></div></div>
 		
 		<p>下面例子由三个项目组成，分别是 tools, server, client。</p>
 		<p>其中 tools 是密码生成工具</p>
 		<p>
 			<a class="ulink" href="https://tools.ietf.org/html/rfc6749" target="_top">https://tools.ietf.org/html/rfc6749</a>
 		</p>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp425"></a>9.9.2.1. Maven</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp444"></a>9.9.3.1. Maven</h4></div></div></div>
 			
 			<pre class="programlisting">
 			
@@ -128,7 +410,7 @@
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp426"></a>9.9.2.2. Password tools</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp445"></a>9.9.3.2. Password tools</h4></div></div></div>
 			
 			<p>Maven</p>
 			<pre class="screen">
@@ -203,9 +485,9 @@ $2a$10$0/o4cRN2.tmnc58sH.N4WOsreVI6sWlPl4CCBrmUfJ332TMfRzA42
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp437"></a>9.9.2.3. Server</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp456"></a>9.9.3.3. Server</h4></div></div></div>
 			
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp427"></a>9.9.2.3.1. Maven</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp446"></a>9.9.3.3.1. Maven</h5></div></div></div>
 				
 				<pre class="programlisting">
 				
@@ -238,7 +520,7 @@ $2a$10$0/o4cRN2.tmnc58sH.N4WOsreVI6sWlPl4CCBrmUfJ332TMfRzA42
 				
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp428"></a>9.9.2.3.2. application.properties</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp447"></a>9.9.3.3.2. application.properties</h5></div></div></div>
 				
 				<pre class="programlisting">
 				
@@ -271,7 +553,7 @@ spring.jpa.hibernate.ddl-auto=create-drop
 				
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp429"></a>9.9.2.3.3. EnableAuthorizationServer</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp448"></a>9.9.3.3.3. EnableAuthorizationServer</h5></div></div></div>
 				
 				<pre class="programlisting">
 				
@@ -335,7 +617,7 @@ public class AuthorizationServerConfigurer extends AuthorizationServerConfigurer
 			
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp430"></a>9.9.2.3.4. EnableResourceServer</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp449"></a>9.9.3.3.4. EnableResourceServer</h5></div></div></div>
 				
 				<pre class="programlisting">
 				
@@ -383,7 +665,7 @@ public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
 				
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp431"></a>9.9.2.3.5. Entity Table</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp450"></a>9.9.3.3.5. Entity Table</h5></div></div></div>
 				
 				<pre class="programlisting">
 				
@@ -459,7 +741,7 @@ public class User implements UserDetails {
 				
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp432"></a>9.9.2.3.6. UserRepository</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp451"></a>9.9.3.3.6. UserRepository</h5></div></div></div>
 				
 				<pre class="programlisting">
 				
@@ -484,7 +766,7 @@ public interface UserRepository extends JpaRepository&lt;User, Long&gt; {
 				
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp433"></a>9.9.2.3.7. UserService</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp452"></a>9.9.3.3.7. UserService</h5></div></div></div>
 				
 				<pre class="programlisting">
 				
@@ -512,7 +794,7 @@ public class UserService implements UserDetailsService {
 				
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp434"></a>9.9.2.3.8. TestRestController</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp453"></a>9.9.3.3.8. TestRestController</h5></div></div></div>
 				
 				<pre class="programlisting">
 				
@@ -543,7 +825,7 @@ public class TestRestController {
 				
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp435"></a>9.9.2.3.9. 数据库初始化</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp454"></a>9.9.3.3.9. 数据库初始化</h5></div></div></div>
 				
 				<p>在 src/main/resources 目录创建 data.sql 文件</p>
 				<pre class="programlisting">
@@ -554,7 +836,7 @@ INSERT INTO users (user_id, username, password, enabled) VALUES
 				</pre>
 				<p>此处密码 $2a$10$Cyj3hM39V34r5pMeQ.Y9peuUqYMBSvsJ7GTBgp4.stWaTtWMboYGS 请使用上面提供的工具生成。</p>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp436"></a>9.9.2.3.10. Test</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp455"></a>9.9.3.3.10. Test</h5></div></div></div>
 				
 				<p>启动 Spring boot Server 项目</p>
 				<pre class="screen">
@@ -585,9 +867,9 @@ Hello world !
 				</pre>
 			</div>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="oauth.client"></a>9.9.2.4. Spring boot with Oauth2 RestTemplate</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="oauth.client"></a>9.9.3.4. Spring boot with Oauth2 RestTemplate</h4></div></div></div>
 			
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="oauth.client.maven"></a>9.9.2.4.1. Maven</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="oauth.client.maven"></a>9.9.3.4.1. Maven</h5></div></div></div>
 				
 				<pre class="programlisting">
 				
@@ -598,7 +880,7 @@ Hello world !
 				
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="oauth2.client.configure"></a>9.9.2.4.2. OAuth2ClientConfiguration.java</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="oauth2.client.configure"></a>9.9.3.4.2. OAuth2ClientConfiguration.java</h5></div></div></div>
 				
 				<pre class="programlisting">
 				
@@ -656,7 +938,7 @@ public class OAuth2ClientConfiguration {
 				
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="oauth2.client.app"></a>9.9.2.4.3. Application.java</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="oauth2.client.app"></a>9.9.3.4.3. Application.java</h5></div></div></div>
 				
 				<pre class="programlisting">
 				
@@ -678,7 +960,7 @@ public class Application {
 
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="oauth2.client.application.properties"></a>9.9.2.4.4. application.properties</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="oauth2.client.application.properties"></a>9.9.3.4.4. application.properties</h5></div></div></div>
 				
 				<pre class="programlisting">
 				
@@ -686,7 +968,7 @@ security.basic.enabled=false
 				
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="oauth2.client.controller"></a>9.9.2.4.5. Controller</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="oauth2.client.controller"></a>9.9.3.4.5. Controller</h5></div></div></div>
 				
 				<pre class="programlisting">
 				
@@ -718,7 +1000,7 @@ public class TestController {
 				
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="oauth2.client.test"></a>9.9.2.4.6. Test</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="oauth2.client.test"></a>9.9.3.4.6. Test</h5></div></div></div>
 				
 				<pre class="screen">
 				
@@ -732,9 +1014,9 @@ OK
 
 	</div>
 
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="oauth2.jwt"></a>9.9.3. Spring boot with Oauth2 jwt</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="oauth2.jwt"></a>9.9.4. Spring boot with Oauth2 jwt</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp438"></a>9.9.3.1. Maven</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp457"></a>9.9.4.1. Maven</h4></div></div></div>
 			
 			<pre class="screen">
 		
@@ -793,7 +1075,7 @@ OK
 			</pre>
 		</div>
 
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp439"></a>9.9.3.2. Authorization Server</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp458"></a>9.9.4.2. Authorization Server</h4></div></div></div>
 			
 			<pre class="programlisting">
 		
@@ -880,7 +1162,7 @@ public class AuthorizationServerConfigurer extends AuthorizationServerConfigurer
 		
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp440"></a>9.9.3.3. Resource Server</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp459"></a>9.9.4.3. Resource Server</h4></div></div></div>
 			
 			<pre class="programlisting">
 		
@@ -935,7 +1217,7 @@ public class ResourceServerConfigurer extends ResourceServerConfigurerAdapter {
 		
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp441"></a>9.9.3.4. Web Security</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp460"></a>9.9.4.4. Web Security</h4></div></div></div>
 			
 			<pre class="programlisting">
 		
@@ -977,7 +1259,7 @@ public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
 		
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp442"></a>9.9.3.5. 插入数据</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp461"></a>9.9.4.5. 插入数据</h4></div></div></div>
 			
 			<p></p>
 			<pre class="screen">
@@ -987,7 +1269,7 @@ INSERT INTO `user` (username, password, enabled) VALUES ('netkiller@msn.com', '$
 			</pre>
 
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp443"></a>9.9.3.6. 使用 CURL 测试 JWT</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp462"></a>9.9.4.6. 使用 CURL 测试 JWT</h4></div></div></div>
 			
 			<pre class="screen">
 		
@@ -1003,7 +1285,7 @@ neo@MacBook-Pro ~ % curl -H "Accept: application/json" -H "Content-Type: applica
 		
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp444"></a>9.9.3.7. 测试 Shell</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp463"></a>9.9.4.7. 测试 Shell</h4></div></div></div>
 			
 			<pre class="screen">
 		
@@ -1014,7 +1296,7 @@ curl -s -k -H "Accept: application/json" -H "Content-Type: application/json" -H 
 		
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="refresh_token"></a>9.9.3.8. refresh_token</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="refresh_token"></a>9.9.4.8. refresh_token</h4></div></div></div>
 			
 			<pre class="screen">
 		
@@ -1025,9 +1307,9 @@ curl -s  -X POST --user 'api:secret' -d 'grant_type=refresh_token&amp;client_id=
 
 	</div>
 
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="oauth2.jwt.keypair"></a>9.9.4. Spring boot with Oauth2 jwt 非对称证书</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="oauth2.jwt.keypair"></a>9.9.5. Spring boot with Oauth2 jwt 非对称证书</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp445"></a>9.9.4.1. 创建证书</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp464"></a>9.9.5.1. 创建证书</h4></div></div></div>
 			
 			<p>创建证书 keytool -genkeypair -alias jwt -keyalg RSA -keypass passw0rd -keystore jwt.jks -storepass passw0rd	</p>
 			<pre class="programlisting">
@@ -1074,7 +1356,7 @@ HQIDAQAB
 			</pre>
 			<p>复制 jwt.jks 和 public.crt 到 src/main/resources 目录下</p>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp446"></a>9.9.4.2. Authorization Server</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp465"></a>9.9.5.2. Authorization Server</h4></div></div></div>
 			
 			<pre class="programlisting">
 		
@@ -1088,7 +1370,7 @@ HQIDAQAB
 		
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp447"></a>9.9.4.3. Resource Server</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp466"></a>9.9.5.3. Resource Server</h4></div></div></div>
 			
 			<pre class="programlisting">
 		
@@ -1113,7 +1395,7 @@ HQIDAQAB
 			</pre>
 		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="oauth2.ios"></a>9.9.5. Apple iOS 访问 Oauth2</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="oauth2.ios"></a>9.9.6. Apple iOS 访问 Oauth2</h3></div></div></div>
 		
 		<pre class="programlisting">
 	
@@ -1266,7 +1548,7 @@ NSString *url=@"http://xxxxx";
 	
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="oauth2.android"></a>9.9.6. Android Oauth2 + Jwt example</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="oauth2.android"></a>9.9.7. Android Oauth2 + Jwt example</h3></div></div></div>
 		
 		<p></p>
 		<pre class="programlisting">
@@ -1469,10 +1751,10 @@ public class Oauth2jwtActivity extends AppCompatActivity {
 	
 		</pre>
 	</div>
-	
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="oauth2.RestTemplate"></a>9.9.7. RestTemplate 使用 HttpClient</h3></div></div></div>
+
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="oauth2.RestTemplate"></a>9.9.8. RestTemplate 使用 HttpClient</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp448"></a>9.9.7.1. Maven</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp467"></a>9.9.8.1. Maven</h4></div></div></div>
 			
 			<pre class="programlisting">
 				
@@ -1504,7 +1786,7 @@ public class Oauth2jwtActivity extends AppCompatActivity {
 				
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp449"></a>9.9.7.2. SpringBootApplication</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp468"></a>9.9.8.2. SpringBootApplication</h4></div></div></div>
 			
 			<pre class="programlisting">
 				
@@ -1528,7 +1810,7 @@ public class Application {
 				
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp450"></a>9.9.7.3. ClientRestController</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp469"></a>9.9.8.3. ClientRestController</h4></div></div></div>
 			
 			<pre class="programlisting">
 				
@@ -1566,7 +1848,7 @@ public class ClientRestController {
 				
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp451"></a>9.9.7.4. Test</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp470"></a>9.9.8.4. Test</h4></div></div></div>
 			
 			<p>首先获取 Token</p>
 			<pre class="screen">
@@ -1590,7 +1872,7 @@ MacBook-Pro:Application neo$ curl -X POST --user 'api:secret' -d 'grant_type=pas
 			</pre>
 		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="oauth.self-sign"></a>9.9.8. 自签名证书信任问题</h3></div><div><h4 class="subtitle">unable to find valid certification path to requested target</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="oauth.self-sign"></a>9.9.9. 自签名证书信任问题</h3></div><div><h4 class="subtitle">unable to find valid certification path to requested target</h4></div></div></div>
 		
 		
 		<pre class="programlisting">
@@ -1653,8 +1935,8 @@ public class TestController {
 		
 		</pre>
 	</div>
-	
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="oauth2"></a>9.9.9. Principal</h3></div></div></div>
+
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="oauth2"></a>9.9.10. Principal</h3></div></div></div>
 		
 		<pre class="programlisting">
 		
@@ -1672,7 +1954,7 @@ public class ResourceController {
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp452"></a>9.9.10. SecurityContextHolder 对象</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp471"></a>9.9.11. SecurityContextHolder 对象</h3></div></div></div>
 		
 		<pre class="screen">
 		
@@ -1690,9 +1972,54 @@ public class ResourceController {
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="oauth2.faq"></a>9.9.11. Oauth2 常见问题</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp474"></a>9.9.12. 资源服务器配置</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp453"></a>9.9.11.1. 修改 /oauth/token 路径</h4></div></div></div>
+		<p>ResourceServerConfigurerAdapter</p>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp473"></a>9.9.12.1. access()</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+ 	@Override
+    public void configure(HttpSecurity http) throws Exception {
+        http
+                .httpBasic()
+            .and()
+                .authorizeRequests()
+                .antMatchers("/home")
+                .permitAll()
+            .and()
+                .authorizeRequests()
+                .antMatchers("/user")
+                .access("#oauth2.hasScope('read')")
+            .and()
+                .authorizeRequests()
+                .anyRequest()
+                .authenticated()
+        ;
+    }			
+			
+			</pre>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp472"></a>9.9.12.1.1. </h5></div></div></div>
+				
+				<pre class="programlisting">
+				
+	@Override
+    public void configure(HttpSecurity http) throws Exception {
+        super.configure(http);
+        http
+                .authorizeRequests()
+                .antMatchers("/login").permitAll()
+                .antMatchers("/info","/news")
+                .access("#oauth2.hasScope('read') and hasRole('USER')");
+    }				
+				
+				</pre>
+			</div>
+		</div>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="oauth2.faq"></a>9.9.13. Oauth2 常见问题</h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp475"></a>9.9.13.1. 修改 /oauth/token 路径</h4></div></div></div>
 			
 			<pre class="programlisting">
 			
@@ -1705,7 +2032,7 @@ public class ResourceController {
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp454"></a>9.9.11.2. password 认证方式静态配置用户列表</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp476"></a>9.9.13.2. password 认证方式静态配置用户列表</h4></div></div></div>
 			
 			<pre class="programlisting">
 			
