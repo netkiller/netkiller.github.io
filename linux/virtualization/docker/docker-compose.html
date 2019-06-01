@@ -16,9 +16,9 @@
 	
 	
 	
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp1063"></a>163.11.1. 安装 docker-compose</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp1082"></a>163.11.1. 安装 docker-compose</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp1061"></a>163.11.1.1. 使用 pip 安装</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp1080"></a>163.11.1.1. 使用 pip 安装</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -27,7 +27,7 @@ pip install docker-compose
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp1062"></a>163.11.1.2. OSCM 安装</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp1081"></a>163.11.1.2. OSCM 安装</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -36,7 +36,7 @@ curl -s https://raw.githubusercontent.com/oscm/shell/master/virtualization/docke
 			</pre>
 		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp1064"></a>163.11.2. 快速入门</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp1083"></a>163.11.2. 快速入门</h3></div></div></div>
 		
 		<pre class="screen">
 		
@@ -293,7 +293,7 @@ tmpfs:
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp1065"></a>163.11.7.7. 编译 Dockerfile</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="docker-compose.yml.Dockerfile"></a>163.11.7.7. 编译 Dockerfile</h4></div></div></div>
 			
 			<p>编译当前目录下的 Dockerfile 使用 build: .</p>
 			<pre class="screen">
@@ -306,8 +306,84 @@ services:
      - "5000:5000"			
 			
 			</pre>
+			<p>指定镜像名称</p>
+			<pre class="screen">
+			
+version: "3.7"
+services:
+  redis-image:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - node=master
+    image: netkiller/redis:latest
+    container_name: redis
+    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - redis
+    privileged: true
+    sysctls:
+      net.core.somaxconn: '511'
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 65535
+        hard: 65535			
+			
+			</pre>
+			<p>docker-compose build redis-image 构建镜像</p>
+			<pre class="screen">
+			
+neo@MacBook-Pro ~/workspace/docker/docker-compose/redis/cluster % docker-compose build redis-image
+Building redis-image
+Step 1/12 : FROM redis:latest
+ ---&gt; a55fbf438dfd
+Step 2/12 : ARG node
+ ---&gt; Using cache
+ ---&gt; 4deb8fc1e1df
+Step 3/12 : ENV REDIS_PORT 6379
+ ---&gt; Using cache
+ ---&gt; 5723ff2fe55c
+Step 4/12 : COPY redis.conf /etc/redis/redis.conf
+ ---&gt; Using cache
+ ---&gt; daf496f8c342
+Step 5/12 : COPY docker-entrypoint.sh /usr/local/bin/
+ ---&gt; Using cache
+ ---&gt; 600ae3b0c059
+Step 6/12 : RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+ ---&gt; Using cache
+ ---&gt; 630e3813bc8f
+Step 7/12 : RUN echo 'Asia/Shanghai' &gt;/etc/timezone
+ ---&gt; Using cache
+ ---&gt; 7d48350d6621
+Step 8/12 : RUN echo 'echo never &gt; /sys/kernel/mm/transparent_hugepage/enabled' &gt; /etc/rc.local
+ ---&gt; Using cache
+ ---&gt; c096dc75da72
+Step 9/12 : RUN chmod +rw /etc/redis/redis.conf
+ ---&gt; Using cache
+ ---&gt; 25d8b0ac8893
+Step 10/12 : EXPOSE $REDIS_PORT
+ ---&gt; Using cache
+ ---&gt; 99f31a88d2ff
+Step 11/12 : ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+ ---&gt; Using cache
+ ---&gt; ef98f89610ae
+Step 12/12 : CMD [ "redis-server", "/etc/redis/redis.conf" ]
+ ---&gt; Using cache
+ ---&gt; 095823650068
+
+Successfully built 095823650068
+Successfully tagged netkiller/redis:latest
+
+neo@MacBook-Pro ~/workspace/docker/docker-compose/redis/cluster % docker images | grep netkiller/redis
+netkiller/redis                            latest              095823650068        8 minutes ago       95MB
+			
+			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp1066"></a>163.11.7.8. resources 硬件资源分配</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="docker-compose.resources"></a>163.11.7.8. resources 硬件资源分配</h4></div></div></div>
 			
 			<pre class="screen">
 			
