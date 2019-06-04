@@ -1,13 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Spring cloud 安全部署与性能优化</title><link rel="stylesheet" type="text/css" href="docbook.css"/><link rel="stylesheet" type="text/css" href="/journal/journal.css"/><meta name="generator" content="DocBook XSL Stylesheets V1.79.1"/><meta name="description" content=""/><meta name="keywords" content="spring, spring cloud, , , "/></head><body><section xml:lang="zh-cn" class="article" id="idp1"><div class="titlepage"><div><div><h2 class="title">Spring cloud 安全部署与性能优化</h2></div><div><h3 class="subtitle"><em/></h3></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(陈景峯)</span>, <span class="lineage">netkiller, BG7NYT</span></h3><div class="affiliation">
-			<div class="address"><p><br/>
-				<span class="country">中国</span><span class="state">广东省</span><span class="city">深圳市</span><span class="street">龙华新区民治街道溪山美地</span><br/>
-				<span class="postcode">518131</span><br/>
-				<span class="phone">+86 13113668890</span><br/>
-				<br/>
-				<code class="email">&lt;<a class="email" href="mailto:netkiller@msn.com">netkiller@msn.com</a>&gt;</code><br/>
-			</p></div>
-		</div></div></div><div><div class="legalnotice" id="legalnotice">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Spring cloud 安全部署与性能优化</title><link rel="stylesheet" type="text/css" href="docbook.css"/><link rel="stylesheet" type="text/css" href="/journal/journal.css"/><meta name="generator" content="DocBook XSL Stylesheets V1.79.1"/><meta name="description" content=""/><meta name="keywords" content="spring, spring cloud, , , "/></head><body><section xml:lang="zh-cn" class="article" id="idp1"><div class="titlepage"><div><div><h2 class="title">Spring cloud 安全部署与性能优化</h2></div><div><h3 class="subtitle"><em>http://www.netkiller.cn/journal/spring.html</em></h3></div><div><div class="author"><h3 class="author"><span class="honorific">Mr</span>. <span class="firstname">Neo Chen</span> <span class="surname">(陈景峯)</span>, <span class="lineage">netkiller, BG7NYT</span></h3><div class="affiliation">
+		
+		<div class="address"><p><br/>
+			<span class="country">中国</span><br/>
+			<span class="state">广东省</span><br/>
+			<span class="city">深圳市</span><br/>
+			<span class="street">望海路半岛城邦三期</span><br/>
+			<span class="postcode">518067</span><br/>
+			<span class="phone">+86 13113668890</span><br/>
+			<code class="email">&lt;<a class="email" href="mailto:netkiller@msn.com">netkiller@msn.com</a>&gt;</code><br/>
+		</p></div>
+
+		<span class="shortaffil">MMDVM Hotspot: <br/></span>
+		<span class="jobtitle"><br/></span>
+		<span class="orgname">YSF80337 - CN China 1 - W24166/TG46001<br/></span>
+		 <span class="orgdiv">BM_China_46001 - DMR Radio ID 4600441<br/></span>
+	</div></div></div><div><div class="legalnotice" id="legalnotice">
 	<p class="legalnotice-title"><strong>版权声明</strong></p>
 	<p>转载请与作者联系，转载时请务必标明文章原始出处和作者信息及本声明。</p>
 	<table style="border: 0; " class="simplelist"><tr><td>
@@ -28,55 +36,30 @@
 			<table style="border: 0; " class="simplelist"><tr><td>微信订阅号 netkiller-ebook (微信扫描二维码）</td></tr><tr><td>QQ：13721218 请注明“读者”</td></tr><tr><td>QQ群：128659835 请注明“读者”</td></tr></table>
 		</td></tr></table>
 	<p/>
-</div></div><div><p class="pubdate">2019-06-01</p></div><div><div class="abstract"><div class="abstract-title">摘要</div>
+</div></div><div><p class="pubdate">2019-06-04</p></div><div><div class="abstract"><div class="abstract-title">摘要</div>
 
-		</div></div></div><hr/></div><div class="toc"><div class="toc-title">目录</div><ul class="toc"><li><span class="section"><a href="#idp5">1. 规划</a></span><ul><li><span class="section"><a href="#idp2">1.1. 目录规划</a></span></li><li><span class="section"><a href="#idp3">1.2. 用户规划</a></span></li><li><span class="section"><a href="#idp4">1.3. 权限规划</a></span></li></ul></li><li><span class="section"><a href="#os">2. 操作系统配置与优化</a></span><ul><li><span class="section"><a href="#idp6">2.1. /etc/resolv.conf</a></span></li><li><span class="section"><a href="#idp7">2.2. .history 文件</a></span></li><li><span class="section"><a href="#idp8">2.3. 临时文件安全</a></span></li><li><span class="section"><a href="#idp9">2.4. 执行权限 </a></span></li><li><span class="section"><a href="#idp12">2.5. Linux 系统资源调配</a></span><ul><li><span class="section"><a href="#idp10">2.5.1. /etc/security/limits.conf</a></span></li><li><span class="section"><a href="#idp11">2.5.2. /etc/sysctl.conf</a></span></li></ul></li><li><span class="section"><a href="#idp13">2.6. 关闭写磁盘I/O功能</a></span></li><li><span class="section"><a href="#idp14">2.7. 放弃 LVM 使用 Btrfs</a></span></li><li><span class="section"><a href="#openssh">2.8. Openssh 安全配置</a></span><ul><li><span class="section"><a href="#idp15">2.8.1. 禁止root用户登录</a></span></li><li><span class="section"><a href="#idp16">2.8.2. 限制SSH验证重试次数</a></span></li><li><span class="section"><a href="#idp17">2.8.3. 禁止证书登陆</a></span></li><li><span class="section"><a href="#idp18">2.8.4. 使用证书替代密码认证</a></span></li><li><span class="section"><a href="#idp19">2.8.5. 图形窗口客户端记忆密码的问题</a></span></li><li><span class="section"><a href="#idp20">2.8.6. 关闭 GSSAPI</a></span></li><li><span class="section"><a href="#idp21">2.8.7. 禁止SSH端口映射</a></span></li><li><span class="section"><a href="#idp22">2.8.8. IP地址限制</a></span></li><li><span class="section"><a href="#idp23">2.8.9. 禁止SSH密码穷举</a></span></li></ul></li><li><span class="section"><a href="#pam">2.9. PAM 插件认证加固配置</a></span><ul><li><span class="section"><a href="#pam_tally2.so">2.9.1. pam_tally2.so</a></span></li><li><span class="section"><a href="#pam_listfile.so">2.9.2. pam_listfile.so</a></span></li><li><span class="section"><a href="#pam_access.so">2.9.3. pam_access.so</a></span></li><li><span class="section"><a href="#pam_wheel.so">2.9.4. pam_wheel.so</a></span></li></ul></li><li><span class="section"><a href="#idp24">2.10. NTP 服务</a></span></li></ul></li><li><span class="section"><a href="#jvm">3. Java 虚拟机</a></span><ul><li><span class="section"><a href="#jre">3.1. 使用 Server JRE 替代JDK。</a></span></li><li><span class="section"><a href="#JAVA_OPTS">3.2. JAVA_OPTS</a></span></li><li><span class="section"><a href="#idp25">3.3. java.security 优化</a></span></li></ul></li><li><span class="section"><a href="#nginx">4. 配置 Nginx</a></span><ul><li><span class="section"><a href="#idp26">4.1. 处理器数量和连接数配置</a></span></li><li><span class="section"><a href="#idp27">4.2. 隐藏nginx版本号</a></span></li><li><span class="section"><a href="#http2">4.3. HTTP2</a></span></li><li><span class="section"><a href="#http2.redirect">4.4. 用户访问 HTTP时强制跳转到 HTTPS</a></span></li><li><span class="section"><a href="#idp28">4.5. 开启 gzip 压缩传输</a></span></li><li><span class="section"><a href="#idp29">4.6. 过期时间</a></span></li><li><span class="section"><a href="#idp30">4.7. 上传文件尺寸限制</a></span></li><li><span class="section"><a href="#idp31">4.8. 实现相互备份</a></span></li></ul></li><li><span class="section"><a href="#springboot">5. 配置 Spring boot</a></span><ul><li><span class="section"><a href="#idp32">5.1. 指定配置文件</a></span></li><li><span class="section"><a href="#idp33">5.2. 日志文件</a></span></li><li><span class="section"><a href="#idp36">5.3. 如何启动 Springboot 程序</a></span><ul><li><span class="section"><a href="#idp34">5.3.1. systemd</a></span></li><li><span class="section"><a href="#idp35">5.3.2. 传统 init.d 脚本</a></span></li></ul></li><li><span class="section"><a href="#idp38">5.4. 监听端口</a></span><ul><li><span class="section"><a href="#idp37">5.4.1. 使用 80 端口</a></span></li></ul></li><li><span class="section"><a href="#idp39">5.5. 连接数配置</a></span></li><li><span class="section"><a href="#idp40">5.6. 编码配置</a></span></li><li><span class="section"><a href="#idp41">5.7. Session 配置</a></span></li><li><span class="section"><a href="#idp42">5.8. 压缩传输配置</a></span></li><li><span class="section"><a href="#idp43">5.9. 上传限制</a></span></li><li><span class="section"><a href="#idp44">5.10. Redis 配置</a></span></li></ul></li><li><span class="section"><a href="#idp45">6. 如何部署应用程序</a></span></li></ul></div>
+		</div></div></div><hr/></div><div class="toc"><div class="toc-title">目录</div><ul class="toc"><li><span class="section"><a href="#os">1. 操作系统配置与优化</a></span><ul><li><span class="section"><a href="#idp2">1.1. 一键优化</a></span></li><li><span class="section"><a href="#idp5">1.2. 域名</a></span><ul><li><span class="section"><a href="#idp3">1.2.1. 配置 DNS</a></span></li><li><span class="section"><a href="#idp4">1.2.2. /etc/hosts</a></span></li></ul></li><li><span class="section"><a href="#idp6">1.3. 历史记录操作留痕</a></span></li><li><span class="section"><a href="#idp7">1.4. 临时文件安全</a></span></li><li><span class="section"><a href="#idp8">1.5. 执行权限 </a></span></li><li><span class="section"><a href="#idp11">1.6. Linux 系统资源调配</a></span><ul><li><span class="section"><a href="#idp9">1.6.1. /etc/security/limits.conf</a></span></li><li><span class="section"><a href="#idp10">1.6.2. /etc/sysctl.conf</a></span></li></ul></li><li><span class="section"><a href="#idp12">1.7. 关闭 SELINUX</a></span></li><li><span class="section"><a href="#idp13">1.8. 关闭写磁盘I/O功能</a></span></li><li><span class="section"><a href="#idp14">1.9. 放弃 LVM 使用 Btrfs</a></span></li><li><span class="section"><a href="#openssh">1.10. Openssh 安全配置</a></span><ul><li><span class="section"><a href="#idp15">1.10.1. 禁止root用户登录</a></span></li><li><span class="section"><a href="#idp16">1.10.2. 限制SSH验证重试次数</a></span></li><li><span class="section"><a href="#idp17">1.10.3. 禁止证书登陆</a></span></li><li><span class="section"><a href="#idp18">1.10.4. 使用证书替代密码认证</a></span></li><li><span class="section"><a href="#idp19">1.10.5. 图形窗口客户端记忆密码的问题</a></span></li><li><span class="section"><a href="#idp20">1.10.6. 关闭 GSSAPI</a></span></li><li><span class="section"><a href="#idp21">1.10.7. 禁止SSH端口映射</a></span></li><li><span class="section"><a href="#idp22">1.10.8. IP地址限制</a></span></li><li><span class="section"><a href="#idp23">1.10.9. 禁止SSH密码穷举</a></span></li></ul></li><li><span class="section"><a href="#pam">1.11. PAM 插件认证加固配置</a></span><ul><li><span class="section"><a href="#pam_tally2.so">1.11.1. pam_tally2.so</a></span></li><li><span class="section"><a href="#pam_listfile.so">1.11.2. pam_listfile.so</a></span></li><li><span class="section"><a href="#pam_access.so">1.11.3. pam_access.so</a></span></li><li><span class="section"><a href="#pam_wheel.so">1.11.4. pam_wheel.so</a></span></li></ul></li><li><span class="section"><a href="#idp24">1.12. NTP 服务</a></span></li></ul></li><li><span class="section"><a href="#jvm">2. Java 虚拟机</a></span><ul><li><span class="section"><a href="#idp25">2.1. 安装脚本</a></span></li><li><span class="section"><a href="#jre">2.2. 使用 Server JRE 替代JDK。</a></span></li><li><span class="section"><a href="#JAVA_OPTS">2.3. JAVA_OPTS</a></span></li><li><span class="section"><a href="#idp26">2.4. java.security 优化</a></span></li><li><span class="section"><a href="#idp27">2.5. jconsole 配置</a></span></li></ul></li><li><span class="section"><a href="#idp31">3. 数据库</a></span><ul><li><span class="section"><a href="#idp28">3.1. MySQL</a></span></li><li><span class="section"><a href="#idp29">3.2. PostgreSQL</a></span></li><li><span class="section"><a href="#idp30">3.3. Redis</a></span></li></ul></li><li><span class="section"><a href="#idp32">4. RabbitMQ</a></span></li><li><span class="section"><a href="#springboot">5. 配置 Spring boot</a></span><ul><li><span class="section"><a href="#idp33">5.1. 指定配置文件</a></span></li><li><span class="section"><a href="#idp34">5.2. 日志文件</a></span></li><li><span class="section"><a href="#idp37">5.3. 如何启动 Springboot 程序</a></span><ul><li><span class="section"><a href="#idp35">5.3.1. systemd</a></span></li><li><span class="section"><a href="#idp36">5.3.2. 传统 init.d 脚本</a></span></li></ul></li><li><span class="section"><a href="#idp39">5.4. 监听端口</a></span><ul><li><span class="section"><a href="#idp38">5.4.1. 使用 80 端口</a></span></li></ul></li><li><span class="section"><a href="#idp40">5.5. 连接数配置</a></span></li><li><span class="section"><a href="#idp41">5.6. 编码配置</a></span></li><li><span class="section"><a href="#idp42">5.7. Session 配置</a></span></li><li><span class="section"><a href="#idp43">5.8. 压缩传输配置</a></span></li><li><span class="section"><a href="#idp44">5.9. 上传限制</a></span></li><li><span class="section"><a href="#idp45">5.10. Redis 配置</a></span></li><li><span class="section"><a href="#idp50">5.11. 数据库配置</a></span><ul><li><span class="section"><a href="#idp46">5.11.1. PostgreSQL</a></span></li><li><span class="section"><a href="#idp47">5.11.2. MySQL</a></span></li><li><span class="section"><a href="#idp48">5.11.3. Oracle</a></span></li><li><span class="section"><a href="#idp49">5.11.4. 链接池</a></span></li></ul></li></ul></li><li><span class="section"><a href="#springcloud">6. Spring Cloud 配置</a></span><ul><li><span class="section"><a href="#idp51">6.1. Config Server</a></span></li><li><span class="section"><a href="#idp52">6.2. Eureka 安全配置</a></span></li><li><span class="section"><a href="#idp53">6.3. Openfeign 优化</a></span></li></ul></li><li><span class="section"><a href="#nginx">7. 配置 Nginx</a></span><ul><li><span class="section"><a href="#idp54">7.1. 处理器数量和连接数配置</a></span></li><li><span class="section"><a href="#idp55">7.2. 隐藏nginx版本号</a></span></li><li><span class="section"><a href="#http2">7.3. HTTP2</a></span></li><li><span class="section"><a href="#http2.redirect">7.4. 用户访问 HTTP时强制跳转到 HTTPS</a></span></li><li><span class="section"><a href="#idp56">7.5. 开启 gzip 压缩传输</a></span></li><li><span class="section"><a href="#idp57">7.6. 缓存过期时间</a></span></li><li><span class="section"><a href="#idp58">7.7. 上传文件尺寸限制</a></span></li><li><span class="section"><a href="#idp59">7.8. 实现相互备份</a></span></li><li><span class="section"><a href="#idp60">7.9. Nginx 状态信息</a></span></li><li><span class="section"><a href="#idp61">7.10. 禁止公网访问 Spring Boot Actuator</a></span></li></ul></li><li><span class="section"><a href="#idp70">8. 部署应用程序</a></span><ul><li><span class="section"><a href="#idp62">8.1. 服务器软件安装目录</a></span></li><li><span class="section"><a href="#idp63">8.2. 应用程序部署目录</a></span></li><li><span class="section"><a href="#idp64">8.3. 数据盘</a></span></li><li><span class="section"><a href="#idp68">8.4. 用户与权限</a></span><ul><li><span class="section"><a href="#idp65">8.4.1. 禁止使用 root 用户启动服务</a></span></li><li><span class="section"><a href="#idp66">8.4.2. Springboot 应用程序启动用户</a></span></li><li><span class="section"><a href="#idp67">8.4.3. 用户隔离更安全</a></span></li></ul></li><li><span class="section"><a href="#idp69">8.5. 进程监控与重启</a></span></li></ul></li><li><span class="section"><a href="#idp71">9. 监控</a></span></li><li><span class="section"><a href="#idp72">10. 备份</a></span></li></ul></div>
 	
-	<section class="section" id="idp5"><div class="titlepage"><div><div><h2 class="title" style="clear: both">1. 规划</h2></div></div></div>
-		
-		<section class="section" id="idp2"><div class="titlepage"><div><div><h3 class="title">1.1. 目录规划</h3></div></div></div>
-			
-			<pre class="screen">
-			
-/srv		服务器软件安装目录，例如 jdk
-/opt		
-			
-			</pre>
 
-		</section>
-		<section class="section" id="idp3"><div class="titlepage"><div><div><h3 class="title">1.2. 用户规划</h3></div></div></div>
-			
-			<p>禁止使用 root 用户启动应用，每个应用拥有自己的用户。</p>
-			<pre class="screen">
-				
-nginx		Nginx Web 服务器用户
-redis 		Redis 缓存用户
-mysql		MySQL 数据库用户
-			
-			</pre>
-			<p>为 Springboot 进程创建启动用户</p>
-			<p>应用程序放在/www目录下www所有者是www用户。下面是创建www用户的命令</p>
-			<pre class="screen">
-			
-adduser --home /www -c "Web Application" www
-			
-			</pre>
-		</section>
-		<section class="section" id="idp4"><div class="titlepage"><div><div><h3 class="title">1.3. 权限规划</h3></div></div></div>
-			
-			<p>应用程序部署与应用程序启动不能使用同一个用户。</p>
-			<p>上传权限与应用启动不使用一个用户。</p>
-		</section>
-
-	</section>
-	<section class="section" id="os"><div class="titlepage"><div><div><h2 class="title" style="clear: both">2. 操作系统配置与优化</h2></div></div></div>
+	<section class="section" id="os"><div class="titlepage"><div><div><h2 class="title" style="clear: both">1. 操作系统配置与优化</h2></div></div></div>
 		
 		<p>操作系统要求 CentOS 7 Minimal ISO</p>
-		<section class="section" id="idp6"><div class="titlepage"><div><div><h3 class="title">2.1. /etc/resolv.conf</h3></div></div></div>
+		<section class="section" id="idp2"><div class="titlepage"><div><div><h3 class="title">1.1. 一键优化</h3></div></div></div>
 			
-			<p>配置DNS</p>
 			<pre class="screen">
 			
+curl -s https://raw.githubusercontent.com/oscm/shell/master/os/personalise.sh | bash			
+			
+			</pre>
+		</section>
+
+		<section class="section" id="idp5"><div class="titlepage"><div><div><h3 class="title">1.2. 域名</h3></div></div></div>
+			
+			<section class="section" id="idp3"><div class="titlepage"><div><div><h4 class="title">1.2.1. 配置 DNS</h4></div></div></div>
+				
+				<p>修改 /etc/resolv.conf 配置 DNS 确保域名解析正确</p>
+				<pre class="screen">
+				
 echo -ne "
 search example.com
 nameserver 208.67.222.222
@@ -84,12 +67,31 @@ nameserver 202.67.220.220
 nameserver 8.8.8.8
 nameserver 4.4.4.4
 " &gt; /etc/resolv.conf
-			
-			</pre>
+				
+				</pre>
+			</section>
+			<section class="section" id="idp4"><div class="titlepage"><div><div><h4 class="title">1.2.2. /etc/hosts</h4></div></div></div>
+				
+				<p>DNS 解析有延迟，很多不可控因素，将域名写入 /etc/hosts 更为保险</p>
+				<pre class="screen">
+				
+192.168.1.1		www.netkiller.cn
+192.168.1.2		api.netkiller.cn
+192.168.1.3		db.netkiller.cn
+				
+				</pre>
+				<p>使用域名链接数据的例子</p>
+				<pre class="screen">
+				
+spring.datasource.url=jdbc:mysql://db.netkiller.cn:3306/neo				
+				
+				</pre>
+				<p>DNS 不可靠的原因分析，因为DNS使用UDP传输，网络拥堵，电磁干扰等等都能导致丢包。</p>
+			</section>
 		</section>
-		<section class="section" id="idp7"><div class="titlepage"><div><div><h3 class="title">2.2. .history 文件</h3></div></div></div>
+		<section class="section" id="idp6"><div class="titlepage"><div><div><h3 class="title">1.3. 历史记录操作留痕</h3></div></div></div>
 			
-			<p>SA的操作记录问题</p>
+			<p>定义 .history 文件格式，记录每一步操作，便于查看什么时间执行了什么命令</p>
 			<p>通过~/.bash_history文件记录系统管理员的操作记录，定制.bash_history格式</p>
 			<pre class="screen">
 			
@@ -110,7 +112,7 @@ $ history | head
 			
 			</pre>
 		</section>
-		<section class="section" id="idp8"><div class="titlepage"><div><div><h3 class="title">2.3. 临时文件安全</h3></div></div></div>
+		<section class="section" id="idp7"><div class="titlepage"><div><div><h3 class="title">1.4. 临时文件安全</h3></div></div></div>
 			
 			<p>临时文件不应该有执行权限</p>
 			<p>/tmp</p>
@@ -127,7 +129,7 @@ none /dev/shm tmpfs defaults，nosuid，noexec，rw 0 0
 			
 			</pre>
 		</section>
-		<section class="section" id="idp9"><div class="titlepage"><div><div><h3 class="title">2.4. 执行权限 </h3></div></div></div>
+		<section class="section" id="idp8"><div class="titlepage"><div><div><h3 class="title">1.5. 执行权限 </h3></div></div></div>
 			
 			<p>以数据库为例,从安全角度考虑我们需要如下更改</p>
 			<pre class="screen">
@@ -139,9 +141,9 @@ chmod 700 /usr/bin/mysql*
 			<p>mysql用户是DBA专用用户, 其他用户将不能执行mysql等命令。</p>
 		</section>
 
-		<section class="section" id="idp12"><div class="titlepage"><div><div><h3 class="title">2.5. Linux 系统资源调配</h3></div></div></div>
+		<section class="section" id="idp11"><div class="titlepage"><div><div><h3 class="title">1.6. Linux 系统资源调配</h3></div></div></div>
 			
-			<section class="section" id="idp10"><div class="titlepage"><div><div><h4 class="title">2.5.1. /etc/security/limits.conf</h4></div></div></div>
+			<section class="section" id="idp9"><div class="titlepage"><div><div><h4 class="title">1.6.1. /etc/security/limits.conf</h4></div></div></div>
 				
 				<p>很多资料上是这么写的</p>
 				<pre class="screen">
@@ -182,7 +184,7 @@ EOF
 				</pre>
 			</section>
 
-			<section class="section" id="idp11"><div class="titlepage"><div><div><h4 class="title">2.5.2. /etc/sysctl.conf</h4></div></div></div>
+			<section class="section" id="idp10"><div class="titlepage"><div><div><h4 class="title">1.6.2. /etc/sysctl.conf</h4></div></div></div>
 				
 				<p>内核参数调整</p>
 				<pre class="screen">
@@ -201,11 +203,18 @@ EOF
 			
 				</pre>
 			</section>
-
-
+		</section>
+		<section class="section" id="idp12"><div class="titlepage"><div><div><h3 class="title">1.7. 关闭 SELINUX</h3></div></div></div>
+			
+			<pre class="screen">
+			
+curl -s https://raw.githubusercontent.com/oscm/shell/master/os/selinux.sh | bash				
+			
+			</pre>
 		</section>
 
-		<section class="section" id="idp13"><div class="titlepage"><div><div><h3 class="title">2.6. 关闭写磁盘I/O功能</h3></div></div></div>
+
+		<section class="section" id="idp13"><div class="titlepage"><div><div><h3 class="title">1.8. 关闭写磁盘I/O功能</h3></div></div></div>
 			
 			<p>对于某些文件没必要记录文件的访问时间，由其是在高并发的IO密集操作的环境下，通过两个参数可以实现noatime,nodiratime减少不必要的系统IO资源。</p>
 			<p>编辑/etc/fstab 添加 noatime,nodiratime 参数</p>
@@ -218,21 +227,27 @@ EOF
 			<p>我一般分区规划是，/系统根分区,swap交换分区,/www数据分区，同时 禁止写入atime时间,因为/www频繁请求会影响IO </p>
 			<p>临时mount</p>
 			<pre class="screen">
-				mount -o remount,noatime,nodiratime /dev/sda3 /mnt/your
+			
+mount -o remount,noatime,nodiratime /dev/sda3 /mnt/your
+			
 			</pre>
 			<p>LABEL 方式</p>
 			<pre class="screen">
-				LABEL=/www /www ext3 defaults,noatime,nodiratime 1 1
+			
+LABEL=/www /www ext3 defaults,noatime,nodiratime 1 1
+			
 			</pre>
 			<p>UUID 方式</p>
 			<pre class="screen">
-				UUID=eeff3e86-7964-4a48-ac02-51ea167ea6b2 /www ext4 defaults,noatime,nodiratime 1 2
+			
+UUID=eeff3e86-7964-4a48-ac02-51ea167ea6b2 /www ext4 defaults,noatime,nodiratime 1 2
+			
 			</pre>
 			<p>至此，Linux 的OS部分安装配置与优化完成。</p>
 
 		</section>
 
-		<section class="section" id="idp14"><div class="titlepage"><div><div><h3 class="title">2.7. 放弃 LVM 使用 Btrfs</h3></div></div></div>
+		<section class="section" id="idp14"><div class="titlepage"><div><div><h3 class="title">1.9. 放弃 LVM 使用 Btrfs</h3></div></div></div>
 			
 			<p>btrfa 的快照功能非常适合快速备份</p>
 			<p>子卷功能比物理分区更灵活</p>
@@ -257,10 +272,10 @@ UUID=786f570d-fe5c-4d5f-832a-c1b0963dd4e6 /www  btrfs   noatime,nodiratime,subvo
 
 		</section>
 
-		<section class="section" id="openssh"><div class="titlepage"><div><div><h3 class="title">2.8. Openssh 安全配置</h3></div></div></div>
+		<section class="section" id="openssh"><div class="titlepage"><div><div><h3 class="title">1.10. Openssh 安全配置</h3></div></div></div>
 			
 			<p>这节主要讲与SSH有关的安全配置</p>
-			<section class="section" id="idp15"><div class="titlepage"><div><div><h4 class="title">2.8.1. 禁止root用户登录</h4></div></div></div>
+			<section class="section" id="idp15"><div class="titlepage"><div><div><h4 class="title">1.10.1. 禁止root用户登录</h4></div></div></div>
 				
 				<p>只允许普通用户登陆，然后通过su命令切换到root用过。后面还会将怎样限制su命令</p>
 				<pre class="screen">
@@ -269,7 +284,7 @@ PermitRootLogin no
 			
 				</pre>
 			</section>
-			<section class="section" id="idp16"><div class="titlepage"><div><div><h4 class="title">2.8.2. 限制SSH验证重试次数</h4></div></div></div>
+			<section class="section" id="idp16"><div class="titlepage"><div><div><h4 class="title">1.10.2. 限制SSH验证重试次数</h4></div></div></div>
 				
 				<p>超过3次socket连接会断开，效果不明显，有一点点用。</p>
 				<pre class="screen">
@@ -278,7 +293,7 @@ MaxAuthTries 3
 			
 				</pre>
 			</section>
-			<section class="section" id="idp17"><div class="titlepage"><div><div><h4 class="title">2.8.3. 禁止证书登陆</h4></div></div></div>
+			<section class="section" id="idp17"><div class="titlepage"><div><div><h4 class="title">1.10.3. 禁止证书登陆</h4></div></div></div>
 				
 				<p>证书登陆非常安全，但是很有可能正常用户在你不知道情况下，给你安装了一个证书，他随时都可能进入你的系统</p>
 				<p>任何一个有权限的用户都能很方便的植入一个证书到 .ssh/authorized_keys 文件中</p>
@@ -289,7 +304,7 @@ AuthorizedKeysFile /dev/null
 				
 				</pre>
 			</section>
-			<section class="section" id="idp18"><div class="titlepage"><div><div><h4 class="title">2.8.4. 使用证书替代密码认证</h4></div></div></div>
+			<section class="section" id="idp18"><div class="titlepage"><div><div><h4 class="title">1.10.4. 使用证书替代密码认证</h4></div></div></div>
 				
 				<p>是不是自相矛盾？ 这个跟上面讲的正好相反，这里只允许使用key文件登陆。</p>
 				<pre class="screen">
@@ -300,7 +315,7 @@ PasswordAuthentication no
 				<p>这种方式比起密码要安全的多，唯一要注意的地方就是证书被拷贝 ，建议你给证书加上 passphrase。</p>
 				<p>证书的 passphrase 是可以通过openssl工具将其剥离的，SSH证书我没有试过，但是原理都差不多。</p>
 			</section>
-			<section class="section" id="idp19"><div class="titlepage"><div><div><h4 class="title">2.8.5. 图形窗口客户端记忆密码的问题</h4></div></div></div>
+			<section class="section" id="idp19"><div class="titlepage"><div><div><h4 class="title">1.10.5. 图形窗口客户端记忆密码的问题</h4></div></div></div>
 				
 				<p>当你使用XShell, Xftp, WinSCP, SecureCRT, SecureFX ......等等软件登录时，该软件都提供记住密码的功能，使你下次再登陆的时候无须输入密码就可以进入系统。这样做的确非常方便，</p>
 				<p>但是你是否想过你的电脑一旦丢失或者被其他人进入，那有多么危险。我之前每天背着笔记本电脑上班，上面安装着XShell并且密码全部记忆在里面。这使我意识到一点电脑丢失，有多么可怕。</p>
@@ -312,20 +327,20 @@ ChallengeResponseAuthentication yes
 				</pre>
 				<p>每次登陆都回提示你输入密码。密码保存也无效。</p>
 			</section>
-			<section class="section" id="idp20"><div class="titlepage"><div><div><h4 class="title">2.8.6. 关闭 GSSAPI</h4></div></div></div>
+			<section class="section" id="idp20"><div class="titlepage"><div><div><h4 class="title">1.10.6. 关闭 GSSAPI</h4></div></div></div>
 				
 				<pre class="screen">
-			
+				
 GSSAPIAuthentication no
 #GSSAPIAuthentication yes
 #GSSAPICleanupCredentials yes
 #GSSAPICleanupCredentials yes
 #GSSAPIStrictAcceptorCheck yes
 #GSSAPIKeyExchange no
-			
+				
 				</pre>
 			</section>
-			<section class="section" id="idp21"><div class="titlepage"><div><div><h4 class="title">2.8.7. 禁止SSH端口映射</h4></div></div></div>
+			<section class="section" id="idp21"><div class="titlepage"><div><div><h4 class="title">1.10.7. 禁止SSH端口映射</h4></div></div></div>
 				
 				<p>禁止使用SSH映射Socks5翻墙等等</p>
 				<pre class="screen">
@@ -334,7 +349,7 @@ AllowTcpForwarding no
 			
 				</pre>
 			</section>
-			<section class="section" id="idp22"><div class="titlepage"><div><div><h4 class="title">2.8.8. IP地址限制</h4></div></div></div>
+			<section class="section" id="idp22"><div class="titlepage"><div><div><h4 class="title">1.10.8. IP地址限制</h4></div></div></div>
 				
 				<p>只允许通过192.168.2.1,192.168.2.2 访问本机</p>
 				<pre class="screen">
@@ -349,7 +364,7 @@ AllowTcpForwarding no
 				</pre>
 				<p>上面使白名单策略，你也可以采用黑名单策略。</p>
 			</section>
-			<section class="section" id="idp23"><div class="titlepage"><div><div><h4 class="title">2.8.9. 禁止SSH密码穷举</h4></div></div></div>
+			<section class="section" id="idp23"><div class="titlepage"><div><div><h4 class="title">1.10.9. 禁止SSH密码穷举</h4></div></div></div>
 				
 				<p>骇客常常使用骇客字典穷举你的SSH密码，使用下面脚本可以封杀频繁链接的IP地址</p>
 				<pre class="screen">
@@ -402,7 +417,7 @@ done
 				</pre>
 			</section>
 		</section>
-		<section class="section" id="pam"><div class="titlepage"><div><div><h3 class="title">2.9. PAM 插件认证加固配置</h3></div></div></div>
+		<section class="section" id="pam"><div class="titlepage"><div><div><h3 class="title">1.11. PAM 插件认证加固配置</h3></div></div></div>
 			
 			<p>配置文件</p>
 			<pre class="screen">
@@ -419,7 +434,7 @@ config-util  fingerprint-auth-ac  other    password-auth-ac  runuser   smartcard
 ls /lib64/security/
 		
 			</pre>
-			<section class="section" id="pam_tally2.so"><div class="titlepage"><div><div><h4 class="title">2.9.1. pam_tally2.so</h4></div></div></div>
+			<section class="section" id="pam_tally2.so"><div class="titlepage"><div><div><h4 class="title">1.11.1. pam_tally2.so</h4></div></div></div>
 				
 				<p>此模块的功能是，登陆错误输入密码3次，5分钟后自动解禁，在未解禁期间输入正确密码也无法登陆。</p>
 				<p>在配置文件 /etc/pam.d/sshd 顶端加入</p>
@@ -450,7 +465,7 @@ neo                 8    07/12/13 15:45:36  192.168.6.2
 			
 				</pre>
 				<p>pam_tally2 计数器日志保存在 /var/log/tallylog 注意，这是二进制格式的文件</p>
-				<div class="example" id="idp46"><div class="example-title">例 1. /etc/pam.d/sshd - pam_tally2.so</div><div class="example-contents">
+				<div class="example" id="idp73"><div class="example-title">例 1. /etc/pam.d/sshd - pam_tally2.so</div><div class="example-contents">
 					
 					<pre class="screen">
 				
@@ -480,7 +495,7 @@ auth required pam_tally2.so deny=3 unlock_time=5 even_deny_root root_unlock_time
 			
 				</pre>
 			</section>
-			<section class="section" id="pam_listfile.so"><div class="titlepage"><div><div><h4 class="title">2.9.2. pam_listfile.so</h4></div><div><h5 class="subtitle">用户登陆限制</h5></div></div></div>
+			<section class="section" id="pam_listfile.so"><div class="titlepage"><div><div><h4 class="title">1.11.2. pam_listfile.so</h4></div><div><h5 class="subtitle">用户登陆限制</h5></div></div></div>
 				
 				
 				<p>将下面一行添加到 /etc/pam.d/sshd 中，这里采用白名单方式，你也可以采用黑名单方式</p>
@@ -497,7 +512,7 @@ neo
 www
 			
 				</pre>
-				<div class="example" id="idp48"><div class="example-title">例 2. /etc/pam.d/sshd - pam_listfile.so</div><div class="example-contents">
+				<div class="example" id="idp75"><div class="example-title">例 2. /etc/pam.d/sshd - pam_listfile.so</div><div class="example-contents">
 					
 					<pre class="screen">
 				
@@ -530,7 +545,7 @@ auth       required     pam_listfile.so item=user sense=deny file=/etc/ssh/black
 				<p>更多细节请查看手册 $ man pam_listfile</p>
 			</section>
 
-			<section class="section" id="pam_access.so"><div class="titlepage"><div><div><h4 class="title">2.9.3. pam_access.so</h4></div></div></div>
+			<section class="section" id="pam_access.so"><div class="titlepage"><div><div><h4 class="title">1.11.3. pam_access.so</h4></div></div></div>
 				
 				<p>编辑 /etc/pam.d/sshd 文件，加入下面一行</p>
 				<pre class="screen">
@@ -556,7 +571,7 @@ EOF
 				</pre>
 				<p>测试是否生效</p>
 			</section>
-			<section class="section" id="pam_wheel.so"><div class="titlepage"><div><div><h4 class="title">2.9.4. pam_wheel.so</h4></div></div></div>
+			<section class="section" id="pam_wheel.so"><div class="titlepage"><div><div><h4 class="title">1.11.4. pam_wheel.so</h4></div></div></div>
 				
 				<p>限制普通用户通过su命令提升权限至root. 只有属于wheel组的用户允许通过su切换到root用户</p>
 				<p>编辑 /etc/pam.d/su 文件，去掉下面的注释</p>
@@ -584,7 +599,7 @@ su: incorrect password
 				</pre>
 			</section>
 		</section>
-		<section class="section" id="idp24"><div class="titlepage"><div><div><h3 class="title">2.10. NTP 服务</h3></div></div></div>
+		<section class="section" id="idp24"><div class="titlepage"><div><div><h3 class="title">1.12. NTP 服务</h3></div></div></div>
 			
 			<p>每个服务器必须安装 NTP，以保证服务器的时间准确。</p>
 			<pre class="screen">
@@ -596,14 +611,64 @@ curl -s https://raw.githubusercontent.com/oscm/shell/master/os/ntpd/ntpdate.sh |
 		</section>
 
 	</section>
-	<section class="section" id="jvm"><div class="titlepage"><div><div><h2 class="title" style="clear: both">3. Java 虚拟机</h2></div></div></div>
+	<section class="section" id="jvm"><div class="titlepage"><div><div><h2 class="title" style="clear: both">2. Java 虚拟机</h2></div></div></div>
 		
-		<section class="section" id="jre"><div class="titlepage"><div><div><h3 class="title">3.1. 使用 Server JRE 替代JDK。</h3></div></div></div>
+		<section class="section" id="idp25"><div class="titlepage"><div><div><h3 class="title">2.1. 安装脚本</h3></div></div></div>
+			
+			<p>OpenJDK 1.8</p>
+			<pre class="screen">
+			
+curl -s https://raw.githubusercontent.com/oscm/shell/master/lang/java/openjdk/java-1.8.0-openjdk.sh | bash			
+			
+			</pre>
+			<p>OpenJDK 11</p>
+			<pre class="screen">
+			
+curl -s https://raw.githubusercontent.com/oscm/shell/master/lang/java/openjdk/java-11-openjdk.sh | bash			
+			
+			</pre>
+			<p>Oracle Server JRE 1.8</p>
+			<p>http://java.oracle.com 下载 server-jre-8u212-linux-x64.tar.gz 然后运行下面安装脚本</p>	
+			<pre class="screen">
+			
+#!/bin/bash
+tar zxf server-jre-8u212-linux-x64.tar.gz*
+mv jdk1.8.0_212 /srv/
+ln -s /srv/jdk1.8.0_212 /srv/java
+
+cat &gt;&gt; /etc/profile.d/java.sh &lt;&lt;'EOF'
+export JAVA_HOME=/srv/java
+export JAVA_OPTS="-server -Xms512m -Xmx8192m"
+export CLASSPATH=$JAVA_HOME/lib:$JAVA_HOME/jre/lib:.
+export PATH=$PATH:$JAVA_HOME/bin:$JAVA_HOME/jre/bin:
+EOF
+
+sed -i '117s/securerandom.source/#securerandom.source/' /srv/java/jre/lib/security/java.security
+sed -i '117isecurerandom.source=file:/dev/./urandom' /srv/java/jre/lib/security/java.security
+
+cat &gt;&gt; /etc/man.config &lt;&lt;EOF
+MANPATH  /srv/java/man
+EOF
+
+alternatives --install /usr/bin/java java /srv/jdk1.8.0_212/bin/java 100 \
+	--family java-1.8.0-server-jre \
+	--slave /usr/bin/javac javac /srv/jdk1.8.0_212/bin/javac			
+			
+			</pre>
+			<p>如果服务器上安装了多个 JAVA 版本，切换 JAVA 版本使用下面命令</p>
+			<pre class="screen">
+			
+alternatives --config java			
+			
+			</pre>
+			
+		</section>
+		<section class="section" id="jre"><div class="titlepage"><div><div><h3 class="title">2.2. 使用 Server JRE 替代JDK。</h3></div></div></div>
 			
 			<p>服务器上不要安装JDK，请使用 Server JRE. 服务器上根本不需要编译器，代码应该在Release服务器上完成编译打包工作。</p>
 			<p>理由：一旦服务器被控制，可以防止在其服务器上编译其他恶意代码并植入到你的程序中。</p>
 		</section>
-		<section class="section" id="JAVA_OPTS"><div class="titlepage"><div><div><h3 class="title">3.2. JAVA_OPTS</h3></div></div></div>
+		<section class="section" id="JAVA_OPTS"><div class="titlepage"><div><div><h3 class="title">2.3. JAVA_OPTS</h3></div></div></div>
 			
 			<p>加入 -server 选项使 JRE 工作在服务器模式。</p>
 			<pre class="screen">
@@ -622,7 +687,7 @@ export JAVA_OPTS="-server -Xms512m -Xmx4096m"
 			
 			</pre>
 		</section>
-		<section class="section" id="idp25"><div class="titlepage"><div><div><h3 class="title">3.3. java.security 优化</h3></div></div></div>
+		<section class="section" id="idp26"><div class="titlepage"><div><div><h3 class="title">2.4. java.security 优化</h3></div></div></div>
 			
 			<p/>
 			<p>打开$JAVA_HOME/jre/lib/security/java.security文件，找到下面的内容：</p>
@@ -634,173 +699,89 @@ securerandom.source=file:/dev/./urandom
 			
 			</pre>
 		</section>
+		<section class="section" id="idp27"><div class="titlepage"><div><div><h3 class="title">2.5. jconsole 配置</h3></div></div></div>
+			
+			<pre class="screen">
+			
+java -jar -Djava.rmi.server.hostname=192.168.0.1 -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=911 -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false netkiller-1.0-SNAPSHOT.jar			
+			
+			</pre>
+			<p>如果是云主机，配置 java.rmi.server.hostname=192.168.0.1 为内网IP地址，这样只能从内网监控 JVM</p>
+			<p>启动 jconsole</p>
+			<pre class="screen">
+			
+jconsole localhost:911
+			
+			</pre>
+		</section>
 	</section>
-
-	<section class="section" id="nginx"><div class="titlepage"><div><div><h2 class="title" style="clear: both">4. 配置 Nginx</h2></div></div></div>
+	<section class="section" id="idp31"><div class="titlepage"><div><div><h2 class="title" style="clear: both">3. 数据库</h2></div></div></div>
 		
-		<section class="section" id="idp26"><div class="titlepage"><div><div><h3 class="title">4.1. 处理器数量和连接数配置</h3></div></div></div>
+		<section class="section" id="idp28"><div class="titlepage"><div><div><h3 class="title">3.1. MySQL</h3></div></div></div>
 			
-			<p>worker_processes = CPU 数量</p>
-			<pre class="screen">
-			
-user www;
-worker_processes 1;
-
-error_log /var/log/nginx/error.log warn;
-pid /var/run/nginx.pid;				
-			
-			</pre>
-			<p>连接数配置</p>
-			<pre class="screen">
-			
-events {
-    worker_connections  4096;
-}				
-			
-			</pre>
-		</section>
-		<section class="section" id="idp27"><div class="titlepage"><div><div><h3 class="title">4.2. 隐藏nginx版本号</h3></div></div></div>
-			
-			<p>隐藏nginx版本号可以有效的增加黑客攻击难度</p>
-			<pre class="screen">
-			
-vim /etc/nginx/nginx.conf
-
-http {
-...
-server_tokens off;
-}
-			
-			</pre>
-		</section>
-		<section class="section" id="http2"><div class="titlepage"><div><div><h3 class="title">4.3. HTTP2</h3></div></div></div>
-			
-			<pre class="screen">
-			
-	server {
-		listen 443 ssl http2;
-	
-		ssl_certificate server.crt;
-		ssl_certificate_key server.key;
-	}
-			
-			</pre>
-		</section>
-		<section class="section" id="http2.redirect"><div class="titlepage"><div><div><h3 class="title">4.4. 用户访问 HTTP时强制跳转到 HTTPS</h3></div></div></div>
-			
-			<p>497 - normal request was sent to HTTPS  </p>
-			<pre class="screen">
-			
-				#让http请求重定向到https请求
-
-	server {
-		listen 80;
-		error_page 497 https://$host$uri?$args;
-		rewrite ^(.*)$ https://$host$1 permanent;
-	}
-			
-			</pre>
-			<pre class="screen">
-			
-	server {
-		listen 80
-		listen 443 ssl http2;
-	
-		ssl_certificate server.crt;
-		ssl_certificate_key server.key;
-	
-		error_page 497 https://$host$uri?$args;
-	
-		if ($scheme = http) {
-			return 301 https://$server_name$request_uri;
-		}
-	}
-			
-			</pre>
-		</section>
-		<section class="section" id="idp28"><div class="titlepage"><div><div><h3 class="title">4.5. 开启 gzip 压缩传输</h3></div></div></div>
-			
-			<p>gzip_types 压缩类型</p>
-			<pre class="screen">
-				
-	gzip_types text/plain text/css application/javascript text/javascript application/x-javascript text/xml application/xml application/xml+rss application/json;			
-			
-			</pre>
-			<p>text/html 是 gzip_types 默认值，所以不要将text/html加入到gzip_types</p>
-		</section>
-		<section class="section" id="idp29"><div class="titlepage"><div><div><h3 class="title">4.6. 过期时间</h3></div></div></div>
-			
-			<pre class="screen">
-			
-	location ~ .*\.(htm|html|gif|jpg|jpeg|png|bmp|swf|ioc|rar|zip|txt|flv|mid|doc|ppt|pdf|xls|mp3|wma)$
-	{
-		expires 30d;
-	}
-	location ~ .*\.(js|css)$
-	{
-		expires 1h;
-	}
-			
-			</pre>
-		</section>
-		<section class="section" id="idp30"><div class="titlepage"><div><div><h3 class="title">4.7. 上传文件尺寸限制</h3></div></div></div>
-			
-			<p>client_max_body_size 上传文件尺寸限制</p>
+			<p>5.7</p>
 			<pre class="screen">
 						
-client_max_body_size 2M;				
+curl -s https://raw.githubusercontent.com/oscm/shell/master/database/mysql/5.7/mysql.server.sh | bash
+			
+			</pre>
+			<p>安装完成会看到下面输出</p>
+			<pre class="screen">
+			
+2019-06-04T08:54:24.419092Z 1 [Note] A temporary password is generated for root@localhost: 8X!pE(o+urv;			
+			
+			</pre>
+			<p/>
+			<p>8.0</p>
+			<pre class="screen">
+			
+curl -s https://raw.githubusercontent.com/oscm/shell/master/database/mysql/8.0/server.sh | bash
+
+curl -s https://raw.githubusercontent.com/oscm/shell/master/database/mysql/8.0/client.sh | bash			
 			
 			</pre>
 		</section>
-
-		<section class="section" id="idp31"><div class="titlepage"><div><div><h3 class="title">4.8. 实现相互备份</h3></div></div></div>
+		<section class="section" id="idp29"><div class="titlepage"><div><div><h3 class="title">3.2. PostgreSQL</h3></div></div></div>
 			
-			<p>两台服务器 server1，server2 相互备份</p>
+			<p>PostgreSQL 9.4</p>
 			<pre class="screen">
 			
-	upstream backend {
-		server server1.example.com:8080;
-		server server2.example.com:8080 backup;
-	}
-	server {
-		location / {
-			proxy_pass http://backend;
-		}
-	}
-					
+curl -s https://raw.githubusercontent.com/oscm/shell/master/database/postgresql/postgresql94-centos7.sh | bash			
 			
 			</pre>
+		</section>
+		<section class="section" id="idp30"><div class="titlepage"><div><div><h3 class="title">3.3. Redis</h3></div></div></div>
+			
 			<pre class="screen">
 			
-	upstream frontend {
-		server server1.example.com:8080 backup;
-		server server2.example.com:8080;
-	}
-	server {
-		location / {
-			proxy_pass http://frontend;
-		}
-	}			
+curl -s https://raw.githubusercontent.com/oscm/shell/master/database/redis/source/redis-5.0.5.sh | bash			
 			
 			</pre>
 		</section>
 	</section>
-
+	<section class="section" id="idp32"><div class="titlepage"><div><div><h2 class="title" style="clear: both">4. RabbitMQ</h2></div></div></div>
+		
+		<pre class="screen">
+		
+curl -s https://raw.githubusercontent.com/oscm/shell/master/queue/rabbitmq/rabbitmq-server-3.7.15.sh | bash		
+		
+		</pre>
+	</section>
 	<section class="section" id="springboot"><div class="titlepage"><div><div><h2 class="title" style="clear: both">5. 配置 Spring boot</h2></div></div></div>
 		
 		<p>下面以 Springboot 2.0 为例。</p>
-		<section class="section" id="idp32"><div class="titlepage"><div><div><h3 class="title">5.1. 指定配置文件</h3></div></div></div>
+		<section class="section" id="idp33"><div class="titlepage"><div><div><h3 class="title">5.1. 指定配置文件</h3></div></div></div>
 			
 			<p>配置文件位置，默认application.properties是放在jar包中的，这样对于运维并不友好。通过spring.config.location可以制定外部配置文件，这样更便于运维。</p>
 			<p>--spring.config.location 指定配置文件</p>
 			<pre class="screen">
-				
+			
 java -jar demo.jar --spring.config.location=/opt/config/application.properties
 			
 			</pre>
 			<p>这样运维人员便于配置数据库链接，切换服务器等操作</p>
 		</section>
-		<section class="section" id="idp33"><div class="titlepage"><div><div><h3 class="title">5.2. 日志文件</h3></div></div></div>
+		<section class="section" id="idp34"><div class="titlepage"><div><div><h3 class="title">5.2. 日志文件</h3></div></div></div>
 			
 			<p>默认日志文件</p>
 			<pre class="screen">
@@ -816,9 +797,9 @@ java -jar spring-boot-app.jar --logging.file=/tmp/spring-2018-12-10.log
 			
 			</pre>
 		</section>
-		<section class="section" id="idp36"><div class="titlepage"><div><div><h3 class="title">5.3. 如何启动 Springboot 程序</h3></div></div></div>
+		<section class="section" id="idp37"><div class="titlepage"><div><div><h3 class="title">5.3. 如何启动 Springboot 程序</h3></div></div></div>
 			
-			<section class="section" id="idp34"><div class="titlepage"><div><div><h4 class="title">5.3.1. systemd</h4></div></div></div>
+			<section class="section" id="idp35"><div class="titlepage"><div><div><h4 class="title">5.3.1. systemd</h4></div></div></div>
 				
 				<p>/etc/systemd/system/spring.service</p>
 				<pre class="screen">
@@ -848,7 +829,7 @@ WantedBy=multi-user.target
 				
 				</pre>
 			</section>
-			<section class="section" id="idp35"><div class="titlepage"><div><div><h4 class="title">5.3.2. 传统 init.d 脚本</h4></div></div></div>
+			<section class="section" id="idp36"><div class="titlepage"><div><div><h4 class="title">5.3.2. 传统 init.d 脚本</h4></div></div></div>
 				
 				<pre class="screen">
 				
@@ -858,7 +839,7 @@ WantedBy=multi-user.target
 # Homepage: http://www.netkiller.cn
 # Date: 2017-02-08
 # $Author$
-# $Id: 23b418d7da1fba583280726d0fccff71713a1b76 $
+# $Id: eea3d7a2b748bd027791dd004fb312ec0ec9ffea $
 ##############################################
 # chkconfig: 345 100 02
 # description: Spring boot application
@@ -934,7 +915,7 @@ exit $?
 				</pre>
 			</section>
 		</section>
-		<section class="section" id="idp38"><div class="titlepage"><div><div><h3 class="title">5.4. 监听端口</h3></div></div></div>
+		<section class="section" id="idp39"><div class="titlepage"><div><div><h3 class="title">5.4. 监听端口</h3></div></div></div>
 			
 			<p>不要使用root用户启动springboot，Java程序与C程序不同。nginx,httpd 使用root用户启动守护80端口，子进程/线程会通过setuid(),setgid()两个函数切换到普通用户。即父进程所有者是root用户，子进程与多线程所有者是一个非root用户，这个用户没有shell权限，无法通过ssh与控制台登陆系统。</p>
 			<p>Java 的JVM 是与系统无关的，是建立在OS之上的，你使用什么用户启动Springboot，那麽Springboot 就会继承该所有者的权限。</p>
@@ -950,7 +931,7 @@ server.port=8080 # 监听端口
 server.address=192.168.0.1 # 绑定的地址			
 			
 			</pre>
-			<section class="section" id="idp37"><div class="titlepage"><div><div><h4 class="title">5.4.1. 使用 80 端口</h4></div></div></div>
+			<section class="section" id="idp38"><div class="titlepage"><div><div><h4 class="title">5.4.1. 使用 80 端口</h4></div></div></div>
 				
 				<p>Linux系统小于1024的端口只有root可以使用，这也是为什么Springboot默认端口是8080。如果你想使用80端口只能使用root启动Springboot，不建议这样做，这会带来了很多安全问题。建议使用iptables端口转发。</p>
 				<p>解决方案是创建一个普通用户，如：</p>
@@ -984,19 +965,36 @@ iptables -t nat -L
 				<p>这个方案可以在 Tomcat 前段增加反向代理，例如：Nginx,Apache,Squid,Varnish或者F5， Array这类设备等等</p>
 			</section>
 		</section>
-		<section class="section" id="idp39"><div class="titlepage"><div><div><h3 class="title">5.5. 连接数配置</h3></div></div></div>
+		<section class="section" id="idp40"><div class="titlepage"><div><div><h3 class="title">5.5. 连接数配置</h3></div></div></div>
 			
-			<p>系统默认 2048</p>
+			<p>系统默认 2048，这里 max-threads 是 4096 表示服务器最大连接数是 4096</p>
 			<pre class="screen">
 							
 server.tomcat.max-threads=4096 # 最大线程数				
 			
 			</pre>
+			<p>空闲线程数，静止没有访问时，服务器保留的线程数。</p>
+			<pre class="screen">
+			
+server:
+  tomcat:
+    min-spare-threads: 20
+    max-threads: 100
+  connection-timeout: 20000		
+			
+			</pre>
+			<p>配置 min-spare-threads 可以防止服务器静止的状态下，突然发起大量的链接请求导致系统没有响应。</p>
+			<pre class="screen">
+			
+server.tomcat.connection-timeout=20000
+			
+			</pre>
+			<p>链接超时时间建议设置 60～20秒之间。</p>
 		</section>
 
-		<section class="section" id="idp40"><div class="titlepage"><div><div><h3 class="title">5.6. 编码配置</h3></div></div></div>
+		<section class="section" id="idp41"><div class="titlepage"><div><div><h3 class="title">5.6. 编码配置</h3></div></div></div>
 			
-			<p>Spring boot 默认并非 UTF-8 建议强制配置编码</p>
+			<p>有些版本的 Spring boot 默认并非 UTF-8 建议强制配置编码</p>
 			<pre class="screen">
 			
 spring.messages.encoding=UTF-8
@@ -1007,7 +1005,7 @@ spring.http.encoding.force=true
 			
 			</pre>
 		</section>
-		<section class="section" id="idp41"><div class="titlepage"><div><div><h3 class="title">5.7. Session 配置</h3></div></div></div>
+		<section class="section" id="idp42"><div class="titlepage"><div><div><h3 class="title">5.7. Session 配置</h3></div></div></div>
 			
 			<p>修改 Cookie 变量 JSESSIONID， 这个cookie 是用于维持Session关系。建议你改为PHPSESSID，防止黑客骚猫。 </p>
 			<pre class="screen">
@@ -1019,7 +1017,7 @@ server.session.cookie.path=/
 			
 			</pre>
 		</section>
-		<section class="section" id="idp42"><div class="titlepage"><div><div><h3 class="title">5.8. 压缩传输配置</h3></div></div></div>
+		<section class="section" id="idp43"><div class="titlepage"><div><div><h3 class="title">5.8. 压缩传输配置</h3></div></div></div>
 			
 			<p>注意不仅仅压缩 HTML 页面，配置 application/json 也可以压缩传输 JSON 数据</p>
 			<pre class="screen">
@@ -1030,7 +1028,7 @@ server.compression.min-response-size=1024
 			
 			</pre>
 		</section>
-		<section class="section" id="idp43"><div class="titlepage"><div><div><h3 class="title">5.9. 上传限制</h3></div></div></div>
+		<section class="section" id="idp44"><div class="titlepage"><div><div><h3 class="title">5.9. 上传限制</h3></div></div></div>
 			
 			<p>上传文件尺寸限制，注意如果使用了 Nginx 代理 Springboot 同时也需要配置 Nginx 上传限制。</p>
 			<pre class="screen">
@@ -1041,9 +1039,7 @@ spring.http.multipart.enabled=false
 			
 			</pre>
 		</section>
-
-
-		<section class="section" id="idp44"><div class="titlepage"><div><div><h3 class="title">5.10. Redis 配置</h3></div></div></div>
+		<section class="section" id="idp45"><div class="titlepage"><div><div><h3 class="title">5.10. Redis 配置</h3></div></div></div>
 			
 			<pre class="screen">
 					
@@ -1069,18 +1065,375 @@ spring.redis.jedis.pool.min-idle=0
 			
 			</pre>
 		</section>
+		<section class="section" id="idp50"><div class="titlepage"><div><div><h3 class="title">5.11. 数据库配置</h3></div></div></div>
+			
+			<section class="section" id="idp46"><div class="titlepage"><div><div><h4 class="title">5.11.1. PostgreSQL</h4></div></div></div>
+				
+				<pre class="screen">
+				
+spring.datasource.driver-class-name=org.postgresql.Driver
+spring.datasource.platform=postgres
+spring.datasource.url=jdbc:postgresql://192.168.1.240:5432/saas_data?currentSchema=public&amp;useUnicode=true&amp;characterEncoding=UTF-8
+spring.datasource.username=ctsuser
+spring.datasource.password=saas				
+				
+				</pre>
+			</section>
+			<section class="section" id="idp47"><div class="titlepage"><div><div><h4 class="title">5.11.2. MySQL</h4></div></div></div>
+				
+				<pre class="screen">
+				
+spring.datasource.driver-class-name=com.mysql.jdbc.Driver
+spring.datasource.url=jdbc:mysql://主机地址:端口号/数据库
+spring.datasource.username=用户名
+spring.datasource.password=密码
+spring.jpa.database=MYSQL # 启用JPA支持			
+				
+				</pre>
+			</section>
+			<section class="section" id="idp48"><div class="titlepage"><div><div><h4 class="title">5.11.3. Oracle</h4></div></div></div>
+				
+				<pre class="screen">
+				
+spring.datasource.driver-class-name=oracle.jdbc.OracleDriver
+spring.datasource.url=jdbc:oracle:thin:@//odb.netkiller.cn:1521/orcl
+spring.datasource.username=orcl
+spring.datasource.password=passw0rd
+spring.datasource.connection-test-query="SELECT 1 FROM DUAL"
+spring.jpa.database-platform=org.hibernate.dialect.Oracle10gDialect
+				
+				</pre>
+			</section>
+			<section class="section" id="idp49"><div class="titlepage"><div><div><h4 class="title">5.11.4. 链接池</h4></div></div></div>
+				
+				<pre class="screen">
+				
+spring.jpa.show-sql=true
+#spring.jpa.hibernate.ddl-auto=none
+#spring.jpa.hibernate.ddl-auto=create-drop
+spring.datasource.max-active=50
+spring.datasource.initial-size=5
+spring.datasource.max-idle=10
+spring.datasource.min-idle=5
+spring.datasource.test-while-idle=true
+spring.datasource.test-on-borrow=false
+spring.datasource.validation-query=SELECT 1 FROM DUAL
+spring.datasource.time-between-eviction-runs-millis=5000
+spring.datasource.min-evictable-idle-time-millis=60000				
+				
+				</pre>
+			</section>
+		</section>
+	</section>
+	<section class="section" id="springcloud"><div class="titlepage"><div><div><h2 class="title" style="clear: both">6. Spring Cloud 配置</h2></div></div></div>
+		
+		<section class="section" id="idp51"><div class="titlepage"><div><div><h3 class="title">6.1. Config Server</h3></div></div></div>
+			
+			<p>下面是给配置服务器增加用户认证，访问配置服务器用户名config, 密码 s3cr3t</p>
+			<pre class="screen">
+			
+server.port=8888
+spring.cloud.config.server.git.uri=/opt/config
+security.user.name=config
+security.user.password=s3cr3t			
+			
+			</pre>
+		</section>
+		<section class="section" id="idp52"><div class="titlepage"><div><div><h3 class="title">6.2. Eureka 安全配置</h3></div></div></div>
+			
+			<p>为 eureka 增加HTTP认证，周泽任何人都能注册进来。</p>
+			<pre class="screen">
+			
+security.user.name=eureka
+security.user.password=s3cr3t			
+			
+			</pre>
+		</section>
+
+		<section class="section" id="idp53"><div class="titlepage"><div><div><h3 class="title">6.3. Openfeign 优化</h3></div></div></div>
+			
+			<p>开发压缩传输</p>
+			<pre class="screen">
+			
+feign.compression.response.enabled=true
+feign.compression.request.enabled=true
+feign.compression.request.mime-types=text/xml,application/xml,application/json
+feign.compression.request.min-request-size=2048		
+			
+			</pre>
+		</section>
+	</section>
+	<section class="section" id="nginx"><div class="titlepage"><div><div><h2 class="title" style="clear: both">7. 配置 Nginx</h2></div></div></div>
+		
+		<section class="section" id="idp54"><div class="titlepage"><div><div><h3 class="title">7.1. 处理器数量和连接数配置</h3></div></div></div>
+			
+			<p>worker_processes = CPU 数量</p>
+			<pre class="screen">
+			
+user www;
+worker_processes 1;
+
+error_log /var/log/nginx/error.log warn;
+pid /var/run/nginx.pid;				
+			
+			</pre>
+			<p>连接数配置</p>
+			<pre class="screen">
+			
+events {
+    worker_connections  4096;
+}				
+			
+			</pre>
+		</section>
+		<section class="section" id="idp55"><div class="titlepage"><div><div><h3 class="title">7.2. 隐藏nginx版本号</h3></div></div></div>
+			
+			<p>隐藏nginx版本号可以有效的增加黑客攻击难度</p>
+			<pre class="screen">
+			
+vim /etc/nginx/nginx.conf
+
+http {
+...
+server_tokens off;
+}
+			
+			</pre>
+		</section>
+		<section class="section" id="http2"><div class="titlepage"><div><div><h3 class="title">7.3. HTTP2</h3></div></div></div>
+			
+			<pre class="screen">
+			
+	server {
+		listen 443 ssl http2;
+	
+		ssl_certificate server.crt;
+		ssl_certificate_key server.key;
+	}
+			
+			</pre>
+		</section>
+		<section class="section" id="http2.redirect"><div class="titlepage"><div><div><h3 class="title">7.4. 用户访问 HTTP时强制跳转到 HTTPS</h3></div></div></div>
+			
+			<p>497 - normal request was sent to HTTPS  </p>
+			<pre class="screen">
+			
+				#让http请求重定向到https请求
+
+	server {
+		listen 80;
+		error_page 497 https://$host$uri?$args;
+		rewrite ^(.*)$ https://$host$1 permanent;
+	}
+			
+			</pre>
+			<pre class="screen">
+			
+	server {
+		listen 80
+		listen 443 ssl http2;
+	
+		ssl_certificate server.crt;
+		ssl_certificate_key server.key;
+	
+		error_page 497 https://$host$uri?$args;
+	
+		if ($scheme = http) {
+			return 301 https://$server_name$request_uri;
+		}
+	}
+			
+			</pre>
+		</section>
+		<section class="section" id="idp56"><div class="titlepage"><div><div><h3 class="title">7.5. 开启 gzip 压缩传输</h3></div></div></div>
+			
+			<p>gzip_types 压缩类型</p>
+			<pre class="screen">
+				
+	gzip_types text/plain text/css application/javascript text/javascript application/x-javascript text/xml application/xml application/xml+rss application/json;			
+			
+			</pre>
+			<p>text/html 是 gzip_types 默认值，所以不要将text/html加入到gzip_types</p>
+		</section>
+		<section class="section" id="idp57"><div class="titlepage"><div><div><h3 class="title">7.6. 缓存过期时间</h3></div></div></div>
+			
+			<pre class="screen">
+			
+	location ~ .*\.(htm|html|gif|jpg|jpeg|png|bmp|swf|ioc|rar|zip|txt|flv|mid|doc|ppt|pdf|xls|mp3|wma)$
+	{
+		expires 30d;
+	}
+	location ~ .*\.(js|css)$
+	{
+		expires 1h;
+	}
+			
+			</pre>
+		</section>
+		<section class="section" id="idp58"><div class="titlepage"><div><div><h3 class="title">7.7. 上传文件尺寸限制</h3></div></div></div>
+			
+			<p>client_max_body_size 上传文件尺寸限制</p>
+			<pre class="screen">
+						
+client_max_body_size 2M;				
+			
+			</pre>
+		</section>
+
+		<section class="section" id="idp59"><div class="titlepage"><div><div><h3 class="title">7.8. 实现相互备份</h3></div></div></div>
+			
+			<p>两台服务器 server1，server2 相互备份</p>
+			<pre class="screen">
+			
+	upstream backend {
+		server server1.example.com:8080;
+		server server2.example.com:8080 backup;
+	}
+	server {
+		location / {
+			proxy_pass http://backend;
+		}
+	}
+					
+			
+			</pre>
+			<pre class="screen">
+			
+	upstream frontend {
+		server server1.example.com:8080 backup;
+		server server2.example.com:8080;
+	}
+	server {
+		location / {
+			proxy_pass http://frontend;
+		}
+	}
+			
+			</pre>
+		</section>
+		<section class="section" id="idp60"><div class="titlepage"><div><div><h3 class="title">7.9. Nginx 状态信息</h3></div></div></div>
+			
+			<p>允许监控软件从 localhost 收集 nginx 状态信息</p>
+			<pre class="screen">
+						
+server {
+    listen       80;
+    server_name  localhost;
+
+    location /status {
+        stub_status on;
+        access_log off;
+        allow 127.0.0.1;
+        deny all;
+    }
+}			
+			
+			</pre>
+		</section>
+		<section class="section" id="idp61"><div class="titlepage"><div><div><h3 class="title">7.10. 禁止公网访问 Spring Boot Actuator</h3></div></div></div>
+			
+			<p>Spring Boot Actuator 是会泄漏一些环境变量等敏感信息，甚至可以通过 localhost:8080/actuator/shutdown 远程关闭服务器。所以需要禁止公网访问，只允许内部服务器采集信息。</p>
+			<pre class="screen">
+			
+	location ~ ^/actuator
+	{
+		allow 172.16.0.10;
+		deny all;
+	}
+			
+			</pre>
+			<p>172.16.0.10 是监控服务器</p>
+		</section>
+	</section>
+
+	<section class="section" id="idp70"><div class="titlepage"><div><div><h2 class="title" style="clear: both">8. 部署应用程序</h2></div></div></div>
+		
+		<section class="section" id="idp62"><div class="titlepage"><div><div><h3 class="title">8.1. 服务器软件安装目录</h3></div></div></div>
+			
+			<pre class="screen">
+			
+/srv		服务器软件安装目录，例如 jdk
+/opt		系统保留，可以用于安装软件，存储备份文件
+			
+			</pre>
+		</section>
+		<section class="section" id="idp63"><div class="titlepage"><div><div><h3 class="title">8.2. 应用程序部署目录</h3></div></div></div>
+			
+			<p>应用程序放在/www目录下，一般是这样的结构。</p>
+			<pre class="screen">
+			
+/www/example.com/www.example.com
+			
+			</pre>
+			<p>每次升级将压错包解压到 /www/example.com/目录下，www.example.com 是符号连接，连接到刚刚解压的目录。</p>
+			<p>这个可以实现通过符号连接在多个版本之间快速切换。</p>
+		</section>
+		<section class="section" id="idp64"><div class="titlepage"><div><div><h3 class="title">8.3. 数据盘</h3></div></div></div>
+			
+			<p>数据盘是指云主机额外增加一个磁盘，用于数据存储。</p>
+			<p>如果是阿里云可以使用下面脚本，自动化分区格式化为 Btrfs 格式的文件系统。</p>
+			<pre class="screen">
+			
+curl https://github.com/oscm/shell/blob/master/cloud/aliyun/xvdb.exp.sh | bash
+			
+			</pre>
+		</section>
+		<section class="section" id="idp68"><div class="titlepage"><div><div><h3 class="title">8.4. 用户与权限</h3></div></div></div>
+			
+			<section class="section" id="idp65"><div class="titlepage"><div><div><h4 class="title">8.4.1. 禁止使用 root 用户启动服务</h4></div></div></div>
+				
+				<p>禁止使用 root 用户启动应用，每个应用拥有自己的用户。例如：</p>
+				<pre class="screen">
+					
+nginx		Nginx Web 服务器用户
+redis 		Redis 缓存用户
+mysql		MySQL 数据库用户
+				
+				</pre>
+				<p>我门常常会看到有人编译安装了nginx，并没有为nginx创建用户，也没有使用 nobody,daemon 等用户启动nginx，而是使用root启动了 nginx.</p>
+				<p>通过 ps ax 可以看到 nginx 所有者是 root，一旦 nginx 被入侵，黑客将获得 root 权限。</p>
+			</section>
+			<section class="section" id="idp66"><div class="titlepage"><div><div><h4 class="title">8.4.2. Springboot 应用程序启动用户</h4></div></div></div>
+				
+				<p>为 Springboot 进程创建启动用户</p>
+				<p>应用程序放在/www目录下www所有者是www用户。下面是创建www用户的命令</p>
+				<pre class="screen">
+				
+adduser --home /www -c "Web Application" www
+				
+				</pre>
+			</section>
+
+			<section class="section" id="idp67"><div class="titlepage"><div><div><h4 class="title">8.4.3. 用户隔离更安全</h4></div></div></div>
+				
+				<p>应用程序部署与应用程序启动不能使用同一个用户。</p>
+				<p>上传权限与应用启动不使用一个用户。</p>
+				<pre class="screen">
+				
+用户 --&gt; nginx (nginx 用户) --&gt; springboot (www 用户)	--&gt; xxxx.jar (root 用户)
+               |
+               V
+      HTML 文件 （nobody 用户 644）			
+				
+				</pre>
+				<p>例如 nginx 被黑客攻击，黑客想修改 HTML文件，但HTML权限是 nobody，所以只能查看无法修改。</p>
+				<p>同理 nginx 也没有权限修改 xxxx.jar 文件。</p>
+
+			</section>
+		</section>
+		<section class="section" id="idp69"><div class="titlepage"><div><div><h3 class="title">8.5. 进程监控与重启</h3></div></div></div>
+			
+			<p>程序运行一段时间后，可能会出现崩溃，异常退出，没有任何日志可以排查。</p>
+			<p>所以我们需要监控程序，一旦退出就重新启动。</p>
+		</section>
+	</section>
+	<section class="section" id="idp71"><div class="titlepage"><div><div><h2 class="title" style="clear: both">9. 监控</h2></div><div><h3 class="subtitle">Spring Boot Actuator 健康检查、审计、统计和监控</h3></div></div></div>
+		
+		
 
 	</section>
-	<section class="section" id="idp45"><div class="titlepage"><div><div><h2 class="title" style="clear: both">6. 如何部署应用程序</h2></div></div></div>
+	<section class="section" id="idp72"><div class="titlepage"><div><div><h2 class="title" style="clear: both">10. 备份</h2></div></div></div>
 		
-		<p>应用程序放在/www目录下，一般是这样的结构。</p>
-		<pre class="screen">
-		
-/www/example.com/www.example.com
-		
-		</pre>
-		<p>每次升级将压错包解压到 /www/example.com/目录下，www.example.com 是符号连接，连接到刚刚解压的目录。</p>
-		<p>这个可以实现通过符号连接在多个版本之间快速切换。</p>
 	</section>
 </section><div xmlns="" id="disqus_thread"/><script xmlns="">
 

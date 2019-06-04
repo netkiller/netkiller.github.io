@@ -26,22 +26,147 @@
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp166"></a>2.42.2. 健康状态</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp167"></a>2.42.2. 与 Spring Boot Actuator 有关的配置</h3></div></div></div>
+		
+		<p>application.properties</p>
+		<p>跨域配置</p>
+		<pre class="screen">
+		
+management.endpoints.web.cors.allowed-origins=https://example.com
+management.endpoints.web.cors.allowed-methods=GET,POST		
+		
+		</pre>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp166"></a>2.42.2.1. 禁用HTTP端点</h4></div></div></div>
+			
+			<p>如果您不想通过HTTP公开端点，则可以将管理端口设置为-1，如以下示例所示：</p>
+			<pre class="screen">
+			
+management.server.port=-1			
+			
+			</pre>
+		</div>
+
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp168"></a>2.42.3. actuator 接口</h3></div></div></div>
 		
 		<pre class="screen">
 		
-curl localhost:8080/actuator/health		
+neo@MacBook-Pro ~ % curl -s http://localhost:8080/actuator | jq
+{
+  "_links": {
+    "self": {
+      "href": "http://localhost:8080/actuator",
+      "templated": false
+    },
+    "health": {
+      "href": "http://localhost:8080/actuator/health",
+      "templated": false
+    },
+    "health-component": {
+      "href": "http://localhost:8080/actuator/health/{component}",
+      "templated": true
+    },
+    "health-component-instance": {
+      "href": "http://localhost:8080/actuator/health/{component}/{instance}",
+      "templated": true
+    },
+    "info": {
+      "href": "http://localhost:8080/actuator/info",
+      "templated": false
+    }
+  }
+}
+		
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp167"></a>2.42.3. 关机</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp170"></a>2.42.4. 健康状态</h3></div></div></div>
 		
+		<p>curl localhost:8080/actuator/health</p>
+		<pre class="screen">
+				
+neo@MacBook-Pro ~ % curl -s http://localhost:8080/actuator/health | jq
+{
+  "status": "UP"
+}
+		
+		</pre>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp169"></a>2.42.4.1. 健康状态</h4></div></div></div>
+			
+			<p>详细的健康状态信息</p>
+			<pre class="screen">
+			
+management.endpoint.health.show-details=always			
+			
+			</pre>
+			<p></p>
+			<pre class="screen">
+			
+neo@MacBook-Pro ~ % curl -s http://localhost:8080/actuator/health | jq
+{
+  "status": "UP",
+  "details": {
+    "diskSpace": {
+      "status": "UP",
+      "details": {
+        "total": 250790436864,
+        "free": 23556112384,
+        "threshold": 10485760
+      }
+    }
+  }
+}			
+			
+			</pre>
+		</div>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp171"></a>2.42.5. 关机</h3></div></div></div>
+		
+		<p>配置文件中加入</p>
+		<pre class="screen">
+		
+management.endpoint.shutdown.enabled=true		
+		
+		</pre>
+
 		<pre class="screen">
 		
 curl -X POST localhost:8080/actuator/shutdown	
 		
 		</pre>
 	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp172"></a>2.42.6. info 配置信息</h3></div></div></div>
+		
+		<p>返回 application.properties 文件中定义的 info 配置信息，如:</p>
+		<pre class="screen">
+		
+# info端点信息配置
+info.app.name=spring-boot-example
+info.app.version=v1.0.0		
+		
+		</pre>
+		<p></p>
+		<pre class="screen">
+		
+neo@MacBook-Pro ~ % curl -s http://localhost:8080/actuator/info | jq   
+{
+  "app": {
+    "name": "spring-boot-example",
+    "version": "v1.0.0"
+  }
+}
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp173"></a>2.42.7. 计划任务</h3></div></div></div>
+		
+		<pre class="screen">
+		
+http://localhost:8080/actuator/scheduledtasks		
+		
+		</pre>
+	</div>
+
 </div><div xmlns="" id="disqus_thread"></div><script xmlns="">
 
 var disqus_config = function () {
