@@ -15,9 +15,117 @@
 	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">171.9. CI / CD</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="webhook.html">上一页</a> </td><th width="60%" align="center">第 171 章 Gitlab 项目管理</th><td width="20%" align="right"> <a accesskey="n" href="../redmine.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="cicd"></a>171.9. CI / CD</h3></div></div></div>
 		
 		<p>https://gitlab.com/gitlab-examples</p>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="gitlab.pipeline"></a>171.9.1. Pipeline</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp1237"></a>171.9.1. GitLab Runner</h4></div></div></div>
 			
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="pipeline.cache"></a>171.9.1.1. cache</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp1234"></a>171.9.1.1. Install GitLab Runner</h5></div></div></div>
+				
+				<pre class="screen">
+				
+[root@localhost ~]# wget -O /usr/local/bin/gitlab-runner https://gitlab-runner-downloads.s3.amazonaws.com/latest/binaries/gitlab-runner-linux-amd64
+--2019-06-06 16:19:31--  https://gitlab-runner-downloads.s3.amazonaws.com/latest/binaries/gitlab-runner-linux-amd64
+Resolving gitlab-runner-downloads.s3.amazonaws.com (gitlab-runner-downloads.s3.amazonaws.com)... 52.216.10.19
+Connecting to gitlab-runner-downloads.s3.amazonaws.com (gitlab-runner-downloads.s3.amazonaws.com)|52.216.10.19|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 30832000 (29M) [application/octet-stream]
+Saving to: '/usr/local/bin/gitlab-runner'
+
+100%[==================================================================================================================================================================================================&gt;] 30,832,000   113KB/s   in 7m 11s 
+
+2019-06-06 16:26:44 (69.8 KB/s) - '/usr/local/bin/gitlab-runner' saved [30832000/30832000]
+
+
+[root@localhost ~]# chmod +x /usr/local/bin/gitlab-runner
+[root@localhost ~]# useradd --comment 'GitLab Runner' --create-home gitlab-runner --shell /bin/bash
+[root@localhost ~]# gitlab-runner install --user=gitlab-runner --working-directory=/home/gitlab-runner
+Runtime platform                                    arch=amd64 os=linux pid=113531 revision=ac2a293c version=11.11.2
+[root@localhost ~]# gitlab-runner start
+Runtime platform                                    arch=amd64 os=linux pid=113576 revision=ac2a293c version=11.11.2				
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp1235"></a>171.9.1.2. Registering Runners</h5></div></div></div>
+				
+				<pre class="screen">
+				
+[root@localhost ~]# gitlab-runner register
+Runtime platform                                    arch=amd64 os=linux pid=114182 revision=ac2a293c version=11.11.2
+Running in system-mode.                            
+                                                   
+Please enter the gitlab-ci coordinator URL (e.g. https://gitlab.com/):
+http://192.168.1.229/
+Please enter the gitlab-ci token for this runner:
+5iF88xJLfFgpvRJySam2
+Please enter the gitlab-ci description for this runner:
+[localhost.localdomain]: 
+Please enter the gitlab-ci tags for this runner (comma separated):
+my-tag,another-tag
+Registering runner... succeeded                     runner=5iF88xJL
+Please enter the executor: docker, docker-ssh, parallels, ssh, virtualbox, kubernetes, shell, docker+machine, docker-ssh+machine:
+shell
+Runner registered successfully. Feel free to start it, but if it's running already the config should be automatically reloaded! 				
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp1236"></a>171.9.1.3. /etc/gitlab-runner/config.toml</h5></div></div></div>
+				
+				<pre class="screen">
+				
+[root@localhost ~]# cat /etc/gitlab-runner/config.toml
+concurrent = 1
+check_interval = 0
+
+[session_server]
+  session_timeout = 1800
+
+[[runners]]
+  name = "localhost.localdomain"
+  url = "http://192.168.1.229/"
+  token = "09936a09484934dec93d78ffa49b89"
+  executor = "shell"
+  [runners.custom_build_dir]
+  [runners.cache]
+    [runners.cache.s3]
+    [runners.cache.gcs]				
+				
+				</pre>
+			</div>
+			
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp1238"></a>171.9.2. 配置 CI / CD</h4></div></div></div>
+			
+			<p>进入项目设置界面，点击 Settings，再点击 CI / CD</p>
+			<div><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="NaN"><tr><td><img src="../images/gitlab/cicd/CI-CD.png" width="NaN" /></td></tr></table></div>
+			<p>点击 Expand 按钮 展开 Runners</p>
+			<div><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="NaN"><tr><td><img src="../images/gitlab/cicd/Runners.png" width="NaN" /></td></tr></table></div>
+			<p>这时可以看到 Set up a specific Runner manually, 后面会用到 http://192.168.1.96/ 和 zASzWwffenos6Jbbfsgu</p>
+			<p>使用 SSH 登录 Gitlab runner 服务器，运行 gitlab-runner register</p>
+			<pre class="screen">
+			
+[root@localhost ~]# gitlab-runner register
+Runtime platform                                    arch=amd64 os=linux pid=92925 revision=ac2a293c version=11.11.2
+Running in system-mode.                            
+                                                   
+Please enter the gitlab-ci coordinator URL (e.g. https://gitlab.com/):
+http://192.168.1.96/
+Please enter the gitlab-ci token for this runner:
+zASzWwffenos6Jbbfsgu
+Please enter the gitlab-ci description for this runner:
+[localhost.localdomain]: 
+Please enter the gitlab-ci tags for this runner (comma separated):
+
+Registering runner... succeeded                     runner=zASzWwff
+Please enter the executor: docker, docker-ssh, shell, ssh, docker-ssh+machine, parallels, virtualbox, docker+machine, kubernetes:
+shell
+Runner registered successfully. Feel free to start it, but if it's running already the config should be automatically reloaded! 			
+			
+			</pre>
+			<p>返回 gitlab 查看注册状态</p>
+			<div><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="NaN"><tr><td><img src="../images/gitlab/cicd/Runners-status.png" width="NaN" /></td></tr></table></div>
+		</div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="gitlab.pipeline"></a>171.9.3. Pipeline</h4></div></div></div>
+			
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="pipeline.cache"></a>171.9.3.1. cache</h5></div></div></div>
 				
 				<p></p>
 				<pre class="screen">
@@ -56,10 +164,10 @@ package:
 				
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="before_script"></a>171.9.1.2. before_script</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="before_script"></a>171.9.3.2. before_script</h5></div></div></div>
 				
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="stages"></a>171.9.1.3. stages</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="stages"></a>171.9.3.3. stages</h5></div></div></div>
 				
 				<pre class="screen">
 				
@@ -106,7 +214,7 @@ deploy_job:
 				
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="services"></a>171.9.1.4. services</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="services"></a>171.9.3.4. services</h5></div></div></div>
 				
 				<pre class="screen">
 				
@@ -127,7 +235,7 @@ connect:
 				</pre>
 			</div>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp1219"></a>171.9.2. Java</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp1239"></a>171.9.4. Java</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -215,6 +323,41 @@ deploy_prod:
  only:
   - master
  environment: production			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp1240"></a>171.9.5. vue.js android</h4></div></div></div>
+			
+			<pre class="screen">
+			
+build site:
+  image: node:6
+  stage: build
+  script:
+    - npm install --progress=false
+    - npm run build
+  artifacts:
+    expire_in: 1 week
+    paths:
+      - dist
+
+unit test:
+  image: node:6
+  stage: test
+  script:
+    - npm install --progress=false
+    - npm run unit
+
+deploy:
+  image: alpine
+  stage: deploy
+  script:
+    - apk add --no-cache rsync openssh
+    - mkdir -p ~/.ssh
+    - echo "$SSH_PRIVATE_KEY" &gt;&gt; ~/.ssh/id_dsa
+    - chmod 600 ~/.ssh/id_dsa
+    - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" &gt; ~/.ssh/config
+    - rsync -rav --delete dist/ user@server.com:/your/project/path/			
 			
 			</pre>
 		</div>
