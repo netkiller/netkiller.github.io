@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>4.3. </title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><meta name="keywords" content="openfiler, freenas, proftpd,pureftpd,vsftpd, rsync,wget,samba" /><link rel="home" href="../index.html" title="Netkiller Linux Storage 手札" /><link rel="up" href="index.html" title="第 4 章 File Synchronize" /><link rel="prev" href="tsync.html" title="4.2. tsync" /><link rel="next" href="unison.html" title="4.4. Unison File Synchronizer" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">云社区</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">云栖社区</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/video.html">视频教程</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">4.3. </th></tr><tr><td width="20%" align="left"><a accesskey="p" href="tsync.html">上一页</a> </td><th width="60%" align="center">第 4 章 File Synchronize</th><td width="20%" align="right"> <a accesskey="n" href="unison.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id=""></a>4.3. </h2></div></div></div>
+	
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp46"></a>4.3.1. 安装</h3></div></div></div>
+		
+		<p>Ubuntu</p>
+		<pre class="screen">
+		
+apt install lsyncd		
+		
+		</pre>
+		<p>CentOS</p>
+		<pre class="screen">
+		
+yum install lsyncd		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp51"></a>4.3.2. 配置 lsyncd.conf</h3></div></div></div>
+		
+		<pre class="screen">
+		
+vi etc/lsyncd.conf
+settings {
+    logfile      ="/var/log/lsyncd/lsyncd.log",
+    statusFile   ="/var/log/lsyncd/lsyncd.status",
+    inotifyMode  = "CloseWrite",
+    maxProcesses = 7,
+    -- nodaemon =true,
+    }
+
+sync {
+    default.rsync,
+    source    = "/tmp/src",
+    target    = "/tmp/dest",
+    -- excludeFrom = "/etc/rsyncd.d/rsync_exclude.lst",
+    rsync     = {
+        binary    = "/usr/bin/rsync",
+        archive   = true,
+        compress  = true,
+        verbose   = true
+        }
+    }		
+		
+		</pre>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp50"></a>4.3.2.1. lsyncd.conf 配置项说明</h4></div></div></div>
+			
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp47"></a>4.3.2.1.1. settings 全局设置</h5></div></div></div>
+				
+				<pre class="screen">
+				
+logfile 定义日志文件
+stausFile 定义状态文件
+nodaemon=true 表示不启用守护模式，默认
+statusInterval 将lsyncd的状态写入上面的statusFile的间隔，默认10秒
+inotifyMode 指定inotify监控的事件，默认是CloseWrite，还可以是Modify或CloseWrite or Modify
+maxProcesses 同步进程的最大个数。假如同时有20个文件需要同步，而maxProcesses = 8，则最大能看到有8个rysnc进程
+maxDelays 累计到多少所监控的事件激活一次同步，即使后面的delay延迟时间还未到
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp48"></a>4.3.2.1.2. sync 定义同步参数</h5></div></div></div>
+				
+				<p>可以继续使用maxDelays来重写settings的全局变量。一般第一个参数指定lsyncd以什么模式运行：rsync、rsyncssh、direct三种模式：</p>
+				<pre class="screen">
+				
+default.rsync ：本地目录间同步，使用rsync，也可以达到使用ssh形式的远程rsync效果，或daemon方式连接远程rsyncd进程；
+default.direct ：本地目录间同步，使用cp、rm等命令完成差异文件备份；
+default.rsyncssh ：同步到远程主机目录，rsync的ssh模式，需要使用key来认证
+
+source 同步的源目录，使用绝对路径。
+target 定义目的地址，三种模式写法:
+	/tmp/dest ：本地目录同步，可用于direct和rsync模式
+	172.16.0.1:/tmp/dest ：同步到远程服务器目录，可用于rsync和rsyncssh模式
+	172.16.0.1::module ：同步到远程服务器目录，用于rsync模式
+
+init 这是一个优化选项，当init = false，只同步进程启动以后发生改动事件的文件，原有的目录即使有差异也不会同步。默认是true
+
+delay 累计事件，等待rsync同步延时时间，默认15秒（最大累计到1000个不可合并的事件）。也就是15s内监控目录下发生的改动，会累积到一次rsync同步，避免过于频繁的同步。（可合并的意思是，15s内两次修改了同一文件，最后只同步最新的文件）
+
+excludeFrom 排除选项，后面指定排除的列表文件，如excludeFrom = "/etc/lsyncd.exclude"，如果是简单的排除，可以使用exclude = LIST。
+这里的排除规则写法与原生rsync有点不同，更为简单：
+监控路径里的任何部分匹配到一个文本，都会被排除，例如/bin/foo/bar可以匹配规则foo
+如果规则以斜线/开头，则从头开始要匹配全部
+如果规则以/结尾，则要匹配监控路径的末尾
+?匹配任何字符，但不包括/
+*匹配0或多个字符，但不包括/
+**匹配0或多个字符，可以是/
+delete 为了保持target与souce完全同步，Lsyncd默认会delete = true来允许同步删除。它除了false，还有startup、running值
+
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp49"></a>4.3.2.1.3. rsync</h5></div></div></div>
+				
+				<pre class="screen">
+				
+bwlimit 限速，单位kb/s，与rsync相同（这么重要的选项在文档里竟然没有标出）
+compress 压缩传输默认为true。在带宽与cpu负载之间权衡，本地目录同步可以考虑把它设为false
+perms 默认保留文件权限。
+				
+				</pre>
+			</div>
+		</div>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp52"></a>4.3.3. 配置演示</h3></div></div></div>
+		
+		<pre class="screen">
+		
+settings {
+    logfile ="/var/log/lsyncd.log",
+    statusFile ="/var/log/lsyncd.status",
+    inotifyMode = "CloseWrite",
+    maxProcesses = 8,
+    }
+
+
+-- 本地目录同步，direct：cp/rm/mv。 适用：500+万文件，变动不大
+sync {
+    default.direct,
+    source    = "/tmp/src",
+    target    = "/tmp/dest",
+    delay = 1
+    maxProcesses = 1
+    }
+
+-- 本地目录同步，rsync模式：rsync
+sync {
+    default.rsync,
+    source    = "/tmp/src",
+    target    = "/tmp/dest1",
+    excludeFrom = "/etc/rsyncd.d/rsync_exclude.lst",
+    rsync     = {
+        binary = "/usr/bin/rsync",
+        archive = true,
+        compress = true,
+        bwlimit   = 2000
+        } 
+    }
+
+-- 远程目录同步，rsync模式 + rsyncd daemon
+sync {
+    default.rsync,
+    source    = "/tmp/src",
+    target    = "www@192.168.0.1::module",
+    delete="running",
+    exclude = { ".*", ".tmp" },
+    delay = 30,
+    init = false,
+    rsync     = {
+        binary = "/usr/bin/rsync",
+        archive = true,
+        compress = true,
+        verbose   = true,
+        password_file = "/etc/rsyncd.d/rsync.pwd",
+        _extra    = {"--bwlimit=200"}
+        }
+    }
+
+-- 远程目录同步，rsync模式 + ssh shell
+sync {
+    default.rsync,
+    source    = "/tmp/src",
+    target    = "www.netkiller.cn:/tmp/dest",
+    -- target    = "root@www.netkiller.cn:/www/netkiller.cn/www.netkiller.cn",
+    maxDelays = 5,
+    delay = 30,
+    -- init = true,
+    rsync     = {
+        binary = "/usr/bin/rsync",
+        archive = true,
+        compress = true,
+        bwlimit   = 2000
+        -- rsh = "/usr/bin/ssh -p 22 -o StrictHostKeyChecking=no"
+        -- 如果要指定其它端口，请用上面的rsh
+        }
+    }
+
+-- 远程目录同步，rsync模式 + rsyncssh，效果与上面相同
+sync {
+    default.rsyncssh,
+    source    = "/tmp/src",
+    host      = "www.netkiller.cn",
+    targetdir = "/remote/dir",
+    excludeFrom = "/etc/rsyncd.d/rsync_exclude.lst",
+    -- maxDelays = 5,
+    delay = 0,
+    -- init = false,
+    rsync    = {
+        binary = "/usr/bin/rsync",
+        archive = true,
+        compress = true,
+        verbose   = true,
+        _extra = {"--bwlimit=2000"},
+        },
+    ssh      = {
+        port  =  1234
+        }
+    }		
+		
+		</pre>
+	</div>
+</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="tsync.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="unison.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">4.2. tsync </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 4.4. Unison File Synchronizer</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script><script xmlns="" type="text/javascript" src="/js/q.js" async="async"></script></body></html>
