@@ -14,7 +14,7 @@
 	    <a xmlns="" href="//www.netkiller.cn/home/video.html">视频教程</a> |
 	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">62.9. FAQ</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="example.html">上一页</a> </td><th width="60%" align="center">第 62 章 postfix - High-performance mail transport agent</th><td width="20%" align="right"> <a accesskey="n" href="../devel/index.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="faq"></a>62.9. FAQ</h2></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp659"></a>62.9.1. SMTP ERROR: RCPT TO command failed: 501 5.1.3 Bad recipient address syntax</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="501"></a>62.9.1. SMTP ERROR: RCPT TO command failed: 501 5.1.3 Bad recipient address syntax</h3></div></div></div>
 			
 			<p>客户端反馈</p>
 			<pre class="screen">
@@ -28,39 +28,39 @@ SMTP ERROR: RCPT TO command failed: 501 5.1.3 Bad recipient address syntax
 			<pre class="screen">
 			
 Sep 23 16:12:00 smtp1 postfix/smtpd[982]: NOQUEUE: reject: RCPT from unknown[202.130.101.34]: 554 5.7.1 &lt;netkiller@msn.com&gt;: Relay access denied; from=&lt;root@mail.example.com&gt; to=&lt;netkiller@msn.com&gt; proto=ESMTP helo=&lt;localhost.localdomain&gt;
-						
+			
 			</pre>
 			<p>问题原因是 mynetworks 配置项没有放行客户端</p>
 			<pre class="screen">
-[root@netkiller.github.io ~]# postconf | grep permit_mynetworks
-smtpd_recipient_restrictions = permit_mynetworks, reject_unauth_destination
+				[root@netkiller.github.io ~]# postconf | grep permit_mynetworks
+				smtpd_recipient_restrictions = permit_mynetworks, reject_unauth_destination
 			</pre>
 			<p>设置mynetworks配置项，允许IP使用SMTP发送邮件</p>
 			<pre class="screen">
-[root@netkiller.github.io ~]# postconf -n | grep mynetworks
-mynetworks = 202.130.101.34
+				[root@netkiller.github.io ~]# postconf -n | grep mynetworks
+				mynetworks = 202.130.101.34
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp660"></a>62.9.2. connect to gmail-smtp-in.l.google.com[2607:f8b0:400e:c00::1a]:25: Network is unreachable</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="faq.network"></a>62.9.2. connect to gmail-smtp-in.l.google.com[2607:f8b0:400e:c00::1a]:25: Network is unreachable</h3></div></div></div>
 			
 			<p>问题分析，上面2607:f8b0:400e:c00::1a是IPv6地址，在google默认是ipv6，但大陆机房几乎不支持ipv6.</p>
 			<pre class="screen">
-Aug 26 03:19:52 localhost postfix/smtp[6468]: connect to gmail-smtp-in.l.google.com[2607:f8b0:400e:c00::1a]:25: Network is unreachable
-Aug 26 03:19:53 localhost postfix/smtpd[6151]: connect from unknown[175.43.242.13]
+				Aug 26 03:19:52 localhost postfix/smtp[6468]: connect to gmail-smtp-in.l.google.com[2607:f8b0:400e:c00::1a]:25: Network is unreachable
+				Aug 26 03:19:53 localhost postfix/smtpd[6151]: connect from unknown[175.43.242.13]
 			</pre>
 			<p>解决方法禁用ipv6</p>
 			<pre class="screen">
-postconf -e "inet_protocols = ipv4"
-systemctl reload postfix
+				postconf -e "inet_protocols = ipv4"
+				systemctl reload postfix
 			</pre>
 		</div>
 		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp661"></a>62.9.3. opendkim[5762]: 3012A802C1DD: [49.213.11.18] [49.213.11.18] not internal</h3></div></div></div>
 			
 			<p>发送电子邮件并进行DKIM签名的前提是你邮件客户端的IP地址在 TrustedHosts 列表中</p>
 			<pre class="screen">
-Aug 26 03:52:36 localhost opendkim[5762]: 3012A802C1DD: [49.213.11.18] [49.213.11.18] not internal
-Aug 26 03:52:36 localhost opendkim[5762]: 3012A802C1DD: not authenticated
-Aug 26 03:52:36 localhost opendkim[5762]: 3012A802C1DD: no signature data			
+				Aug 26 03:52:36 localhost opendkim[5762]: 3012A802C1DD: [49.213.11.18] [49.213.11.18] not internal
+				Aug 26 03:52:36 localhost opendkim[5762]: 3012A802C1DD: not authenticated
+				Aug 26 03:52:36 localhost opendkim[5762]: 3012A802C1DD: no signature data
 			</pre>
 			<p>解决方法</p>
 			<p>添加 not internal IP地址到 /etc/opendkim/TrustedHosts 文件中，然后reload opendkim 进程。</p>
@@ -80,60 +80,62 @@ Aug 26 02:46:53 localhost postfix/smtpd[5441]: disconnect from unknown[202.130.1
 Aug 26 02:46:54 localhost postfix/smtp[5446]: connect to gmail-smtp-in.l.google.com[2607:f8b0:400e:c00::1b]:25: Network is unreachable
 Aug 26 02:46:54 localhost postfix/smtp[5446]: 4CC5C802C382: to=&lt;netkiller@msn.com&gt;, relay=gmail-smtp-in.l.google.com[74.125.25.27]:25, delay=1.3, delays=0.57/0.01/0.41/0.27, dsn=2.0.0, status=sent (250 2.0.0 OK 1472194014 m185si19680934pfc.265 - gsmtp)
 Aug 26 02:46:54 localhost postfix/qmgr[4605]: 4CC5C802C382: removed
-						
+			
 			</pre>
 			<p>解决方案</p>
 			<pre class="screen">
-[root@localhost ~]# egrep -v "^#|^$"  /etc/opendkim.conf
-PidFile	/var/run/opendkim/opendkim.pid
-Mode	sv
-Syslog	yes
-SyslogSuccess	yes
-LogWhy	yes
-UserID	opendkim:opendkim
-Socket	inet:8891@localhost
-Umask	002
-SendReports	yes
-SoftwareHeader	yes
-Canonicalization	relaxed/relaxed
-Selector	default
-MinimumKeyBits	1024
-KeyFile	/etc/opendkim/keys/default.private
-KeyTable	/etc/opendkim/KeyTable
-SigningTable	refile:/etc/opendkim/SigningTable
-InternalHosts	refile:/etc/opendkim/TrustedHosts
-OversignHeaders	From
+				[root@localhost ~]# egrep -v "^#|^$" /etc/opendkim.conf
+				PidFile /var/run/opendkim/opendkim.pid
+				Mode sv
+				Syslog yes
+				SyslogSuccess yes
+				LogWhy yes
+				UserID opendkim:opendkim
+				Socket inet:8891@localhost
+				Umask 002
+				SendReports yes
+				SoftwareHeader yes
+				Canonicalization relaxed/relaxed
+				Selector default
+				MinimumKeyBits 1024
+				KeyFile /etc/opendkim/keys/default.private
+				KeyTable /etc/opendkim/KeyTable
+				SigningTable refile:/etc/opendkim/SigningTable
+				InternalHosts refile:/etc/opendkim/TrustedHosts
+				OversignHeaders From
 			</pre>
 			<p>注意下面几项配置</p>
 			<pre class="screen">
-Mode	sv (这里默认是v便是校验邮件但不签名，s表示签名邮件)
-KeyFile	/etc/opendkim/keys/default.private
-KeyTable	/etc/opendkim/KeyTable
-SigningTable	refile:/etc/opendkim/SigningTable
-InternalHosts	refile:/etc/opendkim/TrustedHosts			
+				Mode sv (这里默认是v便是校验邮件但不签名，s表示签名邮件)
+				KeyFile /etc/opendkim/keys/default.private
+				KeyTable /etc/opendkim/KeyTable
+				SigningTable refile:/etc/opendkim/SigningTable
+				InternalHosts refile:/etc/opendkim/TrustedHosts
 			</pre>
 		</div>
 		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp663"></a>62.9.5. /etc/opendkim/keys/default.private: open(): No such file or directory</h3></div></div></div>
 			
 			<p>如果无法启动请查看启动日志</p>
 			<pre class="screen">
-# grep opendkim  /var/log/messages
-Aug 25 01:24:57 localhost yum[10052]: Installed: libopendkim-2.10.3-7.el7.x86_64
-Aug 25 01:25:00 localhost yum[10052]: Installed: opendkim-2.10.3-7.el7.x86_64
-Aug 25 01:55:08 localhost opendkim: /etc/opendkim/keys/default.private: open(): No such file or directory
-Aug 25 01:55:08 localhost opendkim: opendkim: /etc/opendkim.conf: /etc/opendkim/keys/default.private: open(): No such file or directory
-Aug 25 01:55:08 localhost systemd: opendkim.service: control process exited, code=exited status=78
-Aug 25 01:55:08 localhost systemd: Unit opendkim.service entered failed state.
-Aug 25 01:55:08 localhost systemd: opendkim.service failed.
-Aug 25 01:56:10 localhost opendkim: /etc/opendkim/keys/default.private: open(): No such file or directory
-Aug 25 01:56:10 localhost opendkim: opendkim: /etc/opendkim.conf: /etc/opendkim/keys/default.private: open(): No such file or directory
-Aug 25 01:56:10 localhost systemd: opendkim.service: control process exited, code=exited status=78
-Aug 25 01:56:10 localhost systemd: Unit opendkim.service entered failed state.
-Aug 25 01:56:10 localhost systemd: opendkim.service failed.		
+				# grep opendkim /var/log/messages
+				Aug 25 01:24:57 localhost yum[10052]: Installed: libopendkim-2.10.3-7.el7.x86_64
+				Aug 25 01:25:00 localhost yum[10052]: Installed: opendkim-2.10.3-7.el7.x86_64
+				Aug 25 01:55:08 localhost opendkim: /etc/opendkim/keys/default.private: open(): No such file or directory
+				Aug 25 01:55:08 localhost opendkim: opendkim: /etc/opendkim.conf: /etc/opendkim/keys/default.private: open(): No such file or directory
+				Aug 25 01:55:08 localhost systemd: opendkim.service: control process
+				exited, code=exited status=78
+				Aug 25 01:55:08 localhost systemd: Unit opendkim.service entered failed state.
+				Aug 25 01:55:08 localhost systemd: opendkim.service failed.
+				Aug 25 01:56:10 localhost opendkim: /etc/opendkim/keys/default.private: open(): No such file or directory
+				Aug 25 01:56:10 localhost opendkim: opendkim: /etc/opendkim.conf: /etc/opendkim/keys/default.private: open(): No such file or directory
+				Aug 25 01:56:10 localhost systemd: opendkim.service: control process exited, code=exited status=78
+				Aug
+				25 01:56:10 localhost systemd: Unit opendkim.service entered failed state.
+				Aug 25 01:56:10 localhost systemd: opendkim.service failed.
 			</pre>
 			<p>修改配置文件，指向你的密钥文件</p>
 			<pre class="screen">
-KeyFile	/etc/opendkim/keys/default.private			
+				KeyFile /etc/opendkim/keys/default.private
 			</pre>
 		</div>
 		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp664"></a>62.9.6. fatal: parameter inet_interfaces: no local interface found for ::1</h3></div></div></div>
@@ -146,6 +148,89 @@ inet_protocols = all
 inet_protocols = ipv4
 			
 			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="552"></a>62.9.7. NOQUEUE: reject: MAIL from unknown[192.168.3.31]: 552 5.3.4 Message size exceeds fixed limit;</h3></div></div></div>
+			
+			<pre class="screen">
+			
+NOQUEUE: reject: MAIL from unknown[192.168.3.31]: 552 5.3.4 Message size exceeds fixed limit;			
+			
+			</pre>
+			<p>查看 message_size_limit 配置，默认是 10MB</p>
+			<pre class="screen">
+			
+neo@netkiller ~ % postconf -d | grep message_size_limit
+message_size_limit = 10240000		
+			
+			</pre>
+			<pre class="screen">
+			
+neo@netkiller ~ % sudo postconf -e 'message_size_limit = 1024000000'
+neo@netkiller ~ % sudo systemctl reload postfix
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="452"></a>62.9.8. 452 4.3.1 Insufficient system storage</h3></div></div></div>
+			
+			<p>message_size_limit 设置不合理</p>
+			<pre class="screen">
+			
+neo@netkiller ~ % sudo postconf -e 'message_size_limit = 10240000000'	
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="454"></a>62.9.9. 454 Relay access denied</h3></div></div></div>
+			
+			<pre class="screen">
+			
+Jul 10 08:22:43 netkiller postfix/smtpd[2820]: NOQUEUE: reject: RCPT from unknown[192.168.3.31]: 454 4.7.1 &lt;netkiller@kindle.cn&gt;: Relay access denied; from=&lt;neo@netkiller.cn&gt; to=&lt;netkiller@kindle.cn&gt; proto=ESMTP helo=&lt;1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa&gt;			
+			
+			</pre>
+			<p></p>
+			<pre class="screen">
+			
+neo@netkiller ~ % sudo postconf -e 'smtpd_recipient_restrictions=permit_mynetworks' 
+			
+			</pre>
+			<p>配置 permit_mynetworks 后，需要将网卡的IP地址配置到 mynetworks，这里是 192.168.3.0/24</p>
+			<pre class="screen">
+			
+mynetworks = 127.0.0.0/8 [::ffff:127.0.0.0]/104 [::1]/128 192.168.3.0/24
+			
+			</pre>
+			<div class="example"><a id="idp1415"></a><p class="title"><strong>例 62.1. SMTP 服务器配置实例</strong></p><div class="example-contents">
+				
+				<p>配置例子</p>
+				<pre class="screen">
+			
+neo@netkiller ~ % postconf -n
+alias_database = hash:/etc/aliases
+alias_maps = hash:/etc/aliases
+append_dot_mydomain = no
+biff = no
+compatibility_level = 2
+inet_interfaces = all
+inet_protocols = all
+mailbox_size_limit = 0
+message_size_limit = 10240000000
+mydestination = $myhostname, netkiller.cn, mail.netkiller.cn, localhost
+myhostname = mail.netkiller.cn
+mynetworks = 127.0.0.0/8 [::ffff:127.0.0.0]/104 [::1]/128 192.168.3.0/24
+myorigin = /etc/mailname
+readme_directory = no
+recipient_delimiter = +
+relayhost =
+smtp_tls_session_cache_database = btree:${data_directory}/smtp_scache
+smtpd_banner = $myhostname ESMTP $mail_name (Ubuntu)
+smtpd_recipient_restrictions = permit_mynetworks
+smtpd_relay_restrictions = permit_mynetworks permit_sasl_authenticated defer_unauth_destination permit_inet_interfaces
+smtpd_tls_cert_file = /etc/ssl/certs/ssl-cert-snakeoil.pem
+smtpd_tls_key_file = /etc/ssl/private/ssl-cert-snakeoil.key
+smtpd_tls_session_cache_database = btree:${data_directory}/smtpd_scache
+smtpd_use_tls = yes			
+			
+				</pre>
+			</div></div><br class="example-break" />
 		</div>
 	</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
 
