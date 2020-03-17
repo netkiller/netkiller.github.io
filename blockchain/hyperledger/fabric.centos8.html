@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>24.4. CentOS 8.0 安装 Fabric 2.0.0</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><meta name="keywords" content="https://cn.hyperledger.org, https://hub.docker.com/u/hyperledger/, https://github.com/hyperledger/, " /><link rel="home" href="../index.html" title="Netkiller Blockchain 手札" /><link rel="up" href="hyperledger.html" title="第 24 章 Hyperledger Fabric v2.0.0" /><link rel="prev" href="setup.oscm.html" title="24.3. Netkiller OSCM 一键安装" /><link rel="next" href="fabric-samples.html" title="24.5. fabric-samples" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">云社区</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">云栖社区</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/video.html">视频教程</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">24.4. CentOS 8.0 安装 Fabric 2.0.0</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="setup.oscm.html">上一页</a> </td><th width="60%" align="center">第 24 章 Hyperledger Fabric v2.0.0</th><td width="20%" align="right"> <a accesskey="n" href="fabric-samples.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="fabric.centos8"></a>24.4. CentOS 8.0 安装 Fabric 2.0.0</h2></div></div></div>
+	
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp399"></a>24.4.1. CentOS 8 初始化</h3></div></div></div>
+		
+		<p></p>
+		<pre class="screen">
+		
+[root@localhost ~]# dnf update -y
+		
+		
+		</pre>
+		<p>禁用防火墙</p>
+		<pre class="screen">
+		
+[root@localhost ~]# systemctl disable firewalld
+Removed /etc/systemd/system/multi-user.target.wants/firewalld.service.
+Removed /etc/systemd/system/dbus-org.fedoraproject.FirewallD1.service.		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp400"></a>24.4.2. 安装依赖命令和语言</h3></div></div></div>
+		
+		<pre class="screen">
+		
+if [ ! -f /usr/bin/bunzip2 ];then
+    dnf install -y bzip2
+fi
+
+if [ ! -f /usr/bin/git ];then
+    dnf install -y git
+fi
+
+if [ ! -f /usr/bin/go ];then
+    dnf install -y golang
+fi
+		
+		</pre>
+		<p></p>
+		<pre class="screen">
+		
+curl -L --retry 5 --retry-delay 3 https://github.com/hyperledger/fabric/releases/download/v1.4.6/hyperledger-fabric-linux-amd64-1.4.6.tar.gz | tar xz
+curl -L --retry 5 --retry-delay 3 https://github.com/hyperledger/fabric-ca/releases/download/v1.4.6/hyperledger-fabric-ca-linux-amd64-1.4.6.tar.gz | tar xz
+
+mkdir -p /srv/hyperledger/fabric
+mv bin config /srv/hyperledger/fabric
+PATH=$PATH:/srv/hyperledger/fabric/bin
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp401"></a>24.4.3. 安装 Docker</h3></div></div></div>
+		
+		<pre class="screen">
+		
+dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
+
+dnf install -y docker-ce
+
+systemctl enable docker
+systemctl start docker
+		
+		</pre>
+		<p>安装 docker-compose</p>
+		<pre class="screen">
+		
+sudo curl -L "https://github.com/docker/compose/releases/download/1.25.4/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp402"></a>24.4.4. 安装 Fabric 2.0.0</h3></div></div></div>
+		
+		<pre class="screen">
+		
+IMAGES=(ca peer orderer couchdb ccenv kafka zookeeper tools javaenv)		
+FABRIC_TAG=latest
+for IMAGE in ${IMAGES}; do
+    echo "==&gt; FABRIC IMAGE: $IMAGE"
+    echo
+    docker pull hyperledger/fabric-$IMAGE:$FABRIC_TAG
+    echo
+done		
+		
+		</pre>
+		<p>按照完成检查镜像</p>
+		<pre class="screen">
+		
+[root@localhost src]# docker images
+REPOSITORY                     TAG                 IMAGE ID            CREATED             SIZE
+hyperledger/fabric-zookeeper   latest              21e55e9a2862        12 days ago         276MB
+hyperledger/fabric-kafka       latest              28a93b376dbe        12 days ago         270MB
+hyperledger/fabric-couchdb     latest              03ac1654afc5        12 days ago         261MB
+hyperledger/fabric-ca          latest              3b96a893c1e4        2 weeks ago         150MB
+hyperledger/fabric-tools       latest              0f9743ac0662        2 weeks ago         1.49GB
+hyperledger/fabric-ccenv       latest              191911f4454f        2 weeks ago         1.36GB
+hyperledger/fabric-orderer     latest              84eaba5388e7        2 weeks ago         120MB
+hyperledger/fabric-peer        latest              5a52faa5d8c2        2 weeks ago         128MB		
+		
+		</pre>
+	</div>
+
+</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="setup.oscm.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="hyperledger.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="fabric-samples.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">24.3. Netkiller OSCM 一键安装 </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 24.5. fabric-samples</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script><script xmlns="" type="text/javascript" src="/js/q.js" async="async"></script></body></html>
