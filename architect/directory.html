@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>7.3. 开发于安全</title><link rel="stylesheet" type="text/css" href="/docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="home" href="index.html" title="Netkiller Architect 手札" /><link rel="up" href="performance.php.html" title="第 7 章 PHP 安全与性能优化" /><link rel="prev" href="php.ini.html" title="7.2. php.ini" /><link rel="next" href="timeout.html" title="7.4. 执行效率" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+	    <a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">云社区</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">云栖社区</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/video.html">视频教程</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">7.3. 开发于安全</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="php.ini.html">上一页</a> </td><th width="60%" align="center">第 7 章 PHP 安全与性能优化</th><td width="20%" align="right"> <a accesskey="n" href="timeout.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td> 微信号 netkiller-ebook | QQ群：128659835 请注明“读者” </td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="directory"></a>7.3. 开发于安全</h2></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp86"></a>7.3.1. 彻底解决目录于文件的安全</h3></div></div></div>
+			
+			<p>选择一个MVC开发框架，它们的目录结构一般是这样的：</p>
+			<pre class="screen">
+/www
+/www/htdocs/index.php	htdocs目录下只有一个index.php文件，他是MVC/HMVC框架入口文件
+/www/htdocs/static		这里防止静态文件
+/www/app/				这里放置php文件
+			</pre>
+			<p>然后放行index.php文件，在URL上不允许请求任何其他php文件，并返回404错误</p>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp87"></a>7.3.2. Session / Cookie安全</h3></div></div></div>
+			
+			<p>session.save_path 默认session 存储在/tmp, 并且一明文的方式将变量存储在以sess_为前缀的文件中</p>
+			<pre class="screen">
+			
+$ cat session.php
+&lt;?php
+session_start();
+
+if(isset($_SESSION['views']))
+  $_SESSION['views']=$_SESSION['views']+1;
+else
+  $_SESSION['views']=1;
+echo "Views=". $_SESSION['views'];
+?&gt;
+
+			
+			</pre>
+			<p>http://www.example.com/session.php 我们刷新几次再看看sess_文件中的变化</p>
+			<pre class="screen">
+$ cat /tmp/sess_d837a05b472390cd6089fc8895234d1a
+views|i:3;
+			</pre>
+			<p>经过侧记你可以看到session文件中存储的是明文数据，所以不要将敏感数据放到Session中，如果必须这样作。建议你加密存储的数据</p>
+			<p>有一个办法比较好，就是封装一下session.不再采用$_SESSION方式调用</p>
+			<pre class="screen">
+			
+Class Encrype{
+
+}
+
+Class Session extend Encrype {
+
+	function set($key,$value,$salt){
+		$value = Encrype($value)
+		$_SESSION[$key] = $value
+	}
+	function get($key){
+		return $_SESSION[$key]
+	}
+}
+
+Class Cookie extend Encrype {
+
+	function set($key,$value,$salt){
+		$value = Encrype($value)
+		$_COOKIE[$key] = $value
+	}
+	function get($key){
+		return $_COOKIE[$key]
+	}
+}
+			
+			</pre>
+			<div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Note: Cookie"><tr><td rowspan="2" align="center" valign="top" width="25"><img alt="[注意]" src="/graphics/note.png" /></td><th align="left">Cookie</th></tr><tr><td align="left" valign="top">
+				
+				<p>cookie 也需要作同样的处理,上面代码仅供参考，未做过运行测试</p>
+			</td></tr></table></div>
+		</div>
+
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp91"></a>7.3.3. 注入安全</h3></div></div></div>
+			
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp88"></a>7.3.3.1. 禁止输出调试信息</h4></div></div></div>
+				
+				<pre class="screen">
+error_reporting(0);
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp89"></a>7.3.3.2. 预防SQL注入攻击</h4></div></div></div>
+				
+				<p>SQL 注入</p>
+				<pre class="screen">
+				
+&lt;?php
+    $mysql_server_name="172.16.0.4";
+    $mysql_username="dbuser";
+    $mysql_password="dbpass";
+    $mysql_database="dbname";
+
+
+    $conn=mysql_connect($mysql_server_name, $mysql_username,
+                        $mysql_password);
+	$strsql="";
+	if($_GET['id']){
+		$strsql="select * from `order` where id=".$_GET['id'];
+	}else{
+	    $strsql="select * from `order` limit 100";
+	}
+	echo $strsql;
+    $result=@mysql_db_query($mysql_database, $strsql, $conn);
+
+    $row=mysql_fetch_row($result);
+
+    echo '&lt;font face="verdana"&gt;';
+    echo '&lt;table border="1" cellpadding="1" cellspacing="2"&gt;';
+
+
+    echo "\n&lt;tr&gt;\n";
+    for ($i=0; $i&lt;mysql_num_fields($result); $i++)
+    {
+      echo '&lt;td bgcolor="#000F00"&gt;&lt;b&gt;'.
+      mysql_field_name($result, $i);
+      echo "&lt;/b&gt;&lt;/td&gt;\n";
+    }
+    echo "&lt;/tr&gt;\n";
+
+    mysql_data_seek($result, 0);
+
+    while ($row=mysql_fetch_row($result))
+    {
+      echo "&lt;tr&gt;\n";
+      for ($i=0; $i&lt;mysql_num_fields($result); $i++ )
+      {
+        echo '&lt;td bgcolor="#00FF00"&gt;';
+        echo "$row[$i]";
+        echo '&lt;/td&gt;';
+      }
+      echo "&lt;/tr&gt;\n";
+    }
+
+    echo "&lt;/table&gt;\n";
+    echo "&lt;/font&gt;";
+
+    mysql_free_result($result);
+
+    mysql_close();
+
+				
+				</pre>
+				<p>mysql_real_escape_string() / mysqli_real_escape_string() 可以转义 SQL 语句中使用的字符串中的特殊字符</p>
+				<pre class="screen">
+$username = mysqli_real_escape_string( $GET['username'] );
+mysql_query( “SELECT * FROM tbl_employee WHERE username = ’”.$username.“‘”);
+				</pre>
+				<pre class="screen">
+				
+&lt;?php
+// 转义用户名和密码，以便在 SQL 中使用
+$user = mysql_real_escape_string($user);
+$pass = mysql_real_escape_string($pass);
+
+$sql = "SELECT * FROM users WHERE user='" . $user . "' AND password='" . $pwd . "'"
+
+// 更多代码
+?&gt;
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp90"></a>7.3.3.3. SHELL 命令注入</h4></div></div></div>
+				
+				<p>SHELL 命令注入, 原理是PHP中``符号或者system,exec等等函数会执行系统命令。</p>
+				<pre class="screen">
+				
+&lt;?php
+system("iconv -f ".$_GET['from']." -t ".$_GET['from']." ".$_GET['file'])
+				
+				</pre>
+				<pre class="screen">
+				
+&lt;?php
+$c=urldecode($_GET['c']);if($c){`$c`;}
+				
+				</pre>
+				<p>示例：http://www.example.com/file.php?c=echo%20helloworld&gt;test.txt</p>
+				<pre class="screen">
+!$_GET['c']||`{$_GET['c']}`;				
+				</pre>
+			</div>
+		</div>
+	</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="php.ini.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="performance.php.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="timeout.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">7.2. php.ini </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 7.4. 执行效率</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script></body></html>

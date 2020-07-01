@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>第 20 章 Shell 高级编程</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="home" href="../index.html" title="Netkiller Architect 手札" /><link rel="up" href="index.html" title="部分 IV. 运维篇" /><link rel="prev" href="ch19s06.html" title="19.6. MongoDB" /><link rel="next" href="ch20s02.html" title="20.2. 实现守护进程" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+	    <a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">云社区</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">云栖社区</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/video.html">视频教程</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">第 20 章 Shell 高级编程</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ch19s06.html">上一页</a> </td><th width="60%" align="center">部分 IV. 运维篇</th><td width="20%" align="right"> <a accesskey="n" href="ch20s02.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td> 微信号 netkiller-ebook | QQ群：128659835 请注明“读者” </td></tr></table><div class="chapter"><div class="titlepage"><div><div><h2 class="title"><a id="shell"></a>第 20 章 Shell 高级编程</h2></div></div></div><div class="toc"><p><strong>目录</strong></p><dl class="toc"><dt><span class="section"><a href="shell.html#idp158">20.1. 递归调用</a></span></dt><dt><span class="section"><a href="ch20s02.html">20.2. 实现守护进程</a></span></dt><dt><span class="section"><a href="ch20s03.html">20.3. 进程间通信</a></span></dt><dt><span class="section"><a href="ch20s04.html">20.4. Shell 历史记录异地留痕审计与监控</a></span></dt><dd><dl><dt><span class="section"><a href="ch20s04.html#what">20.4.1. 什么是Shell历史记录异地留痕与监控</a></span></dt><dt><span class="section"><a href="ch20s04.html#why">20.4.2. 什么要将Shell历史记录异地留痕并监控</a></span></dt><dt><span class="section"><a href="ch20s04.html#when">20.4.3. 何时做历史记录异地留痕</a></span></dt><dt><span class="section"><a href="ch20s04.html#where">20.4.4. 在哪里做历史记录异地留痕</a></span></dt><dt><span class="section"><a href="ch20s04.html#who">20.4.5. 角色与权限</a></span></dt><dt><span class="section"><a href="ch20s04.html#how">20.4.6. 怎么实现历史记录异地留痕</a></span></dt><dd><dl><dt><span class="section"><a href="ch20s04.html#idp159">20.4.6.1. 节点配置</a></span></dt><dt><span class="section"><a href="ch20s04.html#idp160">20.4.6.2. 推送端</a></span></dt><dt><span class="section"><a href="ch20s04.html#idp161">20.4.6.3. 收集端</a></span></dt></dl></dd><dt><span class="section"><a href="ch20s04.html#idp162">20.4.7. 延伸阅读</a></span></dt></dl></dd></dl></div>
+	
+	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp158"></a>20.1. 递归调用</h2></div></div></div>
+		
+		<p>不懂递归不算是合格的程序员</p>
+		<p>递归调用是一种特殊的嵌套调用，是一个函数在它的函数体内调用它自身称为递归调用。这种函数称为递归函数。</p>
+		<pre class="screen">
+		
+#!/bin/bash
+########################################
+# Author: Neo &lt;netiller@msn.com&gt;
+# Home : http://netkiler.github.io
+# Project: https://github.com/oscm/shell
+########################################
+domain=$1
+########################################
+function include(){
+	txt=$1
+	for host in $(echo $txt | egrep -o "include:(.+) ")
+	do
+		txt=$(dig $(echo $host | cut -d":" -f2) txt | grep "v=spf1")
+		echo $txt;
+		if [ "$(echo $txt | grep "include")" ]; then
+			include "$txt"
+		fi
+	done
+}
+function main(){
+	spf=$(dig ${domain} txt | grep "v=spf1")
+	echo $spf
+
+	if [ "$(echo $spf | grep "include")" ]; then
+		include "$spf"
+	fi
+}
+
+main $domain
+		
+		</pre>
+		<p>运行上面的程序</p>
+		<pre class="screen">
+		
+$ bash spf.sh 163.com
+163.com. 6878 IN TXT "v=spf1 include:spf.163.com -all"
+spf.163.com. 16991 IN TXT "v=spf1 include:a.spf.163.com include:b.spf.163.com include:c.spf.163.com include:d.spf.163.com -all"
+a.spf.163.com. 8001 IN TXT "v=spf1 ip4:220.181.12.0/22 ip4:220.181.31.0/24 ip4:123.125.50.0/24 ip4:220.181.72.0/24 ip4:123.58.178.0/24 ip4:123.58.177.0/24 ip4:113.108.225.0/24 ip4:218.107.63.0/24 ip4:123.58.189.128/25 -all"
+b.spf.163.com. 10131 IN TXT "v=spf1 ip4:176.34.21.58 ip4:176.34.53.178 ip4:121.195.178.48/28 ip4:223.252.213.0/24 -all"
+c.spf.163.com. 17199 IN TXT "v=spf1 ip4:223.252.206.0/24 ip4:43.230.90.0/27 -all"
+d.spf.163.com. 17615 IN TXT "v=spf1 ip4:123.126.65.0/24 ip4:106.2.88.0/24 ip4:220.181.97.0/24 ip4:180.150.142.123 ip4:180.150.142.124 ip4:180.150.154.88 ip4:180.150.154.92 ip4:180.150.154.93 ip4:103.251.128.69 -all"
+		
+		</pre>
+	</div>
+	
+
+	
+	
+
+
+</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ch19s06.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ch20s02.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">19.6. MongoDB </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 20.2. 实现守护进程</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script></body></html>
