@@ -1,0 +1,363 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>17.2. 一次切割日志引发的血案</title><link rel="stylesheet" type="text/css" href="../..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="home" href="../../index.html" title="Netkiller Architect 手札" /><link rel="up" href="index.html" title="第 17 章 Server" /><link rel="prev" href="index.html" title="第 17 章 Server" /><link rel="next" href="ch17s03.html" title="17.3. 日志归档与数据挖掘" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+	    <a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">云社区</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">云栖社区</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/video.html">视频教程</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">17.2. 一次切割日志引发的血案</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><th width="60%" align="center">第 17 章 Server</th><td width="20%" align="right"> <a accesskey="n" href="ch17s03.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td> 微信号 netkiller-ebook | QQ群：128659835 请注明“读者” </td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp466"></a>17.2. 一次切割日志引发的血案</h2></div></div></div>
+	
+	<p>很多应用程序会产生日志，有些程序已经实现了日志切割，一般是每天一个文件。但有时这个切割并不能满足我们的需求，例如我们需要颗粒度更细的切割。</p>
+
+	<div class="itemizedlist"><p class="title"><strong>切割日志的目的是什么？</strong></p><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem">日志尺寸过大</li><li class="listitem">便于分析</li><li class="listitem">切割后归档，或者导入日志平台</li></ul></div>
+
+	<div class="itemizedlist"><p class="title"><strong>切割日志基本两种方法：</strong></p><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem">手工</li><li class="listitem">shell</li><li class="listitem">工具，例如logrotate，传统的cronolog</li></ul></div>
+	<p>日志切割方案网上有很多，很多运维也是参考这些方案进行配置，网上的例子不完全都是对的，可能你用了很多年配置方案是错误的。 没有出现故障是侥幸，因为笔者15年前就在此处栽过，由于日志太大，我便清空了日志，以为程序仍然会继续写入，最后直到服务器崩溃。 最近发现很多新手再谈cronolog，我便想起当前发生的故障，有必要跟大家分享。</p>
+	<p>首先日志是可以切割的，网上的例子理论上也是可行，但我们不能不求甚解，稀里糊涂的用下去。</p>
+	<p>我们首先了解一下日志是怎么产生的，那种日志可以切割，那些日志不能切割，为什么不能切割，如果需要切割日志怎么处理？</p>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp209"></a>17.2.1. 日志是怎么产生的</h3></div></div></div>
+		
+		<p>日志生命周期，创建/打开日志文件，追加日志记录，关闭日志文件。请看下面伪代码。</p>
+		<pre class="programlisting">
+		
+main (){ 
+	f = open(/tmp/prog.log) ...
+	...
+	f.append('DEBUG .............') 
+	...
+	f.append('INFO .............') 
+	...
+	f.append('WARN .............') 
+	f.close()
+}		
+		
+		</pre>
+		<p>这个程序是顺序运行，每次运行都会经历，打开日志文件，追加日志记录，关闭日志文件，一个日志生命周期结束。 在完成日志生命周后，你就可以切割日志了。因为f.close()后日志文件已经被释放。</p>
+		<p>再看下面的程序</p>
+		<pre class="programlisting">
+		
+main (){ 
+	f = open(/tmp/prog.log) 
+	loop{ 
+		... ... 
+		f.append('DEBUG .............') 
+		... 
+		f.append('INFO .............') 
+		... 
+		f.append('WARN .............') 
+		if(quit){ 
+			break 
+		} 
+	} 
+	f.close()
+}		
+		
+		</pre>
+		<p>这个程序就不同了，程序运行，打开日志文件，然后进入无穷循环，期间不断写入日志，接到退出命令才会关闭日志。 那么这个程序你就不能随便切割日志。你一旦修改了日志文件，程序将不能在写入日志到文件中。 这个程序切割日志的过程是这样的</p>
+		<pre class="programlisting">
+		
+split loop { prog run prog quit &amp;&amp; mv /tmp/prog.log /tmp/prog.2016-05-05.log }		
+		
+		</pre>
+		<p>再看下面的程序</p>
+		<pre class="programlisting">
+		
+main (){ 
+	loop{ 
+		f = open(/tmp/prog.log) 
+		loop{ 
+			...
+			...
+			f.append('DEBUG .............') 
+			...
+			f.append('INFO .............') 
+			...
+			f.append('WARN .............') 
+			if(reload){ 
+				break 
+			} 
+		} 
+		f.close() 
+	}
+}		
+		
+		</pre>
+		<p>这个程序多了一层循环，并加入了重载功能。这个程序怎样切割日志呢：</p>
+		<pre class="programlisting">
+		
+split loop { 
+	prog run
+	mv /tmp/prog.log /tmp/prog.YYYY-MM-DD.log
+	prog reload 
+}		
+		
+		</pre>
+		<p></p>
+		<pre class="programlisting">
+		
+main (){ 
+	loop{ 
+		f = open(/tmp/prog.YYYY-MM-DD.log) 
+		loop{ 
+			...
+			...
+			f.append('DEBUG .............') 
+			...
+			f.append('INFO .............') 
+			...
+			f.append('WARN .............') 
+			if(reload){ 
+				break 
+			} 
+		} 
+		f.close() 
+	}
+}			
+		
+		</pre>
+		<p>如果你是程序猿，这个程序可以优化一下，日志文件名自动产生日期 /tmp/prog.YYYY-MM-DD.log 在reload时候重新创建或打开日志。</p>
+		<p>最操蛋写法，很多初学者会这么干，</p>
+		<pre class="programlisting">
+		
+log(type, msg){ 
+	f = open(/tmp/prog.YYYY-MM-DD.log) 
+	f.append(type, msg) 
+	f.close() 
+} 
+
+main(){ ...
+	...
+	log('INFO','..............') ...
+	...
+	log('DEBUG','..............') ...
+	... 
+}		
+		
+		</pre>
+		<p>这种代码的适应性非常强，写一个日志函数，但牺牲了IO性能，如果频繁打开/关闭文件同时进行写IO操作，这样的程序很难实现高并发。 所以很多高并发的程序，只会打开一次日志文件（追加模式），不会再运行期间关闭日志文件，直到进程发出退出信号。</p>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp213"></a>17.2.2. 让我们看个究竟</h3></div></div></div>
+		
+		<p>我们手工模拟一次日志分割的过程，首先开启三个Shell终端。</p>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp210"></a>17.2.2.1. 第一种情况，日志文件被重命名</h4></div></div></div>
+			
+			<pre class="screen">
+			
+终端一，模拟打开日志文件
+
+[root@www.netkiller.cn ~]# cat &gt; /tmp/test.log
+终端二，重命名文件
+
+[root@www.netkiller.cn ~]# mv /tmp/test.log /tmp/test.2016.05.05.log
+终端一，输入一些内容然后按下Ctrl+D 保存文件
+
+[root@www.netkiller.cn ~]# cat &gt; /tmp/test.log
+Helloworld
+Ctrl + D[root@www.netkiller.cn ~]# cat /tmp/test.log
+cat: /tmp/test.log: No such file or directory			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp211"></a>17.2.2.2. 第二种情况，日志文件被删除</h4></div></div></div>
+			
+			<pre class="screen">
+			
+终端一，模拟打开日志文件
+
+[root@www.netkiller.cn ~]# cat &gt; /tmp/test.log
+终端二，使用lsof查看文件的打开情况
+
+[root@www.netkiller.cn ~]# lsof | grep /tmp/test.log
+cat       20032           root    1w      REG              253,1          0     288466 /tmp/test.log
+终端三，删除日志文件
+
+[root@www.netkiller.cn ~]# rm -rf /tmp/test.log
+终端二，查看日志的状态，你能看到 deleted
+
+[root@www.netkiller.cn ~]# lsof | grep /tmp/test.log
+cat        5269           root    1w      REG              253,1          0     277445 /tmp/test.log (deleted)
+终端一，回到终端一种，继续写入一些内容并保存，然后查看日志文件是否有日志记录被写入
+
+[root@www.netkiller.cn ~]# cat &gt; /tmp/test.log
+Helloworld
+^D[root@www.netkiller.cn ~]# cat /tmp/test.log
+cat: /tmp/test.log: No such file or directory
+经过上面两个实验，你应该明白了在日志打开期间对日志文件做重命名或者删除都会造成日志记录的写入失败。			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp212"></a>17.2.2.3. 第三种情况，日志没有被删除，也没有被重命名，而是被其他程序做了修改</h4></div></div></div>
+			
+			<pre class="screen">
+			
+第一步，终端窗口一中创建一个文件，文件写入一些字符串，这里写入 “one”，然后查看是否成功写入。
+
+[root@www.netkiller.cn ~]# echo one &gt; /tmp/test.log[root@www.netkiller.cn ~]# cat /tmp/test.log
+one
+上面我们可以看到/tmp/test.log文件成功写入一个字符串”one”
+
+第二步，开始追加一些字符串
+
+[root@www.netkiller.cn ~]# cat &gt; /tmp/test.log
+two
+先不要保存（不要发出^D）
+
+第三部，在终端二窗口中清空这个文件
+
+[root@www.netkiller.cn ~]# &gt; /tmp/test.log [root@www.netkiller.cn ~]# cat /tmp/test.log
+通过cat查看/tmp/test.log文件，什么也没也表示操作成功。
+
+第四步，完成字符串追加，使用Ctrl+D保存文件，最后使用cat /tmp/test.log 查看内容。
+
+[root@www.netkiller.cn ~]# cat &gt; /tmp/test.log
+two[root@www.netkiller.cn ~]# cat /tmp/test.log
+你会发现/tmp/test.log文件中没有写入任何内容。这表示在日志的访问期间，如果其他程序修改了该日志文件，原来的程序将无法再写入日志。
+
+让我们再来一次，看个究竟
+
+终端一，创建并追加字符串到日志文件中
+
+# echo one &gt; /tmp/test.log# cat /tmp/test.logone# cat &gt;&gt; /tmp/test.logtwo
+记得不要保存
+
+终端二，使用lsof查看文件的打开情况
+
+# lsof | grep /tmp/test.logcat       22631           root    1w      REG              253,1          0     277445 /tmp/test.log
+终端三，开启另一个程序追加字符串到日志文件中
+
+# cat &gt;&gt; /tmp/test.log three
+先不要保存（不要发出^D)
+
+终端二，查看文件的打开情况
+
+# lsof | grep /tmp/test.logcat       22631           root    1w      REG              253,1          0     277445 /tmp/test.log
+cat       23350           root    1w      REG              253,1          0     277445 /tmp/test.log
+终端三，保存three字符串
+
+# cat &gt;&gt; /tmp/test.log three
+^D# cat /tmp/test.log three
+回到终端一，继续保存内容
+
+# cat &gt; /tmp/test.logtwo
+^D# cat /tmp/test.logtwo
+e
+出现新的行情况了，two报道最上面去了，这是因为打开文件默认文件指针是页首，它不知道最后一次文件写入的位置。
+
+你可以反复实验，结果相同。
+
+# cat /tmp/test.logtwo
+e
+four
+five
+我为什么没有使用 echo “five” » /tmp/test.log 这种方式追加呢？因为 cat 重定向后只要不发出^D就不会保存文件，而echo是打开文件，获取文件尾部位置，然后追加，最后关闭文件。
+			
+			
+			</pre>
+		</div>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp214"></a>17.2.3. 经典案例分析</h3></div></div></div>
+		
+		<p>我们以 Nginx 为例</p>
+		<pre class="screen">
+		
+[root@www.netkiller.cn ~]# cat /etc/logrotate.d/nginx
+/var/log/nginx/*.log {        daily
+        missingok
+        rotate 52
+        compress
+        delaycompress
+        notifempty
+        create 640 nginx adm
+        sharedscripts
+        postrotate                [ -f /var/run/nginx.pid ] &amp;&amp; kill -USR1 `cat /var/run/nginx.pid`        endscript}
+		
+		
+		</pre>
+		<p>nginx 日志切割后会运行 kill -USR1 这个让nginx 重新创建日志文件或者夺回日志文件的操作权。</p>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp215"></a>17.2.4. 怎样监控日志</h3></div></div></div>
+		
+		<p>那么怎样监控日志被删除，写入权被其他程序夺取？对于程序猿一定很关注这个问题。下面我们讲解怎么监控日志。</p>
+		<p>Linux 系统可以使用 inotify 开发包来监控文件的状态变化，包括开打，写入，修改权限等等。你需要启动一个进程或者线程监控日志文件的变化，以便随时reload 你的主程序。</p>
+		<pre class="screen">
+		
+prog { sign = null
+	logfile = /var/log/your.log
+	
+	thread monitor { 
+		inotify logfile { sign = reload } 
+	} 
+	thread worker { 
+		loop{ 
+			f = open(logfile) 
+			loop{ 
+				f.append(....) 
+				if(sign == reload) { break }
+			} 
+			f.close() 
+		} 
+	} 
+	main(){ 
+		monitor.start() 
+		worker.start() 
+	}
+}		
+		
+		</pre>
+		<p>不知你是否看懂，简单的说就是两个并行运行的程序，一个负责日志监控，一个负责干活，一旦日志发生变化就通知主程序 reload。 至于使用进程还是线程去实现，取决于你熟悉那种语言或者你擅长的技术。</p>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp216"></a>17.2.5. 总结</h3></div></div></div>
+		
+		<p>小小的日志文件有如此大的学问，目前很多应用程序写的比较健壮，能够判断出当前日志被删除，改写。程序运行中能够在创建丢失的日志文件，当日志被其他程序改写后，能够夺回写入权。 但这样的程序会影响程序并发性能，鱼和熊掌不能兼得。看了这篇文章我想你应该对日志有了全面了解，也会在接下来的工作中谨慎处理日志。</p>
+	</div>
+</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ch17s03.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 17 章 Server </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 17.3. 日志归档与数据挖掘</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script></body></html>

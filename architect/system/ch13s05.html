@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>13.5. PAM 插件认证加固配置</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="home" href="../index.html" title="Netkiller Architect 手札" /><link rel="up" href="os.html" title="第 13 章 Linux 系统安全与优化配置" /><link rel="prev" href="ch13s04.html" title="13.4. Linux 系统资源调配" /><link rel="next" href="oscm.html" title="第 14 章 环境安装模板化" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+	    <a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">云社区</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">云栖社区</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/video.html">视频教程</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">13.5. PAM 插件认证加固配置</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ch13s04.html">上一页</a> </td><th width="60%" align="center">第 13 章 Linux 系统安全与优化配置</th><td width="20%" align="right"> <a accesskey="n" href="oscm.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td> 微信号 netkiller-ebook | QQ群：128659835 请注明“读者” </td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp453"></a>13.5. PAM 插件认证加固配置</h2></div></div></div>
+		
+		<p>配置文件</p>
+		<pre class="screen">
+		
+ls  /etc/pam.d/
+chfn         crond                login    passwd            remote    runuser-l          smtp          ssh-keycat  sudo-i       system-auth-ac
+chsh         fingerprint-auth     newrole  password-auth     run_init  smartcard-auth     smtp.postfix  su          su-l
+config-util  fingerprint-auth-ac  other    password-auth-ac  runuser   smartcard-auth-ac  sshd          sudo        system-auth
+		
+		</pre>
+		<p>认证插件</p>
+		<pre class="screen">
+		
+ls /lib64/security/
+		
+		</pre>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="pam_tally2.so"></a>13.5.1. pam_tally2.so</h3></div></div></div>
+			
+			<p>此模块的功能是，登陆错误输入密码3次，5分钟后自动解禁，在未解禁期间输入正确密码也无法登陆。</p>
+			<p>在配置文件 /etc/pam.d/sshd 顶端加入</p>
+			<pre class="screen">
+			
+auth required pam_tally2.so deny=3 onerr=fail unlock_time=300
+			
+			</pre>
+			<p>查看失败次数</p>
+			<pre class="screen">
+			
+# pam_tally2
+Login           Failures Latest failure     From
+root               14    07/12/13 15:44:37  192.168.6.2
+neo                 8    07/12/13 15:45:36  192.168.6.2
+			
+			</pre>
+			<p>重置计数器</p>
+			<pre class="screen">
+			
+# pam_tally2 -r -u root
+Login           Failures Latest failure     From
+root               14    07/12/13 15:44:37  192.168.6.2
+
+# pam_tally2 -r -u neo
+Login           Failures Latest failure     From
+neo                 8    07/12/13 15:45:36  192.168.6.2
+			
+			</pre>
+			<p>pam_tally2 计数器日志保存在 /var/log/tallylog 注意，这是二进制格式的文件</p>
+			<div class="example"><a id="idp410"></a><p class="title"><strong>例 13.1. /etc/pam.d/sshd - pam_tally2.so</strong></p><div class="example-contents">
+				
+				<pre class="screen">
+				
+# cat  /etc/pam.d/sshd
+#%PAM-1.0
+auth required pam_tally2.so deny=3 onerr=fail unlock_time=300
+
+auth	   required	pam_sepermit.so
+auth       include      password-auth
+account    required     pam_nologin.so
+account    include      password-auth
+password   include      password-auth
+# pam_selinux.so close should be the first session rule
+session    required     pam_selinux.so close
+session    required     pam_loginuid.so
+# pam_selinux.so open should only be followed by sessions to be executed in the user context
+session    required     pam_selinux.so open env_params
+session    optional     pam_keyinit.so force revoke
+session    include      password-auth
+				
+				</pre>
+			</div></div><br class="example-break" />
+			<p>以上配置root用户不受限制, 如果需要限制root用户，参考下面</p>
+			<pre class="screen">
+auth required pam_tally2.so deny=3 unlock_time=5 even_deny_root root_unlock_time=1800
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="pam_listfile.so"></a>13.5.2. pam_listfile.so</h3></div><div><h4 class="subtitle">用户登陆限制</h4></div></div></div>
+			
+			
+			<p>将下面一行添加到 /etc/pam.d/sshd 中，这里采用白名单方式，你也可以采用黑名单方式</p>
+			<pre class="screen">
+auth       required     pam_listfile.so item=user sense=allow file=/etc/ssh/whitelist onerr=fail
+			</pre>
+			<p>将允许登陆的用户添加到 /etc/ssh/whitelist，除此之外的用户将不能通过ssh登陆到你的系统</p>
+			<pre class="screen">
+# cat /etc/ssh/whitelist
+neo
+www
+			</pre>
+			<div class="example"><a id="idp411"></a><p class="title"><strong>例 13.2. /etc/pam.d/sshd - pam_listfile.so</strong></p><div class="example-contents">
+				
+				<pre class="screen">
+# cat /etc/pam.d/sshd
+#%PAM-1.0
+auth       required     pam_listfile.so item=user sense=allow file=/etc/ssh/whitelist onerr=fail
+auth       required     pam_tally2.so deny=3 onerr=fail unlock_time=300
+
+auth	   required	pam_sepermit.so
+auth       include      password-auth
+account    required     pam_nologin.so
+account    include      password-auth
+password   include      password-auth
+# pam_selinux.so close should be the first session rule
+session    required     pam_selinux.so close
+session    required     pam_loginuid.so
+# pam_selinux.so open should only be followed by sessions to be executed in the user context
+session    required     pam_selinux.so open env_params
+session    optional     pam_keyinit.so force revoke
+session    include      password-auth
+				</pre>
+			</div></div><br class="example-break" />
+			<p>sense=allow 白名单方式, sense=deny 黑名单方式</p>
+			<pre class="screen">
+auth       required     pam_listfile.so item=user sense=deny file=/etc/ssh/blacklist onerr=fail
+			</pre>
+			<p>更多细节请查看手册 $ man pam_listfile</p>
+		</div>
+
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="pam_access.so"></a>13.5.3. pam_access.so</h3></div></div></div>
+			
+			<p>编辑 /etc/pam.d/sshd 文件，加入下面一行</p>
+			<pre class="screen">
+account required pam_access.so
+			</pre>
+			<p>保存后重启sshd进程</p>
+			<p>编辑 /etc/security/access.conf 文件</p>
+			<pre class="screen">
+			
+cat &gt;&gt;  /etc/security/access.conf &lt;&lt; EOF
+
+- : root : ALL EXCEPT 192.168.6.1
+EOF
+			
+			</pre>
+			<p>只能通过 192.168.6.1 登陆, 添加多个IP地址</p>
+			<pre class="screen">
+- : root : ALL EXCEPT 192.168.6.1 192.168.6.2
+			</pre>
+			<p>测试是否生效</p>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="pam_wheel.so"></a>13.5.4. pam_wheel.so</h3></div></div></div>
+			
+			<p>限制普通用户通过su命令提升权限至root. 只有属于wheel组的用户允许通过su切换到root用户</p>
+			<p>编辑 /etc/pam.d/su 文件，去掉下面的注释</p>
+			<pre class="screen">
+auth		required	pam_wheel.so use_uid
+			</pre>
+			<p>修改用户组别，添加到wheel组</p>
+			<pre class="screen">
+# usermod -G wheel www
+
+# id www
+uid=501(www) gid=501(www) groups=501(www),10(wheel)
+			</pre>
+			<p>没有加入到wheel组的用户使用su时会提示密码不正确。</p>
+			<pre class="screen">
+$ su - root
+Password:
+su: incorrect password
+			</pre>
+		</div>
+	</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ch13s04.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="os.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="oscm.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">13.4. Linux 系统资源调配 </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 14 章 环境安装模板化</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script></body></html>
