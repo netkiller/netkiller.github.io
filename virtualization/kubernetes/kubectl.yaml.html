@@ -66,7 +66,7 @@ iMac:kubernetes neo$ kubectl logs counter
 9: Sun Oct  4 12:32:53 UTC 2020
 		
 		</pre>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp196"></a>2.7.2.1. 指定主机名</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp198"></a>2.7.2.1. 指定主机名</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -95,11 +95,122 @@ spec:
 			
 			</pre>
 		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp199"></a>2.7.2.2. </h4></div></div></div>
+			
+			<pre class="screen">
+			
+apiVersion: v1
+kind: Pod
+metadata:
+  name: envars-fieldref
+spec:
+  containers:
+    - name: test-container
+      image: k8s.gcr.io/busybox
+      command: [ "sh", "-c"]
+      args:
+      - while true; do
+          echo -en '\n';
+          printenv NODE_NAME POD_NAME POD_NAMESPACE;
+          printenv POD_IP POD_SERVICE_ACCOUNT;
+          sleep 10;
+        done;
+      env:
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: POD_SERVICE_ACCOUNT
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.serviceAccountName
+  restartPolicy: Never			
+			
+			</pre>
+			<p></p>
+			<pre class="screen">
+			
+apiVersion: v1
+kind: Pod
+metadata:
+  name: envars-resourcefieldref
+spec:
+  containers:
+    - name: test-container
+      image: k8s.gcr.io/busybox:1.24
+      command: [ "sh", "-c"]
+      args:
+      - while true; do
+          echo -en '\n';
+          printenv CPU_REQUEST CPU_LIMIT;
+          printenv MEM_REQUEST MEM_LIMIT;
+          sleep 10;
+        done;
+      resources:
+        requests:
+          memory: "32Mi"
+          cpu: "125m"
+        limits:
+          memory: "64Mi"
+          cpu: "250m"
+      env:
+        - name: CPU_REQUEST
+          valueFrom:
+            resourceFieldRef:
+              containerName: test-container
+              resource: requests.cpu
+        - name: CPU_LIMIT
+          valueFrom:
+            resourceFieldRef:
+              containerName: test-container
+              resource: limits.cpu
+        - name: MEM_REQUEST
+          valueFrom:
+            resourceFieldRef:
+              containerName: test-container
+              resource: requests.memory
+        - name: MEM_LIMIT
+          valueFrom:
+            resourceFieldRef:
+              containerName: test-container
+              resource: limits.memory
+  restartPolicy: Never			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp200"></a>2.7.2.3. 健康状态检查</h4></div></div></div>
+			
+			<p>就绪探针</p>
+			<pre class="screen">
+			
+        readinessProbe: 
+          exec:
+            command:
+            - cat
+            - /tmp/healthy
+          initialDelaySeconds: 10         #10s之后开始第一次探测
+          periodSeconds: 5                #第一次探测之后每隔5s探测一次			
+			
+			</pre>
+			<p></p>
+		</div>
 	</div>
 
 	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="Service"></a>2.7.3. Service</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp197"></a>2.7.3.1. 创建服务</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp201"></a>2.7.3.1. 创建服务</h4></div></div></div>
 			
 			<p>创建 service.yaml 文件</p>
 			<pre class="screen">
@@ -147,11 +258,11 @@ my-service   &lt;none&gt;      2m20s
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp198"></a>2.7.3.2. 查看服务</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp202"></a>2.7.3.2. 查看服务</h4></div></div></div>
 			
 
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp199"></a>2.7.3.3. 设置外部IP</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp203"></a>2.7.3.3. 设置外部IP</h4></div></div></div>
 			
 			<p>报漏 80.11.12.10:80 地址</p>
 			<pre class="screen">
@@ -173,7 +284,7 @@ spec:
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp200"></a>2.7.3.4. 绑定外部域名</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp204"></a>2.7.3.4. 绑定外部域名</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -188,7 +299,7 @@ spec:
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp201"></a>2.7.3.5. </h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp205"></a>2.7.3.5. </h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -210,7 +321,7 @@ spec:
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp202"></a>2.7.3.6. nodePort</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp206"></a>2.7.3.6. nodePort</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -232,7 +343,7 @@ spec:
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp203"></a>2.7.3.7. LoadBalancer</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp207"></a>2.7.3.7. LoadBalancer</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -256,7 +367,7 @@ status:
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp204"></a>2.7.3.8. Example</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp208"></a>2.7.3.8. Example</h4></div></div></div>
 			
 			<pre class="screen">
 		
@@ -316,7 +427,7 @@ spec:
 	</div>
 	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="ConfigMap"></a>2.7.4. ConfigMap</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp205"></a>2.7.4.1. Key-Value 配置</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp209"></a>2.7.4.1. Key-Value 配置</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -382,7 +493,7 @@ data:
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp206"></a>2.7.4.2. 环境变量</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp210"></a>2.7.4.2. 环境变量</h4></div></div></div>
 			
 			<p>envFrom 可将 ConfigMap 中的配置项定义为容器环境变量</p>
 			<pre class="screen">
@@ -445,7 +556,7 @@ pod/test-pod created
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp207"></a>2.7.4.3. 配置文件</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp211"></a>2.7.4.3. 配置文件</h4></div></div></div>
 			
 			<p>定义配置</p>
 			<pre class="screen">
@@ -559,9 +670,151 @@ spec:
 			</pre>
 		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp210"></a>2.7.5. Job</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id=""></a>2.7.5. Volume</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp208"></a>2.7.5.1. 执行单词任务</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp213"></a>2.7.5.1. local</h4></div></div></div>
+			
+			<pre class="screen">
+			
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: example-pv
+spec:
+  capacity:
+    storage: 100Gi
+  # volumeMode field requires BlockVolume Alpha feature gate to be enabled.
+  volumeMode: Filesystem
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: local-storage
+  local:
+    path: /mnt/disks/ssd1
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - example-node			
+			
+			</pre>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp212"></a>2.7.5.1.1. 案例</h5></div></div></div>
+				
+				<pre class="screen">
+				
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: local-volume
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: netkiller-local-pv
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-volume
+  local:
+    path: /tmp/neo
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - minikube
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: netkiller-pvc
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: local-volume
+---
+kind: Pod
+apiVersion: v1
+metadata:
+  name: busybox
+  namespace: default
+spec:
+  containers:
+    - name: busybox
+      image: busybox:latest
+      # image: registry.netkiller.cn:5000/netkiller/welcome:latest
+      imagePullPolicy: IfNotPresent
+      command:
+        - sleep
+        - "3600"
+      volumeMounts:
+      - mountPath: "/srv"
+        name: mypd
+  restartPolicy: Always
+  volumes:
+    - name: mypd
+      persistentVolumeClaim:
+        claimName: netkiller-pvc			
+				
+				</pre>
+				<p>部署 POD</p>
+				<pre class="screen">
+				
+iMac:kubernetes neo$ kubectl create -f example/volume/local.yaml 
+storageclass.storage.k8s.io/local-volume created
+persistentvolume/netkiller-local-pv created
+persistentvolumeclaim/netkiller-pvc created
+pod/busybox created				
+				
+				</pre>
+				<p>查看POD状态</p>
+				<pre class="screen">
+				
+iMac:kubernetes neo$ kubectl get pod
+NAME      READY   STATUS    RESTARTS   AGE
+busybox   1/1     Running   0          2m28s				
+				
+				</pre>
+				<p>进入POD查看local卷的挂载情况，同时创建一个测试文件。</p>
+				<pre class="screen">
+				
+iMac:kubernetes neo$ kubectl exec -it busybox sh
+kubectl exec [POD] [COMMAND] is DEPRECATED and will be removed in a future version. Use kubectl exec [POD] -- [COMMAND] instead.
+/ # mount | grep /srv
+tmpfs on /srv type tmpfs (rw)
+
+/ # echo helloworld &gt; /srv/netkiller
+/ # cat /srv/netkiller 
+helloworld
+				
+				</pre>
+				<p>进入宿主主机查看挂载目录</p>
+				<pre class="screen">
+				
+$ cat /tmp/neo/netkiller 
+helloworld
+				
+				</pre>
+			</div>
+		</div>
+	</div>
+	
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="Job"></a>2.7.6. Job</h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp214"></a>2.7.6.1. 执行单词任务</h4></div></div></div>
 			
 			<p>.spec.completions 标志Job结束需要成功运行的Pod个数，默认为1</p>
 			<p>.spec.parallelism 标志并行运行的Pod的个数，默认为1</p>
@@ -596,7 +849,7 @@ $ kubectl logs $pods
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp209"></a>2.7.5.2. 计划任务</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp215"></a>2.7.6.2. 计划任务</h4></div></div></div>
 			
 			<p>.spec.schedule 指定任务运行周期，格式同Cron</p>
 			<p>.spec.startingDeadlineSeconds 指定任务开始的截止期限</p>
@@ -621,6 +874,173 @@ spec:
             - -c
             - date; echo Hello from the Kubernetes cluster
           restartPolicy: OnFailure			
+			
+			</pre>
+		</div>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="Ingress"></a>2.7.7. Ingress</h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp216"></a>2.7.7.1. 端口</h4></div></div></div>
+			
+			<pre class="screen">
+			
++----------+  Ingress   +---------+    Pod    +----------+
+| internet | ---------&gt; | Service | --------&gt; | Pod Node |
++----------+            +---------+           +----------+
+			
+			
+			</pre>
+			<pre class="screen">
+			
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: springboot
+spec:
+  backend:
+    service:
+      name: springboot
+      port: 
+        number: 80			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp217"></a>2.7.7.2. URI 规则</h4></div></div></div>
+			
+			<pre class="screen">
+			
+                  Ingress	 / ---&gt; /api --&gt; api-service:8080		
+www.netkiller.cn ---------&gt; |  ---&gt; /usr --&gt; usr-service:8080
+                             \ ---&gt; /img --&gt; img-service:8080			
+			
+			</pre>
+			<pre class="screen">
+			
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: uri-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - host: www.netkiller.cn
+    http:
+      paths:
+      - path: /api
+        backend:
+          serviceName: api-service
+          servicePort: 8080
+      - path: /usr
+        backend:
+          serviceName: usr-service
+          servicePort: 8080		
+      - path: /img
+        backend:
+          serviceName: img-service
+          servicePort: 8080		
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp218"></a>2.7.7.3. vhost 虚拟主机</h4></div></div></div>
+			
+			<pre class="screen">
+			
+www.netkiller.cn --|     Ingress     |-&gt; www.netkiller.cn www:80
+                   | --------------&gt; |
+img.netkiller.cn --|                 |-&gt; img.netkiller.cn img:80			
+			
+			</pre>
+			<pre class="screen">
+			
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: vhost-ingress
+spec:
+  rules:
+  - host: www.netkiller.cn
+    http:
+      paths:
+      - backend:
+          serviceName: www
+          servicePort: 80
+  - host: img.netkiller.cn
+    http:
+      paths:
+      - backend:
+          serviceName: img
+          servicePort: 80			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp219"></a>2.7.7.4. rewrite</h4></div></div></div>
+			
+			<pre class="screen">
+			
+http://www.netkiller.cn/1100 =&gt; /article/1100			
+			
+			</pre>
+			<pre class="screen">
+			
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress			
+metadata:
+  name: rewrite-ingress
+  annotations: 
+    nginx.ingress.kubernetes.io/rewrite-target: /article/$1
+spec:
+  rules:
+  - host: www.netkiller.cn
+    http:
+      paths:
+        # 可以有多个（可以正则）
+        - path: /($/.*)
+          backend:
+            serviceName: article
+            servicePort: 80	
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp222"></a>2.7.7.5. annotations 配置</h4></div></div></div>
+			
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp220"></a>2.7.7.5.1. HTTP 跳转到 HTTPS</h5></div></div></div>
+				
+				<pre class="screen">
+				
+# 该注解只在配置了HTTPS之后才会生效进行跳转
+nginx.ingress.kubernetes.io/ssl-redirect: "true"
+
+# 强制跳转到https，不论是否配置了https证书
+nginx.ingress.kubernetes.io/force-ssl-redirect: "true"				
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp221"></a>2.7.7.5.2. server-snippet</h5></div></div></div>
+				
+				<p>server-snippet 可以让你直接编排 Nginx 配置</p>
+				<pre class="screen">
+				
+nginx.ingress.kubernetes.io/server-snippet: |
+    rewrite /api/($|.*) /api/v2/$1 break;
+    rewrite /img/($|.*) /img/thumbnail/$1 break;
+				
+				</pre>
+			</div>
+			
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp223"></a>2.7.7.6. 管理 Ingress</h4></div></div></div>
+			
+			<pre class="screen">
+			
+# 查看已有配置
+kubectl describe ingress test
+
+# 修改配置
+kubectl edit ingress test	
+
+# 来重新载入配置
+kubectl replace -f ingress.yaml		
 			
 			</pre>
 		</div>
