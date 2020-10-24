@@ -308,7 +308,25 @@ To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
 			</pre>
 		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="kubectl.pods"></a>2.3.3. pods</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="kubectl.namespace"></a>2.3.3. namespace 命名空间</h3></div></div></div>
+		
+		<pre class="screen">
+		
+$ kubectl create namespace new-namespace		
+		
+		</pre>
+	</div>
+
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="kubectl.label"></a>2.3.4. label 标签</h3></div></div></div>
+		
+		<p>label 用于识别对象，管理关联关系等目的，如Pod、Service、Deployment、Node的关联。</p>
+		<pre class="screen">
+		
+kubectl label nodes &lt;node-name&gt; &lt;label-key&gt;=&lt;label-value&gt;		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="kubectl.pods"></a>2.3.5. pods</h3></div></div></div>
 		
 		<p></p>
 		<pre class="screen">
@@ -317,7 +335,7 @@ kubectl get pod &lt;pod-name&gt; -o wide
 kubectl get pods --all-namespaces
 		
 		</pre>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp138"></a>2.3.3.1. 查看所有POD</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp138"></a>2.3.5.1. 查看所有POD</h4></div></div></div>
 			
 			<pre class="screen">
 		
@@ -357,7 +375,7 @@ kubectl get pods -l run=nginx
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp139"></a>2.3.3.2. 运行 POD</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp139"></a>2.3.5.2. 运行 POD</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -383,7 +401,7 @@ kubectl run busybox --rm=true --image=busybox --restart=Never -it
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="get.pod"></a>2.3.3.3. pod</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="get.pod"></a>2.3.5.3. pod</h4></div></div></div>
 			
 			<p></p>
 			<pre class="screen">
@@ -411,7 +429,7 @@ storage-provisioner                    1/1     Running   0          39m
 		
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp140"></a>2.3.3.4. 删除 pod</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp140"></a>2.3.5.4. 删除 pod</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -420,7 +438,7 @@ kubectl delete -n default pod counter
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="kubectl.describe"></a>2.3.3.5. 查看 Pod 的事件</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="kubectl.describe"></a>2.3.5.5. 查看 Pod 的事件</h4></div></div></div>
 			
 			<pre class="screen">
 		
@@ -477,8 +495,104 @@ Events:
 		
 			</pre>
 		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp144"></a>2.3.5.6. Taint（污点）和 Toleration（容忍）</h4></div></div></div>
+			
+			<p>其目的是分配 pod 在集群间的调度，Taint 和 toleration 相互配合，可以用来避免 pod 被分配到某个节点上。这跟节点亲和性作用相反。</p>
+			<p>给 node 节点设置 label，通过给 pod 设置 nodeSelector 将 pod 调度到匹配标签的节点上。</p>
+			<p>如果设置 toleration 应用于 pod 上，则表示 pod 可以被调度到 taint 的节点上。</p>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp141"></a>2.3.5.6.1. Taint（污点）设置</h5></div></div></div>
+				
+				<p>设置污点: kubectl taint node [node] key=value:[effect]</p>
+				<div class="orderedlist"><p class="title"><strong>effect 参数</strong></p><ol class="orderedlist" type="1"><li class="listitem">NoSchedule ：不能被调度。</li><li class="listitem">PreferNoSchedule：尽量不要调度。</li><li class="listitem">NoExecute：不允许该节点有 Pod。</li></ol></div>
+				<p>在 shenzhen 节点上设置Taint，键为key，值为value，effect是NoSchedule。</p>
+				<pre class="screen">
+				
+kubectl taint nodes shenzhen key=value:NoSchedule
+				
+				</pre>
+				<p>这意味着除非pod只有明确声明toleration可以容忍这个Taint，否则就不会被调度到该节点。</p>
+				<pre class="screen">
+				
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-taints
+spec:
+  tolerations:
+  - key: "key"
+    operator: "Equal"
+    value: "value"
+    effect: "NoSchedule"
+  containers:
+    - name: pod-taints
+      image: busybox:latest				
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp142"></a>2.3.5.6.2. Toleration（容忍）调度</h5></div></div></div>
+				
+				<p>key 存在即可匹配</p>
+				<pre class="screen">
+				
+spec:
+  tolerations:
+  - key: "key"
+    operator: "Exists"
+    effect: "NoSchedule"				
+				
+				</pre>
+				<p>key 必须存在，并且值等 value</p>
+				<pre class="screen">
+				
+spec:
+  tolerations:
+  - key: "key"
+    operator: "Equal"
+    value: "value"
+    effect: "NoSchedule"				
+				
+				</pre>
+				<p>在pod上设置多个toleration：</p>
+				<pre class="screen">
+				
+spec:				
+  tolerations:
+  - key: "key1"
+    operator: "Equal"
+    value: "value1"
+    effect: "NoSchedule"
+  - key: "key2"
+    operator: "Equal"
+    value: "value2"
+    effect: "NoExecute"				
+				
+				</pre>
+				<p>如果给node加上Taint effect=NoExecute的，该节点上的没有设置toleration的pod都会被立刻驱逐，设置 tolerationSeconds 后会给 Pod 一个宽限期。</p>				
+				<pre class="screen">
+				
+spec:		
+  tolerations:
+  - key: "key"
+    operator: "Equal"
+    value: "value"
+    effect: "NoSchedule"
+    tolerationSeconds: 3600
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp143"></a>2.3.5.6.3. 使用场景</h5></div></div></div>
+				
+				<p>例如有些节点上挂了SSD，给redis,mongodb,mysql 使用，有些节点上安装了显卡GPU。就可以使用 taint </p>
+				<pre class="screen">
+				
+kubectl taint nodes shenzhen special=true:NoSchedule
+kubectl taint nodes guangdong special=true:PreferNoSchedule				
+				
+				</pre>
+			</div>
+		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="kubectl.expose"></a>2.3.4. expose</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="kubectl.expose"></a>2.3.6. expose</h3></div></div></div>
 		
 		<p></p>
 		<pre class="screen">
@@ -503,9 +617,9 @@ kubectl expose deployment nginx --port=80 --target-port=8080 --type=LoadBalancer
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="kubectl.service"></a>2.3.5. 服务管理</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="kubectl.service"></a>2.3.7. 服务管理</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp141"></a>2.3.5.1. 列出服务</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp145"></a>2.3.7.1. 列出服务</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -525,7 +639,7 @@ my-service   ClusterIP   10.106.157.143   &lt;none&gt;        80/TCP,443/TCP   9
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp142"></a>2.3.5.2. 查看服务详细信息</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp146"></a>2.3.7.2. 查看服务详细信息</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -547,7 +661,7 @@ Events:                   &lt;none&gt;
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp143"></a>2.3.5.3. 更新服务</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp147"></a>2.3.7.3. 更新服务</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -555,7 +669,7 @@ kubectl replace -f service.yaml --force
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp144"></a>2.3.5.4. 删除服务</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp148"></a>2.3.7.4. 删除服务</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -563,7 +677,7 @@ kubectl delete service hello-minikube
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp145"></a>2.3.5.5. clusterip</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp149"></a>2.3.7.5. clusterip</h4></div></div></div>
 			
 			<p>语法</p>
 			<pre class="screen">
@@ -584,7 +698,7 @@ kubectl create service clusterip my-service --clusterip="None"
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp146"></a>2.3.5.6. externalname</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp150"></a>2.3.7.6. externalname</h4></div></div></div>
 			
 			<p>语法</p>
 			<pre class="screen">
@@ -600,7 +714,7 @@ kubectl create service externalname my-externalname --external-name bar.com
 			</pre>
 
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp147"></a>2.3.5.7. loadbalancer</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp151"></a>2.3.7.7. loadbalancer</h4></div></div></div>
 			
 			<p>语法</p>
 			<pre class="screen">
@@ -615,7 +729,7 @@ kubectl create service loadbalancer my-lb --tcp=5678:8080
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp148"></a>2.3.5.8. nodeport</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp152"></a>2.3.7.8. nodeport</h4></div></div></div>
 			
 			<p>语法</p>
 			<pre class="screen">
@@ -630,7 +744,7 @@ kubectl create service nodeport my-nodeport --tcp=5678:8080
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp149"></a>2.3.5.9. serviceaccount</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp153"></a>2.3.7.9. serviceaccount</h4></div></div></div>
 			
 			<p>语法</p>
 			<pre class="screen">
@@ -646,9 +760,9 @@ kubectl create serviceaccount my-service-account
 			</pre>
 		</div>
 	</div>
-	
-	
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="kubectl.deployment"></a>2.3.6. 部署管理</h3></div></div></div>
+
+
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="kubectl.deployment"></a>2.3.8. 部署管理</h3></div></div></div>
 		
 		<pre class="screen">
 		
@@ -656,7 +770,7 @@ kubectl create -f https://raw.githubusercontent.com/kubernetes/dashboard/master/
 kubectl get pods --namespace=kube-system		
 		
 		</pre>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp150"></a>2.3.6.1. </h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp154"></a>2.3.8.1. </h4></div></div></div>
 			
 			<pre class="screen">
 		
@@ -667,7 +781,7 @@ kubectl get deploy
 		</div>
 
 
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp151"></a>2.3.6.2. 删除 deployment</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp155"></a>2.3.8.2. 删除 deployment</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -676,7 +790,7 @@ kubectl delete deployment hello-minikube
 			</pre>
 		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="kubectlscale"></a>2.3.7. 资源管理</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="kubectlscale"></a>2.3.9. 资源管理</h3></div></div></div>
 		
 		<pre class="screen">
 		
@@ -685,7 +799,8 @@ kubectl scale deployment springbootdemo --replicas=4
 kubectl scale deployment nginx --replicas=10	
 		
 		</pre>
-	</div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="kubectl.logs"></a>2.3.8. 查看 pod 日志</h3></div></div></div>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="kubectl.logs"></a>2.3.10. 查看 pod 日志</h3></div></div></div>
 		
 		<pre class="screen">
 		
@@ -695,7 +810,7 @@ kubectl logs --previous &lt;pod-name&gt;
 		</pre>
 	</div>
 
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="kubectl.exec"></a>2.3.9. 执行 Shell</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="kubectl.exec"></a>2.3.11. 执行 Shell</h3></div></div></div>
 		
 		<p>进入容器内部.</p>
 		<pre class="screen">
@@ -729,9 +844,9 @@ Address: 185.199.109.153
 *** Can't find www.netkiller.cn: No answer
 		
 		</pre>
-		
+
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="kubectl.edit"></a>2.3.10. edit</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="kubectl.edit"></a>2.3.12. edit</h3></div></div></div>
 		
 		<pre class="screen">
 		
@@ -739,7 +854,7 @@ kubectl edit --namespace=kube-system rc kubernetes-dashboard
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="kubectl.rollout"></a>2.3.11. rollout</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="kubectl.rollout"></a>2.3.13. rollout</h3></div></div></div>
 		
 		<p>查看发布历史</p>
 		<pre class="screen">
@@ -772,7 +887,7 @@ kubectl rollout undo deployment/nginx-deployment --to-revision=3
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="kubectl.port-forward"></a>2.3.12. port-forward 端口映射</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="kubectl.port-forward"></a>2.3.14. port-forward 端口映射</h3></div></div></div>
 		
 		<pre class="screen">
 		
@@ -780,9 +895,9 @@ $ kubectl port-forward svc/demo 8080:8080
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="kubectl.secret"></a>2.3.13. secret 密钥管理</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="kubectl.secret"></a>2.3.15. secret 密钥管理</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp152"></a>2.3.13.1. </h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp156"></a>2.3.15.1. </h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -799,7 +914,7 @@ EOF
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp153"></a>2.3.13.2. Private Registry 用户认证</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp157"></a>2.3.15.2. Private Registry 用户认证</h4></div></div></div>
 			
 			<pre class="screen">
 		
@@ -852,7 +967,7 @@ kubectl delete -n default secret docker-hub
 		
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp154"></a>2.3.13.3. 配置TLS SSL</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp158"></a>2.3.15.3. 配置TLS SSL</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -891,10 +1006,10 @@ kubectl create secret tls ingress-secret --namespace=kube-system --key cert/ingr
 			</pre>
 		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="kubectl.configmap"></a>2.3.14. ConfigMap</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="kubectl.configmap"></a>2.3.16. ConfigMap</h3></div></div></div>
 		
 		<p>ConfigMap 用于保存配置数据的键值，也可以用来保存配置文件。</p>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp155"></a>2.3.14.1. 创建 Key-Value 配置项</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp159"></a>2.3.16.1. 创建 Key-Value 配置项</h4></div></div></div>
 			
 			<p>从key-value字符串创建ConfigMap</p>
 			<pre class="screen">
@@ -943,7 +1058,7 @@ Events:  &lt;none&gt;
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp156"></a>2.3.14.2. 从文件创建 ConfigMap</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp160"></a>2.3.16.2. 从文件创建 ConfigMap</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -1098,7 +1213,7 @@ configmap/apache-httpd-users created
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp157"></a>2.3.14.3. </h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp161"></a>2.3.16.3. </h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -1130,7 +1245,7 @@ configmap/env-config created
 			</pre>
 		</div>
 
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp158"></a>2.3.14.4. 查看 ConfigMap</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp162"></a>2.3.16.4. 查看 ConfigMap</h4></div></div></div>
 			
 			<p></p>
 			<pre class="screen">
@@ -1225,7 +1340,7 @@ neo@MacBook-Pro-Neo ~ % kubectl get configmap user -o json
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp159"></a>2.3.14.5. 删除 ConfigMap</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp163"></a>2.3.16.5. 删除 ConfigMap</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -1236,9 +1351,9 @@ configmap "config" deleted
 		</div>
 
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="kubectl.cronjob"></a>2.3.15. Job/CronJob</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="kubectl.cronjob"></a>2.3.17. Job/CronJob</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp160"></a>2.3.15.1. CronJob</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp164"></a>2.3.17.1. CronJob</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -1249,9 +1364,9 @@ kubectl delete cronjob hello
 			</pre>
 		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="kubectl.explain"></a>2.3.16. explain</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="kubectl.explain"></a>2.3.18. explain</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp161"></a>2.3.16.1. ingress</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp165"></a>2.3.18.1. ingress</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -1337,6 +1452,17 @@ FIELDS:
      multiplexed on the same port according to the hostname specified through
      the SNI TLS extension, if the ingress controller fulfilling the ingress
      supports SNI.			
+			
+			</pre>
+		</div>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp167"></a>2.3.19. 操作系统</h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp166"></a>2.3.19.1. sysctls</h4></div></div></div>
+			
+			<pre class="screen">
+			
+kubelet --experimental-allowed-unsafe-sysctls 'kernel.msg*,kernel.shmmax,kernel.sem,net.ipv4.route.min_pmtu'
 			
 			</pre>
 		</div>

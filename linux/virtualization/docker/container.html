@@ -14,7 +14,16 @@
 	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
 	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">163.4. 容器</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="docker.images.html">上一页</a> </td><th width="60%" align="center">第 163 章 Docker</th><td width="20%" align="right"> <a accesskey="n" href="docker.volume.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td> 微信号 netkiller-ebook | QQ群：128659835 请注明“读者” </td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="container"></a>163.4. 容器</h2></div></div></div>
 	
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp1136"></a>163.4.1. 启动与终止容器</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="container.ls"></a>163.4.1. 查看容器</h3></div></div></div>
+		
+		<pre class="screen">
+		
+iMac:netkiller neo$ docker container ls		
+		
+		</pre>
+	</div>
+
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="container.run"></a>163.4.2. 启动与终止容器</h3></div></div></div>
 		
 		<pre class="screen">
 			
@@ -42,6 +51,19 @@ $ sudo docker restart silly_bohr
 silly_bohr
 			
 		</pre>
+		<pre class="screen">
+		
+[root@localhost ~]# docker container start registry
+registry
+
+[root@localhost ~]# docker ps
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                    NAMES
+f1e57592f82a        registry:latest     "/entrypoint.sh /etc…"   8 days ago          Up 6 seconds        0.0.0.0:5000-&gt;5000/tcp   registry		
+
+[root@localhost ~]# curl http://192.168.3.6:5000/v2/_catalog
+{"repositories":[]}
+		
+		</pre>
 		<p>守护进程运行</p>
 		<pre class="screen">
 			
@@ -65,7 +87,7 @@ $ sudo docker logs insane_babbage
 		</pre>
 		<p>注意：守护进程在后台运行，所以无输出，只能通过docker logs 命令查看</p>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp1137"></a>163.4.2. 进入容器</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="container.exec"></a>163.4.3. 进入容器</h3></div></div></div>
 		
 		<pre class="screen">
 			
@@ -82,29 +104,59 @@ bin  boot  dev  etc  home  lib  lib64  media  mnt  opt  proc  root  run  sbin  s
 			
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp1138"></a>163.4.3. 导出和导入容器</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="container.export"></a>163.4.4. 导出和导入容器</h3></div></div></div>
 		
-		<p></p>
-		<pre class="screen">
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp1139"></a>163.4.4.1. Ubuntu</h4></div></div></div>
+			
+			<p></p>
+			<pre class="screen">
 			
 $ sudo docker export 7691a814370e &gt; ubuntu.tar
 			
-		</pre>
-		<p></p>
-		<pre class="screen">
+			</pre>
+			<p></p>
+			<pre class="screen">
 			
 			&lt;![CDATA[
 $ cat ubuntu.tar | sudo docker import - test/ubuntu:v1.0
 			
-		</pre>
-		<p>指定 URL 或者某个目录来导入，例如</p>
-		<pre class="screen">
+			</pre>
+			<p>指定 URL 或者某个目录来导入，例如</p>
+			<pre class="screen">
 			
 $sudo docker import http://example.com/exampleimage.tgz example/imagerepo			
 			
-		</pre>
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp1140"></a>163.4.4.2. Mac 导出与导入</h4></div></div></div>
+			
+			<p>导出</p>
+			<pre class="screen">
+		
+iMac:tmp neo$ docker export registry -o registry.tar		
+		
+			</pre>
+			<p>导入</p>
+			<pre class="screen">
+		
+iMac:tmp neo$ docker import registry.tar 
+sha256:1678c838115696f9540f168fe117ea81715b6b676497307e65d15d1ac10d9a11
+		
+			</pre>
+			<p>指定 [REPOSITORY[:TAG]]</p>
+			<pre class="screen">
+		
+iMac:tmp neo$ docker import registry.tar registry:latest
+sha256:7b76bd807a47dcc60e41bf2f8268ecf69906bb14c2ebaa348c4c15aac716b878
+
+iMac:tmp neo$ docker images registry
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+registry            latest              7b76bd807a47        11 seconds ago      26.2MB		
+		
+			</pre>
+		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="kill"></a>163.4.4. kill</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="container.kill"></a>163.4.5. 停止所有容器</h3></div></div></div>
 		
 		<p>杀死所有正在运行的容器</p>
 		<pre class="screen">
@@ -113,7 +165,7 @@ docker kill $(docker ps -a -q)
 			
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp1139"></a>163.4.5. 删除容器</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="container.rm"></a>163.4.6. 删除容器</h3></div></div></div>
 		
 		<p>使用 docker rm 来删除一个处于终止状态的容器。</p>
 		<pre class="screen">
@@ -144,7 +196,173 @@ docker rm $(docker ps -a -q)
 			
 		</pre>
 	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="container.log-driver"></a>163.4.7. log-driver</h3></div></div></div>
+		
+		<p>日志发送到 fluentd</p>
+		<pre class="screen">
+		
+docker run --log-driver=fluentd --log-opt fluentd-address=192.168.2.5:24220 ubuntu echo "Hello world"		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="container.system"></a>163.4.8. 操作系统</h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="container.env"></a>163.4.8.1. 设置环境变量</h4></div></div></div>
+			
+			<pre class="screen">
+		
+iMac:welcome neo$ docker run 127.0.0.1:5000/netkiller/welcome -e JAVA_OPTS="-server -Xms512m -Xmx4096m"		
+		
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp1141"></a>163.4.8.2. /etc/hosts 配置</h4></div></div></div>
+			
+			<pre class="screen">
+		
+# docker run --add-host=docker:10.180.0.1 --rm -it debian
+		
+			</pre>
+			<p>向 /etc/hosts 文件内添加主机名</p>
+			<pre class="screen">
+		
+docker run -it --add-host=db.netkiller.cn:172.16.18.80 ubuntu cat /etc/hosts		
+		
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="sysctl"></a>163.4.8.3. sysctl</h4></div></div></div>
+			
+			<pre class="screen">
+		
+$ docker run --sysctl net.ipv4.ip_forward=1 someimage		
+		
+			</pre>
+			<pre class="screen">
+			
+docker run -itd --restart=always --net=host \
+--name=centos01 --hostname=centos01 \
+--sysctl kernel.msgmnb=13107200 \
+--sysctl kernel.msgmni=256 \
+--sysctl kernel.msgmax=65536 \
+--sysctl kernel.shmmax=69719476736 \
+--sysctl kernel.sem='500 256000 250 1024' \
+-v /mnt/ssd:/var/lib/www \
+centos:latest /bin/bash
 
+docker exec centos01 sysctl -a |grep -E \
+'kernel.msgmnb|kernel.msgmni|kernel.msgmax|kernel.shmmax|kernel.sem'			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp1142"></a>163.4.8.4. ulimits</h4></div></div></div>
+			
+			<p>查看 ulimit 设置</p>
+			<pre class="screen">
+		
+$ docker run --ulimit nofile=1024:1024 --rm debian sh -c "ulimit -n"
+		
+			</pre>
+			<pre class="screen">
+		
+$ docker run -it --ulimit as=1024 fedora /bin/bash
+$ docker run -d -u daemon --ulimit nproc=3 busybox top
+		
+			</pre>
+			<pre class="screen">
+		
+docker run -d --ulimit nofile=20480:40960 nproc=1024:2048 nginx		
+		
+			</pre>
+		</div>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="container.top"></a>163.4.9. 查看容器内运行的进程</h3></div></div></div>
+		
+		<pre class="screen">
+		
+neo@MacBook-Pro-Neo ~ % docker ps
+CONTAINER ID        IMAGE                                                 COMMAND                  CREATED             STATUS              PORTS                              NAMES
+a6e33697e4bb        docker.elastic.co/elasticsearch/elasticsearch:7.9.2   "/tini -- /usr/local…"   2 minutes ago       Up 2 minutes        9200/tcp, 9300/tcp                 es02
+598a6e61d4fc        docker.elastic.co/kibana/kibana:7.9.2                 "/usr/local/bin/dumb…"   2 minutes ago       Up 2 minutes        0.0.0.0:5601-&gt;5601/tcp             kibana
+bc125a658981        docker.elastic.co/elasticsearch/elasticsearch:7.9.2   "/tini -- /usr/local…"   2 minutes ago       Up 2 minutes        9200/tcp, 9300/tcp                 es03
+d027503bee4b        docker.elastic.co/elasticsearch/elasticsearch:7.9.2   "/tini -- /usr/local…"   2 minutes ago       Up 2 minutes        0.0.0.0:9200-&gt;9200/tcp, 9300/tcp   elasticsearch
+
+neo@MacBook-Pro-Neo ~ % docker top 598a6e61d4fc
+PID                 USER                TIME                COMMAND
+3077                1000                0:00                /usr/local/bin/dumb-init -- /usr/local/bin/kibana-docker
+3285                1000                1:58                /usr/share/kibana/bin/../node/bin/node /usr/share/kibana/bin/../src/cli --cpu.cgroup.path.override=/ --cpuacct.cgroup.path.override=/		
+		
+		</pre>
+	</div>
+
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="container.update"></a>163.4.10. 更新容器资源配置</h3></div></div></div>
+		
+		<pre class="screen">
+		
+neo@MacBook-Pro-Neo ~ % docker update kibana --cpus 1
+kibana		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="container.wait"></a>163.4.11. 查看容器的退出状态</h3></div></div></div>
+		
+		<pre class="screen">
+		
+neo@MacBook-Pro-Neo ~ % docker wait a6e33697e4bb
+0
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="container.pause"></a>163.4.12. 暂停与恢复容器</h3></div></div></div>
+		
+		<p>暂停容器运行</p>
+		<pre class="screen">
+		
+docker pause a6e33697e4bb		
+		
+		</pre>
+		<p>恢复容器运行</p>
+		<pre class="screen">
+		
+docker unpause a6e33697e4bb
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="container.diff"></a>163.4.13. 对比容器的变化</h3></div></div></div>
+		
+		<p>查看容器启动后，修改了镜像中哪些问题</p>
+		<pre class="screen">
+		
+neo@MacBook-Pro-Neo ~ % docker diff a6e33697e4bb
+C /tmp
+A /tmp/elasticsearch-14495251404334864644
+A /tmp/hsperfdata_elasticsearch
+A /tmp/hsperfdata_elasticsearch/6
+C /usr
+C /usr/share
+C /usr/share/elasticsearch
+C /usr/share/elasticsearch/config
+A /usr/share/elasticsearch/config/elasticsearch.keystore
+A /usr/share/elasticsearch/.cache
+A /usr/share/elasticsearch/.cache/JNA
+A /usr/share/elasticsearch/.cache/JNA/temp
+C /usr/share/elasticsearch/logs
+A /usr/share/elasticsearch/logs/gc.log
+A /usr/share/elasticsearch/logs/gc.log.00		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="container.stats"></a>163.4.14. 查看容器状态</h3></div></div></div>
+		
+		<pre class="screen">
+		
+neo@MacBook-Pro-Neo ~ % docker stats
+CONTAINER ID        NAME                CPU %               MEM USAGE / LIMIT     MEM %               NET I/O             BLOCK I/O           PIDS
+a6e33697e4bb        es02                0.68%               894.2MiB / 3.848GiB   22.69%              13.9MB / 6.95MB     98.9MB / 3.88MB     77
+598a6e61d4fc        kibana              0.95%               462.8MiB / 3.848GiB   11.74%              718kB / 13MB        409MB / 4.1kB       12
+bc125a658981        es03                2.67%               889.9MiB / 3.848GiB   22.58%              1.76MB / 5.79MB     48.5MB / 3.09MB     71
+d027503bee4b        elasticsearch       2.75%               928.4MiB / 3.848GiB   23.56%              24MB / 14.7MB       139MB / 8.57MB      75		
+		
+		</pre>
+	</div>
 </div><div xmlns="" id="disqus_thread"></div><script xmlns="">
 
 var disqus_config = function () {
