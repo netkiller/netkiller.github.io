@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>19.6. (How) 如何做压力测试</title><link rel="stylesheet" type="text/css" href="/docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><link rel="home" href="index.html" title="Netkiller Architect 手札" /><link rel="up" href="压力测试中存在的问题.html" title="第 19 章 多维度架构之压力测试" /><link rel="prev" href="who-压力测试过程参与人员.html" title="19.5. (Who) 压力测试过程参与人员" /><link rel="next" href="database/index.html" title="部分 II. Database Modeling Design" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+	    <a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">云社区</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">云栖社区</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/video.html">视频教程</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">19.6. (How) 如何做压力测试</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="who-压力测试过程参与人员.html">上一页</a> </td><th width="60%" align="center">第 19 章 多维度架构之压力测试</th><td width="20%" align="right"> <a accesskey="n" href="database/index.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td> 微信号 netkiller-ebook | QQ群：128659835 请注明“读者” </td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="how-如何做压力测试"></a>19.6. (How) 如何做压力测试</h2></div></div></div>
+		
+		<p>
+			下面我们举一些例子，讲述压力测试方法，限于篇幅不可能面面俱到，我仅仅是给你提供思路。
+		</p>
+		<p>
+			测试前你需要一些监控工具，实时监控服务器的资源变化。
+		</p>
+		<p>
+			例如 Web 服务器压力测试，测试场景是 nginx ：
+		</p>
+		<pre class="programlisting">
+    
+    worker_processes  8;            处理器数
+    worker_rlimit_nofile 65530;     允许最多打开文件数
+    worker_connections  4096;       最大连接数数为
+    keepalive_timeout  65;          开启复用连接
+    gzip  on;                       压缩传输数据
+    
+		</pre>
+		<p>
+			怎么测试呢？你要获得最大化性能吗？还是相对性能？我们通常需要的是满足需求就好的相对性能，而不是最大化性能。为什么呢？因为要获得最大化性能是要做出很多配置牺牲的，例如关闭日志，禁止访问时间等等。
+		</p>
+		<p>
+			按照上面的配置你的测试用例应该是，每次并发4000 请求 8000~10000
+			次， 你不能并发8000 请求 4000
+			这样测试。很是很多人常常犯的错误，所以测试者需要连接系统的配置参数，不能盲目使用数字实验。
+		</p>
+		<p>
+			上面我说过线程的开启时随着请求，逐渐增加的，所以首次发起测试数据是不准确的，通过pstree命令可以看到线程数量。等第三次以后线程逐渐增加到4096个，并且之前开启的TCP可以复用，这时测试的结果比较有说服力。
+		</p>
+		<p>
+			延伸阅读《Netkiller Web 手札》《Netkiller Testing 手札》《Netkiller Linux 手札》
+		</p>
+	</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="who-压力测试过程参与人员.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="压力测试中存在的问题.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="database/index.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">19.5. (Who) 压力测试过程参与人员 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 部分 II. Database Modeling Design</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script></body></html>

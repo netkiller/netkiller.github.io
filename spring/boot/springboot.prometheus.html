@@ -1,0 +1,428 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>2.46. Spring Boot with Prometheus</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config" /><link rel="home" href="../index.html" title="Netkiller Spring Cloud 手札" /><link rel="up" href="index.html" title="第 2 章 Spring Boot" /><link rel="prev" href="springboot.grafana.html" title="2.45. Spring boot with Grafana" /><link rel="next" href="../mvc/index.html" title="第 3 章 Spring MVC" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+	    <a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">云社区</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">云栖社区</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/video.html">视频教程</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">2.46. Spring Boot with Prometheus</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="springboot.grafana.html">上一页</a> </td><th width="60%" align="center">第 2 章 Spring Boot</th><td width="20%" align="right"> <a accesskey="n" href="../mvc/index.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td> | </td><td>微信号 netkiller-ebook  </td><td> | </td><td>QQ群：128659835 请注明“读者”</td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="springboot.prometheus"></a>2.46. Spring Boot with Prometheus</h2></div></div></div>
+	
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp224"></a>2.46.1. Maven 依赖</h3></div></div></div>
+		
+		<pre class="screen">
+		
+	&lt;dependencies&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-webflux&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;io.micrometer&lt;/groupId&gt;
+			&lt;artifactId&gt;micrometer-registry-prometheus&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+	&lt;/dependencies&gt;		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp225"></a>2.46.2. application.properties 配置文件</h3></div></div></div>
+		
+		<p>开启 metrics</p>
+		<pre class="screen">
+		
+spring.application.name=springboot-with-prometheus
+management.endpoints.web.exposure.include=*
+management.metrics.tags.application=${spring.application.name}
+		
+		</pre>
+	</div>
+
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp226"></a>2.46.3. 启动类</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+package cn.netkiller.welcome;
+
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+
+import org.reactivestreams.Publisher;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.actuate.autoconfigure.metrics.MeterRegistryCustomizer;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
+
+import io.micrometer.core.instrument.MeterRegistry;
+import reactor.core.publisher.Mono;
+
+@SpringBootApplication
+@RestController
+public class Application {
+
+	@GetMapping("/")
+	@ResponseBody
+	public Publisher&lt;String&gt; index() {
+		return Mono.just("Hello world! \r\n");
+	}
+
+	@GetMapping("/address")
+	@ResponseBody
+	public Publisher&lt;String&gt; address() throws UnknownHostException {
+		InetAddress addr = InetAddress.getLocalHost();
+		return Mono.just(String.format("Address %s, Hostname %s \r\n", addr.getHostAddress(), addr.getHostName()));
+	}
+
+	@Bean
+	MeterRegistryCustomizer&lt;MeterRegistry&gt; configurer(@Value("${spring.application.name}") String applicationName) {
+		return (registry) -&gt; registry.config().commonTags("application", applicationName);
+	}
+
+	public static void main(String[] args) {
+		System.out.println("Welcome!");
+		SpringApplication.run(Application.class, args);
+	}
+}		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp227"></a>2.46.4. 测试</h3></div></div></div>
+		
+		<p>启动 Springboot</p>
+		<pre class="screen">
+		
+Welcome!
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::        (v2.3.4.RELEASE)
+
+2020-10-28 21:57:54.110  INFO 64079 --- [           main] cn.netkiller.welcome.Application         : Starting Application on MacBook-Pro-Neo.local with PID 64079 (/Users/neo/workspace/microservice/welcome/target/classes started by neo in /Users/neo/workspace/microservice/welcome)
+2020-10-28 21:57:54.114  INFO 64079 --- [           main] cn.netkiller.welcome.Application         : No active profile set, falling back to default profiles: default
+2020-10-28 21:57:55.877  INFO 64079 --- [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 14 endpoint(s) beneath base path '/actuator'
+2020-10-28 21:57:56.364  INFO 64079 --- [           main] o.s.b.web.embedded.netty.NettyWebServer  : Netty started on port(s): 8080
+2020-10-28 21:57:56.380  INFO 64079 --- [           main] cn.netkiller.welcome.Application         : Started Application in 2.773 seconds (JVM running for 3.439)
+		
+		</pre>
+		<p>获取监控数据</p>
+		<pre class="screen">
+		
+neo@MacBook-Pro-Neo ~ % curl http://localhost:8080/actuator/prometheus
+# HELP jvm_threads_states_threads The current number of threads having NEW state
+# TYPE jvm_threads_states_threads gauge
+jvm_threads_states_threads{application="springboot-with-prometheus",state="terminated",} 0.0
+jvm_threads_states_threads{application="springboot-with-prometheus",state="blocked",} 0.0
+jvm_threads_states_threads{application="springboot-with-prometheus",state="waiting",} 2.0
+jvm_threads_states_threads{application="springboot-with-prometheus",state="timed-waiting",} 2.0
+jvm_threads_states_threads{application="springboot-with-prometheus",state="runnable",} 7.0
+jvm_threads_states_threads{application="springboot-with-prometheus",state="new",} 0.0
+# HELP jvm_gc_memory_allocated_bytes_total Incremented for an increase in the size of the young generation memory pool after one GC to before the next
+# TYPE jvm_gc_memory_allocated_bytes_total counter
+jvm_gc_memory_allocated_bytes_total{application="springboot-with-prometheus",} 1.9922944E7
+# HELP system_cpu_usage The "recent cpu usage" for the whole system
+# TYPE system_cpu_usage gauge
+system_cpu_usage{application="springboot-with-prometheus",} 0.0
+# HELP jvm_memory_used_bytes The amount of used memory
+# TYPE jvm_memory_used_bytes gauge
+jvm_memory_used_bytes{application="springboot-with-prometheus",area="heap",id="G1 Old Gen",} 1.1322368E7
+jvm_memory_used_bytes{application="springboot-with-prometheus",area="heap",id="G1 Eden Space",} 1.6777216E7
+jvm_memory_used_bytes{application="springboot-with-prometheus",area="nonheap",id="Metaspace",} 3.1712968E7
+jvm_memory_used_bytes{application="springboot-with-prometheus",area="heap",id="G1 Survivor Space",} 1487328.0
+jvm_memory_used_bytes{application="springboot-with-prometheus",area="nonheap",id="CodeHeap 'non-nmethods'",} 1277184.0
+jvm_memory_used_bytes{application="springboot-with-prometheus",area="nonheap",id="CodeHeap 'non-profiled nmethods'",} 1413760.0
+jvm_memory_used_bytes{application="springboot-with-prometheus",area="nonheap",id="Compressed Class Space",} 4253200.0
+jvm_memory_used_bytes{application="springboot-with-prometheus",area="nonheap",id="CodeHeap 'profiled nmethods'",} 7536256.0
+# HELP jvm_memory_committed_bytes The amount of memory in bytes that is committed for the Java virtual machine to use
+# TYPE jvm_memory_committed_bytes gauge
+jvm_memory_committed_bytes{application="springboot-with-prometheus",area="heap",id="G1 Old Gen",} 2.5165824E7
+jvm_memory_committed_bytes{application="springboot-with-prometheus",area="heap",id="G1 Eden Space",} 2.8311552E7
+jvm_memory_committed_bytes{application="springboot-with-prometheus",area="nonheap",id="Metaspace",} 3.3161216E7
+jvm_memory_committed_bytes{application="springboot-with-prometheus",area="heap",id="G1 Survivor Space",} 2097152.0
+jvm_memory_committed_bytes{application="springboot-with-prometheus",area="nonheap",id="CodeHeap 'non-nmethods'",} 2555904.0
+jvm_memory_committed_bytes{application="springboot-with-prometheus",area="nonheap",id="CodeHeap 'non-profiled nmethods'",} 2555904.0
+jvm_memory_committed_bytes{application="springboot-with-prometheus",area="nonheap",id="Compressed Class Space",} 4849664.0
+jvm_memory_committed_bytes{application="springboot-with-prometheus",area="nonheap",id="CodeHeap 'profiled nmethods'",} 7602176.0
+# HELP system_load_average_1m The sum of the number of runnable entities queued to available processors and the number of runnable entities running on the available processors averaged over a period of time
+# TYPE system_load_average_1m gauge
+system_load_average_1m{application="springboot-with-prometheus",} 2.263671875
+# HELP process_files_open_files The open file descriptor count
+# TYPE process_files_open_files gauge
+process_files_open_files{application="springboot-with-prometheus",} 89.0
+# HELP jvm_classes_unloaded_classes_total The total number of classes unloaded since the Java virtual machine has started execution
+# TYPE jvm_classes_unloaded_classes_total counter
+jvm_classes_unloaded_classes_total{application="springboot-with-prometheus",} 0.0
+# HELP jvm_buffer_total_capacity_bytes An estimate of the total capacity of the buffers in this pool
+# TYPE jvm_buffer_total_capacity_bytes gauge
+jvm_buffer_total_capacity_bytes{application="springboot-with-prometheus",id="direct",} 1.6777223E7
+jvm_buffer_total_capacity_bytes{application="springboot-with-prometheus",id="mapped - 'non-volatile memory'",} 0.0
+jvm_buffer_total_capacity_bytes{application="springboot-with-prometheus",id="mapped",} 0.0
+# HELP jvm_gc_live_data_size_bytes Size of old generation memory pool after a full GC
+# TYPE jvm_gc_live_data_size_bytes gauge
+jvm_gc_live_data_size_bytes{application="springboot-with-prometheus",} 0.0
+# HELP jvm_gc_pause_seconds Time spent in GC pause
+# TYPE jvm_gc_pause_seconds summary
+jvm_gc_pause_seconds_count{action="end of minor GC",application="springboot-with-prometheus",cause="G1 Evacuation Pause",} 1.0
+jvm_gc_pause_seconds_sum{action="end of minor GC",application="springboot-with-prometheus",cause="G1 Evacuation Pause",} 0.008
+# HELP jvm_gc_pause_seconds_max Time spent in GC pause
+# TYPE jvm_gc_pause_seconds_max gauge
+jvm_gc_pause_seconds_max{action="end of minor GC",application="springboot-with-prometheus",cause="G1 Evacuation Pause",} 0.008
+# HELP process_files_max_files The maximum file descriptor count
+# TYPE process_files_max_files gauge
+process_files_max_files{application="springboot-with-prometheus",} 10240.0
+# HELP jvm_threads_live_threads The current number of live threads including both daemon and non-daemon threads
+# TYPE jvm_threads_live_threads gauge
+jvm_threads_live_threads{application="springboot-with-prometheus",} 11.0
+# HELP process_start_time_seconds Start time of the process since unix epoch.
+# TYPE process_start_time_seconds gauge
+process_start_time_seconds{application="springboot-with-prometheus",} 1.603893473057E9
+# HELP jvm_classes_loaded_classes The number of classes that are currently loaded in the Java virtual machine
+# TYPE jvm_classes_loaded_classes gauge
+jvm_classes_loaded_classes{application="springboot-with-prometheus",} 6965.0
+# HELP jvm_buffer_memory_used_bytes An estimate of the memory that the Java virtual machine is using for this buffer pool
+# TYPE jvm_buffer_memory_used_bytes gauge
+jvm_buffer_memory_used_bytes{application="springboot-with-prometheus",id="direct",} 1.6777224E7
+jvm_buffer_memory_used_bytes{application="springboot-with-prometheus",id="mapped - 'non-volatile memory'",} 0.0
+jvm_buffer_memory_used_bytes{application="springboot-with-prometheus",id="mapped",} 0.0
+# HELP process_cpu_usage The "recent cpu usage" for the Java Virtual Machine process
+# TYPE process_cpu_usage gauge
+process_cpu_usage{application="springboot-with-prometheus",} 0.0
+# HELP jvm_buffer_count_buffers An estimate of the number of buffers in the pool
+# TYPE jvm_buffer_count_buffers gauge
+jvm_buffer_count_buffers{application="springboot-with-prometheus",id="direct",} 4.0
+jvm_buffer_count_buffers{application="springboot-with-prometheus",id="mapped - 'non-volatile memory'",} 0.0
+jvm_buffer_count_buffers{application="springboot-with-prometheus",id="mapped",} 0.0
+# HELP jvm_gc_max_data_size_bytes Max size of old generation memory pool
+# TYPE jvm_gc_max_data_size_bytes gauge
+jvm_gc_max_data_size_bytes{application="springboot-with-prometheus",} 2.147483648E9
+# HELP jvm_threads_peak_threads The peak live thread count since the Java virtual machine started or peak was reset
+# TYPE jvm_threads_peak_threads gauge
+jvm_threads_peak_threads{application="springboot-with-prometheus",} 11.0
+# HELP logback_events_total Number of error level events that made it to the logs
+# TYPE logback_events_total counter
+logback_events_total{application="springboot-with-prometheus",level="debug",} 0.0
+logback_events_total{application="springboot-with-prometheus",level="trace",} 0.0
+logback_events_total{application="springboot-with-prometheus",level="info",} 3.0
+logback_events_total{application="springboot-with-prometheus",level="error",} 0.0
+logback_events_total{application="springboot-with-prometheus",level="warn",} 0.0
+# HELP jvm_gc_memory_promoted_bytes_total Count of positive increases in the size of the old generation memory pool before GC to after GC
+# TYPE jvm_gc_memory_promoted_bytes_total counter
+jvm_gc_memory_promoted_bytes_total{application="springboot-with-prometheus",} 1924096.0
+# HELP jvm_threads_daemon_threads The current number of live daemon threads
+# TYPE jvm_threads_daemon_threads gauge
+jvm_threads_daemon_threads{application="springboot-with-prometheus",} 9.0
+# HELP process_uptime_seconds The uptime of the Java virtual machine
+# TYPE process_uptime_seconds gauge
+process_uptime_seconds{application="springboot-with-prometheus",} 35.375
+# HELP jvm_memory_max_bytes The maximum amount of memory in bytes that can be used for memory management
+# TYPE jvm_memory_max_bytes gauge
+jvm_memory_max_bytes{application="springboot-with-prometheus",area="heap",id="G1 Old Gen",} 2.147483648E9
+jvm_memory_max_bytes{application="springboot-with-prometheus",area="heap",id="G1 Eden Space",} -1.0
+jvm_memory_max_bytes{application="springboot-with-prometheus",area="nonheap",id="Metaspace",} -1.0
+jvm_memory_max_bytes{application="springboot-with-prometheus",area="heap",id="G1 Survivor Space",} -1.0
+jvm_memory_max_bytes{application="springboot-with-prometheus",area="nonheap",id="CodeHeap 'non-nmethods'",} 5840896.0
+jvm_memory_max_bytes{application="springboot-with-prometheus",area="nonheap",id="CodeHeap 'non-profiled nmethods'",} 1.22908672E8
+jvm_memory_max_bytes{application="springboot-with-prometheus",area="nonheap",id="Compressed Class Space",} 1.073741824E9
+jvm_memory_max_bytes{application="springboot-with-prometheus",area="nonheap",id="CodeHeap 'profiled nmethods'",} 1.22908672E8
+# HELP system_cpu_count The number of processors available to the Java virtual machine
+# TYPE system_cpu_count gauge
+system_cpu_count{application="springboot-with-prometheus",} 8.0
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp228"></a>2.46.5. 控制器监控</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+@RestController
+@RequestMapping("/app")
+public class AppController {
+  private final Counter counter;
+ 
+  public AppController(final MeterRegistry registry) {
+    this.counter = registry.counter("greeting");
+  }
+ 
+  @RequestMapping("/greeting")
+  public String greeting() {
+    this.counter.increment();
+    return "hello world #" + this.counter.count();
+  }
+}		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp233"></a>2.46.6. 自定义埋点监控</h3></div></div></div>
+		
+						<p></p>
+		<div class="itemizedlist"><p class="title"><strong>prometheus 监控指标有如下几种类型</strong></p><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem">Counter	类型代表数据递增的指标，即只增不减，除非监控系统重置</li><li class="listitem">Guage		类型代表数据可以任意变化的指标，即可增可减</li><li class="listitem">Histogram 由bucket{le=""}，bucket{le="+Inf"},sum，count 组成，用于一段时间范围内对数据进行采样，并能够对其指定区间以及总数进行统计，通常它采集的数据展示为直方图。</li><li class="listitem">Summary 	由{quantile="&lt;φ&gt;"}，sum，count 组成，用于一段时间内数据采样结果（通常是请求持续时间或响应大小），它直接存储了 quantile 数据，而不是根据统计区间计算出来的。</li></ul></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp229"></a>2.46.6.1. 拦截器</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+package cn.netkiller.welcome.config;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.servlet.HandlerInterceptor;
+
+import cn.netkiller.welcome.component.RestfulApiCounter;
+
+public class PrometheusInterceptor implements HandlerInterceptor {
+
+	@Autowired
+	private RestfulApiCounter restfulApiCounter;
+
+	public PrometheusInterceptor() {
+
+	}
+
+	@Override
+	public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
+
+		restfulApiCounter.increment();
+	}
+
+}			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp230"></a>2.46.6.2. 计数器元件</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+package cn.netkiller.welcome.component;
+
+import org.springframework.stereotype.Component;
+
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+
+@Component
+public class RestfulApiCounter {
+	private final Counter counter;
+
+	public RestfulApiCounter(MeterRegistry registry) {
+		this.counter = registry.counter("restful_api_requests_total");
+	}
+
+	public void increment() {
+		this.counter.increment();
+	}
+}
+			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp231"></a>2.46.6.3. 配置类</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+package cn.netkiller.welcome.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+@Configuration
+public class IntercepterConfiguration implements WebMvcConfigurer {
+
+	@Bean
+	public PrometheusInterceptor prometheusInterceptor() {
+
+		return new PrometheusInterceptor();
+	}
+
+	@Override
+	public void addInterceptors(InterceptorRegistry registry) {
+		registry.addInterceptor(prometheusInterceptor()).addPathPatterns("/**");
+
+	}
+}
+			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp232"></a>2.46.6.4. 测试埋点效果</h4></div></div></div>
+			
+			<pre class="screen">
+			
+neo@MacBook-Pro-Neo ~ % curl -s http://localhost:8080/actuator/prometheus | grep restful
+# HELP restful_api_requests_total  
+# TYPE restful_api_requests_total counter
+restful_api_requests_total{application="springboot-with-prometheus",} 0.0
+
+neo@MacBook-Pro-Neo ~ % curl http://localhost:8080/
+Hello world! 
+
+neo@MacBook-Pro-Neo ~ % curl http://localhost:8080/address
+Address 127.0.0.1, Hostname MacBook-Pro-Neo.local 
+
+neo@MacBook-Pro-Neo ~ % curl -s http://localhost:8080/actuator/prometheus | grep restful
+# HELP restful_api_requests_total  
+# TYPE restful_api_requests_total counter
+restful_api_requests_total{application="springboot-with-prometheus",} 2.0			
+			
+			</pre>
+		</div>
+	</div>
+</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="springboot.grafana.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="../mvc/index.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">2.45. Spring boot with Grafana </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 3 章 Spring MVC</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script></body></html>
