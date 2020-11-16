@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>1.4. 容器</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><meta name="keywords" content="qmeu,kvm,xen,openvz, docker, coreos, , " /><link rel="home" href="../index.html" title="Netkiller Virtualization 手札" /><link rel="up" href="index.html" title="第 1 章 Docker" /><link rel="prev" href="docker.images.html" title="1.3. 镜像" /><link rel="next" href="docker.volume.html" title="1.5. 卷管理" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>1.4. 容器</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="qmeu,kvm,xen,openvz, docker, coreos, , " /><link rel="home" href="../index.html" title="Netkiller Virtualization 手札" /><link rel="up" href="index.html" title="第 1 章 Docker" /><link rel="prev" href="docker.images.html" title="1.3. 镜像" /><link rel="next" href="docker.volume.html" title="1.5. 卷管理" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
 		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
 	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
 	    <a xmlns="" href="/journal/index.html">杂文</a> |
@@ -87,7 +87,7 @@ $ sudo docker logs insane_babbage
 		</pre>
 		<p>注意：守护进程在后台运行，所以无输出，只能通过docker logs 命令查看</p>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="container.exec"></a>1.4.3. 进入容器</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="container.attach"></a>1.4.3. 进入容器</h3></div></div></div>
 		
 		<pre class="screen">
 			
@@ -104,9 +104,18 @@ bin  boot  dev  etc  home  lib  lib64  media  mnt  opt  proc  root  run  sbin  s
 			
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="container.export"></a>1.4.4. 导出和导入容器</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="container.exec"></a>1.4.4. 运行容器内的命令</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp23"></a>1.4.4.1. Ubuntu</h4></div></div></div>
+		<pre class="screen">
+		
+neo@MacBook-Pro-Neo ~ % docker exec prometheus id         
+uid=65534(nobody) gid=65534(nogroup)		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="container.export"></a>1.4.5. 导出和导入容器</h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp23"></a>1.4.5.1. Ubuntu</h4></div></div></div>
 			
 			<p></p>
 			<pre class="screen">
@@ -128,7 +137,7 @@ $sudo docker import http://example.com/exampleimage.tgz example/imagerepo
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp24"></a>1.4.4.2. Mac 导出与导入</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp24"></a>1.4.5.2. Mac 导出与导入</h4></div></div></div>
 			
 			<p>导出</p>
 			<pre class="screen">
@@ -156,7 +165,7 @@ registry            latest              7b76bd807a47        11 seconds ago      
 			</pre>
 		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="container.kill"></a>1.4.5. 停止所有容器</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="container.kill"></a>1.4.6. 停止所有容器</h3></div></div></div>
 		
 		<p>杀死所有正在运行的容器</p>
 		<pre class="screen">
@@ -164,8 +173,27 @@ registry            latest              7b76bd807a47        11 seconds ago      
 docker kill $(docker ps -a -q)			
 			
 		</pre>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp25"></a>1.4.6.1. 信号处理</h4></div></div></div>
+			
+			<p>--signal, -s	向容器发送信号</p>
+			<p>发送一个SIGHUP信号</p>
+			<pre class="screen">
+			
+$ docker kill -s=SIGHUP my_container
+			
+			</pre>
+			<p>你可以通过名字或数字指定自定义信号，SIG前缀是可选的，例如下面的命令是等价的：</p>
+			<pre class="screen">
+			
+$ docker kill -s=SIGHUP my_container
+$ docker kill -s=HUP my_container
+$ docker kill -s=1 my_container
+			
+			</pre>
+		</div>
+		
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="container.rm"></a>1.4.6. 删除容器</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="container.rm"></a>1.4.7. 删除容器</h3></div></div></div>
 		
 		<p>使用 docker rm 来删除一个处于终止状态的容器。</p>
 		<pre class="screen">
@@ -196,7 +224,7 @@ docker rm $(docker ps -a -q)
 			
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="container.log-driver"></a>1.4.7. log-driver</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="container.log-driver"></a>1.4.8. log-driver</h3></div></div></div>
 		
 		<p>日志发送到 fluentd</p>
 		<pre class="screen">
@@ -205,9 +233,9 @@ docker run --log-driver=fluentd --log-opt fluentd-address=192.168.2.5:24220 ubun
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="container.system"></a>1.4.8. 操作系统</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="container.system"></a>1.4.9. 操作系统</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="container.env"></a>1.4.8.1. 设置环境变量</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="container.env"></a>1.4.9.1. 设置环境变量</h4></div></div></div>
 			
 			<pre class="screen">
 		
@@ -215,7 +243,7 @@ iMac:welcome neo$ docker run 127.0.0.1:5000/netkiller/welcome -e JAVA_OPTS="-ser
 		
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp25"></a>1.4.8.2. /etc/hosts 配置</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp26"></a>1.4.9.2. /etc/hosts 配置</h4></div></div></div>
 			
 			<pre class="screen">
 		
@@ -229,7 +257,7 @@ docker run -it --add-host=db.netkiller.cn:172.16.18.80 ubuntu cat /etc/hosts
 		
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="sysctl"></a>1.4.8.3. sysctl</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="sysctl"></a>1.4.9.3. sysctl</h4></div></div></div>
 			
 			<pre class="screen">
 		
@@ -253,7 +281,7 @@ docker exec centos01 sysctl -a |grep -E \
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp26"></a>1.4.8.4. ulimits</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp27"></a>1.4.9.4. ulimits</h4></div></div></div>
 			
 			<p>查看 ulimit 设置</p>
 			<pre class="screen">
@@ -274,7 +302,7 @@ docker run -d --ulimit nofile=20480:40960 nproc=1024:2048 nginx
 			</pre>
 		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="container.top"></a>1.4.9. 查看容器内运行的进程</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="container.top"></a>1.4.10. 查看容器内运行的进程</h3></div></div></div>
 		
 		<pre class="screen">
 		
@@ -293,7 +321,7 @@ PID                 USER                TIME                COMMAND
 		</pre>
 	</div>
 
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="container.update"></a>1.4.10. 更新容器资源配置</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="container.update"></a>1.4.11. 更新容器资源配置</h3></div></div></div>
 		
 		<pre class="screen">
 		
@@ -302,7 +330,7 @@ kibana
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="container.wait"></a>1.4.11. 查看容器的退出状态</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="container.wait"></a>1.4.12. 查看容器的退出状态</h3></div></div></div>
 		
 		<pre class="screen">
 		
@@ -311,7 +339,7 @@ neo@MacBook-Pro-Neo ~ % docker wait a6e33697e4bb
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="container.pause"></a>1.4.12. 暂停与恢复容器</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="container.pause"></a>1.4.13. 暂停与恢复容器</h3></div></div></div>
 		
 		<p>暂停容器运行</p>
 		<pre class="screen">
@@ -326,7 +354,7 @@ docker unpause a6e33697e4bb
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="container.diff"></a>1.4.13. 对比容器的变化</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="container.diff"></a>1.4.14. 对比容器的变化</h3></div></div></div>
 		
 		<p>查看容器启动后，修改了镜像中哪些问题</p>
 		<pre class="screen">
@@ -350,7 +378,7 @@ A /usr/share/elasticsearch/logs/gc.log.00
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="container.stats"></a>1.4.14. 查看容器状态</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="container.stats"></a>1.4.15. 查看容器状态</h3></div></div></div>
 		
 		<pre class="screen">
 		
@@ -360,6 +388,15 @@ a6e33697e4bb        es02                0.68%               894.2MiB / 3.848GiB 
 598a6e61d4fc        kibana              0.95%               462.8MiB / 3.848GiB   11.74%              718kB / 13MB        409MB / 4.1kB       12
 bc125a658981        es03                2.67%               889.9MiB / 3.848GiB   22.58%              1.76MB / 5.79MB     48.5MB / 3.09MB     71
 d027503bee4b        elasticsearch       2.75%               928.4MiB / 3.848GiB   23.56%              24MB / 14.7MB       139MB / 8.57MB      75		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp28"></a>1.4.16. 重启容器</h3></div></div></div>
+		
+		<p>--time, -t 10 停止容器之前需要等待的时间(秒)</p>
+		<pre class="screen">
+		
+$ docker restart [options] container [container...]		
 		
 		</pre>
 	</div>

@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>3.3. 配置 Broker(Redis)</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="ElasticSearch, Logstash, Kibana" /><meta name="keywords" content="snmp, ipmi,openipmi,freeipmi,ipmitool, cpu,memory,hdd,ssd,raid,power, logwatch, webmin" /><link rel="home" href="../index.html" title="Netkiller Monitor 手札" /><link rel="up" href="index.html" title="第 3 章 ElasticSearch + Logstash + Kibana" /><link rel="prev" href="logstash.cli.html" title="3.2. logstash 命令简单应用" /><link rel="next" href="logstash.html" title="3.4. logstash 配置项" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+	    <a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">云社区</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">云栖社区</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/video.html">视频教程</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">3.3. 配置 Broker(Redis)</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="logstash.cli.html">上一页</a> </td><th width="60%" align="center">第 3 章 ElasticSearch + Logstash + Kibana</th><td width="20%" align="right"> <a accesskey="n" href="logstash.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td> 微信号 netkiller-ebook | QQ群：128659835 请注明“读者” </td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="redis"></a>3.3. 配置 Broker(Redis)</h2></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="indexer"></a>3.3.1. indexer</h3></div></div></div>
+			
+			<p>
+				</p><div><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="NaN"><tr><td><img src="../images/elk/Redis.png" width="NaN" /></td></tr></table></div><p>
+			</p>
+			<p>/etc/logstash/conf.d/indexer.conf</p>
+			<pre class="screen">
+			
+input {
+  redis {
+    host =&gt; "127.0.0.1"
+    port =&gt; "6379" 
+    key =&gt; "logstash:demo"
+    data_type =&gt; "list"
+    codec  =&gt; "json"
+    type =&gt; "logstash-redis-demo"
+    tags =&gt; ["logstashdemo"]
+  }
+}
+
+output {
+  stdout { codec =&gt; rubydebug }
+  elasticsearch {
+    hosts =&gt; ["127.0.0.1:9200"]
+  }
+}	
+			
+			</pre>
+			<p>测试</p>
+			<pre class="screen">
+			
+# redis-cli 
+127.0.0.1:6379&gt; RPUSH logstash:demo "{\"time\": \"2012-01-01T10:20:00\", \"message\": \"logstash demo message\"}"
+(integer) 1
+127.0.0.1:6379&gt; exit
+			
+			</pre>
+			<p>如果执行成功日志如下</p>
+			<pre class="screen">
+			
+# cat /var/log/logstash/logstash-plain.log 
+[2017-03-22T15:54:36,491][INFO ][logstash.outputs.elasticsearch] Elasticsearch pool URLs updated {:changes=&gt;{:removed=&gt;[], :added=&gt;[http://127.0.0.1:9200/]}}
+[2017-03-22T15:54:36,496][INFO ][logstash.outputs.elasticsearch] Running health check to see if an Elasticsearch connection is working {:healthcheck_url=&gt;http://127.0.0.1:9200/, :path=&gt;"/"}
+[2017-03-22T15:54:36,600][WARN ][logstash.outputs.elasticsearch] Restored connection to ES instance {:url=&gt;#&lt;URI::HTTP:0x20dae6aa URL:http://127.0.0.1:9200/&gt;}
+[2017-03-22T15:54:36,601][INFO ][logstash.outputs.elasticsearch] Using mapping template from {:path=&gt;nil}
+[2017-03-22T15:54:36,686][INFO ][logstash.outputs.elasticsearch] Attempting to install template {:manage_template=&gt;{"template"=&gt;"logstash-*", "version"=&gt;50001, "settings"=&gt;{"index.refresh_interval"=&gt;"5s"}, "mappings"=&gt;{"_default_"=&gt;{"_all"=&gt;{"enabled"=&gt;true, "norms"=&gt;false}, "dynamic_templates"=&gt;[{"message_field"=&gt;{"path_match"=&gt;"message", "match_mapping_type"=&gt;"string", "mapping"=&gt;{"type"=&gt;"text", "norms"=&gt;false}}}, {"string_fields"=&gt;{"match"=&gt;"*", "match_mapping_type"=&gt;"string", "mapping"=&gt;{"type"=&gt;"text", "norms"=&gt;false, "fields"=&gt;{"keyword"=&gt;{"type"=&gt;"keyword"}}}}}], "properties"=&gt;{"@timestamp"=&gt;{"type"=&gt;"date", "include_in_all"=&gt;false}, "@version"=&gt;{"type"=&gt;"keyword", "include_in_all"=&gt;false}, "geoip"=&gt;{"dynamic"=&gt;true, "properties"=&gt;{"ip"=&gt;{"type"=&gt;"ip"}, "location"=&gt;{"type"=&gt;"geo_point"}, "latitude"=&gt;{"type"=&gt;"half_float"}, "longitude"=&gt;{"type"=&gt;"half_float"}}}}}}}}
+[2017-03-22T15:54:36,693][INFO ][logstash.outputs.elasticsearch] Installing elasticsearch template to _template/logstash
+[2017-03-22T15:54:36,780][INFO ][logstash.outputs.elasticsearch] New Elasticsearch output {:class=&gt;"LogStash::Outputs::ElasticSearch", :hosts=&gt;[#&lt;URI::Generic:0x2f9efc89 URL://127.0.0.1&gt;]}
+[2017-03-22T15:54:36,787][INFO ][logstash.pipeline        ] Starting pipeline {"id"=&gt;"main", "pipeline.workers"=&gt;8, "pipeline.batch.size"=&gt;125, "pipeline.batch.delay"=&gt;5, "pipeline.max_inflight"=&gt;1000}
+[2017-03-22T15:54:36,792][INFO ][logstash.inputs.redis    ] Registering Redis {:identity=&gt;"redis://@127.0.0.1:6379/0 list:logstash:demo"}
+[2017-03-22T15:54:36,793][INFO ][logstash.pipeline        ] Pipeline main started
+[2017-03-22T15:54:36,838][INFO ][logstash.agent           ] Successfully started Logstash API endpoint {:port=&gt;9600}
+[2017-03-22T15:55:10,018][WARN ][logstash.runner          ] SIGTERM received. Shutting down the agent.
+[2017-03-22T15:55:10,024][WARN ][logstash.agent           ] stopping pipeline {:id=&gt;"main"}			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="shipper"></a>3.3.2. shipper</h3></div></div></div>
+			
+			<pre class="screen">
+			
+input {
+  file {
+    path =&gt; [ "/var/log/nginx/access.log" ]
+    start_position =&gt; "beginning"
+  }
+}
+
+filter {
+  grok {
+    match =&gt; { "message" =&gt; "%{NGINXACCESS}" }
+    add_field =&gt; { "type" =&gt; "access" }
+  }
+  date {
+    match =&gt; [ "timestamp" , "dd/MMM/YYYY:HH:mm:ss Z" ]
+  }
+  geoip {
+    source =&gt; "clientip"
+  }
+}
+
+output {
+  redis {
+    host =&gt; "127.0.0.1"
+    port =&gt; 6379
+    data_type =&gt; "list"
+    key =&gt; "logstash:demo"
+  }
+}
+			
+			</pre>
+		</div>
+	</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="logstash.cli.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="logstash.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">3.2. logstash 命令简单应用 </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 3.4. logstash 配置项</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script></body></html>

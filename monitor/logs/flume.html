@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>5.12. Apache Flume</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="rinetd.log, , , " /><meta name="keywords" content="snmp, ipmi,openipmi,freeipmi,ipmitool, cpu,memory,hdd,ssd,raid,power, logwatch, webmin" /><link rel="home" href="../index.html" title="Netkiller Monitor 手札" /><link rel="up" href="index.html" title="第 5 章 Logs 分析" /><link rel="prev" href="eventlog-to-syslog.html" title="5.11. eventlog-to-syslog" /><link rel="next" href="graylog.html" title="5.13. graylog - Enterprise Log Management for All" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+	    <a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">云社区</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">云栖社区</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/video.html">视频教程</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">5.12. Apache Flume</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="eventlog-to-syslog.html">上一页</a> </td><th width="60%" align="center">第 5 章 Logs 分析</th><td width="20%" align="right"> <a accesskey="n" href="graylog.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td> 微信号 netkiller-ebook | QQ群：128659835 请注明“读者” </td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="flume"></a>5.12. Apache Flume</h2></div></div></div>
+	
+	<p>http://flume.apache.org/</p>
+	<p>Flume is a distributed, reliable, and available service for efficiently collecting, aggregating, and moving large amounts of log data. It has a simple and flexible architecture based on streaming data flows. It is robust and fault tolerant with tunable reliability mechanisms and many failover and recovery mechanisms. It uses a simple extensible data model that allows for online analytic application.</p>
+	<div><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="NaN"><tr><td><img src="http://flume.apache.org/_images/DevGuide_image00.png" width="NaN" /></td></tr></table></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp122"></a>5.12.1. 安装 Apache flume</h3></div></div></div>
+		
+		<pre class="screen">
+cd /usr/local/src
+wget http://mirrors.tuna.tsinghua.edu.cn/apache/flume/1.7.0/apache-flume-1.7.0-bin.tar.gz
+tar zvf apache-flume-1.7.0-bin.tar.gz
+mv apache-flume-1.7.0-bin /srv/apache-flume-1.7.0
+ln -s /srv/apache-flume-1.7.0 /srv/apache-flume
+cp /srv/apache-flume/conf/flume-env.sh.template /srv/apache-flume/conf/flume-env.sh
+cp /srv/apache-flume/conf/flume-conf.properties.template /srv/apache-flume/conf/flume-conf.properties
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp123"></a>5.12.2. 基本配置</h3></div></div></div>
+		
+		<pre class="screen">
+# Define a memory channel called ch1 on agent1
+agent1.channels.ch1.type = memory
+
+# Define an Avro source called avro-source1 on agent1 and tell it
+# to bind to 0.0.0.0:41414. Connect it to channel ch1.
+agent1.sources.avro-source1.channels = ch1
+agent1.sources.avro-source1.type = avro
+agent1.sources.avro-source1.bind = 0.0.0.0
+agent1.sources.avro-source1.port = 41414
+
+# Define a logger sink that simply logs all events it receives
+# and connect it to the other end of the same channel.
+agent1.sinks.log-sink1.channel = ch1
+agent1.sinks.log-sink1.type = logger
+
+# Finally, now that we've defined all of our components, tell
+# agent1 which ones we want to activate.
+agent1.channels = ch1
+agent1.sources = avro-source1
+agent1.sinks = log-sink1
+		</pre>
+		<p>在agent的机器上执行以下命令启动flume server</p>
+		<pre class="screen">
+$ bin/flume-ng agent --conf ./conf/ -f conf/flume.conf -Dflume.root.logger=DEBUG,console -n agent1
+		</pre>
+		<p>在client的机器上执行以下命令接收日志</p>
+		<pre class="screen">
+$ bin/flume-ng avro-client --conf conf -H localhost -p 41414 -F /etc/passwd -Dflume.root.logger=DEBUG,console
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp124"></a>5.12.3. 配置 MySQL 存储日志</h3></div></div></div>
+		
+		<pre class="screen">
+cp flume-mysql-sink-1.x.x.jar /srv/apache-flume/lib
+cp /usr/share/java/mysql-connector-java.jar /srv/apache-flume/lib
+		</pre>
+		<pre class="screen">
+DROP TABLE IF EXISTS flume;     
+CREATE TABLE flume (         
+ROW_KEY BIGINT,
+timeid BIGINT,
+systemid INT,
+functionid INT,
+bussinessid TEXT,
+bussinessType INT,
+nodeid INT,
+userid INT,
+logtype INT,
+timeout INT,
+detail TEXT,
+PRIMARY KEY (ROW_KEY)   
+) ENGINE=INNODB DEFAULT CHARSET=utf8;
+		</pre>
+		<pre class="screen">
+a1.sources = source1
+a1.sinks = sink1
+a1.channels = channel1
+
+# Describe/configure source1
+a1.sources.source1.type = avro
+a1.sources.source1.bind = 0.0.0.0
+a1.sources.source1.port = 44444
+
+# Use a channel which buffers events in memory
+a1.channels.channel1.type = memory
+a1.channels.channel1.capacity = 1000
+a1.channels.channel1.transactionCapactiy = 100
+
+# Bind the source and sink to the channel
+a1.sources.source1.channels = channel1
+a1.sinks.sink1.channel = channel1
+a1.sinks.sink1.type=org.flume.mysql.sink.RegexMysqlSink
+a1.sinks.sink1.hostname=192.168.10.94
+a1.sinks.sink1.databaseName=logging
+a1.sinks.sink1.port=3306
+a1.sinks.sink1.user=flume
+a1.sinks.sink1.password=flume
+a1.sinks.sink1.regex=^([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+)$
+a1.sinks.sink1.tableName=flume
+a1.sinks.sink1.colNames=ROW_KEY,timeid,systemid,functionid,bussinessid,bussinessType,nodeid,userid,logtype,timeout,detail
+a1.sinks.sink1.colDataTypes=LONG,LONG,INT,INT,TEXT,INT,INT,INT,INT,INT,TEXT
+a1.sinks.sink1.batchSize=100
+		</pre>
+		<p>启动</p>
+		<pre class="screen">
+[root@netkiller]/srv/apache-flume# bin/flume-ng agent --conf conf --conf-file conf/flume-conf.properties --name a1 -Dflume.root.logger=INFO,console
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp125"></a>5.12.4. 配置 HDFS 存储日志</h3></div></div></div>
+		
+		<pre class="screen">
+配置conf/flume.conf
+
+# Define a memory channel called ch1 on agent1
+agent1.channels.ch1.type = memory
+
+# Define an Avro source called avro-source1 on agent1 and tell it
+# to bind to 0.0.0.0:41414. Connect it to channel ch1.
+agent1.sources.spooldir-source1.channels = ch1
+agent1.sources.spooldir-source1.type = spooldir
+agent1.sources.spooldir-source1.spoolDir=/opt/hadoop/flume/tmpData
+agent1.sources.spooldir-source1.bind = 0.0.0.0
+agent1.sources.spooldir-source1.port = 41414
+
+# Define a logger sink that simply logs all events it receives
+# and connect it to the other end of the same channel.
+agent1.sinks.hdfs-sink1.channel = ch1
+agent1.sinks.hdfs-sink1.type = hdfs
+agent1.sinks.hdfs-sink1.hdfs.path = hdfs://master:9000/flume
+agent1.sinks.hdfs-sink1.hdfs.filePrefix = events-
+agent1.sinks.hdfs-sink1.hdfs.useLocalTimeStamp = true
+agent1.sinks.hdfs-sink1.hdfs.round = true
+agent1.sinks.hdfs-sink1.hdfs.roundValue = 10
+
+# Finally, now that we've defined all of our components, tell
+# agent1 which ones we want to activate.
+agent1.channels = ch1
+agent1.sources = spooldir-source1
+agent1.sinks = hdfs-sink1
+		</pre>
+		<p>启动agent </p>
+		<pre class="screen">
+bin/flume-ng agent --conf ./conf/ -f ./conf/flume.conf --name agent1 -Dflume.root.logger=DEBUG,console
+		</pre>
+		<p>查看结果</p>
+		<p>到Hadoop提供的WEB GUI界面可以看到刚刚上传的文件是否成功。GUI界面地址为：http://master:50070/explorer.html#/test 其中，master为Hadoop的Namenode所在的机器名。 </p>
+	</div>
+</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="eventlog-to-syslog.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="graylog.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">5.11. eventlog-to-syslog </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 5.13. graylog - Enterprise Log Management for All</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script></body></html>

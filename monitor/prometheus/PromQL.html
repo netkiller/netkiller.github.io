@@ -1,0 +1,392 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>1.4. PromQL 自定义查询语言</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="snmp, ipmi,openipmi,freeipmi,ipmitool, cpu,memory,hdd,ssd,raid,power, logwatch, webmin" /><link rel="home" href="../index.html" title="Netkiller Monitor 手札" /><link rel="up" href="index.html" title="第 1 章 Prometheus" /><link rel="prev" href="ch01s03.html" title="1.3. prometheus 配置" /><link rel="next" href="ch01s05.html" title="1.5. Installing and Configuring Graphite" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+	    <a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">云社区</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">云栖社区</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/video.html">视频教程</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">1.4. PromQL 自定义查询语言</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ch01s03.html">上一页</a> </td><th width="60%" align="center">第 1 章 Prometheus</th><td width="20%" align="right"> <a accesskey="n" href="ch01s05.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td> 微信号 netkiller-ebook | QQ群：128659835 请注明“读者” </td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="PromQL"></a>1.4. PromQL 自定义查询语言</h2></div></div></div>
+	
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp12"></a>1.4.1. Metrics 格式</h3></div></div></div>
+		
+		<p>Metric 的格式: metric 名称 {标签名=标签值} 监控样本	</p>
+		<pre class="screen">
+			
+&lt;metric name&gt;{&lt;label name&gt;=&lt;label value&gt;, ...} &lt;sample&gt;
+			
+		</pre>
+		<p>指标的名称(metric name)用于定义监控样本的含义，名称只能由ASCII字符、数字、下划线以及冒号组成并必须符合正则表达式[a-zA-Z_:][a-zA-Z0-9_:]*</p>
+		<p>标签(label)反映了当前样本的特征维度，通过这些维度Prometheus可以对样本数据进行过滤，聚合等。标签的名称只能由ASCII字符、数字以及下划线组成并满足正则表达式[a-zA-Z_][a-zA-Z0-9_]*</p>
+		<pre class="screen">
+			
+neo@MacBook-Pro-Neo ~ % curl -s http://localhost:9100/metrics | grep node_cpu_seconds_total
+# HELP node_cpu_seconds_total Seconds the cpus spent in each mode.
+# TYPE node_cpu_seconds_total counter
+node_cpu_seconds_total{cpu="0",mode="idle"} 16761.9
+node_cpu_seconds_total{cpu="0",mode="iowait"} 2.91
+node_cpu_seconds_total{cpu="0",mode="irq"} 0
+node_cpu_seconds_total{cpu="0",mode="nice"} 0
+node_cpu_seconds_total{cpu="0",mode="softirq"} 5.76
+node_cpu_seconds_total{cpu="0",mode="steal"} 0
+node_cpu_seconds_total{cpu="0",mode="system"} 440.28
+node_cpu_seconds_total{cpu="0",mode="user"} 135.58
+node_cpu_seconds_total{cpu="1",mode="idle"} 16851.16
+node_cpu_seconds_total{cpu="1",mode="iowait"} 1.81
+node_cpu_seconds_total{cpu="1",mode="irq"} 0
+node_cpu_seconds_total{cpu="1",mode="nice"} 0
+node_cpu_seconds_total{cpu="1",mode="softirq"} 1.33
+node_cpu_seconds_total{cpu="1",mode="steal"} 0
+node_cpu_seconds_total{cpu="1",mode="system"} 440.52
+node_cpu_seconds_total{cpu="1",mode="user"} 125.7
+node_cpu_seconds_total{cpu="2",mode="idle"} 16792.57
+node_cpu_seconds_total{cpu="2",mode="iowait"} 2.52
+node_cpu_seconds_total{cpu="2",mode="irq"} 0
+node_cpu_seconds_total{cpu="2",mode="nice"} 0
+node_cpu_seconds_total{cpu="2",mode="softirq"} 1.36
+node_cpu_seconds_total{cpu="2",mode="steal"} 0
+node_cpu_seconds_total{cpu="2",mode="system"} 445.29
+node_cpu_seconds_total{cpu="2",mode="user"} 129.73
+node_cpu_seconds_total{cpu="3",mode="idle"} 16844.57
+node_cpu_seconds_total{cpu="3",mode="iowait"} 1.16
+node_cpu_seconds_total{cpu="3",mode="irq"} 0
+node_cpu_seconds_total{cpu="3",mode="nice"} 0
+node_cpu_seconds_total{cpu="3",mode="softirq"} 1.24
+node_cpu_seconds_total{cpu="3",mode="steal"} 0
+node_cpu_seconds_total{cpu="3",mode="system"} 430.82
+node_cpu_seconds_total{cpu="3",mode="user"} 135.15
+			
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp17"></a>1.4.2. metric 类型</h3></div></div></div>
+		
+		<div class="itemizedlist"><p class="title"><strong>Prometheus 定义了4种不同的指标类型(metric type)：</strong></p><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem">Counter（计数器）</li><li class="listitem">Gauge（仪表盘）	</li><li class="listitem">Histogram（直方图）	</li><li class="listitem">Summary（摘要）	</li></ul></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp13"></a>1.4.2.1. Counter：只增不减的计数器</h4></div></div></div>
+			
+			<p>Counter 例子</p>
+			<pre class="screen">
+			
+neo@MacBook-Pro-Neo ~ % curl -s http://localhost:9100/metrics | grep node_cpu_seconds_total
+# HELP node_cpu_seconds_total Seconds the cpus spent in each mode.
+# TYPE node_cpu_seconds_total counter
+node_cpu_seconds_total{cpu="0",mode="idle"} 16761.9			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp14"></a>1.4.2.2. Gauge：可增可减的仪表盘</h4></div></div></div>
+			
+			<p>Gauge 类型的指标侧重于反应系统的当前状态，指标的样本数据可增可减。常用于内存容量的监控。</p>
+			<pre class="screen">
+				
+neo@MacBook-Pro-Neo ~ % curl -s http://localhost:9100/metrics | grep node_memory_MemFree
+# HELP node_memory_MemFree_bytes Memory information field MemFree_bytes.
+# TYPE node_memory_MemFree_bytes gauge
+node_memory_MemFree_bytes 2.933243904e+09				
+				
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp15"></a>1.4.2.3. Histogram</h4></div></div></div>
+			
+			<pre class="screen">
+				
+neo@MacBook-Pro-Neo ~ % curl -s http://localhost:9090/metrics | grep prometheus_tsdb_compaction_chunk_range
+# HELP prometheus_tsdb_compaction_chunk_range_seconds Final time range of chunks on their first compaction
+# TYPE prometheus_tsdb_compaction_chunk_range_seconds histogram
+prometheus_tsdb_compaction_chunk_range_seconds_bucket{le="100"} 2
+prometheus_tsdb_compaction_chunk_range_seconds_bucket{le="400"} 2
+prometheus_tsdb_compaction_chunk_range_seconds_bucket{le="1600"} 2
+prometheus_tsdb_compaction_chunk_range_seconds_bucket{le="6400"} 2
+prometheus_tsdb_compaction_chunk_range_seconds_bucket{le="25600"} 2
+prometheus_tsdb_compaction_chunk_range_seconds_bucket{le="102400"} 3
+prometheus_tsdb_compaction_chunk_range_seconds_bucket{le="409600"} 1506
+prometheus_tsdb_compaction_chunk_range_seconds_bucket{le="1.6384e+06"} 1558
+prometheus_tsdb_compaction_chunk_range_seconds_bucket{le="6.5536e+06"} 4564
+prometheus_tsdb_compaction_chunk_range_seconds_bucket{le="2.62144e+07"} 4564
+prometheus_tsdb_compaction_chunk_range_seconds_bucket{le="+Inf"} 4564
+prometheus_tsdb_compaction_chunk_range_seconds_sum 5.85524936e+09
+prometheus_tsdb_compaction_chunk_range_seconds_count 4564				
+				
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp16"></a>1.4.2.4. Summary</h4></div></div></div>
+			
+			<pre class="screen">
+				
+neo@MacBook-Pro-Neo ~ % curl -s http://localhost:9090/metrics | grep prometheus_tsdb_wal_fsync_duration_seconds
+# HELP prometheus_tsdb_wal_fsync_duration_seconds Duration of WAL fsync.
+# TYPE prometheus_tsdb_wal_fsync_duration_seconds summary
+prometheus_tsdb_wal_fsync_duration_seconds{quantile="0.5"} NaN
+prometheus_tsdb_wal_fsync_duration_seconds{quantile="0.9"} NaN
+prometheus_tsdb_wal_fsync_duration_seconds{quantile="0.99"} NaN
+prometheus_tsdb_wal_fsync_duration_seconds_sum 1.63e-05
+prometheus_tsdb_wal_fsync_duration_seconds_count 1				
+				
+			</pre>
+		</div>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp21"></a>1.4.3. 查询时间序列</h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp18"></a>1.4.3.1. 标签查询</h4></div></div></div>
+			
+			<p>查询 instance="node-exporter:9100"</p>
+			<pre class="screen">
+			
+node_cpu_seconds_total{instance="node-exporter:9100"}			
+			
+			</pre>
+			<p>mode!="irq" 排出 irq</p>
+			<pre class="screen">
+			
+node_cpu_seconds_total{mode!="irq"}			
+			
+			</pre>
+			<p>查询所有 mode="user"</p>
+			<pre class="screen">
+			
+{mode="user"}	
+			
+			</pre>
+			<p>正则查询</p>
+			<pre class="screen">
+			
+node_cpu_seconds_total{mode=~"user|system|nice"}			
+restful_api_requests_total{environment=~"staging|testing|development",method!="GET"}	
+
+{instance =~"n.*"} 		
+			
+			</pre>
+			<p>正则排除</p>
+			<pre class="screen">
+			
+node_cpu_seconds_total{mode!~"steal|softirq|irq|iowait|idle"}			
+			
+			</pre>
+
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp19"></a>1.4.3.2. 范围查询</h4></div></div></div>
+			
+			<div class="orderedlist"><p class="title"><strong>PromQL的时间范围选择器支持时间单位：</strong></p><ol class="orderedlist" type="1"><li class="listitem">s - 秒</li><li class="listitem">m - 分钟</li><li class="listitem">h - 小时</li><li class="listitem">d - 天</li><li class="listitem">w - 周</li><li class="listitem">y - 年</li></ol></div>
+			<p>该表达式将会查询返回时间序列中最近5分钟的所有样本数据：</p>
+			<pre class="screen">
+			
+rate(node_memory_MemAvailable_bytes{}[5m])
+			
+			</pre>
+			<p>可以使用offset时间位移操作：</p>
+			<pre class="screen">
+			
+node_memory_MemAvailable_bytes{} offset 5m
+rate(node_load1{}[5m] offset 1m)	
+			
+			</pre>
+		</div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp20"></a>1.4.3.3. 数学运算</h4></div></div></div>
+			
+			<p>PromQL 支持：数学运算符，逻辑运算符，布尔运算符</p>
+			<div class="itemizedlist"><p class="title"><strong>PromQL操作符中优先级由高到低依次为：</strong></p><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem">^</li><li class="listitem">*, /, %</li><li class="listitem">+, -</li><li class="listitem">==, !=, &lt;=, &lt;, &gt;=, &gt;</li><li class="listitem">and, unless</li><li class="listitem">or</li></ul></div>
+			<p></p>
+			<p>Bytes 转 MB 的例子</p>
+			<pre class="screen">
+			
+node_memory_MemFree_bytes /  (1024 * 1024)			
+			
+			</pre>
+			<p>计算磁盘读写总量</p>
+			<pre class="screen">
+			
+(node_disk_read_bytes_total{device="vda"} + node_disk_written_bytes_total{device="vda"}) / (1024 * 1024)			
+			
+			</pre>
+			<p>内存使用率计算</p>
+			<pre class="screen">
+			
+(node_memory_MemTotal_bytes - node_memory_MemFree_bytes) / node_memory_MemTotal_bytes * 100
+
+# 查询出内存使用率到达 80% 的节点			
+(node_memory_MemTotal_bytes - node_memory_MemFree_bytes) / node_memory_MemTotal_bytes &gt; 0.8
+
+node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes * 100 &gt; 80
+			
+			</pre>
+		</div>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp32"></a>1.4.4. 聚合操作</h3></div></div></div>
+		
+		<p>PromQL内置的聚合操作和函数可以让用户对这些数据进行进一步的分析</p>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp22"></a>1.4.4.1. rate()</h4></div></div></div>
+			
+			<p>通过rate()函数计算HTTP请求量的增长率：</p>
+			<pre class="screen">
+				
+rate(http_requests_total[5m])				
+				
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp23"></a>1.4.4.2. topk() 和 bottomk()</h4></div></div></div>
+			
+			<p>查询当前访问量前10的HTTP地址：</p>
+			<pre class="screen">
+				
+topk(10, http_requests_total)
+				
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp24"></a>1.4.4.3. delta()</h4></div></div></div>
+			
+			<p>通过PromQL内置函数delta()可以获取样本在一段时间返回内的变化情况。例如，计算CPU温度在两个小时内的差异：</p>
+			<pre class="screen">
+				
+delta(cpu_temp_celsius{host="zeus"}[2h])
+				
+			</pre>
+			<p>delta 适用于 Gauge 类型的监控指标</p>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp25"></a>1.4.4.4. predict_linear()</h4></div></div></div>
+			
+			<p>使用predict_linear()对数据的变化趋势进行预测。例如，预测系统磁盘空间在4个小时之后的剩余情况：</p>
+			<pre class="screen">
+				
+predict_linear(node_filesystem_free{job="node"}[1h], 4 * 3600)				
+				
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp26"></a>1.4.4.5. deriv()</h4></div></div></div>
+			
+			<p>deriv()计算样本的线性回归模型</p>
+			<pre class="screen">
+				
+				
+				
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp27"></a>1.4.4.6. sum()</h4></div></div></div>
+			
+			<p>求和操作</p>
+			<pre class="screen">
+			
+sum(node_cpu_seconds_total) 
+sum(node_cpu_seconds_total) by (mode)	
+			
+			</pre>
+			<pre class="screen">
+			
+Element			Value
+{mode="steal"}	0
+{mode="system"}	2632.2400000000002
+{mode="user"}	768.49
+{mode="idle"}	93899.19
+{mode="iowait"}	8.85
+{mode="irq"}	0
+{mode="nice"}	0
+{mode="softirq"}	13.35			
+			
+			</pre>
+			<p></p>
+			<pre class="screen">
+			
+sum(node_cpu_seconds_total) without (instance)
+			
+			</pre>
+			<pre class="screen">
+			
+sum(node_cpu_seconds_total) by (mode,cpu)
+			
+			</pre>
+			<pre class="screen">
+			
+sum(sum(irate(node_cpu{mode!='idle'}[5m]))  / sum(irate(node_cpu[5m]))) by (instance)			
+			
+			</pre>
+			
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp28"></a>1.4.4.7. avg()</h4></div></div></div>
+			
+			<p>计算平均数</p>
+			<pre class="screen">
+			
+avg(node_cpu_seconds_total) by (mode)
+			
+			</pre>
+			<p></p>
+			<pre class="screen">
+			
+
+Element			Value
+{mode="nice"}	0
+{mode="softirq"}	3.3374999999999995
+{mode="steal"}	0
+{mode="system"}	658.06
+{mode="user"}	192.1225
+{mode="idle"}	23474.7975
+{mode="iowait"}	2.2125
+{mode="irq"}	0			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp29"></a>1.4.4.8. min (最小值)，max (最大值)</h4></div></div></div>	
+			
+			<p></p>
+			<pre class="screen">
+			
+			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp30"></a>1.4.4.9. count_values()</h4></div></div></div>
+			
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp31"></a>1.4.4.10. quantile()</h4></div></div></div>
+			
+		</div>
+	</div>
+</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ch01s03.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ch01s05.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">1.3. prometheus 配置 </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 1.5. Installing and Configuring Graphite</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script></body></html>

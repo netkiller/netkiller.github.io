@@ -1,0 +1,674 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>5.2. Web</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="rinetd.log, , , " /><meta name="keywords" content="snmp, ipmi,openipmi,freeipmi,ipmitool, cpu,memory,hdd,ssd,raid,power, logwatch, webmin" /><link rel="home" href="../index.html" title="Netkiller Monitor 手札" /><link rel="up" href="index.html" title="第 5 章 Logs 分析" /><link rel="prev" href="index.html" title="第 5 章 Logs 分析" /><link rel="next" href="tomcat.html" title="5.3. Tomcat" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+	    <a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">云社区</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">云栖社区</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/video.html">视频教程</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">5.2. Web</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><th width="60%" align="center">第 5 章 Logs 分析</th><td width="20%" align="right"> <a accesskey="n" href="tomcat.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td> 微信号 netkiller-ebook | QQ群：128659835 请注明“读者” </td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="web"></a>5.2. Web</h2></div></div></div>
+	
+
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="log.apache"></a>5.2.1. Apache Log</h3></div></div></div>
+		
+		<pre class="screen">
+1、查看当天有多少个IP访问：
+awk '{print $1}' log_file|sort|uniq|wc -l
+
+2、查看某一个页面被访问的次数：
+grep "/index.php" log_file | wc -l
+
+3、查看每一个IP访问了多少个页面：
+awk '{++S[$1]} END {for (a in S) print a,S[a]}' log_file
+
+4、将每个IP访问的页面数进行从小到大排序：
+awk '{++S[$1]} END {for (a in S) print S[a],a}' log_file | sort -n
+
+5、查看某一个IP访问了哪些页面：
+grep ^111.111.111.111 log_file| awk '{print $1,$7}'
+
+6、去掉搜索引擎统计当天的页面：
+awk '{print $12,$1}' log_file | grep ^\"Mozilla | awk '{print $2}' |sort | uniq | wc -l
+
+7、查看2009年6月21日14时这一个小时内有多少IP访问:
+awk '{print $4,$1}' log_file | grep 21/Jun/2009:14 | awk '{print $2}'| sort | uniq | wc -l
+		</pre>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp99"></a>5.2.1.1. 刪除日志</h4></div></div></div>
+			
+			<p>刪除一个月前的日志</p>
+			<pre class="screen">
+rm -f /www/logs/access.log.$(date -d '-1 month' +'%Y-%m')*
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp100"></a>5.2.1.2. 统计爬虫</h4></div></div></div>
+			
+			<pre class="screen">
+grep -E 'Googlebot|Baiduspider'  /www/logs/www.example.com/access.2011-02-23.log | awk '{ print $1 }' | sort | uniq
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp101"></a>5.2.1.3. 统计浏览器</h4></div></div></div>
+			
+			<pre class="screen">
+cat /www/logs/example.com/access.2010-09-20.log | grep -v -E 'MSIE|Firefox|Chrome|Opera|Safari|Gecko|Maxthon' | sort | uniq -c | sort -r -n | head -n 100
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp102"></a>5.2.1.4. IP 统计</h4></div></div></div>
+			
+			<pre class="screen">
+# grep '22/May/2012' /tmp/myid.access.log | awk '{print $1}' | awk -F'.' '{print $1"."$2"."$3"."$4}' | sort | uniq -c | sort -r -n | head -n 10
+   2206 219.136.134.13
+   1497 182.34.15.248
+   1431 211.140.143.100
+   1431 119.145.149.106
+   1427 61.183.15.179
+   1427 218.6.8.189
+   1422 124.232.150.171
+   1421 106.187.47.224
+   1420 61.160.220.252
+   1418 114.80.201.18
+			</pre>
+			<p>统计网段</p>
+			<pre class="screen">
+# cat /www/logs/www/access.2010-09-20.log | awk '{print $1}' | awk -F'.' '{print $1"."$2"."$3".0"}' | sort | uniq -c | sort -r -n | head -n 200
+			</pre>
+			<p>压缩文件处理</p>
+			<pre class="screen">
+zcat www.example.com.access.log-20130627.gz | grep '/xml/data.json' | awk '{print $1}' | awk -F'.' '{print $1"."$2"."$3"."$4}' | sort | uniq -c | sort -r -n | head -n 20
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp103"></a>5.2.1.5. 统计域名</h4></div></div></div>
+			
+			<pre class="screen">
+# cat  /www/logs/access.2011-07-27.log |awk '{print $2}'|sort|uniq -c|sort -rn|more
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp104"></a>5.2.1.6. HTTP Status</h4></div></div></div>
+			
+			<pre class="screen">
+# cat  /www/logs/access.2011-07-27.log |awk '{print $9}'|sort|uniq -c|sort -rn|more
+5056585 304
+1125579 200
+   7602 400
+      5 301
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp105"></a>5.2.1.7. URL 统计</h4></div></div></div>
+			
+			<pre class="screen">
+cat  /www/logs/access.2011-07-27.log |awk '{print $7}'|sort|uniq -c|sort -rn|more
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp106"></a>5.2.1.8. 文件流量统计</h4></div></div></div>
+			
+			<pre class="screen">
+cat /www/logs/access.2011-08-03.log |awk '{sum[$7]+=$10}END{for(i in sum){print sum[i],i}}'|sort -rn|more
+
+grep ' 200 ' /www/logs/access.2011-08-03.log |awk '{sum[$7]+=$10}END{for(i in sum){print sum[i],i}}'|sort -rn|more
+
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp107"></a>5.2.1.9. URL访问量统计</h4></div></div></div>
+			
+			<pre class="screen">
+			
+# cat www.access.log | awk '{print $7}' | egrep '\?|&amp;' | sort | uniq -c | sort -rn | more
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp108"></a>5.2.1.10. 脚本运行速度</h4></div></div></div>
+			
+			<p>查出运行速度最慢的脚本</p>
+			<pre class="screen">
+grep -v 0$ access.2010-11-05.log | awk -F '\" ' '{print $4" " $1}' web.log | awk '{print $1" "$8}' | sort -n -k 1 -r | uniq &gt; /tmp/slow_url.txt
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp109"></a>5.2.1.11. IP, URL 抽取</h4></div></div></div>
+			
+			<pre class="screen">
+# tail -f /www/logs/www.365wine.com/access.2012-01-04.log | grep '/test.html' | awk '{print $1" "$7}'
+			</pre>
+		</div>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="awstats"></a>5.2.2. awstats</h3></div></div></div>
+		
+		<p><a class="ulink" href="http://sourceforge.net/projects/awstats/" target="_top">http://sourceforge.net/projects/awstats/</a></p>
+
+		<div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>install</p>
+				<pre class="screen">
+ sudo apt-get install awstats
+				</pre>
+			</li><li class="listitem"><p>configure</p>
+				<p>sudo vim /etc/awstats/awstats.conf or awstats.conf.local</p>
+				<pre class="screen">
+$ sudo vim /etc/awstats/awstats.conf.local
+
+LogFile="/home/netkiller/logs/access_log"
+SiteDomain="netkiller.8800.org"
+				</pre>
+				<p> or </p>
+				<pre class="screen">
+# cd /usr/share/doc/awstats/examples/
+#/usr/share/doc/awstats/examples$ perl awstats_configure.pl
+				</pre>
+			</li><li class="listitem">
+				<p>apache</p>
+				<pre class="screen">
+sudo cp /usr/share/doc/awstats/examples/apache.conf /etc/apache2/conf.d/awstats.conf
+				</pre>
+				
+			</li><li class="listitem"><p>how do I test awstats.</p>
+				<p>http://netkiller.8800.org/awstats/awstats.pl</p>
+			</li><li class="listitem"><p>Generating the First Stats</p>
+				<pre class="screen">
+sudo -u www-data /usr/bin/perl /usr/lib/cgi-bin/awstats.pl -update -config=netkiller.8800.org
+				</pre>
+			</li><li class="listitem"><p>Automatising the stats generation using Cron</p>
+				<p>If we check the file installed by awstats and search for the word cron using the following command line:</p>
+				<pre class="screen">
+$ dpkg -L awstats | grep cron
+/etc/cron.d
+/etc/cron.d/awstats
+				</pre>
+
+				<p>sudo vim /etc/cron.d/awstats</p>
+				<pre class="screen">
+				
+0,10,20,30,40,50 * * * * www-data [ -x /usr/lib/cgi-bin/awstats.pl -a -f /etc/awstats/awstats.conf -a -r /home/netkiller/logs/access.log ] &amp;&amp; /usr/lib/cgi-bin/awstats.pl -config=netkiller.8800.org -update &gt;/dev/null
+				
+				</pre>
+
+			</li><li class="listitem"><p>web 测试</p>
+				<p>http://netkiller.8800.org/awstats/awstats.pl</p>
+				<p>http://netkiller.8800.org/awstats/awstats.pl?config=other.8800.org</p>
+			</li></ol></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp110"></a>5.2.2.1. 语言</h4></div></div></div>
+			
+			<pre class="screen">
+awstats.pl -update -config=sitename -lang=cn
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp111"></a>5.2.2.2. 输出HTML文档</h4></div></div></div>
+			
+			<pre class="screen">
+perl awstats.pl -config=www.example.com -output -staticlinks -lang=cn &gt; awstats.example.html
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp112"></a>5.2.2.3. 多站点配置</h4></div></div></div>
+			
+			<pre class="screen">
+$ sudo gunzip /usr/share/doc/awstats/examples/awstats.model.conf.gz
+
+$ sudo cp /usr/share/doc/awstats/examples/awstats.model.conf /etc/awstats/awstats.www.example.com.conf
+$ sudo cp /usr/share/doc/awstats/examples/awstats.model.conf /etc/awstats/awstats.www.other.com.conf
+
+
+			</pre>
+			<pre class="screen">
+neo@monitor:/etc/awstats$ vim awstats.www.example.com.conf
+LogFile = /opt/logs/21/access.log
+SiteDomain="www.example.com"
+
+neo@monitor:/etc/awstats$ vim awstats.www.other.com.conf
+LogFile = /opt/logs/22/access.log
+SiteDomain="www.other.com"
+			</pre>
+
+			<pre class="screen">
+$ sudo -u www-data /usr/bin/perl /usr/lib/cgi-bin/awstats.pl -update -config=www.example.com
+$ sudo -u www-data /usr/bin/perl /usr/lib/cgi-bin/awstats.pl -update -config=www.other.com
+			</pre>
+			<pre class="screen">
+http://localhost/cgi-bin/awstats.pl?config=www.example.com
+http://localhost/cgi-bin/awstats.pl?config=www.other.com
+			</pre>
+			<p>批量生成</p>
+			<pre class="screen">
+awstats_updateall.pl now -awstatsprog=/usr/lib/cgi-bin/awstats.pl -configdir=/etc/awstats/
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp113"></a>5.2.2.4. 合并日志</h4></div></div></div>
+			
+			<span class="command"><strong>/usr/share/doc/awstats/examples/logresolvemerge.pl</strong></span>
+			<pre class="screen">
+$ vim awstats.www.example.com.conf
+LogFile="/usr/share/doc/awstats/examples/logresolvemerge.pl /var/log/*/access_log.* |"
+LogFile="/usr/share/doc/awstats/examples/logresolvemerge.pl /mnt/*/logs/www/access.%YYYY-24-%MM-24-%DD-24.log |"
+			</pre>
+			<pre class="screen">
+sudo -u www-data /usr/bin/perl /usr/lib/cgi-bin/awstats.pl -update -config=www.examples.com
+			</pre>
+			<p>http://localhost/cgi-bin/awstats.pl?config=www.example.com</p>
+			<pre class="screen">
+$ grep -v "^#" awstats.www.example.com.conf | sed /^$/d
+LogFile="/usr/share/doc/awstats/examples/logresolvemerge.pl /mnt/*/logs/www/access.%YYYY-24-%MM-24-%DD-24.log |"
+LogType=W
+LogFormat=1
+LogSeparator=" "
+SiteDomain="www.example.com"
+HostAliases="localhost 127.0.0.1 REGEX[myserver\.com$]"
+DNSLookup=2
+DirData="."
+DirCgi="/cgi-bin"
+DirIcons="/icon"
+AllowToUpdateStatsFromBrowser=0
+AllowFullYearView=2
+EnableLockForUpdate=0
+DNSStaticCacheFile="dnscache.txt"
+DNSLastUpdateCacheFile="dnscachelastupdate.txt"
+SkipDNSLookupFor=""
+AllowAccessFromWebToAuthenticatedUsersOnly=0
+AllowAccessFromWebToFollowingAuthenticatedUsers=""
+AllowAccessFromWebToFollowingIPAddresses=""
+CreateDirDataIfNotExists=0
+BuildHistoryFormat=text
+BuildReportFormat=html
+SaveDatabaseFilesWithPermissionsForEveryone=0
+PurgeLogFile=0
+ArchiveLogRecords=0
+KeepBackupOfHistoricFiles=0
+DefaultFile="index.html"
+SkipHosts=""
+SkipUserAgents=""
+SkipFiles=""
+SkipReferrersBlackList=""
+OnlyHosts=""
+OnlyUserAgents=""
+OnlyUsers=""
+OnlyFiles=""
+NotPageList="css js class gif jpg jpeg png bmp ico rss xml swf"
+ValidHTTPCodes="200 304"
+ValidSMTPCodes="1 250"
+AuthenticatedUsersNotCaseSensitive=0
+URLNotCaseSensitive=0
+URLWithAnchor=0
+URLQuerySeparators="?;"
+URLWithQuery=0
+URLWithQueryWithOnlyFollowingParameters=""
+URLWithQueryWithoutFollowingParameters=""
+URLReferrerWithQuery=0
+WarningMessages=1
+ErrorMessages=""
+DebugMessages=0
+NbOfLinesForCorruptedLog=50
+WrapperScript=""
+DecodeUA=0
+MiscTrackerUrl="/js/awstats_misc_tracker.js"
+LevelForBrowsersDetection=2         # 0 disables Browsers detection.
+                                    # 2 reduces AWStats speed by 2%
+                                    # allphones reduces AWStats speed by 5%
+LevelForOSDetection=2               # 0 disables OS detection.
+                                    # 2 reduces AWStats speed by 3%
+LevelForRefererAnalyze=2            # 0 disables Origin detection.
+                                    # 2 reduces AWStats speed by 14%
+LevelForRobotsDetection=2           # 0 disables Robots detection.
+                                    # 2 reduces AWStats speed by 2.5%
+LevelForSearchEnginesDetection=2    # 0 disables Search engines detection.
+                                    # 2 reduces AWStats speed by 9%
+LevelForKeywordsDetection=2         # 0 disables Keyphrases/Keywords detection.
+                                    # 2 reduces AWStats speed by 1%
+LevelForFileTypesDetection=2        # 0 disables File types detection.
+                                    # 2 reduces AWStats speed by 1%
+LevelForWormsDetection=0            # 0 disables Worms detection.
+                                    # 2 reduces AWStats speed by 15%
+UseFramesWhenCGI=1
+DetailedReportsOnNewWindows=1
+Expires=0
+MaxRowsInHTMLOutput=1000
+Lang="auto"
+DirLang="./lang"
+ShowMenu=1
+ShowSummary=UVPHB
+ShowMonthStats=UVPHB
+ShowDaysOfMonthStats=VPHB
+ShowDaysOfWeekStats=PHB
+ShowHoursStats=PHB
+ShowDomainsStats=PHB
+ShowHostsStats=PHBL
+ShowAuthenticatedUsers=0
+ShowRobotsStats=HBL
+ShowWormsStats=0
+ShowEMailSenders=0
+ShowEMailReceivers=0
+ShowSessionsStats=1
+ShowPagesStats=PBEX
+ShowFileTypesStats=HB
+ShowFileSizesStats=0
+ShowOSStats=1
+ShowBrowsersStats=1
+ShowScreenSizeStats=0
+ShowOriginStats=PH
+ShowKeyphrasesStats=1
+ShowKeywordsStats=1
+ShowMiscStats=a
+ShowHTTPErrorsStats=1
+ShowSMTPErrorsStats=0
+ShowClusterStats=0
+AddDataArrayMonthStats=1
+AddDataArrayShowDaysOfMonthStats=1
+AddDataArrayShowDaysOfWeekStats=1
+AddDataArrayShowHoursStats=1
+IncludeInternalLinksInOriginSection=0
+MaxNbOfDomain = 10
+MinHitDomain  = 1
+MaxNbOfHostsShown = 10
+MinHitHost    = 1
+MaxNbOfLoginShown = 10
+MinHitLogin   = 1
+MaxNbOfRobotShown = 10
+MinHitRobot   = 1
+MaxNbOfPageShown = 10
+MinHitFile    = 1
+MaxNbOfOsShown = 10
+MinHitOs      = 1
+MaxNbOfBrowsersShown = 10
+MinHitBrowser = 1
+MaxNbOfScreenSizesShown = 5
+MinHitScreenSize = 1
+MaxNbOfWindowSizesShown = 5
+MinHitWindowSize = 1
+MaxNbOfRefererShown = 10
+MinHitRefer   = 1
+MaxNbOfKeyphrasesShown = 10
+MinHitKeyphrase = 1
+MaxNbOfKeywordsShown = 10
+MinHitKeyword = 1
+MaxNbOfEMailsShown = 20
+MinHitEMail   = 1
+FirstDayOfWeek=1
+ShowFlagLinks=""
+ShowLinksOnUrl=1
+UseHTTPSLinkForUrl=""
+MaxLengthOfShownURL=64
+HTMLHeadSection=""
+HTMLEndSection=""
+Logo="awstats_logo6.png"
+LogoLink="http://awstats.sourceforge.net"
+BarWidth   = 260
+BarHeight  = 90
+StyleSheet=""
+color_Background="FFFFFF"               # Background color for main page (Default = "FFFFFF")
+color_TableBGTitle="CCCCDD"             # Background color for table title (Default = "CCCCDD")
+color_TableTitle="000000"               # Table title font color (Default = "000000")
+color_TableBG="CCCCDD"                  # Background color for table (Default = "CCCCDD")
+color_TableRowTitle="FFFFFF"    # Table row title font color (Default = "FFFFFF")
+color_TableBGRowTitle="ECECEC"  # Background color for row title (Default = "ECECEC")
+color_TableBorder="ECECEC"              # Table border color (Default = "ECECEC")
+color_text="000000"                             # Color of text (Default = "000000")
+color_textpercent="606060"              # Color of text for percent values (Default = "606060")
+color_titletext="000000"                # Color of text title within colored Title Rows (Default = "000000")
+color_weekend="EAEAEA"                  # Color for week-end days (Default = "EAEAEA")
+color_link="0011BB"                             # Color of HTML links (Default = "0011BB")
+color_hover="605040"                    # Color of HTML on-mouseover links (Default = "605040")
+color_u="FFAA66"                                # Background color for number of unique visitors (Default = "FFAA66")
+color_v="F4F090"                                # Background color for number of visites (Default = "F4F090")
+color_p="4477DD"                                # Background color for number of pages (Default = "4477DD")
+color_h="66DDEE"                                # Background color for number of hits (Default = "66DDEE")
+color_k="2EA495"                                # Background color for number of bytes (Default = "2EA495")
+color_s="8888DD"                                # Background color for number of search (Default = "8888DD")
+color_e="CEC2E8"                                # Background color for number of entry pages (Default = "CEC2E8")
+color_x="C1B2E2"                                # Background color for number of exit pages (Default = "C1B2E2")
+ExtraTrackedRowsLimit=500
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp114"></a>5.2.2.5. Flush history file on disk (unique url reach flush limit of 5000) 优化</h4></div></div></div>
+			
+			<pre class="screen">
+$LIMITFLUSH=50000
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp115"></a>5.2.2.6. JAWStats</h4></div></div></div>
+			
+			<p><a class="ulink" href="http://www.jawstats.com/" target="_top">http://www.jawstats.com/</a></p>
+		</div>
+	</div>
+
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="webalizer"></a>5.2.3. webalizer</h3></div></div></div>
+		
+		<p> What is Webalizer?</p>
+		<p> The Webalizer is a fast, free web server log file analysis program. It produces highly detailed, easily configurable usage reports in HTML format, for viewing with a standard web browser</p>
+
+		<div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>install webalizer</p>
+				<pre class="screen">
+sudo apt-get install webalizer
+				</pre>
+			</li><li class="listitem"><p>config</p>
+				<pre class="screen">
+vim /etc/webalizer/webalizer.conf
+
+LogFile /home/netkiller/logs/access.log
+OutputDir /home/netkiller/public_html/webalizer
+				</pre>
+				<p>rotate log</p>
+				<pre class="screen">
+Incremental yes
+				</pre>
+			</li><li class="listitem">
+				<p>crontab</p>
+				<p>/etc/cron.daily/webalizer</p>
+				<pre class="screen">
+
+netkiller@shenzhen:~$ cat /etc/cron.daily/webalizer
+#!/bin/sh
+# /etc/cron.daily/webalizer: Webalizer daily maintenance script
+# This script was originally written by
+# Remco van de Meent &lt;remco@debian.org&gt;
+# and now, all rewrited by Jose Carlos Medeiros &lt;jose@psabs.com.br&gt;
+
+# This script just run webalizer agains all .conf files in /etc/webalizer directory
+
+WEBALIZER=/usr/bin/webalizer
+WEBALIZER_CONFDIR=/etc/webalizer
+
+[ -x ${WEBALIZER} ] || exit 0;
+[ -d ${WEBALIZER_CONFDIR} ] || exit 0;
+
+for i in ${WEBALIZER_CONFDIR}/*.conf; do
+  # run agains a rotated or normal logfile
+  LOGFILE=`awk '$1 ~ /^LogFile$/ {print $2}' $i`;
+
+  # empty ?
+  [ -s "${LOGFILE}" ] || continue;
+  # readable ?
+  [ -r "${LOGFILE}" ] || continue;
+
+  # there was a output ?
+  OUTDIR=`awk '$1 ~ /^OutputDir$/ {print $2}' $i`;
+  #  exists something ?
+  [ "${OUTDIR}" != "" ] || continue;
+  # its a directory ?
+  [ -d ${OUTDIR} ] || continue;
+  # its writable ?
+  [ -w ${OUTDIR} ] || continue;
+
+  # Run Really quietly, exit with status code if !0
+  ${WEBALIZER} -c ${i} -Q || continue;
+  RET=$?;
+
+  # Non rotated log file
+  NLOGFILE=`awk '$1 ~ /^LogFile$/ {gsub(/\.[0-9]+(\.gz)?/,""); print $2}' $i`;
+
+  # check current log, if last log is a rotated logfile
+  if [ "${LOGFILE}" != "${NLOGFILE}" ]; then
+    # empty ?
+    [ -s "${NLOGFILE}" ] || continue;
+    # readable ?
+    [ -r "${NLOGFILE}" ] || continue;
+
+    ${WEBALIZER} -c ${i} -Q ${NLOGFILE};
+    RET=$?;
+  fi;
+done;
+
+# exit with webalizer's exit code
+exit $RET;
+
+				</pre>
+			</li><li class="listitem">
+				<p>initialization</p>
+				<pre class="screen">
+sudo /usr/bin/webalizer
+				</pre>
+			</li><li class="listitem"><p>http://netkiller.8800.org/webalizer/</p>
+			</li></ol></div>
+		<pre class="screen">
+最后附上Webalizer的参数表：
+可以执行webalizer –h得到所有命令行参数：
+Usage: webalizer [options] [log file]
+-h = 打印帮助信息
+-v -V = 打印版本信息
+-d = 打印附加调试信息
+-F type = 日志格式类型. type= (clf | ftp | squid)
+-i = 忽略历史文件
+-p = 保留状态 (递增模式)
+-q = 忽略消息信息
+-Q = 忽略所有信息
+-Y = 忽略国家图形
+-G = 忽略小时统计图形
+-H = 忽略小时统计信息
+-L = 忽略彩色图例
+-l num = 在图形中使用数字背景线
+-m num = 访问超时 (seconds)
+-T = 打印时间信息
+-c file = 指定配置文件
+-n name = 使用的主机名
+-o dir = 结果输出目录
+-t name = 指定报告题目上的主机名
+-a name = 隐藏用户代理名称
+-r name = 隐藏访问链接
+-s name = 隐藏客户
+-u name = 隐藏URL
+-x name = 使用文件扩展名
+-P name = 页面类型扩展名
+-I name = index别名
+-A num = 显示前几名客户类型
+-C num = 显示前几名国家
+-R num = 显示前几名链接
+-S num = 显示前几名客户
+-U num = 显示前几名URLs
+-e num = 显示前几名访问页面
+-E num = 显示前几名不存在的页面
+-X = 隐藏个别用户
+-D name = 使用dns缓存文件
+-N num = DNS 进程数 (0=禁用dns)
+		</pre>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp116"></a>5.2.3.1. 手工生成</h4></div></div></div>
+			
+			<pre class="screen">
+$ sudo webalizer -c /etc/webalizer/webalizer.conf -o /var/www/webalizer/web2 /opt/logs/web2/www/access_log
+			</pre>
+			<p>分析多个文件</p>
+			<pre class="screen">
+# find ./ -exec sudo webalizer -p -c /etc/webalizer/webalizer.conf -o /var/www/webalizer/my /mnt/logs/www/{} \;
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp117"></a>5.2.3.2. 批量处理历史数据</h4></div></div></div>
+			
+			<p>下面脚本可以批量处理历史日志,等这个脚本运行完后在crontab中加入另一个脚本。</p>
+			<pre class="screen">
+for f in /mnt/logs/cdn/*.gz ; do webalizer -c /etc/webalizer/webalizer.conf -o /var/www/webalizer/cdn/ $f ; done
+			</pre>
+			<p>crontab</p>
+			<pre class="screen">
+webalizer -c /etc/webalizer/webalizer.conf -o /var/www/webalizer/cdn/ /mnt/logs/cdn/$(date -d '-1 day' +'%Y-%m-%d').log.gz
+			</pre>
+			<p>多域名批量处理</p>
+			<pre class="screen">
+for d in /mnt/cdn/* ; do
+    htmldir=/var/www/webalizer/$(basename $d)
+    mkdir -p $htmldir
+    for f in $d/*.log.gz ; do webalizer -c /etc/webalizer/webalizer.conf -o $htmldir $f ; done
+done
+			</pre>
+			<p>crontab</p>
+			<pre class="screen">
+#!/bin/bash
+for d in /mnt/cdn/*;
+do
+    htmldir=/var/www/webalizer/$(basename $d)
+    mkdir -p $htmldir
+    webalizer -c /etc/webalizer/webalizer.conf -o $htmldir $d/$(date -d '-1 day' +'%Y_%m_%d').log.gz
+done
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp118"></a>5.2.3.3. crontab</h4></div></div></div>
+			
+			<pre class="screen">
+sudo webalizer  -F clf -p -t www.example.com -Q -c /etc/webalizer/webalizer.conf -o /var/www/webalizer/example /mnt/logs/www/access.$(date -d '-1 day' +'%Y-%m-%d').log
+			</pre>
+		</div>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="sarg"></a>5.2.4. Sarg - Squid Analysis Report Generator</h3></div></div></div>
+		
+		<a class="ulink" href="http://sarg.sourceforge.net/" target="_top">http://sarg.sourceforge.net/</a>
+		<p></p>
+		<pre class="screen">
+
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="goaccess"></a>5.2.5. goaccess - Fast web log analyzer and interactive viewer.</h3></div></div></div>
+		
+		<p>http://goaccess.prosoftcorp.com/</p>
+
+		<p>CentOS</p>
+		<pre class="screen">
+yum install goaccess
+		</pre>
+		<p>Ubuntu</p>
+		<pre class="screen">
+$ sudo apt-get install goaccess
+		</pre>
+		<p>使用方法</p>
+		<pre class="screen">
+# goaccess -f access.log
+		</pre>
+	</div>
+</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="tomcat.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 5 章 Logs 分析 </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 5.3. Tomcat</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script></body></html>

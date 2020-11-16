@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>7.3. NetFlow</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="snmp, ipmi,openipmi,freeipmi,ipmitool, cpu,memory,hdd,ssd,raid,power, logwatch, webmin" /><link rel="home" href="../index.html" title="Netkiller Monitor 手札" /><link rel="up" href="index.html" title="第 7 章 网络监控" /><link rel="prev" href="bandwidth.html" title="7.2. Bandwidth" /><link rel="next" href="network.ntop.html" title="7.4. Ntop" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+	    <a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">云社区</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">云栖社区</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/video.html">视频教程</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">7.3. NetFlow</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="bandwidth.html">上一页</a> </td><th width="60%" align="center">第 7 章 网络监控</th><td width="20%" align="right"> <a accesskey="n" href="network.ntop.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td> 微信号 netkiller-ebook | QQ群：128659835 请注明“读者” </td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="netflow"></a>7.3. NetFlow</h2></div></div></div>
+	
+	<p>查看设备是否发送Netflow包</p>
+	<pre class="screen">
+$ sudo tcpdump -n udp port 2055
+	</pre>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="flow-tools"></a>7.3.1. flow-tools - collects and processes NetFlow data</h3></div></div></div>
+		
+		<pre class="screen">
+$ sudo apt-get install flow-tools
+		</pre>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="flow-capture"></a>7.3.1.1. flow-capture</h4></div></div></div>
+			
+			<pre class="screen">
+mkdir /opt/netflow
+flow-capture -z 6 -n 143 -e 8928 -V 5 -w /opt/netflow 0/0/2055
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp169"></a>7.3.1.2. NetFlow into MySQL with flow-tools</h4></div><div><h5 class="subtitle">NetFlow into MySQL with flow-tools</h5></div></div></div>
+			
+			
+			<p>创建netflow数据库，创建flows表</p>
+			<pre class="screen">
+CREATE TABLE `flows` (
+  `FLOW_ID` int(32) NOT NULL AUTO_INCREMENT,
+  `UNIX_SECS` int(32) unsigned NOT NULL default '0',
+  `UNIX_NSECS` int(32) unsigned NOT NULL default '0',
+  `SYSUPTIME` int(20) NOT NULL,
+  `EXADDR` varchar(16) NOT NULL,
+  `DPKTS` int(32) unsigned NOT NULL default '0',
+  `DOCTETS` int(32) unsigned NOT NULL default '0',
+  `FIRST` int(32) unsigned NOT NULL default '0',
+  `LAST` int(32) unsigned NOT NULL default '0',
+  `ENGINE_TYPE` int(10) NOT NULL,
+  `ENGINE_ID` int(15) NOT NULL,
+  `SRCADDR` varchar(16) NOT NULL default '0',
+  `DSTADDR` varchar(16) NOT NULL default '0',
+  `NEXTHOP` varchar(16) NOT NULL default '0',
+  `INPUT` int(16) unsigned NOT NULL default '0',
+  `OUTPUT` int(16) unsigned NOT NULL default '0',
+  `SRCPORT` int(16) unsigned NOT NULL default '0',
+  `DSTPORT` int(16) unsigned NOT NULL default '0',
+  `PROT` int(8) unsigned NOT NULL default '0',
+  `TOS` int(2) NOT NULL,
+  `TCP_FLAGS` int(8) unsigned NOT NULL default '0',
+  `SRC_MASK` int(8) unsigned NOT NULL default '0',
+  `DST_MASK` int(8) unsigned NOT NULL default '0',
+  `SRC_AS` int(16) unsigned NOT NULL default '0',
+  `DST_AS` int(16) unsigned NOT NULL default '0',
+  PRIMARY KEY (FLOW_ID)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+			</pre>
+			<p>创建数据库插入脚本</p>
+			<pre class="screen">
+			
+$ cat flow-mysql-export
+#!/bin/bash
+ 
+flow-export -f3 -u "username:password:localhost:3306:netflow:flows" &lt; /flows/router/$1
+			
+			</pre>
+			<p>获取Netflow信息，执行插入任务</p>
+			<pre class="screen">
+mkdir -p /srv/flows/router
+flow-capture -w /srv/flows/router -E5G 0/0/2055 -R /srv/bin/flow-mysql-export
+			</pre>
+
+		</div>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="netams"></a>7.3.2. netams - Network Traffic Accounting and Monitoring Software</h3></div></div></div>
+		
+		<div class="procedure"><a id="idp2405"></a><p class="title"><strong>过程 7.1. 安装步骤</strong></p><ol class="procedure" type="1"><li class="step">
+				<p>netams netams-web</p>
+				<pre class="screen">
+$ sudo apt-get install netams netams-web
+				</pre>
+				<pre class="screen">
+$ dpkg -s netams netams-web
+				</pre>
+			</li><li class="step">
+				<p>NeTAMS administrator password</p>
+				<pre class="screen">
+				
+┌───────────────────┤ Configuring netams ├────────────────────┐
+│ Please enter password for "admin" user in NeTAMS database.  │
+│                                                             │
+│ NeTAMS administrator password:                              │
+│                                                             │
+│ *******____________________________________________________ │
+│                                                             │
+│                           &lt;Ok&gt;                              │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+
+┌──────────┤ Configuring netams ├───────────┐
+│                                           │
+│                                           │
+│ Repeat password for NeTAMS user "admin":  │
+│                                           │
+│ *******__________________________________ │
+│                                           │
+│                  &lt;Ok&gt;                     │
+│                                           │
+└───────────────────────────────────────────┘
+
+                
+				</pre>
+				<p>如果你想重新配置安装过程可以运行下面命令</p>
+				<pre class="screen">
+$ sudo dpkg-reconfigure netams netams-web
+				</pre>
+			</li><li class="step">
+				<p>基本配置</p>
+				<pre class="screen">
+$ sudo vim /etc/default/netams
+RUN="yes"
+				</pre>
+				<pre class="screen">
+$ sudo cp /etc/netams/netams.conf /etc/netams/netams.conf.old
+$ sudo vim /etc/netams/netams.conf
+
+$ sudo /etc/init.d/netams restart
+				</pre>
+				<pre class="screen">
+				
+$ cat /etc/apache2/conf.d/netams.conf
+Alias /netams/images /usr/share/netams
+Alias /netams/stat /var/lib/netams/stat
+
+&lt;Directory /var/lib/netams/stat/&gt;
+        Options -Indexes -FollowSymlinks
+
+        DirectoryIndex index.html
+
+        AllowOverride All
+&lt;/Directory&gt;
+
+&lt;Directory /usr/share/netams/&gt;
+        Options -Indexes -FollowSymlinks
+        AllowOverride None
+&lt;/Directory&gt;
+				
+				</pre>
+				<pre class="screen">
+				
+$ cat /etc/apache2/conf.d/netams-web.conf
+ScriptAlias /netams/cgi-bin /usr/share/netams-web
+
+# Uncomment the following if you have no netams package installed
+#Alias /netams/images /usr/share/netams-web/images
+
+&lt;Directory /usr/share/netams-web&gt;
+
+        Options -Indexes +FollowSymlinks
+
+        AddHandler cgi-script .cgi
+
+        AllowOverride None
+
+# By default we deny access from other hosts. May be you will need to configure
+# mod_auth_basic or mod_auth_mysql.
+        Order deny,allow
+        Deny from All
+        Allow from 127.0.0.1
+
+&lt;/Directory&gt;
+				
+				</pre>
+			</li><li class="step">
+				<p>.netamsctl.rc</p>
+				<pre class="screen">
+$ vim ~/.netamsctl.rc
+login=admin
+password=123456
+host=localhost
+
+
+$ netamsctl "show version"
+NeTAMS 3.4.3 (3475.1) buildd@yellow / Tue 06 Apr 2010 03:40:49 +0000
+Run time  22 mins 6.5699 secs
+System time:  22 mins 1.2800 secs
+Average CPU/system load: 0.10%
+Process ID: 23647 RES: 9212K
+Memory allocated: 3640404 (23161), freed (31) (0 NULL) [23130 used]
+Total objects:
+   Oids used: 9
+   NetUnits: 4
+   Policies: 3
+   Services: 10
+   Users: 1
+   Connections: 1 active, 8 total
+
+Services info:
+ Storage ID=1 type mysql wr_q 0/0 rd_q 0/0
+ Data-source ID=1 type LIBPCAP source eth0:0 loop 316382 average 4182 mcsec
+    Perf: average skew delay 21580 mcsec, PPS: 77, BPS: 16788
+Alerter 0 queue max: 255, current: 0
+ Scheduled tasks: 1
+
+				</pre>
+			</li></ol></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="netams-web"></a>7.3.2.1. netams-web</h4></div></div></div>
+			
+			<p>http://localhost/netams/stat/</p>
+			<p>http://localhost/netams/cgi-bin/login.cgi</p>
+		</div>
+	</div>
+</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="bandwidth.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="network.ntop.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">7.2. Bandwidth </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 7.4. Ntop</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script></body></html>
