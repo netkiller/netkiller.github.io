@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>13.5. 接口安全</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><link rel="home" href="../index.html" title="Netkiller Architect 手札" /><link rel="up" href="index.html" title="第 13 章 多维度架构之微服务" /><link rel="prev" href="ch13s04.html" title="13.4. 多维度架构之微服务拆分" /><link rel="next" href="../多维度架构之远程异地灾备.html" title="第 14 章 多维度架构之远程异地灾备" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+	    <a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">云社区</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">云栖社区</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/video.html">视频教程</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">13.5. 接口安全</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ch13s04.html">上一页</a> </td><th width="60%" align="center">第 13 章 多维度架构之微服务</th><td width="20%" align="right"> <a accesskey="n" href="../多维度架构之远程异地灾备.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td> 微信号 netkiller-ebook | QQ群：128659835 请注明“读者” </td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="microservice.interface"></a>13.5. 接口安全</h2></div></div></div>
+		
+		<p>
+			</p><div><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="NaN"><tr><td><img src="../images/backend/microservice/security-microservices.png" width="NaN" /></td></tr></table></div><p>
+		</p>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp128"></a>13.5.1. Restful 安全问提</h3></div></div></div>
+			
+			<p>Restful 的通信安全有很多中解决方案,例如</p>
+			<div class="orderedlist"><ol class="orderedlist compact" type="1"><li class="listitem">
+					<p>HTTP Basic Auth 认证</p>
+				</li><li class="listitem">
+					<p>Cooke / Session 认证</p>
+				</li><li class="listitem">
+					<p>Token 认证</p>
+				</li><li class="listitem">
+					<p>Oauth / OpenID</p>
+				</li></ol></div>
+			<p>等等，每一种方案都很成熟，这里不依依解释，如果不了解，请去搜索引擎查找相关资料。这里我谈谈在实施微服务项目中的心得，首先项目采用
+				Spring cloud 方案，Spring cloud 有自己的RestController
+				控制器，我们需要遵循他的规范开发，这就限制了很多传统的认证加密方法不能应用到 Spring cloud中。
+			</p>
+			<p>例如传统restful 使用 POST 方式提交，POST 数据格式如下：</p>
+			<pre class="screen">
+		
+name=Neo&amp;age=23&amp;md5=xxxxxxx
+		
+			</pre>
+			<p>然后做 token 校验。</p>
+			<p>而 Spring cloud 使用 raw 格式的数据做POST提交，例如</p>
+			<pre class="screen">
+				@RequestMapping(value = "/member/create", method =
+				RequestMethod.POST)
+				public void create(@RequestBody Member member)
+			</pre>
+			<p>我们不想在Spring框架上做额外的改动，又想解决信息的安全问题。	</p>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp129"></a>13.5.2. 第一个阶段采用 HTTP Basic Auth</h3></div></div></div>
+			
+			<p>这个方案简单，实施起来最为方便，因为项目比较紧急，所以就采用了这个方案，这个方案既可以在运维方处理，也可以在开发方处理，对于
+				Spring boot 只需引入Spring Security 简单配置，立即生效。
+			</p>
+			<p>
+				实现方式请参考：
+				<a class="ulink" href="http://www.netkiller.cn/java/spring/boot/security.html" target="_top">Spring boot with Spring security</a>
+			</p>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp130"></a>13.5.3. 第二阶段 HTTP Basic Auth + SSL</h3></div></div></div>
+			
+			<p>上面的方案适合在防火墙内部的服务器间通信，如果跨机房或者在广域网上就不在安全了，通过嗅探器抓包，包括 http basic
+				auth 的用户和密码，以及接口数据没有安全可言。
+				为Web 服务器增加 SSL 证书，可以解决信息安全问提。
+			</p>
+			<p>证书可以使用CA机构颁发的证书，也可以自己生成证书。</p>
+			<p>
+				证书可以配置在Web服务器上如Nginx， 实现方式请参考：
+				<a class="ulink" href="http://www.netkiller.cn/www/nginx/conf.html#http2" target="_top">http://www.netkiller.cn/www/nginx/conf.html#http2</a>
+				《Netkiller Web 手札》
+			</p>
+			<p>
+				也可以配置在 Spring boot 中， 实现方式请参考：
+				<a class="ulink" href="http://www.netkiller.cn/java/spring/boot/https.html" target="_top">Spring boot with HTTPS SSL</a>
+			</p>
+			<p>这个方案可以满足绝大部分用户的需求。</p>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp131"></a>13.5.4. 第三阶段 HTTP2 + HTTP Basic Auth + Oauth2</h3></div></div></div>
+			
+			<p>由于需要为手机端提供 restful
+				服务，之前的方式已经不能满足我们的需求，之前的方式更适合提供私有服务，不适合提供公共服务。所谓私有服务是指它的使用范围限制在企业内部，或者事业部间共享服务，总的来说可以通过防火墙控制服务区域。
+			</p>
+			<p>
+				对于公共服务 OpenID/Oauth 更适合，我们不关心用户地理位，终端设备的情况。实现方式请参考：
+				<a class="ulink" href="http://www.netkiller.cn/java/spring/boot/oauth2.html" target="_top">Spring boot with Oauth2</a>
+			</p>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp132"></a>13.5.5. 第三阶段，终极版诞生，HTTP2 + HTTP Basic Auth + Oauth2 + Jwt</h3></div></div></div>
+			
+			<div class="orderedlist"><ol class="orderedlist compact" type="1"><li class="listitem">
+					<p>SSL 双向认证</p>
+				</li><li class="listitem">
+					<p>HTTP Basic Auth 认证</p>
+				</li><li class="listitem">
+					<p>Oauth2 认证</p>
+				</li></ol></div>
+			<p>这是我们最终的方案，双向认证是服务器与客户端两端都需要证书才能通信。</p>
+			<pre class="screen">
+		
+App(IOS/Android) --&gt;  SSL 双向认证 --&gt; SLB/Proxy --&gt; Feign Client 		
+		
+			</pre>
+			<p>
+				<a class="ulink" href="file:///Users/neo/tmp/spring/security/oauth2.html#oauth2.jwt" target="_top">file:///Users/neo/tmp/spring/security/oauth2.html#oauth2.jwt</a>
+			</p>
+		</div>
+
+	</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ch13s04.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="../多维度架构之远程异地灾备.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">13.4. 多维度架构之微服务拆分 </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 14 章 多维度架构之远程异地灾备</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script></body></html>

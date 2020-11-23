@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>12.2. 容器会遇到的问题</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><link rel="home" href="../index.html" title="Netkiller Architect 手札" /><link rel="up" href="index.html" title="第 12 章 Kubernetes &amp; Docker 实施中你会遇到的问题" /><link rel="prev" href="index.html" title="第 12 章 Kubernetes &amp; Docker 实施中你会遇到的问题" /><link rel="next" href="ch12s03.html" title="12.3. 人员的问题" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+	    <a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">云社区</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">云栖社区</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/video.html">视频教程</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">12.2. 容器会遇到的问题</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><th width="60%" align="center">第 12 章 Kubernetes &amp; Docker 实施中你会遇到的问题</th><td width="20%" align="right"> <a accesskey="n" href="ch12s03.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td> 微信号 netkiller-ebook | QQ群：128659835 请注明“读者” </td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp522"></a>12.2. 容器会遇到的问题</h2></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp106"></a>12.2.1. 程序启动的区别</h3></div></div></div>
+			
+			<p>在Linux是一般是采用守护进程方式启动。启动后进入后台，启动采用 systemd 。</p>
+			<p>容器中启动通常是直接运行，这样的运行方式，相当于你在linux的Shell 终端直接运行一样，是在前台运行，随时 CTRL + C 或者关闭终端窗口，程序就会退出。容器采用这种方式启动，就是为了让 docker 管理容器，docker 能够感知到容器的当前状态，如果程序退出，docker 将会重新启动这个容器。</p>
+			<p>守护进程方式需要记录 pid 即父进程ID，用于后面管理该进程，例如可以实现 HUP 信号处理。也就是 reload 操作，不用退出当前程序实现配置文件刷新。处理 HUP 信号，无需关闭 Socker 端口，也不会关闭线程或进程，用户体验更好。</p>
+			<p>容器是直接运行（前台运行），所以没有 PID 也不能实现 reload 操作。 配置文件更新需要重新启动容器，容器启动瞬间TCP Socker 端口关闭，此时用户会 timeout。甚至该服务可能会引起集群系统的雪崩效应。</p>
+			<p>很多镜像制作者更趋向使用环境变量传递启动参数。</p>
+			<p>当然你也可以在容器中使用 systemd ，这样做容器不能直接感知到容器的运行状态，systemctl stop example 后，容器仍然正常。需要做存活和健康检查。通过健康状态判断容器的工作情况。如果处于非健康状态，将该节点从负载均衡节点池中将它踢出去。</p>
+			<p>Linux 启动一个应用远远比docker 启动一个容器速度要快。因为物理机或者虚拟机的Linux操作系统已经启动，虚拟机也分配了资源，运行可执行文件基本上是瞬间启动。而 docker 启动容器，要分配资源（分配内存和CPU资源，新建文件系统），相当于创建一个虚拟机的过程，最后载入约200MB左右的镜像，并将镜像运行起来，所以启动所需时间较长，有时不可控，尤其是Java应用更为突出。</p>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp107"></a>12.2.2. 存储面临的问题</h3></div></div></div>
+			
+			<p>传统 Linux 直接操作本地硬盘，IO性能最大化。</p>
+			<p>私有云还好办公有云处处受限。</p>
+			<p>自建的 Docker 或 Kubrnetes 可以使用宿主主机资源，公有云只能使用网络文件系统和分布式系统。</p>
+			<p>这也是我的架构中 KVM，Docker，Kubernetes，物理机混合使用的原因，根据业务场景的需要来选择哪种方案。</p>
+			<p>物理机上部署 docker 可以分配宿主主机的所有资源，适合做有状态的服务的存储持久化的需求。</p>
+			<p>私有云 Kubernetes 适合做 CPU密集型运算服务，虽然通过local 卷和 hostPath 可以绑定，但是管理起来不如 Docker 更方便。</p>
+			<p>NFS 基本是做实验用的，不能用在生产环境。我20年的职业生涯遇到过很多奇葩，例如 NFS 卡顿，NFS 用一段时间后访问不了，或者可以访问，文件内容是旧的等等。</p>
+			<p>无论是NFS是更先进的分布式文件系统，如果不是 10G以太网，基本都不能用在生产环境。10年前我用4电口1G网卡做端口聚合勉强可以用于生产环境，不过10年前的互联网生态跟当今不同，那时还是以图文为主，确切的说是文字为主，配图还很少。</p>
+			<p>所以涉及到存储使用分布式文件系统的前提是必须是 10G以上以太网或者8G以上的FC 存储。这样才不会有IO瓶颈。任何分布式文件系统都不可能比本地文件系统稳定，除了速度还有延迟等等。</p>
+			<p>10GB 电口，光口以太网已经出来十几年了，相对比较便宜，可以使用 4光口 10G网卡，然后做端口聚合，变成 40G 网口。</p>
+			<p>现在 40G光口交换机都在10-20万之间。一个40G的交换口可以分出四个10GB口。 </p>
+			<p>如果使用40GB以上的以太网，那么总成本可能会超过物理机+虚拟机的解决方案。</p>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp108"></a>12.2.3. 内部域名DNS </h3></div></div></div>
+			
+			<p>由于在集群环境中容器名称是随机，IP地址是不固定的，甚至端口也是动态的。为了定位到容器的节点，通常集群中带有DNS功能，为每个节点分配一个域名，在其他容器中使用域名即可访问到需要的容器。</p>
+			<p>看似没有问题，我的职业生涯中就遇到过DNS的问题，bind,dnsmseq 我都用过，都出现过事故。解析卡顿，ping www.domain.com 后迟迟解析不出IP。最长一次用了几分钟才解析到IP地址。</p>
+			<p>所以后面就非常谨慎，配置文件中我们仍然使用域名，因为修改配置文件可能需要 reload 应用，或者重新部署等等。域名写入配置，方便IP地址变更。例如 db.host=db.netkiller.cn 同时我们会在 /etc/hosts 中增加 xxx.xxx.xxx.xxx db.netkiller.cn 。这样主要使用 /etc/hosts 做解析，一旦漏掉 /etc/hosts 配置 DNS 还能工作。</p>
+			<p>故障分析，DNS 使用 UDP 协议 53 端口，UDP 在网络中传输不会返回状态，有无数种可能导致 DNS 解析失败。例如内部的交换机繁忙，背板带宽不够（用户存储转发数据包，你可以理解就是交换机的内存），路由的问题等等……</p>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp109"></a>12.2.4. 容器与网络</h3></div></div></div>
+			
+			<p>相比传统网络，容器中的网络环境是十分复杂的。传统网络中一个数据包仅仅经过路由器，交换机，达到服务器，最多在服务前在增加一些防火墙，负载均衡等设备。</p>
+			<p>容器网络部分实现方式SDN（软件定义网络）相比物理机（路由器、交换机、无服务）实现相对复杂。容器里面使用了IP转发，端口转发，软路由，lvs，7层负载均衡等等技术…… 调试起来非常复杂。docker 的 iptables 规则很头痛。</p>
+			<p>例如一个TCP/IP 请求，需要经过多层虚拟网络设备（docker0,bridge0,tun0……）层层转发，再经过4层和7层的各种应用拆包，封包，最终到达容器内部。</p>
+			<p>有兴趣你可以测试一下对比硬件设备，容器的网络延迟和吞吐量。</p>
+			<p>容器的任何操作都是占用宿主主机的资源的，所以存在更多不可控的因素。例如CPU负载瞬态变化可以影响虚拟网络，如UDP丢包。而物理机+交换机+路由器的方案不会有任何影响。</p>
+			<p>在我学习Cisco的时候一直想不通，三层交换机都能启用路由了，为什么不在增加NAT功能？路由器都提供了ACL为什么不增加防火墙功能？为什么要分成三个设备？</p>
+			<p>为什么在高端的箱式插卡设备里，交换，路由，防火墙都能实现。仅仅是因为价格？</p>
+			<p>电信级别的设备 24口交换机只会配满足24口交换的CPU和背板，卖出24口的价格。如果增加NAT功能，不仅会影响交换能力，网络设备本身价格透明且敏感。</p>
+			<p>箱式网络设备定位园区，城域网，骨干网，不是用于接入服务器。价格空间很大，厂家采用堆料方式开发，功能要满足各种用户需求和各种业务的需要。用途比IDC接入更复杂。</p>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp110"></a>12.2.5. 容器的管理</h3></div></div></div>
+			
+			<p>传统服务可以通过键盘和显示器本地管理，OpenSSH 远程管理，通过配置还能使用串口。</p>
+			<p>容器的管理让你抓狂 docker exec 和 kubectl exec 进入后与传统Linux差异非常大，这是镜像制作者造成了。</p>
+			<div class="itemizedlist"><p class="title"><strong>控制台环境</strong></p><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem">有些镜像没有初始化 shell 只有一个 $ 符号</li><li class="listitem">没有彩色显示</li><li class="listitem">可能不支持 UTF-8，中文乱码</li><li class="listitem">可能不是标准 ANSI/XTerm 终端</li><li class="listitem">键盘定义五花八门，可能不是美式104键盘</li><li class="listitem">国家和时区并不是东八区，上海</li><li class="listitem">HOME 目录也是不是 /root</li></ul></div>
+			<div class="itemizedlist"><p class="title"><strong>OS 不完整</strong></p><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem">想查看端口情况，发现 netstat 和 ss 命令没有。</li><li class="listitem">想查看IP地址，发现 ifconfig, ip 命令没有。</li><li class="listitem">想测试IP地址是否畅通，发现 ping, traceroute 没有。</li><li class="listitem">想测试URL，发现 curl , wget 没有。</li></ul></div>
+			<p>有些镜像 dnf,yum,apk,apt 可以使用，有些镜像把包管理也给阉割了，你想安装上述工具都安装不了。</p>
+			<p>卧槽！！！ 一万匹草泥马</p>
+			<p>然后就自己用 Dockerfile 编译，整出200MB的镜像，卧槽这么大。</p>
+			<p>你还会发现你编译的程序没有yum/dnf官方制作的好，它们做了编译器的优化。你如果不相信你可以编译一个 nginx 然后看看bin/nginx这个文件的大小，你再使用 dnf install nginx 安装，比较以下两个二进制文件。你会发现你编译出来的二进制文件足有8M大小，而dnf安装的可能只有4M左右。</p>
+
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp114"></a>12.2.6. 容器与安全</h3></div></div></div>
+			
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp111"></a>12.2.6.1. 网络安全</h4></div></div></div>
+				
+				<p>很多容器的镜像中是不包含 iptables 的，所以无法做颗粒度很细的容器内部网络安全设置。即使你制作的镜像带有iptables ，多数容器的侧咯，IP地址和端口是随机变化的。绑定IP地址又带了容器的复杂性。</p>
+				<p>一旦攻入一个容器，进入容器后，容器与容器间基本是畅通无阻。</p>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp112"></a>12.2.6.2. 挂马风险</h4></div></div></div>
+				
+				<p>在容器中藏一个后门比物理机更容易，如上文所说很多容器中没有调试相关命令，限制了你排查后门的难度。所以Dockerfile 制作镜像，最好使用官方镜像衍生出你的镜像。</p>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp113"></a>12.2.6.3. 隔离安全</h4></div></div></div>
+				
+				<p>容器间是隔离安全的，kubernetes 还有明明空间和RBAC等等。但是......</p>
+				<p>有时我们为了产生持久化会使用本地卷，或将容器目录挂载到节点宿主主机中。这也带来一个安全问题，一是可能大家使用了相同的文件或目录名，相互覆盖对方的文件。二是不小心将敏感信息写入了到宿主主机，存在信息泄露风险。</p>
+				<p>除此之外 local volume, hostPath 以及没有用户认证的网络文件系统，都存在这种风险。例如NFS，因为Pod是随机IP地址，NFS服务器无法通过IP地址设置访问规则。</p>
+			</div>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp115"></a>12.2.7. 容器与监控</h3></div></div></div>
+			
+			<p>谈到监控，跳不开 prometheus（普罗米修斯），它并不能覆盖到所有监控。</p>
+			<p>我曾经写过一篇文章《监控的艺术》网上可以搜到。</p>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp116"></a>12.2.8. 容器与CI/CD</h3></div></div></div>
+			
+			<p>在DevOps场景中，使用 docker 或 kubernetes 做 CI/CD 是很扯淡的。</p>
+			<p>当 git 产生提交后，gitlab/jenkins 启动容器，下载代码，编译，打包，测试，产生构建物，编译 Dockerfile ，上传 docker 镜像到 registry，最后部署到容器执行。</p>
+			<p>卧槽！！！速度能急死你。</p>
+			<p>于是乎，我们做了 Cache。 不用每次都 pull 镜像，缓存 Maven 的 .m2 库，不再清理代码（mvn clean）提速不少，测试环境凑合用吧。 注意不mvn clean 有时会编译出错</p>
+			<p>至于生产环境，我就不说了，有多少人真用CD部署生产环境。</p>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp117"></a>12.2.9. </h3></div></div></div>
+			
+		</div>
+	</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ch12s03.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 12 章 Kubernetes &amp; Docker 实施中你会遇到的问题 </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 12.3. 人员的问题</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script></body></html>

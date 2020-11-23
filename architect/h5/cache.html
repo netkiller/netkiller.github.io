@@ -31,9 +31,155 @@
 			</li></ol></div>
 		<p>将上面的缓存合理地，有选择性的使用可大大提高网站的访问能力。</p>
 		<p>总之，想让你的网站更快，更多并发，答案是cache,cache 再 cache</p>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp22"></a>2.3.1. 浏览器缓存</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp25"></a>2.3.1. 浏览器缓存</h3></div></div></div>
 			
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp19"></a>2.3.1.1. Expires</h4></div></div></div>
+
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp21"></a>2.3.1.1. Cache-Control</h4></div></div></div>
+				
+				<p>通过 Cache-Control 设置页面缓存时间</p>
+				<pre class="screen">
+max-age
+max-age 格式写为：max-age=n，n是以秒为单位, 这个值是告知客户端GMT + N 后页面过期，缓存服务器在s-maxage值为空的时候也会使用这个参数的值。
+
+s-maxage
+s-maxage的格式跟max-age一样，只不过他是给缓存服务器使用的。
+
+must-revalidate
+这个参数用来告知客户端和缓存服务器，在GET请求的时候必须与源服务器验证实体是否为最新版本。
+
+Cache-Control:max-age=1200,s-maxage=3600
+			</pre>
+				<pre class="screen">
+Last-Modified
+这个参数提供了实体最近一次被修改的时间。这个名字起得不错，当实体被修改了之后，这个参数也就会被修改.
+			</pre>
+				<p>ETag</p>
+				<pre class="screen">
+ETag
+ETag是根据内容生成的一段hash字符串，采用信息摘要算法，保证每一个页面有一个唯一字串。
+			</pre>
+				<p>expires</p>
+				<p>expires 是HTTP 1.0 中定义的，已经不能满足用户的需要在 HTTP 1.1 加入了max-age，建议使用 max-age替代expires</p>
+				<pre class="screen">
+指令					含义
+public				可以在任何地方缓存
+private				只能被浏览器缓存
+no-cache			不能在任何地方缓存
+must-revalidate		缓存必须检查更新版本
+proxy-revalidate	代理缓存必须检查更新版本
+max-age				内容能够被缓存的时期，以秒表示
+s-maxage			覆盖共享缓存的max-age设置
+			</pre>
+				<p>在Squid, Varnish, Apache, Lighttpd, Nginx 中都可是实现HTTP Cache-Control推送，每次修改都需要重新加载，不太灵活。</p>
+				<pre class="screen">
+ExpiresActive On
+ExpiresByType image/gif "access plus 1 month"
+ExpiresByType image/png "access plus 1 month"
+ExpiresByType image/jpeg "access plus 1 month"
+ExpiresByType text/css "access plus 1 month"
+ExpiresByType text/javascript "access plus 1 month"
+ExpiresByType application/x-javascript "access plus 1 month"
+ExpiresByType application/x-shockwave-flash "access plus 1 month"
+
+
+server.modules = (
+...
+"mod_expire",
+...
+)
+
+$HTTP["url"] =~ "^/images/" {
+expire.url = ( "" =&gt; "access 30 days" )
+}
+			</pre>
+				<p>我喜欢自己控制TTL时间，且每个页面单独设置，可以随时调整设置。</p>
+
+				<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp19"></a>2.3.1.1.1. 在程序中灵活操作 Cache-Control</h5></div></div></div>
+					
+
+					<p>在MVC框架中每个控制器下的方法都可以单独操作Cache</p>
+					<pre class="screen">
+Class blog extend Controller{
+	blog(){
+		header('Cache-Control: max-age=28800');
+	}
+	list(){
+		header('Cache-Control: max-age=3600');
+	}
+	details(){
+		header('Cache-Control: max-age=160');
+	}
+}
+				</pre>
+					<p>你还可以封装到Controller中</p>
+					<pre class="screen">
+Class blog extend Controller{
+	blog(){
+		this-&gt;cache('28800');
+	}
+	list(){
+		this-&gt;cache('3600');
+	}
+	details(){
+		this-&gt;cache('160');
+	}
+}
+				</pre>
+				</div>
+				<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idp20"></a>2.3.1.1.2. 非程序文件缓存处理</h5></div></div></div>
+					
+					<p>首先做一个Rewrite让程序接管所有图片请求</p>
+					<pre class="screen">
+url.rewrite = ( "^/(.+)" =&gt; "/index.php/$1" )
+				</pre>
+					<p>然后程序通过PATHINFO取出图片URL</p>
+					<pre class="screen">
+http://images.example.com/your/dir/test.jpg =&gt; http://images.example.com/index.php/your/dir/test.jpg
+				</pre>
+					<p>程序取出 /your/dir/test.jpg 设置 Content-type 并输出二进制流</p>
+					<p>详细参考</p>
+					<pre class="screen">
+				
+&lt;?php
+    // Test image.
+    $images = '/test/foo.png';
+
+    $headers = apache_request_headers();
+
+    if (isset($headers['If-Modified-Since']) &amp;&amp; (strtotime($headers['If-Modified-Since']) == filemtime($images))) {
+        header('Last-Modified: '.gmdate('D, d M Y H:i:s', filemtime($images)).' GMT', true, 304);
+    } else {
+        header('Content-Type: image/png');
+        print file_get_contents($fn);
+		if (file_exists($images)) {
+			header('Last-Modified: '.gmdate('D, d M Y H:i:s', filemtime($images)).' GMT', true, 200);
+			header("Cache-Control: max-age=3600, must-revalidate");
+			header('Content-Length: '.filesize($images));
+			header('Content-type: ' .mime_content_type($images));
+			flush();
+			readfile($images);
+			exit;
+		}
+    }
+				
+					</pre>
+					<p>javascript 文件也可以使用类似方法处理</p>
+					<pre class="screen">
+				
+	private function js($file){
+		if (file_exists($file)) {
+			header("Cache-Control: max-age=3600, must-revalidate");
+			header('Content-type: text/javascript');
+			flush();
+			readfile($file);
+			exit;
+		}
+	}
+				
+					</pre>
+				</div>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp22"></a>2.3.1.2. Expires</h4></div></div></div>
 				
 				<p>只要向浏览器输出过期时间HTTP协议头，不论是html还是动态脚本，都能被缓存。</p>
 				<p>HTML META</p>
@@ -61,7 +207,7 @@ header("Cache-Control: no-cache");
 					<p>有些浏览器可能不支持。</p>
 				</td></tr></table></div>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp20"></a>2.3.1.2. If-Modified-Since / Last-Modified</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp23"></a>2.3.1.3. If-Modified-Since / Last-Modified</h4></div></div></div>
 				
 				<p>If-Modified-Since 小于 Last-Modified 返回 200</p>
 				<pre class="screen">
@@ -97,7 +243,7 @@ Expires: Mon, 16 May 2011 08:11:14 GMT
 				
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp21"></a>2.3.1.3. ETag / If-None-Match</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp24"></a>2.3.1.4. ETag / If-None-Match</h4></div></div></div>
 				
 				<pre class="screen">
 				
@@ -130,8 +276,11 @@ Server: lighttpd/1.4.26
 				</pre>
 			</div>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp23"></a>2.3.2. CDN/逆向代理缓存</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp29"></a>2.3.2. CDN (Content Delivery Network) 与反向代理缓存</h3></div></div></div>
 			
+			<p>
+				</p><div><img src="../images/workflow/user-browser-server.png" /></div><p>
+			</p>
 			<div class="orderedlist"><p class="title"><strong>具有代表性的逆向代理服务器：</strong></p><ol class="orderedlist" type="1"><li class="listitem">
 					<p>Squid</p>
 				</li><li class="listitem">
@@ -158,23 +307,69 @@ Server: lighttpd/1.4.26
 				</li></ol></div>
 			<p>s-maxage 与 max-age用法类似，s-maxage针对代理服务器缓存。同样适用于CDN</p>
 			<p>s-maxage 与 max-age 组合使用可以提高CDN性能</p>
+
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp26"></a>2.3.2.1. CDN接口API</h4></div></div></div>
+				
+				<p>与CDN有关的开发工作</p>
+				<p>CDN 内容更新，一般厂商会提供一个SOAP接口，你可以通过接口刷新你的内容。但接口有限制，不能随意使用，一般是多少秒可以刷新一次，或者一天可以刷新几次</p>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp27"></a>2.3.2.2. 方向代理页面过期处理</h4></div></div></div>
+				
+				<p>方向代理一般都支持PURGE协议，Squid,Varnish等等向管理端口发送 PURGE 即可是使用页面刷新</p>
+				<pre class="screen">
+PURGE http://netkiller.github.net/index.html
+				</pre>
+				<p>有些方向代理如：Varnish 可以使用正则表达式</p>
+				<p>同时这些代理服务器都承受管理命令</p>
+				<p>squid: squidclient </p>
+				<p>varnish: varnishadm</p>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp28"></a>2.3.2.3. 内容版本化</h4></div></div></div>
+				
+				<p>例如这样的URL</p>
+				<pre class="screen">
+http://images.example.com/logo.gif
+http://images.example.com/product.jpg
+				</pre>
+				<p>我们可以通过Rewrite或PATHINFO等技术做为静态化。例如首次版本</p>
+				<pre class="screen">
+http://images.example.com/logo.1.gif		=&gt; logo.gif
+http://images.example.com/product.1.jpg		=&gt; product.jpg
+				</pre>
+				<p>原图发生变化后，版本递增</p>
+				<pre class="screen">
+http://images.example.com/logo.2.gif		=&gt; logo.gif
+http://images.example.com/product.2.jpg		=&gt; product.jpg
+				</pre>
+				<p>就的URL将丢弃</p>
+				<pre class="screen">
+http://images.example.com/logo.1.gif
+http://images.example.com/product.1.jpg
+				</pre>
+				<p>CDN 就回源去下面的URL，并且取到的是新图</p>
+				<pre class="screen">
+http://images.example.com/logo.2.gif
+http://images.example.com/product.2.jpg
+				</pre>
+			</div>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp24"></a>2.3.3. 负载均衡设备</h3></div></div></div>
+
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp30"></a>2.3.3. 负载均衡设备</h3></div></div></div>
 			
 			<p>F5 Big-IP, Array 等设备都提供硬件加速，其原理与squid, apache提供的功能大同小异</p>
 			<p>其中Array 页面压缩采用硬件压缩卡实现，SSL加速也采用硬件实现</p>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp25"></a>2.3.4. WEB服务器缓存</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp31"></a>2.3.4. WEB服务器缓存</h3></div></div></div>
 			
 			<p>例如，通过配置apache实现自身 cache</p>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp26"></a>2.3.5. 应用程序缓存</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp32"></a>2.3.5. 应用程序缓存</h3></div></div></div>
 			
 			<p>在这个领域百花齐放，相信你一定能找到适合你的。这些cache会为你提供一些api，来访问它。</p>
 			<p>代表性的 memcached 据我所是sina广泛使用，腾讯也曾经使用过后来开发了TC(Tencent Cache)，台湾雅虎则使用APC Cache。</p>
 			<p>另外模板引擎也有自己的缓存系统</p>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp27"></a>2.3.6. 数据库缓存</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp33"></a>2.3.6. 数据库缓存</h3></div></div></div>
 			
 			<p>数据库本身就有这个配置选项，如果需要你仍然可以在数据库前面加一道Cache。</p>
 			<p>例如PostgreSQL, MySQL 都提供参数可以将memcached编译到它内部</p>

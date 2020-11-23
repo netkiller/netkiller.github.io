@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>20.2. 协议测试</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><link rel="home" href="../index.html" title="Netkiller Architect 手札" /><link rel="up" href="index.html" title="第 20 章 多维度架构之压力测试" /><link rel="prev" href="index.html" title="第 20 章 多维度架构之压力测试" /><link rel="next" href="打破软件自动化测试的格局.html" title="20.3. 打破软件自动化测试的格局" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+	    <a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">云社区</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">云栖社区</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/video.html">视频教程</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">20.2. 协议测试</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><th width="60%" align="center">第 20 章 多维度架构之压力测试</th><td width="20%" align="right"> <a accesskey="n" href="打破软件自动化测试的格局.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td> 微信号 netkiller-ebook | QQ群：128659835 请注明“读者” </td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="协议测试"></a>20.2. 协议测试</h2></div></div></div>
+		
+
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp203"></a>20.2.1. What 什么是协议测试</h3></div></div></div>
+			
+			<p>什么事协议？ 协议是计算机进程或网络中进行数据交换而建立的规则、标准或约定的集合。</p>
+			<p>什么是协议测试? 协议测试就是软件界面与应用服务器间通信规则的测试。</p>
+			<p>需要注意一点，协议测试不是接口测试，接口测试通常是RPC调用，例如基于HTTP SOAP, XML-RPM 并不在本文的讨论范围之内，接口测试可以放在单元测试中。</p>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp204"></a>20.2.2. Why 为什么要做协议测试</h3></div></div></div>
+			
+			<p>传统测试更多注重界面的测试，界面是针对用户的，也是唯一可见，也是最容易测试的。我们通过下面的金字塔说明。</p>
+			<pre class="screen">
+	
+```text
+
+          /\
+         /  \ 
+        / UI \
+       /``````\
+      /  API   \
+     /``````````\
+    /   Service  \
+   /..............\
+```	
+	
+			</pre>
+			<p>用户只能看到 UI ，UI测试是有局限的，只能看到冰山一角，越往下层越难发现软件的缺陷。</p>
+
+			<p>互联网的今天应用软件已不仅仅是三层架构，互联网特点是多语言混合开发，软件运行在异构平台上。</p>
+
+			<p>举例最简单的B/S结构的应用测试如下:</p>
+			<pre class="screen">
+
+
+```text
+用户 -&gt; DNS -&gt; CDN -&gt; Proxy / SLB -&gt; Web -&gt; Application -&gt; Cache -&gt; Database
+```
+
+			</pre>
+			<p>这已经是最简单的结构了，复杂都远不止这些。中间环节还可以加入搜罗引擎，计划任务，单点登录......</p>
+
+			<p>所以仅仅通过UI测试是无法满足，但我们往往看到企业中测试团队的人员比例是，UI测试人数最多，Service 人数最少，呈现出倒金字塔形状。</p>
+
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp205"></a>20.2.3. where 在哪儿测试</h3></div></div></div>
+			
+
+
+			<p>这里谈的协议，不仅限于UI到服务间的协议，还有服务于服务见的协议，进程与进程间的协议。</p>
+
+			<p>这些协议五花八门，有私有协议，有开放式协议，有二进制协议，有文本协议，还有中性协议二进制与文本混用。</p>
+
+			<p>难以归类，从不同角度可能做不同的归类。</p>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp206"></a>20.2.4. when 什么时候测试</h3></div></div></div>
+			
+
+
+			<p>什么时候测试，我的建议紧随开发的进度。不要等待软件开发完时在测试，这样的好处是随时可能发现问题。</p>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp207"></a>20.2.5. Who 谁来做，执行对象</h3></div></div></div>
+			
+
+			<p>协议测试可能是传统科班出身测试工程师的门槛，但对于全栈工程师来说相对容易。协议测试通常无法使用现有的测试软件做测试，很多情况需要我们写专用的测试软件。</p>
+
+			<p>编写测试软件需要掌握哪些技术呢，除了精通一门语言还要掌握下面最基本的技能？</p>
+			<div class="orderedlist"><p class="title"><strong>数据处理：</strong></p><ol class="orderedlist" type="1"><li class="listitem">XML处理 DOM / XPATH </li><li class="listitem">系列化与反序列化 例如 语言自身的系列化 / Json / Hession / MsgPack / Protobuf</li><li class="listitem">编码与解码 URL / Base64 / Unicode / GB系列</li><li class="listitem">摘要 MD5 / SHA1 / CRC32</li><li class="listitem">加密解密 DES / ASE / 分对称公私钥加密</li><li class="listitem">pack/unpack 主要用于处理C/C++结构体重的数据库结构</li></ol></div>
+			<div class="orderedlist"><p class="title"><strong>通信：</strong></p><ol class="orderedlist" type="1"><li class="listitem">HTTP GET/POST/PUT/DELETE</li><li class="listitem">消息队列 RabbitMQ / ActiveMQ / ZeroMQ</li><li class="listitem">Unix Socket / Tcp Socket / UDP Socket</li><li class="listitem">HTML5 / Web Socket / Ajax</li><li class="listitem">管道</li><li class="listitem">Sniffer 软件（抓包/监控）</li></ol></div>
+			<div class="orderedlist"><p class="title"><strong>信号，线程，存储：</strong></p><ol class="orderedlist" type="1"><li class="listitem">共享内存</li><li class="listitem">线程锁</li><li class="listitem">信号处理</li></ol></div>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp208"></a>20.2.6. How 怎样做测试</h3></div></div></div>
+			
+			<p>使用现有的测试软件</p>
+			<p>编写软件模拟协议发出请求然后验证反馈结果</p>
+			<p>嗅探，植入</p>
+			<p>目前自动化测试软件发展很快，可以实现很多协议测试，但仍有局限。所以仍然需要用户自己开发测试工具。</p>
+
+			<p>对于 HTTP GET / POST 完全可以通过现有测试软件实现我们的测试需求。</p>
+
+			<p>对于已知协议的测试是比较容易进行的，更多是工作是，编码/解码，协议的送出与反馈。</p>
+
+			<p>对于很多未知的私有协议就需要经验了，需要大量协议嗅探，总结，反复尝试。文本协议门槛比较低，对于私有的二进制协议难度相对高些。</p>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp209"></a>20.2.7. 如何学习协议测试</h3></div></div></div>
+			
+			<div class="orderedlist"><p class="title"><strong>学习协议测试分为几个阶段：</strong></p><ol class="orderedlist" type="1"><li class="listitem">
+					<p>首先从文本协议开始学起，第一步先拿 SMTP 发送邮件 练手，了解基本协议后，就可以进行下一步学习，学习HTTP协议，处理基本的请求。</p>
+					<p>可以尝试自己开发一个 Web 服务器，不用太复杂，实现基本的目录浏览，文件下载，GET/POST 处理。最后学习ajax, json, websocket 等等，</p>
+				</li><li class="listitem">
+					<p>然后学习二进制协议。早年都欢拿 MSN / QQ 练手，实现一个QQ机器人，这里涉及到其他语言处理C/C++的结构体的问题，就是 pack/unpack 操作，这是一道门槛，阔跨过去前途光明。</p>
+					<p>目前很多软件架构上尽量避免使用结构体，而是使用序列化例如msgpack/hession/Protobuf等等，主要是方便多语音环境的通信。</p>
+				</li><li class="listitem">
+					<p>最后学习与硬件交互，可以拿GSM Modem AT 命令练手，DTMF 信令解码，AFSK数字信号处理 等等</p>
+				</li></ol></div>
+			<div class="sidebar"><div class="titlepage"><div><div><p class="title"><strong>案例：</strong></p></div></div></div>
+				
+				<p>Motorola Mototrbo DMR 数字电台测试案例分享给各位。</p>
+				<p>我是深圳较早一批使用数字电台的用户，手上有一台 Mototrbo XIR P8668 \(对讲机，一下简称P8668\)，P8668拥有GPS/短信收发功能。 我想搞清楚这个短信收发如何实现，并计划实现一个每日发送天气预报给终端的功能。 P8668 通过蓝牙与电脑连接，蓝牙会虚拟一个网卡，任何通信都可以转发到蓝牙设备。</p>
+				<p>首先我开启嗅探器，扫描 P8668 的UDP端口，使用python 开发了一个简单日志记录功能，记录端口上通信的数据。然后开始测试，首先是ping功能，观看数据包变化。 没有多久就分析出ping的数据包，然后是发送短信，接收短信。反复比较分析每条日志，找出变化规律，最终完美的实现了短信收发。</p>
+			</div>
+		</div>
+
+
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp210"></a>20.2.8. 总结</h3></div></div></div>
+			
+			<p>掌握协议测试的测试工程师钱途无量，协议测试门槛也远远高于一般的测试。</p>
+			<p>对于协议测试工程师我要说的是，不要局限在协议测试工程师这个领域，格局要放大些，例如监控领域，自动化领域，游戏外挂领域等等。</p>
+		</div>
+
+	</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="打破软件自动化测试的格局.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 20 章 多维度架构之压力测试 </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 20.3. 打破软件自动化测试的格局</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script></body></html>

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>19.3. 程序怎么写？</title><link rel="stylesheet" type="text/css" href="/docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><link rel="home" href="index.html" title="Netkiller Architect 手札" /><link rel="up" href="多维度架构之Socket连接数.html" title="第 19 章 多维度架构之Socket连接数" /><link rel="prev" href="ch19s02.html" title="19.2. 影响连接的因素有哪些？" /><link rel="next" href="testing/index.html" title="第 20 章 多维度架构之压力测试" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+	    <a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">云社区</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">云栖社区</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/video.html">视频教程</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">19.3. 程序怎么写？</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ch19s02.html">上一页</a> </td><th width="60%" align="center">第 19 章 多维度架构之Socket连接数</th><td width="20%" align="right"> <a accesskey="n" href="testing/index.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td> 微信号 netkiller-ebook | QQ群：128659835 请注明“读者” </td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp555"></a>19.3. 程序怎么写？</h2></div></div></div>
+		
+		<p>直接进入主题，服务器内核参数调整完毕，网络设备调试完成，一切就绪，程序改怎么写才能达到百万级TCP链接呢？</p>
+		<p>不知你是否注意到 nginx 有一个 listen 配置项，Redis 里有一个 bind 配置项。很多人可能都不理解时用来干什么的。</p>
+		<p>它是用来配置使用那个IP地址监听80端口，它不仅仅用来干这个。当配置为127.0.0.1 的时候不走网卡，不受网卡带宽的限制，所以在同一台服务器的Socket调用，我们通常使用localhost。当配置为 0.0.0.0 的时候表示监听所有IP地址，可以是多个网卡提高整体带宽。</p>
+		<p>我们仅仅是用来测试，所以这个程序应该尽量不操作磁盘，不去打开文件，减少内存不必要的开销，节省网卡带宽。</p>
+		<p>对于客户端内核端口范围配置作用于单个IP地址，所以为了能够使用足够多的本地端口，我们可以在服务器上配置多个IP地址，通常一个网卡可以配置 254个IP地址。</p>
+		<p>得出 （65535 - 1024）* 254 = 理论能开出的端口</p>
+		<p>还没完，我们上网的出口是走默认网关那个网卡的默认IP地址，Linux eth0 上配置的IP地址，而你设置了另外254个IP地址是 eth0:1~254 或者分布到其他网卡上（eth1,eth2……）。你测试会发现，对于服务器来说访问过来的IP地址永远都是 eth0 那个IP地址，也无法突破 65535的限制。如果你想使用其他的IP地址发起请求，需要额外的配置，修改路由表。</p>
+		<p>好了，到此为止原理已经将完，你可以试试写一个百万链接的服务器端试试。</p>
+	</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ch19s02.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="多维度架构之Socket连接数.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="testing/index.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">19.2. 影响连接的因素有哪些？ </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 20 章 多维度架构之压力测试</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script></body></html>

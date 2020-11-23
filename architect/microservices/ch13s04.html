@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>13.4. 多维度架构之微服务拆分</title><link rel="stylesheet" type="text/css" href="..//docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><link rel="home" href="../index.html" title="Netkiller Architect 手札" /><link rel="up" href="index.html" title="第 13 章 多维度架构之微服务" /><link rel="prev" href="ch13s03.html" title="13.3. 微服务的性能" /><link rel="next" href="microservice.interface.html" title="13.5. 接口安全" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+	    <a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">云社区</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">云栖社区</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/video.html">视频教程</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">13.4. 多维度架构之微服务拆分</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ch13s03.html">上一页</a> </td><th width="60%" align="center">第 13 章 多维度架构之微服务</th><td width="20%" align="right"> <a accesskey="n" href="microservice.interface.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td> 微信号 netkiller-ebook | QQ群：128659835 请注明“读者” </td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp529"></a>13.4. 多维度架构之微服务拆分</h2></div></div></div>
+		
+		<p>最近在群里有人问关闭分布式事务的话题，详细听了他们需求后。我呵呵一笑，大约在15年前我就遇到过这种问题。</p>
+		<p>起因是这样的，这是一个电商系统，架构师给出的架构是这样的：</p>
+		<pre class="screen">
+		
+用户中心：负责用户注册，登录，用户信息，钱包管理……
+商品中心：负责商品的管理，包括展示，价格和库存管理……
+广告中心：负责商品推广，促销……
+物流中心：负责订单的物流……
+等等中心：负责等等……		
+		
+		</pre>
+		<p>每个中心都有一个独立域名例如：</p>
+		<pre class="screen">
+		
+user.domain.com
+product.domain.com
+ad.domain.com
+search.domain.com
+m.domain.com
+……		
+		
+		</pre>
+		<p>这种架构设计会存在一个问题，用户每下一个订单，都需要连接多个中心，做一连串调用，最终完成下订单这个功能。因为用户可能操作过程中终止购物流程，或者不可抗因素导致流程无法继续。为此需要设计了一种分布式事务系统，用来解决事务回滚的问题。</p>
+		<p>所谓的分布式事务，是指跨服务器实现数据库生成与回滚操作，例如：用户购物，浏览商品，添加购物车，选择物流方式…… 这些数据产生在不同服务器上，如果用户取消订单，数据将依次反向回滚。</p>
+		<p>无独有偶，另一个跨境电商公司的同事也遇到了这种问题，苦苦找不到解决方案，想起了我，询问我的意见。</p>
+		<p>有时候你会发现，人们会陷入思维边界的陷阱，全力以赴在错误的方向上，无法自拔。</p>
+
+		<p>首先，划分中心的架构思维，之所以会出现这种划分方法，我认为跟我们的教育方式有关，导致了多数人都会沿用这种思维定式。</p>
+		<p>其次，分布式服务的确能解决他们遇到的问题，能想到分布式事务，证明他们智商没有问题。但分布式事务不是最优解，是最差解决方案。</p>
+		<p>最后，出现了南辕北辙，在错误方向的道路上越走越远。</p>
+
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp123"></a>13.4.1. 分布式事务之路</h3></div></div></div>
+			
+			<p>大约在15年前我们也遇到了这个问题，幸好我及时出手纠正了架构设计的误区，从而没有走上分布式事务之路。</p>
+			<p>那时还没有微服务的概念，也没有容器技术，我们主要使用物理服务器，在服务器上运行多个实例。从BAT高薪挖来的架构师的思路跟上面一样，将应用划分成各种中心，并且要求每个中心都部署在独立物理机上。划分中心这种方式也与当时的开发模式有关，采用敏捷开发，分成多个小组，每个小组负责一个中心，小组间定义好信通接口，然后所有小组马力全开，活就一起开干了。现在想想简单又粗暴，就如人体器官一样，五脏六腑的联系不是通过一条神经实现的，他们的联系十分复杂。所以我们不能单独思考每个中心，然后就认为把它们合起来就是一个整体。</p>
+			<div class="sidebar"><div class="titlepage"><div><div><p class="title"><strong>成本控制</strong></p></div></div></div>
+				
+				<p>随之时间推移，服务器用量越来越多，且服务器上运行的实例长时间都达不到 20% 资源利用率。为此我们开始尝试刀片服务器，和多实例+负载均衡方式运行。</p>
+			</div>
+			<div class="sidebar"><div class="titlepage"><div><div><p class="title"><strong>运维的挑战</strong></p></div></div></div>
+				
+				<p>每个中心都需要与其他中心通信，配置文件非常复杂，这给运维带来不小负担。为此我们开发自动化发布系统。</p>
+			</div>
+			<div class="sidebar"><div class="titlepage"><div><div><p class="title"><strong>故障排查难点</strong></p></div></div></div>
+				
+				<p>因为参与的节点多，系统每天都会出现各种问题，同时每次故障排查及其耗时。例如每个节点都会产生日志，排查故障时，要一个节点一个节点检查。看查看所有节点上的日志。为此我们开发了一个日志同步程序，能够增量和差异同步日志到日志中心。</p>
+			</div>
+			<p>如果再继续下去，我们一定会去研发分布式事务。</p>
+			<p>此时有一个更好的机会等着我，于是我提出了离职申请，反正是准备离开了，也不怕得罪人，我想我应该在离职之前把这些问题跟公司说一下。</p>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp126"></a>13.4.2. 微服务拆分法则</h3></div></div></div>
+			
+			<div class="orderedlist"><p class="title"><strong>我向公司反映了目前面临的所有问题，并且提出了两个概念：</strong></p><ol class="orderedlist" type="1"><li class="listitem">基于工作流拆分服务：服务的拆分法则，基于工作流拆分服务，确保该工作流运行在一个实例中。</li><li class="listitem">服务器即是服务池：所有物理机应该是一个服务池，根据我们的需求，可以将它部署成任何服务。</li></ol></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp124"></a>13.4.2.1. 基于工作流拆分服务</h4></div></div></div>
+				
+				<p>上面提出的两点，直到今天也仍然适用，例如在微服务的拆分中。在我的职业生涯中，这两个概念始终在指导我的团队。下面我详细说明两个概念怎样应用到实际的工作中。</p>
+				<p>我们还以电商系统举例，用户下单购物的工作流，如果是按照中心划分，流程可能是这样的：</p>
+				<pre class="screen">
+				
+用户 —&gt; 商品中心(浏览) —&gt;  搜索中心（过滤）—&gt; 用户中心（添加购物车）—&gt; 物流中心 （物流方式） —&gt; 结算中心（支付结算/扣积分）—&gt; 商品中心（扣库存）—&gt; 用户中心 （完成）
+				
+				</pre>
+				<p>数据流在，商品中心，搜索中心，用户中心…… 服务器中不断传递，网络延迟，网络超时，网络故障等等任何错误都可能影响用户体验。</p>
+				<p>如果是运行在一个实例中呢？确切的说，我们需要让工作流运行在一个服务器上，一个CPU、内存和硬盘上。这样就没有分布式事务的需求了，数据库的事务处理解决了所有的问题，就这么简单！！！</p>
+				<p>基于这种法则，我们将几套工作流归类，放在一个实例中，放在今天就是微服务。同样微服务的拆分也尽量满足一套工作流在一个微服务客户端上，避免请求过程出现，一个微服务调用另一个微服务的情况。	</p>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp125"></a>13.4.2.2. 服务池的概念</h4></div></div></div>
+				
+				<p>服务器即是服务池的意思是，做到服务于服务器无关，与IP地址无关，通过运维手段，可以将服务器部署成任何服务，这样可以最大化利用硬件资源，不至于一些服务器资源闲置，而另一些则满负荷工作。这样更容易调配服务器资源。</p>
+				<p>这种概念在今天的容器中得到了更好的实现。</p>
+			</div>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp127"></a>13.4.3. 最后总结</h3></div></div></div>
+			
+			<p>还是那句话架构设计是做减法，不是堆技术。你需要从整体考虑，整体不等于个体的总和，这就是多维度思维。</p>
+			<p>分布式事务目前有成熟的解决方案，但是能不用在高并发，长工作流的需求上，这种方案增加了系统的复杂度。导致开发复杂，测试难度大，运维难，故障多。</p>
+		</div>
+	</div><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ch13s03.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="microservice.interface.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">13.3. 微服务的性能 </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 13.5. 接口安全</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script></body></html>
