@@ -1,0 +1,427 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>2.3. 缓存技术</title><link rel="stylesheet" type="text/css" href="../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><link rel="home" href="../index.html" title="Netkiller Architect 手札" /><link rel="up" href="index.html" title="第 2 章 多维度架构之网站HTML" /><link rel="prev" href="cluster.html" title="2.2. 集群(Cluster)" /><link rel="next" href="h5.static.html" title="2.4. 网站静态内容出版" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+   	    <a xmlns="" href="https://edu.51cto.com/lecturer/1703915.html">视频教程</a> |
+	    <a xmlns="" href="https://space.bilibili.com/486347986/">bilibili</a> |
+	    <a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">云社区</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">云栖社区</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">2.3. 缓存技术</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="cluster.html">上一页</a> </td><th width="60%" align="center">第 2 章 多维度架构之网站HTML</th><td width="20%" align="right"> <a accesskey="n" href="h5.static.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td> | </td><td>微信号 netkiller-ebook  </td><td> | </td><td>51CTO：<a href="https://edu.51cto.com/lecturer/1703915.html">视频教程</a></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="cache"></a>2.3. 缓存技术</h2></div></div></div>
+		
+		<p>首先要说明，很多缓存技术依赖静态化。下面展示了缓存可能出现的位置。</p>
+		<p>用户user -&gt; 浏览器缓存 IE/Firefox Cache -&gt; 逆向代理缓存 Reverse proxy Cache -&gt; WEB服务器缓存 Apache cache -&gt; 应用程序缓存 php cache -&gt; 数据库缓存 database cache</p>
+		<p>当然交换机，网络适配器，硬盘上也有Cache 但这不是我们要讨论的范围。</p>
+		<p>缓存存储方式主要是内存和文件两种，后者是存于硬盘中。</p>
+		<div class="orderedlist"><p class="title"><strong>网站上使用的缓存主要包括五种：</strong></p><ol class="orderedlist" type="1"><li class="listitem">
+				<p>浏览器 缓存</p>
+			</li><li class="listitem">
+				<p>逆向代理/CDN缓存</p>
+			</li><li class="listitem">
+				<p>WEB服务器缓存</p>
+			</li><li class="listitem">
+				<p>应用程序缓存</p>
+			</li><li class="listitem">
+				<p>数据库缓存</p>
+			</li></ol></div>
+		<p>将上面的缓存合理地，有选择性的使用可大大提高网站的访问能力。</p>
+		<p>总之，想让你的网站更快，更多并发，答案是cache,cache 再 cache</p>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm227641834368"></a>2.3.1. 浏览器缓存</h3></div></div></div>
+			
+
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm227641833472"></a>2.3.1.1. Cache-Control</h4></div></div></div>
+				
+				<p>通过 Cache-Control 设置页面缓存时间</p>
+				<pre class="screen">
+max-age
+max-age 格式写为：max-age=n，n是以秒为单位, 这个值是告知客户端GMT + N 后页面过期，缓存服务器在s-maxage值为空的时候也会使用这个参数的值。
+
+s-maxage
+s-maxage的格式跟max-age一样，只不过他是给缓存服务器使用的。
+
+must-revalidate
+这个参数用来告知客户端和缓存服务器，在GET请求的时候必须与源服务器验证实体是否为最新版本。
+
+Cache-Control:max-age=1200,s-maxage=3600
+			</pre>
+				<pre class="screen">
+Last-Modified
+这个参数提供了实体最近一次被修改的时间。这个名字起得不错，当实体被修改了之后，这个参数也就会被修改.
+			</pre>
+				<p>ETag</p>
+				<pre class="screen">
+ETag
+ETag是根据内容生成的一段hash字符串，采用信息摘要算法，保证每一个页面有一个唯一字串。
+			</pre>
+				<p>expires</p>
+				<p>expires 是HTTP 1.0 中定义的，已经不能满足用户的需要在 HTTP 1.1 加入了max-age，建议使用 max-age替代expires</p>
+				<pre class="screen">
+指令					含义
+public				可以在任何地方缓存
+private				只能被浏览器缓存
+no-cache			不能在任何地方缓存
+must-revalidate		缓存必须检查更新版本
+proxy-revalidate	代理缓存必须检查更新版本
+max-age				内容能够被缓存的时期，以秒表示
+s-maxage			覆盖共享缓存的max-age设置
+			</pre>
+				<p>在Squid, Varnish, Apache, Lighttpd, Nginx 中都可是实现HTTP Cache-Control推送，每次修改都需要重新加载，不太灵活。</p>
+				<pre class="screen">
+ExpiresActive On
+ExpiresByType image/gif "access plus 1 month"
+ExpiresByType image/png "access plus 1 month"
+ExpiresByType image/jpeg "access plus 1 month"
+ExpiresByType text/css "access plus 1 month"
+ExpiresByType text/javascript "access plus 1 month"
+ExpiresByType application/x-javascript "access plus 1 month"
+ExpiresByType application/x-shockwave-flash "access plus 1 month"
+
+
+server.modules = (
+...
+"mod_expire",
+...
+)
+
+$HTTP["url"] =~ "^/images/" {
+expire.url = ( "" =&gt; "access 30 days" )
+}
+			</pre>
+				<p>我喜欢自己控制TTL时间，且每个页面单独设置，可以随时调整设置。</p>
+
+				<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm227641826048"></a>2.3.1.1.1. 在程序中灵活操作 Cache-Control</h5></div></div></div>
+					
+
+					<p>在MVC框架中每个控制器下的方法都可以单独操作Cache</p>
+					<pre class="screen">
+Class blog extend Controller{
+	blog(){
+		header('Cache-Control: max-age=28800');
+	}
+	list(){
+		header('Cache-Control: max-age=3600');
+	}
+	details(){
+		header('Cache-Control: max-age=160');
+	}
+}
+				</pre>
+					<p>你还可以封装到Controller中</p>
+					<pre class="screen">
+Class blog extend Controller{
+	blog(){
+		this-&gt;cache('28800');
+	}
+	list(){
+		this-&gt;cache('3600');
+	}
+	details(){
+		this-&gt;cache('160');
+	}
+}
+				</pre>
+				</div>
+				<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm227641825920"></a>2.3.1.1.2. 非程序文件缓存处理</h5></div></div></div>
+					
+					<p>首先做一个Rewrite让程序接管所有图片请求</p>
+					<pre class="screen">
+url.rewrite = ( "^/(.+)" =&gt; "/index.php/$1" )
+				</pre>
+					<p>然后程序通过PATHINFO取出图片URL</p>
+					<pre class="screen">
+http://images.example.com/your/dir/test.jpg =&gt; http://images.example.com/index.php/your/dir/test.jpg
+				</pre>
+					<p>程序取出 /your/dir/test.jpg 设置 Content-type 并输出二进制流</p>
+					<p>详细参考</p>
+					<pre class="screen">
+				
+&lt;?php
+    // Test image.
+    $images = '/test/foo.png';
+
+    $headers = apache_request_headers();
+
+    if (isset($headers['If-Modified-Since']) &amp;&amp; (strtotime($headers['If-Modified-Since']) == filemtime($images))) {
+        header('Last-Modified: '.gmdate('D, d M Y H:i:s', filemtime($images)).' GMT', true, 304);
+    } else {
+        header('Content-Type: image/png');
+        print file_get_contents($fn);
+		if (file_exists($images)) {
+			header('Last-Modified: '.gmdate('D, d M Y H:i:s', filemtime($images)).' GMT', true, 200);
+			header("Cache-Control: max-age=3600, must-revalidate");
+			header('Content-Length: '.filesize($images));
+			header('Content-type: ' .mime_content_type($images));
+			flush();
+			readfile($images);
+			exit;
+		}
+    }
+				
+					</pre>
+					<p>javascript 文件也可以使用类似方法处理</p>
+					<pre class="screen">
+				
+	private function js($file){
+		if (file_exists($file)) {
+			header("Cache-Control: max-age=3600, must-revalidate");
+			header('Content-type: text/javascript');
+			flush();
+			readfile($file);
+			exit;
+		}
+	}
+				
+					</pre>
+				</div>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm227641833344"></a>2.3.1.2. Expires</h4></div></div></div>
+				
+				<p>只要向浏览器输出过期时间HTTP协议头，不论是html还是动态脚本，都能被缓存。</p>
+				<p>HTML META</p>
+				<pre class="screen">
+				
+&lt;meta http-equive="Expires" content=" Mon, 10 Jan 2000 00:00:00 GMT"/&gt;
+&lt;meta http-equive="Cache-Control" content="max-age=300"/&gt;
+&lt;meta http-equive="Cache-Control" content="no-cache"/&gt;
+				
+				</pre>
+				<p>动态脚本</p>
+				<pre class="screen">
+				
+Expires: Mon, 10 Jan 2000 00:00:00 GMT
+Cache-Control: max-age=300
+Cache-Control: no-cache
+
+header("Expires: " .gmdate ("D, d M Y H:i:s", time() + 3600 * 24 * 7). " GMT");
+header("Cache-Control: max-age=300");
+header("Cache-Control: no-cache");
+				
+				</pre>
+				<p>很多web server都提供 Expires 模块</p>
+				<div class="tip" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Tip"><tr><td rowspan="2" align="center" valign="top" width="25"><img alt="[提示]" src="/graphics/tip.png" /></td><th align="left">提示</th></tr><tr><td align="left" valign="top">
+					<p>有些浏览器可能不支持。</p>
+				</td></tr></table></div>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm227641812368"></a>2.3.1.3. If-Modified-Since / Last-Modified</h4></div></div></div>
+				
+				<p>If-Modified-Since 小于 Last-Modified 返回 200</p>
+				<pre class="screen">
+				
+neo@neo-OptiPlex-780:/tmp$ curl -I http://www.163.com/
+HTTP/1.1 200 OK
+Server: nginx
+Content-Type: text/html; charset=GBK
+Transfer-Encoding: chunked
+Vary: Accept-Encoding
+Expires: Mon, 16 May 2011 08:12:05 GMT
+Cache-Control: max-age=80
+Vary: User-Agent
+Vary: Accept
+Age: 38
+X-Via: 1.1 ls100:8106 (Cdn Cache Server V2.0), 1.1 lydx156:8106 (Cdn Cache Server V2.0)
+Connection: keep-alive
+Date: Mon, 16 May 2011 08:11:23 GMT
+				
+				</pre>
+				<p>If-Modified-Since 大于 Last-Modified 返回 304</p>
+				<pre class="screen">
+				
+neo@neo-OptiPlex-780:/tmp$ curl -H "If-Modified-Since: Fri, 12 May 2012 18:53:33 GMT" -I http://www.163.com/
+HTTP/1.0 304 Not Modified
+Content-Type: text/html; charset=GBK
+Cache-Control: max-age=80
+Age: 41
+X-Via: 1.0 ls119:80 (Cdn Cache Server V2.0), 1.0 lydx154:8106 (Cdn Cache Server V2.0)
+Connection: keep-alive
+Date: Mon, 16 May 2011 08:11:14 GMT
+Expires: Mon, 16 May 2011 08:11:14 GMT
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm227641812240"></a>2.3.1.4. ETag / If-None-Match</h4></div></div></div>
+				
+				<pre class="screen">
+				
+neo@neo-OptiPlex-780:/tmp$ curl -I http://images.example.com/test/test.html
+HTTP/1.1 200 OK
+Cache-Control: s-maxage=7200, max-age=900
+Expires: Mon, 16 May 2011 09:48:45 GMT
+Content-Type: text/html
+Accept-Ranges: bytes
+ETag: "1984705864"
+Last-Modified: Mon, 16 May 2011 09:01:07 GMT
+Content-Length: 22
+Date: Mon, 16 May 2011 09:33:45 GMT
+Server: lighttpd/1.4.26
+				
+				</pre>
+				<pre class="screen">
+				
+neo@neo-OptiPlex-780:/tmp$ curl -H 'If-None-Match: "1984705864"' -I http://images.example.com/test/test.html
+HTTP/1.1 304 Not Modified
+Cache-Control: s-maxage=7200, max-age=900
+Expires: Mon, 16 May 2011 09:48:32 GMT
+Content-Type: text/html
+Accept-Ranges: bytes
+ETag: "1984705864"
+Last-Modified: Mon, 16 May 2011 09:01:07 GMT
+Date: Mon, 16 May 2011 09:33:32 GMT
+Server: lighttpd/1.4.26
+				
+				</pre>
+			</div>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm227641806464"></a>2.3.2. CDN (Content Delivery Network) 与反向代理缓存</h3></div></div></div>
+			
+			<p>
+				</p><div><img src="../images/workflow/user-browser-server.png" /></div><p>
+			</p>
+			<div class="orderedlist"><p class="title"><strong>具有代表性的逆向代理服务器：</strong></p><ol class="orderedlist" type="1"><li class="listitem">
+					<p>Squid</p>
+				</li><li class="listitem">
+					<p>Nginx</p>
+				</li><li class="listitem">
+					<p>Varnish</p>
+				</li><li class="listitem">
+					<p>Apache cache module</p>
+				</li></ol></div>
+			<div class="orderedlist"><p class="title"><strong>其它逆向代理服务器</strong></p><ol class="orderedlist" type="1"><li class="listitem">
+					<p>一些提供cache的硬件设备</p>
+				</li><li class="listitem">
+					<p>最近几年出现了的 China Cache 服务商，也称CDN</p>
+				</li></ol></div>
+			<p>很多CDN厂商使用Squid 二次开发做为CDN节点，通过全球负载均衡使用分发</p>
+			<div class="orderedlist"><p class="title"><strong>这些CDN厂商主要做了一下二次开发</strong></p><ol class="orderedlist" type="1"><li class="listitem">
+					<p>logs 日志集中</p>
+				</li><li class="listitem">
+					<p>流量限制</p>
+				</li><li class="listitem">
+					<p>push,pull操作</p>
+				</li><li class="listitem">
+					<p>url 刷新</p>
+				</li></ol></div>
+			<p>s-maxage 与 max-age用法类似，s-maxage针对代理服务器缓存。同样适用于CDN</p>
+			<p>s-maxage 与 max-age 组合使用可以提高CDN性能</p>
+
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm227641791648"></a>2.3.2.1. CDN接口API</h4></div></div></div>
+				
+				<p>与CDN有关的开发工作</p>
+				<p>CDN 内容更新，一般厂商会提供一个SOAP接口，你可以通过接口刷新你的内容。但接口有限制，不能随意使用，一般是多少秒可以刷新一次，或者一天可以刷新几次</p>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm227641789664"></a>2.3.2.2. 方向代理页面过期处理</h4></div></div></div>
+				
+				<p>方向代理一般都支持PURGE协议，Squid,Varnish等等向管理端口发送 PURGE 即可是使用页面刷新</p>
+				<pre class="screen">
+PURGE http://netkiller.github.net/index.html
+				</pre>
+				<p>有些方向代理如：Varnish 可以使用正则表达式</p>
+				<p>同时这些代理服务器都承受管理命令</p>
+				<p>squid: squidclient </p>
+				<p>varnish: varnishadm</p>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm227641786096"></a>2.3.2.3. 内容版本化</h4></div></div></div>
+				
+				<p>例如这样的URL</p>
+				<pre class="screen">
+http://images.example.com/logo.gif
+http://images.example.com/product.jpg
+				</pre>
+				<p>我们可以通过Rewrite或PATHINFO等技术做为静态化。例如首次版本</p>
+				<pre class="screen">
+http://images.example.com/logo.1.gif		=&gt; logo.gif
+http://images.example.com/product.1.jpg		=&gt; product.jpg
+				</pre>
+				<p>原图发生变化后，版本递增</p>
+				<pre class="screen">
+http://images.example.com/logo.2.gif		=&gt; logo.gif
+http://images.example.com/product.2.jpg		=&gt; product.jpg
+				</pre>
+				<p>就的URL将丢弃</p>
+				<pre class="screen">
+http://images.example.com/logo.1.gif
+http://images.example.com/product.1.jpg
+				</pre>
+				<p>CDN 就回源去下面的URL，并且取到的是新图</p>
+				<pre class="screen">
+http://images.example.com/logo.2.gif
+http://images.example.com/product.2.jpg
+				</pre>
+			</div>
+		</div>
+
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm227641806336"></a>2.3.3. 负载均衡设备</h3></div></div></div>
+			
+			<p>F5 Big-IP, Array 等设备都提供硬件加速，其原理与squid, apache提供的功能大同小异</p>
+			<p>其中Array 页面压缩采用硬件压缩卡实现，SSL加速也采用硬件实现</p>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm227641778704"></a>2.3.4. WEB服务器缓存</h3></div></div></div>
+			
+			<p>例如，通过配置apache实现自身 cache</p>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm227641777456"></a>2.3.5. 应用程序缓存</h3></div></div></div>
+			
+			<p>在这个领域百花齐放，相信你一定能找到适合你的。这些cache会为你提供一些api，来访问它。</p>
+			<p>代表性的 memcached 据我所是sina广泛使用，腾讯也曾经使用过后来开发了TC(Tencent Cache)，台湾雅虎则使用APC Cache。</p>
+			<p>另外模板引擎也有自己的缓存系统</p>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm227641775088"></a>2.3.6. 数据库缓存</h3></div></div></div>
+			
+			<p>数据库本身就有这个配置选项，如果需要你仍然可以在数据库前面加一道Cache。</p>
+			<p>例如PostgreSQL, MySQL 都提供参数可以将memcached编译到它内部</p>
+		</div>
+	</div>
+
+        网站：<a xmlns="" href="//www.netkiller.cn/">http://www.netkiller.cn/</a> |
+	    知乎：<a xmlns="" href="https://www.zhihu.com/people/netkiller">netkiller</a> |
+	    51CTO：<a xmlns="" href="https://edu.51cto.com/lecturer/1703915.html">视频教程</a> |
+	    Bilibili：<a xmlns="" href="https://space.bilibili.com/486347986/">netkiller</a> |
+	    Github：<a xmlns="" href="https://github.com/netkiller">netkiller</a><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="cluster.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="h5.static.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">2.2. 集群(Cluster) </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 2.4. 网站静态内容出版</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script></body></html>

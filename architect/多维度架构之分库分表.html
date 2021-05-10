@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>第 8 章 多维度架构之分库分表</title><link rel="stylesheet" type="text/css" href="docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><link rel="home" href="index.html" title="Netkiller Architect 手札" /><link rel="up" href="architecture.html" title="部分 I. 多维度架构" /><link rel="prev" href="ch07s04.html" title="7.4. 总结" /><link rel="next" href="ch08s02.html" title="8.2. 常规操作" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+   	    <a xmlns="" href="https://edu.51cto.com/lecturer/1703915.html">视频教程</a> |
+	    <a xmlns="" href="https://space.bilibili.com/486347986/">bilibili</a> |
+	    <a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">云社区</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">云栖社区</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">第 8 章 多维度架构之分库分表</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ch07s04.html">上一页</a> </td><th width="60%" align="center">部分 I. 多维度架构</th><td width="20%" align="right"> <a accesskey="n" href="ch08s02.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td> | </td><td>微信号 netkiller-ebook  </td><td> | </td><td>51CTO：<a href="https://edu.51cto.com/lecturer/1703915.html">视频教程</a></td></tr></table><div class="chapter"><div class="titlepage"><div><div><h2 class="title"><a id="多维度架构之分库分表"></a>第 8 章 多维度架构之分库分表</h2></div></div></div><div class="toc"><p><strong>目录</strong></p><dl class="toc"><dt><span class="section"><a href="多维度架构之分库分表.html#idm227643967408">8.1. 切分策略</a></span></dt><dd><dl><dt><span class="section"><a href="多维度架构之分库分表.html#idm227643964976">8.1.1. 垂直切分</a></span></dt><dt><span class="section"><a href="多维度架构之分库分表.html#idm227643962496">8.1.2. 水平切分</a></span></dt></dl></dd><dt><span class="section"><a href="ch08s02.html">8.2. 常规操作</a></span></dt><dt><span class="section"><a href="分表需要从业务角度考虑.html">8.3. 分表需要从业务角度考虑</a></span></dt><dt><span class="section"><a href="ch08s04.html">8.4. 最后总结</a></span></dt></dl></div>
+	
+	<p>分库和分表是架构必经之路，我想问问你是怎么分库和分表？</p>
+	<p>很多系统在设计之初就没有考虑过后期的分库与分表，甚至开发团队没有架构和DBA人员，开发团队也比较年轻，对于数据库的架构定义非常随意，满足当前需求即可。</p>
+	<p>实际上数据库结构等同于建筑里面的地基，地基没有打好，后面的优化都是徒劳的，最终不得不重构数据库结构。</p>
+	<p>那么你是怎样分库分表的？</p>
+	<div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idm227643967408"></a>8.1. 切分策略</h2></div></div></div>
+		
+		<p>数据的切分策略有两种方式，分别是：水平（横向）切分和垂直（纵向）切分。</p>
+		<p>技术手段也有四种方法，分别是：类别、范围、Hash和冷热数据。</p>
+		<p>一旦使用了分库分表技术，后面的很多技术就受到影响，技术上就要妥协。</p>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm227643964976"></a>8.1.1. 垂直切分</h3></div></div></div>
+			
+			<p>将某个分类数据，某个范围内的数据或者符合Hash值的数据存储到不同的数据库或者表中。</p>
+			<p>垂直切分的优点：缩小单表结果集，提高查询速度</p>
+			<p>垂直切分的缺点：索引不连续，必须合并查询，很多SQL语句会受到限制，例如join（原本不需要）,count,order by，事务处理变得复杂。</p>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm227643962496"></a>8.1.2. 水平切分</h3></div></div></div>
+			
+			<p>由于数据表字段太多，对于大型系统也会产生负担，水平切分就是将表中的某些字段独立到新的表中，然后通过一对一外键关联两张表。</p>
+			<p>水平切分优点：缩小结果集，对于使用 select * 返回数据的查询立竿见影</p>
+			<p>水平切分缺点：夸库无法使用一对一外键约束，对于不使用外键的项目，会产生脏数据。</p>
+		</div>
+	</div>
+
+	
+	
+	
+</div>
+
+        网站：<a xmlns="" href="//www.netkiller.cn/">http://www.netkiller.cn/</a> |
+	    知乎：<a xmlns="" href="https://www.zhihu.com/people/netkiller">netkiller</a> |
+	    51CTO：<a xmlns="" href="https://edu.51cto.com/lecturer/1703915.html">视频教程</a> |
+	    Bilibili：<a xmlns="" href="https://space.bilibili.com/486347986/">netkiller</a> |
+	    Github：<a xmlns="" href="https://github.com/netkiller">netkiller</a><div xmlns="" id="disqus_thread"></div><script xmlns="">
+
+var disqus_config = function () {
+this.page.url = "http://www.netkiller.cn";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'netkiller'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//netkiller.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script><noscript xmlns="">Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><br xmlns="" /><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ch07s04.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="architecture.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ch08s02.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">7.4. 总结 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 8.2. 常规操作</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script></body></html>
