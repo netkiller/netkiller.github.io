@@ -13,9 +13,15 @@
 	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
 	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
 	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
-	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">61.4. dkim</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="aliases.html">上一页</a> </td><th width="60%" align="center">第 61 章 postfix - High-performance mail transport agent</th><td width="20%" align="right"> <a accesskey="n" href="rspamd.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="dkim"></a>61.4. dkim</h2></div></div></div><p>DKIM(DomainKeys Identified Mail) 是一种电子邮件的验证技术，使用密码学的基础提供了签名与验证的功能。DKIM 能增加你邮件的信任度。</p><p>安装 OpenDKIM 环境是CentOS 7</p><pre class="screen">
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">61.4. dkim</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="aliases.html">上一页</a> </td><th width="60%" align="center">第 61 章 postfix - High-performance mail transport agent</th><td width="20%" align="right"> <a accesskey="n" href="rspamd.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="dkim"></a>61.4. dkim</h2></div></div></div>
+		
+		<p>DKIM(DomainKeys Identified Mail) 是一种电子邮件的验证技术，使用密码学的基础提供了签名与验证的功能。DKIM 能增加你邮件的信任度。</p>
+		<p>安装 OpenDKIM 环境是CentOS 7</p>
+		<pre class="screen">
 			yum install -y opendkim
-		</pre><p>查看配置文件</p><pre class="screen">
+		</pre>
+		<p>查看配置文件</p>
+		<pre class="screen">
 			[root@mail.netkiller.cn ~]# egrep -v "^#|^$" /etc/opendkim.conf
 			PidFile /var/run/opendkim/opendkim.pid
 			Mode sv
@@ -35,32 +41,50 @@
 			SigningTable refile:/etc/opendkim/SigningTable
 			InternalHosts refile:/etc/opendkim/TrustedHosts
 			OversignHeaders From
-		</pre><p>生成公钥和私钥example.com 替换成你的域名</p><pre class="screen">
+		</pre>
+		<p>生成公钥和私钥example.com 替换成你的域名</p>
+		<pre class="screen">
 			mkdir /etc/opendkim/keys/example.com
 			opendkim-genkey -D /etc/opendkim/keys/example.com/ -d example.com -s default
 			chown -R opendkim: /etc/opendkim/keys/example.com
 			ln -s /etc/opendkim/keys/example.com/default.private /etc/opendkim/keys/default.private
-		</pre><p>将你域名example.com添加到/etc/opendkim/KeyTable格式如下：</p><pre class="screen">
+		</pre>
+		<p>将你域名example.com添加到/etc/opendkim/KeyTable格式如下：</p>
+		<pre class="screen">
 			default._domainkey.example.com example.com:default:/etc/opendkim/keys/example.com/default.private
-		</pre><p>接下来修改 /etc/opendkim/SigningTable 并添加如下记录</p><pre class="screen">
+		</pre>
+		<p>接下来修改 /etc/opendkim/SigningTable 并添加如下记录</p>
+		<pre class="screen">
 			*@example.com default._domainkey.example.com
-		</pre><p>添加信任主机到/etc/opendkim/TrustedHosts，通常是 example.com / mail.example.com</p><pre class="screen">
+		</pre>
+		<p>添加信任主机到/etc/opendkim/TrustedHosts，通常是 example.com / mail.example.com</p>
+		<pre class="screen">
 			example.com
 			mail.example.com
-		</pre><p>注意：TrustedHosts 是发送邮件机器的IP，不是邮件服务器的IP，例如你的WEB服务器连接到邮件服务器发送电子邮件，那么TrustedHosts 就是你的WEB服务器IP地址。</p><p>至此 opendkim 已经配置完毕。</p><p>现在需要配置域名TXT记录解析，开打文件 /etc/opendkim/keys/example.com/default.txt 参照下面配置</p><pre class="screen">
+		</pre>
+		<p>注意：TrustedHosts 是发送邮件机器的IP，不是邮件服务器的IP，例如你的WEB服务器连接到邮件服务器发送电子邮件，那么TrustedHosts 就是你的WEB服务器IP地址。</p>
+		<p>至此 opendkim 已经配置完毕。</p>
+		<p>现在需要配置域名TXT记录解析，开打文件 /etc/opendkim/keys/example.com/default.txt 参照下面配置</p>
+		<pre class="screen">
 			cat /etc/opendkim/keys/example.com/default.txt
 			default._domainkey IN TXT ( "v=DKIM1; k=rsa; "
 			"p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC5anjIUkTgJT8DSBL2tiydi6DZLIMnPnveFBcyKshwIuGeRzIN2PwQW5F/bvQWdatPLGuw0w5mKXtATJtarbWXy89BgjcJgAGrPSr8GdzsNH0RXRqTy1A21BQyGER3Mx2Fbr6J62reTG2i7jY0w3/cxzuFIGlSn/RP/KrlMze4zQIDAQAB" ) ; ----- DKIM key default for example.com
-		</pre><p>接下来配置postfix把OpenDKIM整合到Postfix修改/etc/postfix/main.cf</p><pre class="screen">
+		</pre>
+		<p>接下来配置postfix把OpenDKIM整合到Postfix修改/etc/postfix/main.cf</p>
+		<pre class="screen">
 			smtpd_milters = inet:127.0.0.1:8891
 			non_smtpd_milters = $smtpd_milters
 			milter_default_action = accept
 			milter_protocol = 2
-		</pre><p>启动 opendkim，重启 postfix</p><pre class="screen">
+		</pre>
+		<p>启动 opendkim，重启 postfix</p>
+		<pre class="screen">
 			systemctl enable opendkim.service
 			systemctl start opendkim.service
 			systemctl restart postfix.service
-		</pre><p>检查opendkim状态与端口</p><pre class="screen">
+		</pre>
+		<p>检查opendkim状态与端口</p>
+		<pre class="screen">
 			# systemctl status opendkim.service
 			● opendkim.service - DomainKeys Identified Mail (DKIM) Milter
 			Loaded: loaded (/usr/lib/systemd/system/opendkim.service; enabled; vendor preset: disabled)
@@ -85,15 +109,28 @@
 			# ss -lnt |
 			grep 8891
 			LISTEN 0 128 127.0.0.1:8891 *:*
-		</pre><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm387212082048"></a>61.4.1. 增加域名</h3></div></div></div><p>创建证书</p><pre class="screen">
+		</pre>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm225804015856"></a>61.4.1. 增加域名</h3></div></div></div>
+			
+			<p>创建证书</p>
+			<pre class="screen">
 				mkdir /etc/opendkim/keys/mydomain.com
 				opendkim-genkey -D /etc/opendkim/keys/mydomain.com/ -r -d mydomain.com
 				chown -R opendkim: /etc/opendkim/keys/mydomain.com
-			</pre><p>配置 KeyTable</p><pre class="screen">
+			</pre>
+			<p>配置 KeyTable</p>
+			<pre class="screen">
 				default._domainkey.mydomain.com mydomain.com:default:/etc/opendkim/keys/mydomain.com/default.private
-			</pre><p>配置 SigningTable</p><pre class="screen">
+			</pre>
+			<p>配置 SigningTable</p>
+			<pre class="screen">
 				*@mydomain.com default._domainkey.mydomain.com
-			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm387212161504"></a>61.4.2. 测试</h3></div></div></div><p>/var/log/maillog</p><pre class="screen">
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm225804012160"></a>61.4.2. 测试</h3></div></div></div>
+			
+			<p>/var/log/maillog</p>
+			<pre class="screen">
 			
 Aug 26 03:02:03 localhost postfix/smtpd[5837]: connect from unknown[155.133.82.144]
 Aug 26 03:02:03 localhost opendkim[5762]: configuration reloaded from /etc/opendkim.conf
@@ -109,7 +146,9 @@ Aug 26 03:02:10 localhost postfix/smtp[5844]: connect to gmail-smtp-in.l.google.
 Aug 26 03:02:11 localhost postfix/smtp[5844]: 27EEC802C1C5: to=&lt;netkiller@msn.com&gt;, relay=gmail-smtp-in.l.google.com[74.125.25.26]:25, delay=1.6, delays=0.58/0.01/0.48/0.49, dsn=2.0.0, status=sent (250 2.0.0 OK 1472194931 om6si19759602pac.41 - gsmtp)
 Aug 26 03:02:11 localhost postfix/qmgr[4605]: 27EEC802C1C5: removed			
 			
-			</pre><p>查看原件原文，如果正常会显示DKIM-Filter和DKIM-Signature两项</p><pre class="screen">
+			</pre>
+			<p>查看原件原文，如果正常会显示DKIM-Filter和DKIM-Signature两项</p>
+			<pre class="screen">
 			
 Delivered-To: netkiller@msn.com
 Received: by 10.28.169.3 with SMTP id s3csp180808wme;
@@ -147,7 +186,9 @@ Content-Transfer-Encoding: base64
 
 5rWL6K+V6YKu5Lu25YaF5a65			
 			
-			</pre></div></div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
+			</pre>
+		</div>
+	</div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
 window.changyan.api.config({
 appid: 'cyvwjQUG3',
 conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
