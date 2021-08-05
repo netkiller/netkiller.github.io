@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>2.4. /etc/caddy/Caddyfile</title><link rel="stylesheet" type="text/css" href="../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="lamp,lnmp,famp,fnmp, cgi,fastcgi,wsgi, apache,lighttpd,nginx,tomcat, awstatus, webalizer" /><link rel="home" href="../index.html" title="Netkiller Linux Web 手札" /><link rel="up" href="index.html" title="第 2 章 Caddy" /><link rel="prev" href="ch02s03.html" title="2.3. 命令行" /><link rel="next" href="../tomcat/index.html" title="第 3 章 Apache Tomcat" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+   	    <a xmlns="" href="https://edu.51cto.com/lecturer/1703915.html">51CTO学院</a> |
+	    <a xmlns="" href="https://edu.csdn.net/lecturer/6423">CSDN程序员研修院</a> |
+	    <a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">腾讯云社区</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">阿里云栖社区</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">2.4. /etc/caddy/Caddyfile</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ch02s03.html">上一页</a> </td><th width="60%" align="center">第 2 章 Caddy</th><td width="20%" align="right"> <a accesskey="n" href="../tomcat/index.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idm58116531008"></a>2.4. /etc/caddy/Caddyfile</h2></div></div></div><p>
+			<a class="ulink" href="https://caddyserver.com/docs/caddyfile" target="_top">https://caddyserver.com/docs/caddyfile</a>
+		</p><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm58116529680"></a>2.4.1. 监听地址</h3></div></div></div><pre class="screen">
+			
+localhost
+example.com
+:443
+http://example.com
+localhost:8080
+127.0.0.1
+[::1]:2015
+example.com/foo/*
+*.example.com
+http://			
+			
+			</pre><pre class="screen">
+			
+localhost:8080, example.com, www.example.com			
+			
+			</pre><p>泛解析</p><pre class="screen">
+			
+*.example.com			
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm58116528096"></a>2.4.2. 反向代理</h3></div></div></div><pre class="screen">
+			
+http://api.netkiller.cn {
+    reverse_proxy /* http://192.168.30.10:8080
+    tls netkiller@msn.com
+}			
+			
+			</pre><p>推送 X-Forwarded-For 头</p><pre class="screen">
+			
+http://www.netkiller.cn {
+
+    root * /opt/netkiller.cn/www.netkiller.cn
+    file_server
+
+    reverse_proxy /api/* 192.168.30.10:8080 {
+	    header_up X-Real-IP {http.request.remote.host}
+	    header_up X-Forwarded-For {http.request.remote.host}
+	}
+
+}			
+			
+			</pre><p>反向代理自签名证书，添加 tls_insecure_skip_verify 配置项</p><pre class="screen">
+			
+netkiller.cn {
+    reverse_proxy * {
+        to https://192.168.0.10
+        transport http {
+            tls_insecure_skip_verify
+        }
+    }
+}
+
+api.netkiller.cn {
+    reverse_proxy * {
+        to 192.168.10.10:443
+        transport http {
+            tls
+            tls_insecure_skip_verify
+        }
+    }
+}
+			
+			</pre><p>反向代理URL前缀问题</p><pre class="screen">
+			
+举例：
+www.netkiller.cn {
+	reverse_proxy /api/* http://api.netkiller.cn:8080
+}
+访问URL: 
+http://www.netkiller.cn/api/adduser
+
+实际访问的URL是:
+http://api.netkiller.cn:8080/api/adduser
+
+我们需要的URL是：
+http://api.netkiller.cn:8080/adduser
+			
+			</pre><p>解决方案</p><pre class="screen">
+			
+www.netkiller.cn {
+	route /api* {
+    	uri strip_prefix /api
+		reverse_proxy api.netkiller.cn:8088
+	}
+}	
+			
+			</pre></div></div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
+window.changyan.api.config({
+appid: 'cyvwjQUG3',
+conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
+});
+</script><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ch02s03.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="../tomcat/index.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">2.3. 命令行 </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 3 章 Apache Tomcat</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script></body></html>
