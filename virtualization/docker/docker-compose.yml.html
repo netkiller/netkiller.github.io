@@ -129,7 +129,69 @@ ports:
 			
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="docker-compose.yml.links"></a>1.11.9. links</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="docker-compose.yml.network"></a>1.11.9. 网络配置</h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm318518499200"></a>1.11.9.1. 自定义 IPv4 子网地址</h4></div></div></div>
+			
+			<pre class="screen">
+			
+version: '3.9'
+networks:
+  default:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.88.10.0/24
+          gateway: 172.88.10.1			
+			
+			</pre>
+		</div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm318518497744"></a>1.11.9.2. external 外部网络</h4></div></div></div>
+			
+
+			<p>创建固定网段的网络bridge2。</p>
+			<pre class="screen">
+		
+docker network create --subnet=10.16.1.0/16 --gateway=10.16.1.1 --opt "com.docker.network.bridge.name"="bridge2" bridge2		
+		
+			</pre>
+			<p>把bridge2网络配置导docker-compose里面。</p>
+			<pre class="screen">
+		
+networks:
+  default:
+    driver: bridge
+  persist:
+    external:
+      name: bridge2		
+		
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm318518495008"></a>1.11.9.3. 配置 IPv6</h4></div></div></div>
+			
+			<pre class="screen">
+			
+networks:
+    frontend:
+        # use the bridge driver, but enable IPv6
+        driver: bridge
+        driver_opts:
+            com.docker.network.enable_ipv6: "true"
+        ipam:
+            driver: default
+            config:
+                - subnet: 172.16.238.0/24
+                gateway: 172.16.238.1
+                - subnet: "2001:3984:3989::/64"
+                gateway: "2001:3984:3989::1"			
+			
+			</pre>
+		</div>
+	</div>
+
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="docker-compose.yml.links"></a>1.11.10. links 主机别名</h3></div></div></div>
 		
 		<p>links的作用是在当前服务里面创建一个链接外部服务的别名。</p>
 		<p>docker-compose.yml</p>
@@ -152,7 +214,54 @@ sql.mysql.driverClassName=com.mysql.jdbc.Driver
 			
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="docker-compose.yml.depends_on"></a>1.11.10. 服务依赖</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="docker-compose.yml.external_links"></a>1.11.11. 链接外部容器</h3></div></div></div>
+		
+		<p>创建 development 网络</p>
+		<pre class="screen">
+		
+docker network create development --driver bridge		
+docker run --name redis-external --net development -d redis		
+		
+		</pre>
+		<pre class="programlisting">
+		
+version: "3.9"
+networks:
+  default:
+    external:
+      name: development
+services:
+  demo-external:
+    image: demo:1.0
+    container_name: demo-external
+    restart: always
+    environment:
+      REDIS_HOST: redis-external
+    ports:
+      - 80:80
+    external_links:
+      - redis-external
+		
+		</pre>
+		<p>测试方法，进入 demo-external 容器，然后 ping redis-external 容器</p>
+		<pre class="screen">
+		
+docker exec -it demo-external ping redis-external		
+		
+		</pre>
+		<p></p>
+		<pre class="screen">
+		
+[root@netkiller docker]# docker exec -it demo-external ping redis-external
+PING redis-external (172.18.0.3) 56(84) bytes of data.
+64 bytes from redis-external.development (172.18.0.3): icmp_seq=1 ttl=64 time=0.091 ms
+64 bytes from redis-external.development (172.18.0.3): icmp_seq=2 ttl=64 time=0.122 ms
+64 bytes from redis-external.development (172.18.0.3): icmp_seq=3 ttl=64 time=0.185 ms		
+		
+		</pre>
+	</div>
+	
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="docker-compose.yml.depends_on"></a>1.11.12. 服务依赖</h3></div></div></div>
 		
 		<p>通过depends_on告诉docker-compose当前服务启动之前先要把depends_on指定的服务启动起来才行。</p>
 		<pre class="programlisting">
@@ -171,7 +280,7 @@ services:
 		</pre>
 	</div>
 
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="docker-compose.yml.working_dir"></a>1.11.11. working_dir</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="docker-compose.yml.working_dir"></a>1.11.13. working_dir</h3></div></div></div>
 		
 		<pre class="screen">
 			
@@ -179,7 +288,7 @@ working_dir
 			
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="docker-compose.yml.environment"></a>1.11.12. 设置环境变量</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="docker-compose.yml.environment"></a>1.11.14. 设置环境变量</h3></div></div></div>
 		
 		<p>environment 实现容器中环境变量的定义</p>
 		<pre class="screen">
@@ -216,7 +325,7 @@ services:
 			
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="docker-compose.yml.tmpfs"></a>1.11.13. 临时文件系统</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="docker-compose.yml.tmpfs"></a>1.11.15. 临时文件系统</h3></div></div></div>
 		
 		<p>挂载临时目录到容器：</p>
 		<pre class="screen">
@@ -228,7 +337,7 @@ tmpfs:
 			
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="docker-compose.yml.Dockerfile"></a>1.11.14. 编译 Dockerfile</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="docker-compose.yml.Dockerfile"></a>1.11.16. 编译 Dockerfile</h3></div></div></div>
 		
 		<p>编译当前目录下的 Dockerfile 使用 build: .</p>
 		<pre class="screen">
@@ -318,7 +427,7 @@ netkiller/redis                            latest              095823650068     
 			
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="docker-compose.resources"></a>1.11.15. resources 硬件资源分配</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="docker-compose.resources"></a>1.11.17. resources 硬件资源分配</h3></div></div></div>
 		
 		<pre class="screen">
 			
@@ -346,12 +455,12 @@ services:
 			
 		</pre>
 		<div class="tip" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Tip"><tr><td rowspan="2" align="center" valign="top" width="25"><img alt="[提示]" src="/graphics/tip.png" /></td><th align="left">提示</th></tr><tr><td align="left" valign="top">
-		<p>注意：启动必须加入 --compatibility 选项</p>
-		<pre class="screen">
+			<p>注意：启动必须加入 --compatibility 选项</p>
+			<pre class="screen">
 		
 docker-compose --compatibility up		
 		
-		</pre>
+			</pre>
 		</td></tr></table></div>
 	</div>
 </div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
