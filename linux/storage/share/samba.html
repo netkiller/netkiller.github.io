@@ -17,7 +17,25 @@
 	
 	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="install"></a>69.2.1. install</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm242172149744"></a>69.2.1.1. Ubuntu</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm206235394544"></a>69.2.1.1. CentOS 8 Stream</h4></div></div></div>
+			
+			<p>服务器端</p>
+			<pre class="screen">
+			
+[root@netkiller ~]# dnf install samba	
+[root@netkiller ~]# cp /etc/samba/smb.conf{,.original}
+[root@netkiller ~]# systemctl enable smb
+[root@netkiller ~]# systemctl start smb		
+			
+			</pre>
+			<p>客户端</p>
+			<pre class="screen">
+			
+[root@netkiller ~]# dnf install samba-client			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm206235391952"></a>69.2.1.2. Ubuntu</h4></div></div></div>
 			
 			<p>环境 ubuntu 17.10</p>
 			<pre class="screen">
@@ -31,7 +49,7 @@ tcp        0      0 0.0.0.0:445             0.0.0.0:*               LISTEN     4
 neo@shenzhen:~$
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="centos6"></a>69.2.1.2. Samba</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="centos6"></a>69.2.1.3. Samba</h4></div></div></div>
 			
 			<pre class="screen">
 # yum -y install samba
@@ -61,8 +79,8 @@ neo@shenzhen:~$
 		
 			</pre>
 		</div>
-	
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="centos7"></a>69.2.1.3. CentOS 7</h4></div></div></div>
+
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="centos7"></a>69.2.1.4. CentOS 7</h4></div></div></div>
 			
 			<pre class="screen">
 yum install -y samba
@@ -73,7 +91,7 @@ systemctl enable smb
 systemctl start smb
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="samba.firewall"></a>69.2.1.4. firewall</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="samba.firewall"></a>69.2.1.5. firewall</h4></div></div></div>
 			
 			<p>防火墙</p>
 			<pre class="screen">
@@ -87,7 +105,7 @@ firewall-cmd --reload
 			</pre>
 			<p>iptables -L</p>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="samba.SELinux"></a>69.2.1.5. SELinux Configuration</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="samba.SELinux"></a>69.2.1.6. SELinux Configuration</h4></div></div></div>
 			
 			<pre class="screen">
 setsebool -P samba_enable_home_dirs on
@@ -105,7 +123,7 @@ valid users = '%S'登录用户，'neo'允许neo访问
 read only = 'No'读写模式，'Yes'只读模式
 browseable = 'No'不显示, 'Yes'显示
 		</pre>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm242172135184"></a>69.2.2.1. Security consideration</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm206246709856"></a>69.2.2.1. Security consideration</h4></div></div></div>
 			
 			<pre class="screen">
 [global]
@@ -113,11 +131,62 @@ interfaces = lo, eth0
 bind interfaces only = true
 			</pre>
 		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm206246708064"></a>69.2.2.2. 共享目录</h4></div></div></div>
+			
+			<p>添加账号</p>
+			<pre class="screen">
+			
+[root@netkiller ~]# adduser finance
+[root@netkiller ~]# smbpasswd -a finance
+New SMB password:
+Retype new SMB password:
+Added user finance.
+			
+			</pre>
+			<p>确认账号正确添加</p>
+			<pre class="screen">
+			
+[root@netkiller ~]# pdbedit -L
+finance:1000:			
+			
+			</pre>
+			<p>创建共享目录</p>
+			<pre class="screen">
+			
+[root@netkiller ~]# mkdir -p /opt/backup/finance
+[root@netkiller ~]# chown finance:finance  /opt/backup/finance
+			
+			</pre>
+			<p>配置 /etc/samba/smb.conf 文件</p>
+			<pre class="screen">
+			
+[finance]
+        comment = Finance Stuff
+        path = /opt/backup/finance
+        browseable = yes
+        writable = yes
+        create mask = 0644
+		directory mask = 0755
+		valid users = neo
+        write list = finance			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm206246703184"></a>69.2.2.3. 限制IP地址访问</h4></div></div></div>
+			
+			<pre class="screen">
+			
+hosts deny=192.168.50.10 192.168.10.   ## 禁止IP 192.168.50.10 及 192.168.10.* 段IP访问
+			
+			</pre>
+		</div>
 	</div>
-	
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="testparm"></a>69.2.3. testparm - check an smb.conf configuration file for internal correctness</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm206246701840"></a>69.2.3. Samba 相关命令</h3></div></div></div>
 		
-		<pre class="screen">
+
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="testparm"></a>69.2.3.1. testparm - check an smb.conf configuration file for internal correctness</h4></div></div></div>
+			
+			<pre class="screen">
 # testparm
 Load smb config files from /etc/samba/smb.conf
 rlimit_max: increasing rlimit_max (1024) to minimum Windows limit (16384)
@@ -148,10 +217,10 @@ Press enter to see a dump of your service definitions
 	browseable = No
 		
 		</pre>
-	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="smbstatus"></a>69.2.4. smbstatus - report on current Samba connections</h3></div></div></div>
-		
-		<pre class="screen">
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="smbstatus"></a>69.2.3.2. smbstatus - report on current Samba connections</h4></div></div></div>
+			
+			<pre class="screen">
 # smbstatus 
 
 Samba version 4.1.12
@@ -163,8 +232,8 @@ Service      pid     machine       Connected at
 
 No locked files
 		</pre>
-		<p>链接共享目录后再次查看</p>
-		<pre class="screen">
+			<p>链接共享目录后再次查看</p>
+			<pre class="screen">
 # smbstatus 
 
 Samba version 4.1.12
@@ -185,20 +254,20 @@ Pid          Uid        DenyMode   Access      R/W        Oplock           Share
 12507        80         DENY_NONE  0x100081    RDONLY     NONE             /www   .   Wed Sep 23 01:37:53 2015
 12507        80         DENY_NONE  0x100081    RDONLY     NONE             /www   .   Wed Sep 23 01:58:22 2015
 		</pre>
-	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="smbpasswd"></a>69.2.5. smbpasswd - change a user's SMB password</h3></div></div></div>
-		
-		<pre class="screen">
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="smbpasswd"></a>69.2.3.3. smbpasswd - change a user's SMB password</h4></div></div></div>
+			
+			<pre class="screen">
 # smbpasswd -a www
 New SMB password:
 Retype new SMB password:
 Added user www.
 		</pre>
-	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="nmblookup"></a>69.2.6. nmblookup - NetBIOS over TCP/IP client used to lookup NetBIOS names</h3></div></div></div>
-		
-		<pre class="screen">
-		
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="nmblookup"></a>69.2.3.4. nmblookup - NetBIOS over TCP/IP client used to lookup NetBIOS names</h4></div></div></div>
+			
+			<pre class="screen">
+		&lt;![CDATA[
 $ nmblookup -A 172.16.0.5
 Looking up status of 172.16.0.5
         USER            &lt;00&gt; -         B &lt;ACTIVE&gt;
@@ -209,42 +278,42 @@ Looking up status of 172.16.0.5
         ..__MSBROWSE__. &lt;01&gt; - &lt;GROUP&gt; B &lt;ACTIVE&gt;
 
         MAC Address = 00-25-64-A7-18-97
-        
-		</pre>
-	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="smbfs"></a>69.2.7. smbfs/smbmount/smbumount</h3></div></div></div>
-		
-		<pre class="screen">
+        	
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="smbfs"></a>69.2.3.5. smbfs/smbmount/smbumount</h4></div></div></div>
+			
+			<pre class="screen">
 sudo apt-get install smbfs
 		</pre>
-		<p>smbmount</p>
-		<pre class="screen">
+			<p>smbmount</p>
+			<pre class="screen">
 $ sudo mkdir /mnt/winfs
 $ sudo smbmount //172.16.0.92/tmp /mnt/winfs
 $ ls /mnt/winfs/
 		</pre>
-		<p>使用neo帐号登录</p>
-		<pre class="screen">
+			<p>使用neo帐号登录</p>
+			<pre class="screen">
 $ sudo smbmount //172.16.0.92/tmp /mnt/winfs -o username=neo
 		</pre>
-		<p>mount</p>
-		<pre class="screen">
+			<p>mount</p>
+			<pre class="screen">
 $ mount -t smbfs -o username=jwhittal \\\\172.16.1.3\\c$ /mnt/thumb
 		</pre>
-		<p>linux 不再使用smbfs, 替换为 cifs</p>
-		<pre class="screen">
+			<p>linux 不再使用smbfs, 替换为 cifs</p>
+			<pre class="screen">
 $ mount -t cifs //192.168.0.2/ /mnt/
 		</pre>
-	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="smbclient"></a>69.2.8. smbclient - ftp-like client to access SMB/CIFS resources on servers</h3></div></div></div>
-		
-		<pre class="screen">
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="smbclient"></a>69.2.3.6. smbclient - ftp-like client to access SMB/CIFS resources on servers</h4></div></div></div>
+			
+			<pre class="screen">
 $ sudo apt-get install smbclient
 		</pre>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm242172119968"></a>69.2.8.1. 显示共享目录</h4></div></div></div>
-			
-			<span class="command"><strong>$ smbclient -L 172.16.1.3</strong></span>
-			<pre class="screen">
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm206246685888"></a>69.2.3.6.1. 显示共享目录</h5></div></div></div>
+				
+				<span class="command"><strong>$ smbclient -L 172.16.1.3</strong></span>
+				<pre class="screen">
 neo@netkiller:~$ smbclient -L 172.16.0.1
 Enter neo's password:
 Domain=[WORKGROUP] OS=[Unix] Server=[Samba 3.4.0]
@@ -266,11 +335,11 @@ Domain=[WORKGROUP] OS=[Unix] Server=[Samba 3.4.0]
         ---------            -------
         WORKGROUP            DEBIAN
 			</pre>
-		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm242172117056"></a>69.2.8.2. 访问共享资源</h4></div></div></div>
-			
-			<p>访问developer共享目录</p>
-			<pre class="screen">
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm206246683328"></a>69.2.3.6.2. 访问共享资源</h5></div></div></div>
+				
+				<p>访问developer共享目录</p>
+				<pre class="screen">
 $ smbclient //localhost/developer
 
 Enter neo's password:
@@ -300,11 +369,11 @@ smb: \&gt; ls
                 61335 blocks of size 131072. 41655 blocks available
 smb: \&gt;
 			</pre>
-		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm242172114464"></a>69.2.8.3. 用户登录</h4></div></div></div>
-			
-			<p>使用用户Neo登录</p>
-			<pre class="screen">
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm206246681600"></a>69.2.3.6.3. 用户登录</h5></div></div></div>
+				
+				<p>使用用户Neo登录</p>
+				<pre class="screen">
 $ smbclient //localhost/developer -U neo
 
 Enter neo's password:
@@ -333,23 +402,23 @@ smb: \&gt; ls
                 61335 blocks of size 131072. 41654 blocks available
 smb: \&gt; quit
 			</pre>
+			</div>
 		</div>
-	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="smbtar"></a>69.2.9. smbtar - shell script for backing up SMB/CIFS shares directly to UNIX tape drives</h3></div></div></div>
-		
-	</div>
-	
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="smbtar"></a>69.2.3.7. smbtar - shell script for backing up SMB/CIFS shares directly to UNIX tape drives</h4></div></div></div>
+			
+		</div>
 
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="example"></a>69.2.10. by Example</h3></div></div></div>
-		
-		<p>Backup the /etc/samba/smb.conf file: </p>
-		<pre class="screen">
+
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="example"></a>69.2.3.8. by Example</h4></div></div></div>
+			
+			<p>Backup the /etc/samba/smb.conf file: </p>
+			<pre class="screen">
 sudo cp /etc/samba/smb.conf /etc/samba/smb.conf.original
 		</pre>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm242172109728"></a>69.2.10.1. share</h4></div></div></div>
-			
-			<p>security = share</p>
-			<pre class="screen">
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm206246676912"></a>69.2.3.8.1. share</h5></div></div></div>
+				
+				<p>security = share</p>
+				<pre class="screen">
 			
 [tmp]
    comment = test
@@ -373,39 +442,39 @@ sudo cp /etc/samba/smb.conf /etc/samba/smb.conf.original
    public = yes
 
 			
-			</pre>
-		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm242172107664"></a>69.2.10.2. user</h4></div></div></div>
-			
-			<pre class="screen">
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm206246674848"></a>69.2.3.8.2. user</h5></div></div></div>
+				
+				<pre class="screen">
 sudo cp /etc/samba/smb.conf /etc/samba/smb.conf.original
 			</pre>
-			<pre class="screen">
+				<pre class="screen">
 security = user
 			</pre>
-			<p>add user</p>
-			<pre class="screen">
+				<p>add user</p>
+				<pre class="screen">
 sudo useradd -s /bin/true neo
 sudo smbpasswd -L -a neo
 			</pre>
-			<p>enable</p>
-			<pre class="screen">
+				<p>enable</p>
+				<pre class="screen">
 sudo smbpasswd -L -e neo
 			</pre>
-			<p>del user</p>
-			<pre class="screen">
+				<p>del user</p>
+				<pre class="screen">
 sudo smbpasswd -L -x neo
 			</pre>
-		</div>
+			</div>
 
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm242172103440"></a>69.2.10.3. test</h4></div></div></div>
-			
-			<p>测试配置文件是否正确</p>
-			<pre class="screen">
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm206246670624"></a>69.2.3.8.3. test</h5></div></div></div>
+				
+				<p>测试配置文件是否正确</p>
+				<pre class="screen">
 $ testparm
 			</pre>
-			<p>查看共享目录</p>
-			<pre class="screen">
+				<p>查看共享目录</p>
+				<pre class="screen">
 $ smbclient -L localhost -N
 
 Domain=[WORKGROUP] OS=[Unix] Server=[Samba 3.3.2]
@@ -427,8 +496,8 @@ Domain=[WORKGROUP] OS=[Unix] Server=[Samba 3.3.2]
         WORKGROUP            PRINTSERVER
 
 			</pre>
-			<p>Windows 访问测试</p>
-			<pre class="screen">
+				<p>Windows 访问测试</p>
+				<pre class="screen">
 C:\&gt;net view \\192.168.3.40
 在 \\192.168.3.40 的共享资源
 
@@ -440,13 +509,13 @@ ubuntu server (Samba, Ubuntu)
 developer  Disk  Development
 命令运行完毕，但发生一个或多个错误。
 			</pre>
+			</div>
 		</div>
-	</div>	
-	
-	
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="faq"></a>69.2.11. FAQ</h3></div></div></div>
+	</div>
+
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="faq"></a>69.2.4. FAQ</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm242172097968"></a>69.2.11.1. smbd/service.c:make_connection_snum(1013)</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm206246666160"></a>69.2.4.1. smbd/service.c:make_connection_snum(1013)</h4></div></div></div>
 			
 			<pre class="screen">
   '/www' does not exist or permission denied when connecting to [www] Error was Permission denied

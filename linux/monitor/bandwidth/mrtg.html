@@ -15,7 +15,113 @@
 	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
 	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">81.5. MRTG</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="network.ntop.html">上一页</a> </td><th width="60%" align="center">第 81 章 网络监控</th><td width="20%" align="right"> <a accesskey="n" href="lvs-rrd.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="mrtg"></a>81.5. MRTG</h2></div></div></div>
 	
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="ubuntu"></a>81.5.1. Ubuntu 安装</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm206233522576"></a>81.5.1. CentOS 8 Stream</h3></div></div></div>
+		
+		<pre class="screen">
+		
+[root@localhost ~]# dnf search mrtg
+Last metadata expiration check: 3:27:52 ago on Thu 26 Aug 2021 02:14:39 PM CST.
+======================================================================================== Name Exactly Matched: mrtg ========================================================================================
+mrtg.x86_64 : Multi Router Traffic Grapher
+============================================================================================ Name Matched: mrtg ============================================================================================
+pcp-import-mrtg2pcp.x86_64 : Performance Co-Pilot tools for importing MTRG data into PCP archive logs
+
+[root@localhost ~]# dnf install -y mrtg
+		
+		</pre>
+		<p>默认配置文件</p>
+		<pre class="screen">
+		
+[root@localhost ~]# cat /etc/mrtg/mrtg.cfg 
+######################################################################
+# Multi Router Traffic Grapher -- Example Configuration File
+######################################################################
+# This file is for use with mrtg-2.0
+#
+# Note:
+#
+# * Keywords must start at the begin of a line.
+#
+# * Lines which follow a keyword line which do start 
+#   with a blank are appended to the keyword line
+#
+# * Empty Lines are ignored
+#
+# * Lines starting with a # sign are comments.
+
+# Where should the logfiles, and webpages be created?
+
+# Minimal mrtg.cfg
+#--------------------
+
+HtmlDir: /var/www/mrtg
+ImageDir: /var/www/mrtg
+LogDir: /var/lib/mrtg
+ThreshDir: /var/lib/mrtg
+#Target[r1]: 2:public@myrouter.somplace.edu
+#MaxBytes[r1]: 1250000
+#Title[r1]: Traffic Analysis
+#PageTop[r1]: &lt;H1&gt;Stats for our Ethernet&lt;/H1&gt;		
+		
+		</pre>
+		<pre class="screen">
+		
+[root@localhost ~]# indexmaker --output=/var/www/mrtg/index.html /etc/mrtg/mrtg.cfg		
+		
+		</pre>
+		<p>启用 mrtg</p>
+		<pre class="screen">
+		
+[root@localhost ~]# systemctl enable mrtg
+Created symlink /etc/systemd/system/multi-user.target.wants/mrtg.service → /usr/lib/systemd/system/mrtg.service.		
+		
+		</pre>
+		<p>启动 mrtg</p>
+		<pre class="screen">
+		
+[root@localhost ~]# systemctl start mrtg	
+		
+		</pre>
+		<p>查看启动状态</p>
+		<pre class="screen">
+		
+[root@localhost ~]# systemctl status mrtg
+● mrtg.service - Multi-router Traffic Grapher
+   Loaded: loaded (/usr/lib/systemd/system/mrtg.service; disabled; vendor preset: disabled)
+   Active: active (running) since Thu 2021-08-26 17:58:34 CST; 4s ago
+ Main PID: 176231 (mrtg)
+    Tasks: 1 (limit: 100608)
+   Memory: 21.4M
+   CGroup: /system.slice/mrtg.service
+           └─176231 /usr/bin/perl -w /usr/bin/mrtg /etc/mrtg/mrtg.cfg --lock-file /var/lock/mrtg/mrtg_l --confcache-file /var/lib/mrtg/mrtg.ok
+
+Aug 26 17:58:34 localhost.localdomain systemd[1]: Started Multi-router Traffic Grapher.		
+		
+		</pre>
+		<p>Nginx 配置</p>
+		<pre class="screen">
+		
+[root@localhost conf.d]# cat /etc/nginx/conf.d/monitor.netkiller.cn.conf 
+server {
+    listen       192.168.30.13:80;
+    server_name  192.168.30.13;
+
+    access_log /var/log/nginx/monitor.netkiller.cn.access.log;
+    error_log /var/log/nginx/monitor.netkiller.cn.error.log;
+
+    # Load configuration files for the default server block.
+    include /etc/nginx/default.d/*.conf;
+
+    location / {
+    	root /var/www/mrtg;
+    	index  index.html; 
+	    autoindex on;
+    }
+}
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="ubuntu"></a>81.5.2. Ubuntu 安装</h3></div></div></div>
 		
 		<pre class="screen">
 $ sudo apt-get install mrtg
@@ -31,7 +137,7 @@ public@172.16.0.254 &gt; /etc/mrtg/firewall.cfg'
 $ sudo mkdir -p /var/www/mrtg
 $ sudo indexmaker --output=/var/www/mrtg/firewall.html /etc/mrtg/firewall.cfg
 		</pre>
-		<div class="example"><a id="idm242037892336"></a><p class="title"><strong>例 81.1. mrtg</strong></p><div class="example-contents">
+		<div class="example"><a id="idm206233510816"></a><p class="title"><strong>例 81.1. mrtg</strong></p><div class="example-contents">
 			
 			<pre class="programlisting">
 			
@@ -40,7 +146,7 @@ $ sudo indexmaker --output=/var/www/mrtg/firewall.html /etc/mrtg/firewall.cfg
 			</pre>
 		</div></div><br class="example-break" />
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="centos"></a>81.5.2. CentOS 安装</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="centos"></a>81.5.3. CentOS 安装</h3></div></div></div>
 		
 		<pre class="screen">
 # yum install mrtg
@@ -84,7 +190,7 @@ public@172.16.0.252 &gt; /etc/mrtg/mrtg.cfg
 # indexmaker --output=/var/www/mrtg/index.html /etc/mrtg/mrtg.cfg	
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="cfg"></a>81.5.3. 监控多个设备</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="cfg"></a>81.5.4. 监控多个设备</h3></div></div></div>
 		
 		<pre class="screen">
 cfgmaker --global "HtmlDir: /var/www/mrtg" \
@@ -105,7 +211,7 @@ public@172.16.0.253 &gt; /etc/mrtg/mrtg.cfg
 indexmaker --output=/var/www/mrtg/index.html /etc/mrtg/mrtg.cfg
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="batch"></a>81.5.4. 批量生成监控配置文件</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="batch"></a>81.5.5. 批量生成监控配置文件</h3></div></div></div>
 		
 		<pre class="screen">
 		
@@ -129,8 +235,8 @@ indexmaker --output=/var/www/mrtg/switch-2960-$host.html /etc/mrtg/switch-2960-$
 done
 		
 		</pre>
-	</div>	
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="size"></a>81.5.5. 图片尺寸</h3></div></div></div>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="size"></a>81.5.6. 图片尺寸</h3></div></div></div>
 		
 		<p>Xsize / Ysize</p>
 		<pre class="screen">
