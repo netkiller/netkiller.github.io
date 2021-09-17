@@ -15,14 +15,26 @@
 	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
 	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">40.3. l2tpd - dummy package for l2tpd to xl2tpd transition</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="pptpd.html">上一页</a> </td><th width="60%" align="center">第 40 章 VPN (Virtual Private Network)</th><td width="20%" align="right"> <a accesskey="n" href="strongswan.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="l2tp"></a>40.3. l2tpd - dummy package for l2tpd to xl2tpd transition</h3></div></div></div>
 	
-	<div class="procedure"><a id="idm206237288608"></a><p class="title"><strong>过程 40.13. install l2tpd</strong></p><ol class="procedure" type="1"><li class="step">
-			<p>install</p>
-			<pre class="screen">
+	<p>PAP（PasswordAuthenticationProtocol 密码认证协议）PAP 是 PPP 协议集中的一种链路控制协议，通过2次握手建立认证，对等结点持续重复发送 ID/ 密码（明文）给验证者，直至认证得到响应或连接终止，常见于PPPOE拨号环境中。</p>
+	<p>首先被认证方向认证方发送认证请求（包含用户名和密码），以明文形式进行传输，认证方接到认证请求，再根据被认证方发送来的用户名去到自己的数据库认证用户名密码是否正确，如果密码正确，PAP认证通过，如果用户名密码错误，PAP认证未通过
+		PAP 并不是一种强有效的认证方法，其密码以文本格式在电路上进行发送，对于窃听、重放或重复尝试和错误攻击没有任何保护。
+	</p>
+	<p>CHAP (ChallengeHandshakeAuthenticationProtocol 质询握手认证协议) CHAP通过三次握手验证被认证方的身份（密文），在初始链路建立时完成，为了提高安全性，在链路建立之后周期性进行验证，目前在企业网的远程接入环境中用的比较常见。</p>
+	<div class="orderedlist"><p class="title"><strong>CHAP: </strong></p><ol class="orderedlist" type="1"><li class="listitem">链路建立阶段结束之后，认证方主动向对端点发送“challenge”消息（此认证序列号id+认证方主机名+随机数）</li><li class="listitem">对端点去到自己的数据库查到认证方主机名对应的密码，用查到的密码结合认证方发来的认证序列号id和随机数，经过单向哈希函数MD5计算出来的值做应答。</li><li class="listitem">根据被认证方发来的认证用户名，主认证方在本地数据库中查找被认证方对应的密码，结合id找到先前保存的随机数据和id根据MD5算法算出一个Hash值，与被认证方得到的Hash值做比较，如果一致，则认证通过，如果不一致，则认证不通过。</li><li class="listitem">经过一定的随机间隔，认证方发送一个新的 challenge 给端点，重复步骤 1 到 3 。</li></ol></div>
+	<p></p>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm104621723104"></a>40.3.1. Ubuntu/Debian</h4></div></div></div>
+		
+
+		<div class="procedure"><a id="idm104621722384"></a><p class="title"><strong>过程 40.13. install l2tpd</strong></p><ol class="procedure" type="1"><li class="step">
+				<p>install</p>
+				<pre class="screen">
+			
 # apt-get install l2tpd
-			</pre>
-		</li><li class="step">
-			<p>/etc/xl2tpd/xl2tpd.conf</p>
-			<pre class="screen">
+			
+				</pre>
+			</li><li class="step">
+				<p>/etc/xl2tpd/xl2tpd.conf</p>
+				<pre class="screen">
 			
 # cp /etc/xl2tpd/xl2tpd.conf /etc/xl2tpd/xl2tpd.conf.original
 # vim /etc/xl2tpd/xl2tpd.conf
@@ -40,10 +52,10 @@ require authentication = yes
 name = vpn.example.com
 pppoptfile = /etc/ppp/options.l2tpd.lns
 			
-			</pre>
-		</li><li class="step">
-			<p>/etc/ppp/options.l2tpd.lns</p>
-			<pre class="screen">
+				</pre>
+			</li><li class="step">
+				<p>/etc/ppp/options.l2tpd.lns</p>
+				<pre class="screen">
 			
 vim /etc/ppp/options.l2tpd.lns
 
@@ -64,24 +76,280 @@ lock
 proxyarp
 connect-delay 5000
 			
-			</pre>
-		</li><li class="step">
-			<p>/etc/xl2tpd/l2tp-secrets</p>
-			<pre class="screen">
+				</pre>
+			</li><li class="step">
+				<p>/etc/xl2tpd/l2tp-secrets</p>
+				<pre class="screen">
 			
 vim /etc/xl2tpd/l2tp-secrets
 
 neo     *       chen    *
 			
-			</pre>
-		</li><li class="step">
-			<p>start</p>
-			<pre class="screen">
+				</pre>
+			</li><li class="step">
+				<p>start</p>
+				<pre class="screen">
 			
 /etc/init.d/xl2tpd start
 			
-			</pre>
-		</li></ol></div>
+				</pre>
+			</li></ol></div>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm104621714320"></a>40.3.2. CentOS 8 Stream</h4></div></div></div>
+		
+		<div class="procedure"><a id="idm104621713680"></a><p class="title"><strong>过程 40.14. L2TP 服务器端</strong></p><ol class="procedure" type="1"><li class="step">
+				<p>安装 xl2tpd</p>
+				<pre class="screen">
+				
+[root@stage ~]# dnf search xl2tpd | grep xl2tpd
+Last metadata expiration check: 2:14:26 ago on Thu 16 Sep 2021 03:24:26 PM CST.
+============================= Name Matched: l2tpd ==============================
+xl2tpd.x86_64 : Layer 2 Tunnelling Protocol Daemon (RFC 2661)				
+				
+				</pre>
+				<p></p>
+				<pre class="screen">
+				
+[root@stage ~]# dnf install -y xl2tpd libreswan
+				
+				</pre>
+				<p>由于L2TP安装需要加载内核模块，所以需要重启系统，否则 modprobe 找不到 l2tp_ppp 模块</p>
+				<pre class="screen">
+				
+[root@stage ~]# reboot				
+				
+				</pre>
+			</li><li class="step">
+				<p>配置 /etc/xl2tpd/xl2tpd.conf</p>
+				<pre class="screen">
+				
+[root@stage ~]# cp /etc/xl2tpd/xl2tpd.conf{,.original}
+
+[root@stage ~]# cat /etc/xl2tpd/xl2tpd.conf | grep -v "^;"
+
+[global]
+
+[lns default]
+ip range = 192.168.1.128-192.168.1.254
+local ip = 192.168.1.99
+require chap = yes
+refuse pap = yes
+require authentication = yes
+name = LinuxVPNserver
+ppp debug = yes
+pppoptfile = /etc/ppp/options.xl2tpd
+length bit = yes
+				
+				</pre>
+				<p>配置 /etc/ppp/options.xl2tpd</p>
+				<pre class="screen">
+				
+[root@stage ~]# vim /etc/ppp/options.xl2tpd
+ipcp-accept-local
+ipcp-accept-remote
+ms-dns  8.8.8.8
+ms-dns  1.1.1.1
+# ms-dns  192.168.1.1
+# ms-dns  192.168.1.3
+# ms-wins 192.168.1.2
+# ms-wins 192.168.1.4
+noccp
+auth
+#obsolete: crtscts
+idle 1800
+mtu 1410
+mru 1410
+nodefaultroute
+debug
+#obsolete: lock
+proxyarp
+connect-delay 5000
+# To allow authentication against a Windows domain EXAMPLE, and require the
+# user to be in a group "VPN Users". Requires the samba-winbind package
+# require-mschap-v2
+# plugin winbind.so
+# ntlm_auth-helper '/usr/bin/ntlm_auth --helper-protocol=ntlm-server-1 --require-membership-of="EXAMPLE\\VPN Users"' 
+# You need to join the domain on the server, for example using samba:
+# http://rootmanager.com/ubuntu-ipsec-l2tp-windows-domain-auth/setting-up-openswan-xl2tpd-with-native-windows-clients-lucid.html
+				
+				</pre>
+				<p>修改为</p>
+				<pre class="screen">
+				
+[root@stage ~]# cat /etc/ppp/options.xl2tpd | grep -v ^#
+ipcp-accept-local
+ipcp-accept-remote
+ms-dns  8.8.8.8
+ms-dns  114.114.114.114
+auth
+idle 1800
+mtu 1410
+mru 1410
+nodefaultroute
+debug
+connect-delay 5000
+require-mschap-v2
+logfile /var/log/xl2tpd.log				
+				
+				</pre>
+			</li><li class="step">
+				<p>配置 Ipsec</p>
+				<pre class="screen">
+				
+[root@stage ~]# cp /etc/ipsec.conf{,.original}
+
+[root@stage ~]# cat /etc/ipsec.conf | grep -v "#"
+
+config setup
+	logfile=/var/log/pluto.log
+	interfaces="%defaultroute"
+	virtual_private=%v4:10.0.0.0/8,%v4:192.168.0.0/16,%v4:172.16.0.0/12,%v4:25.0.0.0/8,%v4:100.64.0.0/10,%v6:fd00::/8,%v6:fe80::/10
+
+
+include /etc/ipsec.d/*.conf
+				
+				</pre>
+				<pre class="screen">
+				
+[root@stage ~]# cat &gt; /etc/ipsec.d/default.secrets &lt;&lt;EOF
+# 0.0.0.0 %any: PSK "123456"
+# %any  %any  : PSK "VPN_IPSEC_PSK"
+: PSK "12345678"
+EOF
+
+[root@stage ~]# cat /etc/ipsec.d/default.secrets
+				
+				</pre>
+			</li><li class="step">
+				<p>创建登陆用户和密码</p>
+				<p>设置登陆密码 /etc/ppp/chap-secrets</p>
+				<pre class="screen">
+				
+[root@stage ~]# cp /etc/ppp/chap-secrets
+[root@stage ~]# cat /etc/ppp/chap-secrets
+# Secrets for authentication using CHAP
+# client	server	secret			IP addresses
+neo	*	chen	*
+tom	*	112233	*
+apple	*	chen	*
+"username" l2tpd "password" *
+				
+				
+				</pre>
+				<pre class="screen">
+				
+[root@stage ~]# vim /etc/xl2tpd/l2tp-secrets 
+[root@stage ~]# cat /etc/xl2tpd/l2tp-secrets 
+# Secrets for authenticating l2tp tunnels
+# us	them	secret
+# *		marko blah2
+# zeus		marko	blah
+# *	*	interop
+
+neo	*	chen	*				
+				
+				</pre>
+			</li><li class="step">
+				<p>启动</p>
+				
+				<p></p>
+				<pre class="screen">
+				
+cat &lt;&lt; 'EOF' &gt;&gt;  /etc/sysctl.conf 
+
+# XL2TPD Add by neo
+net.ipv4.ip_forward=1
+net.ipv4.conf.default.send_redirects=0
+net.ipv4.conf.default.accept_redirects=0
+EOF				
+				
+				</pre>
+				<pre class="screen">
+				
+[root@stage ~]# modprobe l2tp_ppp
+[root@stage ~]# lsmod | grep l2tp
+l2tp_ppp               28672  0
+l2tp_netlink           28672  1 l2tp_ppp
+l2tp_core              32768  2 l2tp_ppp,l2tp_netlink
+pppox                  16384  1 l2tp_ppp
+ppp_generic            45056  2 pppox,l2tp_ppp
+ip6_udp_tunnel         16384  1 l2tp_core
+udp_tunnel             20480  1 l2tp_core				
+				
+				</pre>
+				<pre class="screen">
+				
+[root@stage ~]# sysctl -w net.ipv4.conf.default.send_redirects=0 
+[root@stage ~]# sysctl -w net.ipv4.conf.default.accept_redirects=0				
+[root@stage ~]# ipsec verify
+Verifying installed system and configuration files
+
+Version check and ipsec on-path                   	[OK]
+Libreswan 4.3 (netkey) on 4.18.0-305.12.1.el8_4.x86_64
+Checking for IPsec support in kernel              	[OK]
+ NETKEY: Testing XFRM related proc values
+         ICMP default/send_redirects              	[OK]
+         ICMP default/accept_redirects            	[OK]
+         XFRM larval drop                         	[OK]
+Pluto ipsec.conf syntax                           	[OK]
+Checking rp_filter                                	[OK]
+Checking that pluto is running                    	[OK]
+ Pluto listening for IKE on udp 500               	[OK]
+ Pluto listening for IKE/NAT-T on udp 4500        	[OK]
+ Pluto ipsec.secret syntax                        	[OK]
+Checking 'ip' command                             	[OK]
+Checking 'iptables' command                       	[OK]
+Checking 'prelink' command does not interfere with FIPS	[OK]
+Checking for obsolete ipsec.conf options          	[OK]
+				
+				</pre>
+				<pre class="screen">
+				
+[root@stage ~]# systemctl enable ipsec
+Created symlink /etc/systemd/system/multi-user.target.wants/ipsec.service → /usr/lib/systemd/system/ipsec.service.
+[root@stage ~]# systemctl start ipsec
+				
+[root@stage ~]# systemctl enable xl2tpd				
+[root@stage ~]# systemctl start xl2tpd				
+				
+				</pre>
+			</li><li class="step">
+				<p>配置IP伪装</p>
+				<pre class="screen">
+				
+iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+iptables -A FORWARD -o ppp0 -j ACCEPT				
+				
+				</pre>
+				<p></p>
+				<pre class="screen">
+				
+
+firewall-cmd --permanent --add-service=ipsec	# 放行ipsec服务，安装时会自定生成此服务
+firewall-cmd --permanent --add-port=1701/udp	# xl2tp 的端口，默认1701. 
+firewall-cmd --permanent --add-port=4500/udp	# ipsec 的端口
+firewall-cmd --permanent --add-masquerade		# 启用NAT转发功能。必须启用此功能
+firewall-cmd --reload				
+				
+				</pre>
+			</li></ol></div>
+		
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="ipsec"></a>40.3.3. Ipsec VPN</h4></div></div></div>
+		
+		
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="ipsec-tools"></a>40.3.3.1. ipsec-tools - IPsec tools for Linux</h5></div></div></div>
+			
+			<p>https://trac.ipsec-tools.net/</p>
+		</div>
+	</div>	
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm104621690464"></a>40.3.4. FAQ</h4></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm104621689808"></a>40.3.4.1. Unsupported protocol 'Compression Control Protocol' (0x80fd) received</h5></div></div></div>
+			
+			<p>删除 /etc/ppp/options.xl2tpd 文件中的 noccp</p>
+		</div>
+	</div>
 </div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
 window.changyan.api.config({
 appid: 'cyvwjQUG3',
