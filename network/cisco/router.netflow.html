@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>13.2. Router</title><link rel="stylesheet" type="text/css" href="../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="Cisco, H3C, Juniper, F5 BIG-IP, Array, Dell, IBM, HP, , " /><link rel="home" href="../index.html" title="Netkiller Network 手札" /><link rel="up" href="netflow.html" title="第 13 章 Netflow" /><link rel="prev" href="netflow.html" title="第 13 章 Netflow" /><link rel="next" href="switch.netflow.html" title="13.3. Switch" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+   	    <a xmlns="" href="https://edu.51cto.com/lecturer/1703915.html">51CTO学院</a> |
+	    <a xmlns="" href="https://edu.csdn.net/lecturer/6423">CSDN程序员研修院</a> |
+	    <a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">腾讯云社区</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">阿里云栖社区</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">13.2. Router</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="netflow.html">上一页</a> </td><th width="60%" align="center">第 13 章 Netflow</th><td width="20%" align="right"> <a accesskey="n" href="switch.netflow.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="router.netflow"></a>13.2. Router</h2></div></div></div><pre class="screen">
+		
+router#enable
+Password:*****
+router#configure terminal
+router(config)#interface FastEthernet 0/1
+router(config-if)#ip route-cache flow
+router(config-if)#exit
+router(config)#ip flow-export destination 192.168.9.101 9996
+router(config)#ip flow-export source FastEthernet 0/1
+router(config)#ip flow-export version 9
+router(config)#ip flow-cache timeout active 1
+router(config)#ip flow-cache timeout inactive 15
+router(config)#snmp-server ifindex persist
+router(config)#^Z
+router#write
+router#show ip flow export
+router#show ip cache flow
+		
+		</pre><pre class="screen">
+interface FastEthernet0/0/0
+ description Default-Shenzhen-IPLC-Hongkong-WAN
+ ip address 192.168.1.254 255.255.255.0
+ ip flow ingress
+ ip nat outside
+ ip virtual-reassembly in
+ duplex auto
+ speed auto
+!
+ip flow-export source FastEthernet0/0/0
+ip flow-export version 9
+ip flow-export destination 192.168.1.246 2055
+
+
+
+2911#show ip flow export
+Flow export v5 is enabled for main cache
+  Export source and destination details :
+  VRF ID : Default
+    Source(1)       192.168.1.254 (FastEthernet0/0/0)
+    Destination(1)  192.168.1.246 (2055)
+  Version 5 flow records
+  450 flows exported in 19 udp datagrams
+  0 flows failed due to lack of export packet
+  0 export packets were sent up to process level
+  0 export packets were dropped due to no fib
+  0 export packets were dropped due to adjacency issues
+  0 export packets were dropped due to fragmentation failures
+  0 export packets were dropped due to encapsulation fixup failures
+2911#show ip cache flow
+IP packet size distribution (198733 total packets):
+   1-32   64   96  128  160  192  224  256  288  320  352  384  416  448  480
+   .000 .006 .079 .011 .006 .006 .010 .007 .004 .006 .005 .006 .005 .007 .004
+
+    512  544  576 1024 1536 2048 2560 3072 3584 4096 4608
+   .004 .004 .101 .061 .661 .000 .000 .000 .000 .000 .000
+
+IP Flow Switching Cache, 278544 bytes
+  181 active, 3915 inactive, 899 added
+  27986 ager polls, 0 flow alloc failures
+  Active flows timeout in 30 minutes
+  Inactive flows timeout in 15 seconds
+IP Sub Flow Cache, 34056 bytes
+  145 active, 879 inactive, 496 added, 496 added to flow
+  0 alloc failures, 0 force free
+  1 chunk, 1 chunk added
+  last clearing of statistics never
+Protocol         Total    Flows   Packets Bytes  Packets Active(Sec) Idle(Sec)
+--------         Flows     /Sec     /Flow  /Pkt     /Sec     /Flow     /Flow
+TCP-WWW            184      0.0        69  1214      2.1       2.9       7.7
+TCP-other           50      0.0         3   125      0.0       0.6       9.8
+UDP-other          422      0.0       131  1073      9.4      14.7      15.4
+ICMP                62      0.0         3    83      0.0      15.6      15.4
+Total:             718      0.1        95  1094     11.7      10.8      13.0
+
+SrcIf         SrcIPaddress    DstIf         DstIPaddress    Pr SrcP DstP  Pkts
+
+SrcIf         SrcIPaddress    DstIf         DstIPaddress    Pr SrcP DstP  Pkts
+Fa0/0/0       14.107.17.191   Gi0/1         192.168.1.254   11 405A 2868     1
+Fa0/0/0       192.168.1.216   Null          192.168.1.255   11 0715 0089     1
+Fa0/0/0       114.95.139.199  Gi0/1         192.168.1.254   11 2C00 2868     1
+Fa0/0/0       121.10.120.164  Gi0/1         192.168.1.254   11 1F40 2868     2
+Fa0/0/0       117.63.26.75    Local         192.168.1.254   01 0000 0303     1
+Fa0/0/0       112.112.179.108 Gi0/1         192.168.1.254   11 0413 2868  1574
+Fa0/0/0       121.10.24.67    Gi0/1         192.168.1.254   11 1F40 2868    41
+Fa0/0/0       123.245.109.226 Gi0/1         192.168.1.254   11 2CAD 2868     1
+Fa0/0/0       74.125.235.3    Gi0/2         192.168.1.254   06 0050 0A45     1
+Fa0/0/0       117.82.149.18   Gi0/1         192.168.1.254   11 31DC 2868     4
+Fa0/0/0       58.52.129.128   Gi0/1         192.168.1.254   11 8EFB 2868     8
+Fa0/0/0       14.155.27.35    Gi0/1         192.168.1.254   11 CF9E 2868    79
+Fa0/0/0       218.81.47.155   Local         192.168.1.254   01 0000 0303     2
+Fa0/0/0       218.21.87.42    Gi0/1         192.168.1.254   11 0C1B 2868    54
+Fa0/0/0       58.213.29.42    Gi0/1         192.168.1.254   11 BA85 2868     4
+Fa0/0/0       118.249.123.126 Gi0/1         192.168.1.254   11 2682 2868     3
+Fa0/0/0       111.179.55.238  Gi0/1         192.168.1.254   11 486E 2868  1203
+Fa0/0/0       61.154.157.176  Gi0/1         192.168.1.254   11 A430 2868     5
+Fa0/0/0       1.206.63.198    Gi0/1         192.168.1.254   11 205F 2868    14
+Fa0/0/0       222.68.17.88    Gi0/1         192.168.1.254   11 7333 2868    62
+Fa0/0/0       116.230.173.1   Gi0/1         192.168.1.254   11 BD78 2868    19
+Fa0/0/0       115.238.255.189 Gi0/1         192.168.1.254   06 0050 0AC3  7435
+
+		</pre></div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
+window.changyan.api.config({
+appid: 'cyvwjQUG3',
+conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
+});
+</script><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="netflow.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="netflow.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="switch.netflow.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 13 章 Netflow </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 13.3. Switch</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script></body></html>

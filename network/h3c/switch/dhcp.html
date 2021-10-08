@@ -1,0 +1,387 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>20.2. DHCP</title><link rel="stylesheet" type="text/css" href="../../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="Cisco, H3C, Juniper, F5 BIG-IP, Array, Dell, IBM, HP, , " /><link rel="home" href="../../index.html" title="Netkiller Network 手札" /><link rel="up" href="index.html" title="第 20 章 H3C Switch" /><link rel="prev" href="index.html" title="第 20 章 H3C Switch" /><link rel="next" href="vlan.html" title="20.3. VLAN" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+   	    <a xmlns="" href="https://edu.51cto.com/lecturer/1703915.html">51CTO学院</a> |
+	    <a xmlns="" href="https://edu.csdn.net/lecturer/6423">CSDN程序员研修院</a> |
+	    <a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">腾讯云社区</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">阿里云栖社区</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">20.2. DHCP</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><th width="60%" align="center">第 20 章 H3C Switch</th><td width="20%" align="right"> <a accesskey="n" href="vlan.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="dhcp"></a>20.2. DHCP</h3></div></div></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="dhcp.server"></a>20.2.1. DHCP Server</h4></div></div></div><p>S3600 SI 没有DHCP Server，只有EI版本提供，狗日的H3C(fuck h3c)</p><pre class="screen">
+			
+dhcp enable
+dhcp server ip-pool 0
+static-bind ip-address 172.16.0.2
+static-bind mac-address 000f-e200-0002
+dns-list 172.16.0.254
+gateway-list 172.16.0.254
+quit
+			
+			</pre><pre class="screen">
+			
+dhcp server ip-pool 0
+network 10.1.1.0 mask 255.255.255.0
+domain-name aabbcc.com
+dns-list 10.1.1.2
+nbns-list 10.1.1.4
+expired day 10 hour 12
+quit
+			
+			</pre><pre class="screen">
+			
+3. 配置步骤
+
+(1)        配置端口属于VLAN及对应VLAN接口的IP地址（略）
+
+(2)        配置DHCP服务
+
+# 使能DHCP服务。
+
+&lt;H3C&gt; system-view
+
+[H3C] dhcp enable
+
+# 配置不参与自动分配的IP地址（DNS服务器、WINS服务器和出口网关地址）。
+
+[H3C] dhcp server forbidden-ip 10.1.1.2
+
+[H3C] dhcp server forbidden-ip 10.1.1.4
+
+[H3C] dhcp server forbidden-ip 10.1.1.126
+
+[H3C] dhcp server forbidden-ip 10.1.1.254
+
+# 配置DHCP地址池0的共有属性（地址池范围、DNS服务器地址）。
+
+[H3C] dhcp server ip-pool 0
+
+[H3C-dhcp-pool-0] network 10.1.1.0 mask 255.255.255.0
+
+[H3C-dhcp-pool-0] domain-name aabbcc.com
+
+[H3C-dhcp-pool-0] dns-list 10.1.1.2
+
+[H3C-dhcp-pool-0] quit
+
+# 配置DHCP地址池1的属性（地址池范围、出口网关、地址租用期限）。
+
+[H3C] dhcp server ip-pool 1
+
+[H3C-dhcp-pool-1] network 10.1.1.0 mask 255.255.255.128
+
+[H3C-dhcp-pool-1] gateway-list 10.1.1.126
+
+[H3C-dhcp-pool-1] expired day 10 hour 12
+
+[H3C-dhcp-pool-1] quit
+
+# 配置DHCP地址池2的属性（地址池范围、出口网关、WINS服务器地址、地址租用期限）。
+
+[H3C] dhcp server ip-pool 2
+
+[H3C-dhcp-pool-2] network 10.1.1.128 mask 255.255.255.128
+
+[H3C-dhcp-pool-2] expired day 5
+
+[H3C-dhcp-pool-2] nbns-list 10.1.1.4
+
+[H3C-dhcp-pool-2] gateway-list 10.1.1.254
+			
+			</pre><div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm99597934512"></a>20.2.1.1. 排除IP地址</h5></div></div></div><p>排除单个IP地址</p><pre class="screen">
+dhcp server forbidden-ip 10.1.1.2
+dhcp server forbidden-ip 10.1.1.4
+dhcp server forbidden-ip 10.1.1.126
+dhcp server forbidden-ip 10.1.1.254				
+				</pre><p>排除一段IP地址</p><pre class="screen">
+#
+ dhcp server forbidden-ip 192.168.2.200 192.168.2.254
+ dhcp server forbidden-ip 192.168.3.200 192.168.3.254
+ dhcp server forbidden-ip 192.168.4.1 192.168.4.10
+ dhcp server forbidden-ip 192.168.4.200 192.168.4.254
+ dhcp server forbidden-ip 192.168.3.1 192.168.3.10
+ dhcp server forbidden-ip 192.168.5.1 192.168.5.10
+ dhcp server forbidden-ip 192.168.5.200 192.168.5.254
+ dhcp server forbidden-ip 192.168.6.200 192.168.6.254
+ dhcp server forbidden-ip 192.168.7.1 192.168.7.10
+ dhcp server forbidden-ip 192.168.7.200 192.168.7.254
+ dhcp server forbidden-ip 192.168.8.1 192.168.8.10
+ dhcp server forbidden-ip 192.168.8.200 192.168.8.254
+ dhcp server forbidden-ip 192.168.9.1 192.168.9.10
+ dhcp server forbidden-ip 192.168.9.200 192.168.9.254
+ dhcp server forbidden-ip 192.168.2.1 192.168.2.30
+ dhcp server forbidden-ip 192.168.6.1 192.168.6.30
+#
+				</pre></div></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="dhcp.relay"></a>20.2.2. DHCP中继配置</h4></div></div></div><pre class="screen">
+			
+# 进入系统视图。
+
+&lt;H3C&gt; system-view
+
+# 使能DHCP服务。
+
+[H3C] dhcp enable
+
+# 配置DHCP Server的组号为1，IP地址为202.38.1.2。
+
+[H3C] dhcp-server 1 ip 202.38.1.2
+
+# 配置VLAN接口2对应DHCP Server组1。
+
+[H3C] interface Vlan-interface 2
+
+[H3C-Vlan-interface2] dhcp-server 1
+
+# 配置VLAN接口2的IP地址，需与DHCP Client属于同一网段。
+
+[H3C-Vlan-interface2] ip address 10.110.1.1 255.255.0.0
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="dhcp.snooping"></a>20.2.3. DHCP Snooping</h4></div></div></div><pre class="screen">
+			
+# 进入系统视图。
+
+&lt;H3C&gt; system-view
+
+# 开启交换机DHCP-Snooping功能。
+
+[H3C] dhcp-snooping
+
+# 进入Ethernet1/0/1端口视图。
+
+[H3C] interface Ethernet1/0/1
+
+# 设置端口为信任端口。
+
+[H3C-Ethernet1/0/1] dhcp-snooping trust
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm99597946928"></a>20.2.4. IP地址过期时间</h4></div></div></div><pre class="screen">
+			
+[MSR2610-dhcp-pool-5]expired day 5
+[MSR2610-dhcp-pool-5]di th
+#
+dhcp server ip-pool 5
+ network 192.168.50.0 mask 255.255.255.0
+ gateway-list 192.168.50.1
+ dns-list 202.96.134.133 114.114.114.114
+ expired day 5
+#
+return			
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm99597954320"></a>20.2.5. </h4></div></div></div><pre class="screen">
+			
+static-bind ip-address 192.168.50.2 mac-address 000d-85c7-4e20
+static-bind ip-address 192.168.50.5 mask 255.255.255.0
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm99597957920"></a>20.2.6. 静态IP地址为不可分配地址</h4></div></div></div><pre class="screen">
+			
+[MSR2610]dhcp server forbidden-ip 192.168.30.5			
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm99597963264"></a>20.2.7. 查看地址池配置</h4></div></div></div><div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm99597946304"></a>20.2.7.1. 查看地址池配置</h5></div></div></div><pre class="screen">
+				
+&lt;H3C&gt;display dhcp server tree all
+Global pool:
+
+Pool name: vlan2
+ network 192.168.2.0 mask 255.255.255.0
+ Sibling node:vlan3
+ gateway-list 192.168.2.254 
+ dns-list 211.162.78.2 8.8.8.8 
+ expired 7 0 0
+
+Pool name: vlan3
+ network 192.168.3.0 mask 255.255.255.0
+ PrevSibling node:vlan2
+ Sibling node:vlan4
+ gateway-list 192.168.3.254 
+ dns-list 211.162.78.2 8.8.8.8 
+ expired 1 0 0
+
+Pool name: vlan4
+ network 192.168.4.0 mask 255.255.255.0
+ PrevSibling node:vlan3
+ Sibling node:vlan5
+ gateway-list 192.168.4.254 
+ dns-list 202.96.134.133 202.96.128.68 208.67.222.222 208.67.220.220 
+ expired 1 0 0
+                
+Pool name: vlan5
+ network 192.168.5.0 mask 255.255.255.0
+ PrevSibling node:vlan4
+ Sibling node:vlan6
+ gateway-list 192.168.5.254 
+ dns-list 211.162.78.2 8.8.8.8 
+ expired 1 0 0
+
+Pool name: vlan6
+ network 192.168.6.0 mask 255.255.255.0
+ PrevSibling node:vlan5
+ Sibling node:vlan7
+ gateway-list 192.168.6.254 
+ dns-list 202.45.84.58 203.80.96.10 8.8.8.8 
+ expired 1 0 0
+
+Pool name: vlan7
+ network 192.168.7.0 mask 255.255.255.0
+ PrevSibling node:vlan6
+ Sibling node:vlan8
+ gateway-list 192.168.7.254 
+ dns-list 208.67.222.222 208.67.220.220 8.8.8.8 4.4.4.4 
+ expired 1 0 0  
+
+Pool name: vlan8
+ network 192.168.8.0 mask 255.255.255.0
+ PrevSibling node:vlan7
+ Sibling node:vlan9
+ gateway-list 192.168.8.254 
+ dns-list 208.67.222.222 208.67.220.220 8.8.8.8 4.4.4.4 
+ expired 1 0 0
+
+Pool name: vlan9
+ network 192.168.9.0 mask 255.255.255.0
+ PrevSibling node:vlan8
+ gateway-list 192.168.9.254 
+ dns-list 208.67.222.222 208.67.220.220 8.8.8.8 4.4.4.4 
+ expired 1 0 0
+&lt;H3C&gt;			
+				
+				</pre></div><div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm99597964512"></a>20.2.7.2. 查看地址租约</h5></div></div></div><pre class="screen">
+				
+&lt;H3C&gt;display dhcp server ip-in-use all
+Global pool: 
+ IP address       Client-identifier/    Lease expiration          Type
+                  Hardware address                                
+ 192.168.2.39     201a-065b-c488        Jun  3 2000 15:42:50      Auto:COMMITTED
+ 192.168.2.51     78e3-b590-bed0        Jun  3 2000 07:37:22      Auto:COMMITTED
+ 192.168.2.71     001b-3899-e518        Jun  4 2000 11:32:43      Auto:COMMITTED
+ 192.168.3.35     6c62-6da6-8aa3        May 30 2000 06:44:22      Auto:COMMITTED
+ 192.168.3.33     902b-340b-5b38        May 30 2000 07:45:48      Auto:COMMITTED
+ 192.168.2.31     001e-ec64-9b46        Jun  3 2000 11:17:01      Auto:COMMITTED
+ 192.168.2.72     78e3-b5ab-2891        Jun  5 2000 06:57:37      Auto:COMMITTED
+ 192.168.2.63     50e5-4919-15a9        Jun  3 2000 07:45:42      Auto:COMMITTED
+ 192.168.6.42     80c1-6edf-b997        May 30 2000 10:49:35      Auto:COMMITTED
+ 192.168.3.41     5254-0054-dd26        May 29 2000 14:41:22      Auto:COMMITTED
+ 192.168.2.46     6c62-6dbf-1ea8        Jun  5 2000 11:30:58      Auto:COMMITTED
+ 192.168.2.53     902b-340b-669f        Jun  3 2000 07:39:01      Auto:COMMITTED
+ 192.168.2.32     78e3-b590-cc1a        Jun  5 2000 06:44:34      Auto:COMMITTED
+ 192.168.3.23     80c1-6edf-b844        May 30 2000 10:48:46      Auto:COMMITTED
+ 192.168.3.30     6c62-6dd2-f8ea        May 30 2000 06:45:07      Auto:COMMITTED
+ 192.168.3.42     902b-340b-66ab        May 30 2000 08:45:11      Auto:COMMITTED
+ 192.168.3.40     5254-0032-6e05        May 29 2000 12:03:14      Auto:COMMITTED
+ 192.168.2.77     78e3-b5ab-5cdf        Jun  5 2000 07:48:11      Auto:COMMITTED
+ 192.168.2.50     78e3-b596-c42c        Jun  5 2000 06:42:09      Auto:COMMITTED
+ 192.168.2.73     74d4-3585-ae8a        Jun  5 2000 06:50:13      Auto:COMMITTED
+ 192.168.2.34     78e3-b5ab-2ab9        Jun  5 2000 06:54:54      Auto:COMMITTED
+ 192.168.2.35     78e3-b5ab-59ed        Jun  3 2000 06:45:34      Auto:COMMITTED
+ 192.168.3.16     78e3-b59b-99c5        May 30 2000 09:13:29      Auto:COMMITTED
+ 192.168.2.49     6c62-6db1-aab5        Jun  5 2000 06:44:27      Auto:COMMITTED
+ 192.168.3.25     78e3-b5ab-2ac7        May 30 2000 07:07:10      Auto:COMMITTED
+ 192.168.2.62     78e3-b590-beb0        Jun  5 2000 06:48:40      Auto:COMMITTED
+ 192.168.3.36     74d4-3585-a743        May 30 2000 10:50:28      Auto:COMMITTED
+ 192.168.3.39     5254-001a-2f7d        May 29 2000 12:02:49      Auto:COMMITTED
+ 192.168.2.40     001d-92f0-3200        Jun  5 2000 06:40:34      Auto:COMMITTED
+ 192.168.2.70     78e3-b59b-818c        Jun  5 2000 06:53:36      Auto:COMMITTED
+ 192.168.3.29     60a4-4cad-b643        May 30 2000 10:35:06      Auto:COMMITTED
+ 192.168.6.41     78e3-b590-d14c        May 30 2000 06:56:14      Auto:COMMITTED
+ 192.168.2.58     78e3-b596-ddfc        Jun  5 2000 06:48:25      Auto:COMMITTED
+ 192.168.3.38     0025-90af-9e3c        May 30 2000 00:00:50      Auto:COMMITTED
+ 192.168.2.76     0025-90af-9e3c        Jun  4 2000 11:32:34      Auto:COMMITTED
+ 192.168.6.39     5254-006a-616e        May 30 2000 06:42:31      Auto:COMMITTED
+ 192.168.3.32     902b-3440-c54e        May 30 2000 07:46:29      Auto:COMMITTED
+
+ --- total 37 entry ---		
+ 				
+				</pre></div><div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm99597982176"></a>20.2.7.3. 查看可分配的地址</h5></div></div></div><pre class="screen">
+				
+&lt;H3C&gt; display dhcp server free-ip
+IP Range from 192.168.2.78         to  192.168.2.199       
+IP Range from 192.168.3.43         to  192.168.3.199       
+IP Range from 192.168.4.11         to  192.168.4.199       
+IP Range from 192.168.5.12         to  192.168.5.199       
+IP Range from 192.168.6.43         to  192.168.6.199       
+IP Range from 192.168.7.11         to  192.168.7.199       
+IP Range from 192.168.8.12         to  192.168.8.199       
+IP Range from 192.168.9.11         to  192.168.9.199  				
+				
+				</pre></div><div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm99597985424"></a>20.2.7.4. 查看租约过期地址</h5></div></div></div><pre class="screen">
+				
+&lt;H3C&gt;display dhcp server expired all
+Global pool: 
+ IP address       Client-identifier/    Lease expiration          Type
+                  Hardware address                                
+ 192.168.2.67     f4ec-383f-7bf9        May 17 2000 14:08:22      Release
+ 192.168.2.36     78e3-b590-c26a        May 29 2000 10:52:22      Release
+ 192.168.3.12     201a-065b-c488        May  1 2000 12:12:56      Release
+ 192.168.3.37     001b-3899-e518        May 29 2000 11:40:08      Release
+ 192.168.8.11     001e-ec64-9b46        May  2 2000 14:07:08      Release
+ 192.168.3.11     001e-ec64-9b46        May 18 2000 13:50:54      Release
+ 192.168.2.65     3c97-0ea7-e1a9        May  8 2000 12:05:43      Release
+ 192.168.3.24     6c62-6dbf-1f38        May  7 2000 06:51:49      Release
+ 192.168.6.31     5254-00f0-fb87        May 14 2000 13:24:45      Release
+ 192.168.2.38     78e3-b590-c7d5        May 16 2000 14:43:26      Release
+ 192.168.2.54     1cfa-68ee-9a15        Apr 30 2000 08:08:54      Release
+ 192.168.3.14     80c1-6edf-b997        Apr 28 2000 16:06:51      Release
+ 192.168.2.68     000c-29a4-38eb        May 16 2000 12:18:02      Release
+ 192.168.2.47     78e3-b59b-989f        May 13 2000 12:56:44      Release
+ 192.168.6.35     5254-009f-afd1        May 14 2000 14:21:53      Release
+ 192.168.2.45     78e3-b5ab-3ef4        May  2 2000 13:04:38      Release
+ 192.168.3.18     78e3-b598-f057        May 17 2000 06:45:23      Release
+ 192.168.6.37     5254-00e5-c31e        May 14 2000 14:25:33      Release
+ 192.168.3.20     78e3-b590-c82b        May 16 2000 11:22:44      Release
+ 192.168.3.17     d067-e527-be93        May  9 2000 10:38:25      Release
+ 192.168.2.56     000c-29c9-b264        Apr 30 2000 13:09:15      Release
+ 192.168.2.44     78e3-b596-dddd        May 24 2000 13:37:01      Release
+ 192.168.2.69     78e3-b596-de80        May 17 2000 12:22:29      Release
+ 192.168.3.34     984b-e1a9-7167        May  3 2000 07:14:17      Release
+                
+ --- total 54 entry ---				
+				
+				</pre></div><div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm99597988288"></a>20.2.7.5. 查看冲突IP地址</h5></div></div></div><pre class="screen">
+				
+&lt;H3C&gt;display dhcp server conflict all
+    Address             Discover time                 
+    192.168.2.57        Apr 30 2000 15:12:40          
+    192.168.2.75        May 20 2000 14:39:46          
+ --- total 2 entry ---				
+				
+				</pre></div></div></div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
+window.changyan.api.config({
+appid: 'cyvwjQUG3',
+conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
+});
+</script><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="vlan.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 20 章 H3C Switch </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 20.3. VLAN</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script></body></html>
