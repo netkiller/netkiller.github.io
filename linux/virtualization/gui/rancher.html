@@ -17,37 +17,40 @@
 	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">126.2. Rancher - Multi-Cluster Kubernetes Management</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><th width="60%" align="center">第 126 章 容器图形化管理界面</th><td width="20%" align="right"> <a accesskey="n" href="helm.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="rancher"></a>126.2. Rancher - Multi-Cluster Kubernetes Management</h2></div><div><h3 class="subtitle">Rancher is open-source software for delivering Kubernetes-as-a-Service.</h3></div></div></div>
 	
 	
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm256311881328"></a>126.2.1. 安装</h3></div></div></div>
+	
+<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm539726316672"></a>126.2.1. 安装 Rancher</h3></div></div></div>
+	
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm539726315872"></a>126.2.1.1. Rancher Server</h4></div></div></div>
 		
 		<p>如果只是学习，可以安装最新版</p>
 		<pre class="screen">
 		
-docker run -d --restart=unless-stopped -p 80:80 -p 443:443 --name=rancher rancher/rancher:latest
+docker run -d --privileged --restart=unless-stopped -p 80:80 -p 443:443 --name=rancher rancher/rancher:latest
 		
 		</pre>
 		<p>稳定版</p>
 		<pre class="screen">
 		
-docker run -d --restart=unless-stopped -p 80:80 -p 443:443 -v /var/lib/rancher/:/var/lib/rancher/ --name=rancher rancher/rancher:stable
+docker run -d --privileged --restart=unless-stopped -p 80:80 -p 443:443 -v /var/lib/rancher/:/var/lib/rancher/ --name=rancher rancher/rancher:stable
 		
 		</pre>
 		<p>审计日志</p>
 		<pre class="screen">
 		
-docker run -d --restart=unless-stopped -p 80:80 -p 443:443 -v /var/lib/rancher/:/var/lib/rancher/ -v /var/log/auditlog:/var/log/auditlog --name=rancher rancher/rancher:stable		
-		
+docker run -d --restart=unless-stopped -p 80:80 -p 443:443 -v /var/lib/rancher/:/var/lib/rancher/ -v /var/log/auditlog:/var/log/auditlog --name=rancher rancher/rancher:stable
 		
 		</pre>
-		<p>安装完，浏览器输入 https://your-ip-address 即可进入WebUI</p>
-		<p>防火墙放行 etcd </p>
-		<pre class="screen">
-		
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm539726311824"></a>126.2.1.1.1. 防火墙配置</h5></div></div></div>
+			
+			<p>防火墙放行 etcd </p>
+			<pre class="screen">
+			
 iptables -I INPUT -s 172.16.0.0/0 -p tcp --dport 2379 -j ACCEPT
 iptables -I INPUT -s 172.16.0.0/0 -p tcp --dport 2380 -j ACCEPT		
-		
-		</pre>
-		<pre class="screen">
-		
+			
+			</pre>
+			<pre class="screen">
+			
 systemctl restart firewalld
 systemctl enable firewalld
 
@@ -60,24 +63,31 @@ firewall-cmd --zone=public --add-port=6443/tcp --permanent
 firewall-cmd --zone=public --add-port=2379/tcp --permanent
 firewall-cmd --zone=public --add-port=2380/tcp --permanent
 firewall-cmd --zone=public --add-port=10250/tcp --permanent
-firewall-cmd --reload
-		
-		
-		</pre>
-		<pre class="screen">
-		
-hostnamectl set-hostname m-1d41c853af58
-		
-		</pre>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm256311873616"></a>126.2.1.1. Ubuntu</h4></div></div></div>
+firewall-cmd --reload			
+			
+			</pre>
 			
 			<pre class="screen">
 			
-$ sudo ufw disable			
+hostnamectl set-hostname m-1d41c853af58
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm256311872272"></a>126.2.1.2. SSL 证书</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm539726308336"></a>126.2.1.1.2. Web UI</h5></div></div></div>
+			
+			<p>安装完之后运行下面命令查看密码</p>
+			<pre class="screen">
+			
+[root@localhost ~]# docker logs rancher 2&gt;&amp;1 | grep "Bootstrap Password:"
+2021/11/26 10:27:14 [INFO] Bootstrap Password: wkz68vmmx4gqfwxwzq4vxrzl5zgjqxlmxkfwkdltmpkxl5clqc9dw9
+			
+			</pre>
+			<p>浏览器输入 https://your-ip-address 即可进入WebUI</p>
+			<div><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="800"><tr><td><img src="../images/rancher/password.png" width="800" /></td></tr></table></div>
+			<p>设置密码</p>
+			<div><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="800"><tr><td><img src="../images/rancher/randomly.png" width="800" /></td></tr></table></div>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm539726302912"></a>126.2.1.1.3. SSL 证书</h5></div></div></div>
 			
 			<p>第一种方式</p>
 			<pre class="screen">
@@ -93,7 +103,7 @@ docker run -d --name=nginx --restart=unless-stopped -p 80:80 -p 443:443 -v /your
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm256311869344"></a>126.2.1.3. 进入容器</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm539726300112"></a>126.2.1.1.4. 进入容器</h5></div></div></div>
 			
 			<pre class="screen">
 			
@@ -101,27 +111,136 @@ $ docker exec -it rancher /bin/bash
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm256311868016"></a>126.2.1.4. Rancher CLI</h4></div></div></div>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm539726315616"></a>126.2.1.2. Rancher Kubernetes Engine (RKE)</h4></div></div></div>
+		
+		<p>
+			<a class="ulink" href="https://github.com/rancher/rke/releases" target="_top">https://github.com/rancher/rke/releases</a>
+		</p>
+		<p>https://rancher.com/an-introduction-to-rke/</p>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm539726297600"></a>126.2.1.2.1. 安装 RKE</h5></div></div></div>
+			
+			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm539726296416"></a>126.2.1.2.1.1. v1.3.2</h6></div></div></div>
+				
+				<pre class="screen">
+			
+cd /usr/local/src/
+wget https://github.com/rancher/rke/releases/download/v1.3.2/rke_linux-amd64
+mkdir -p /srv/rancher/bin
+install rke_linux-amd64 /srv/rancher/bin/			
+			
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm539726294576"></a>126.2.1.2.1.2. v0.1.17</h6></div></div></div>
+				
+				<pre class="screen">
+				
+[root@localhost ~]# wget https://github.com/rancher/rke/releases/download/v0.1.17/rke
+[root@localhost ~]# chmod +x rke 
+[root@localhost ~]# ./rke --version
+rke version v0.1.17		
+				
+				</pre>
+			</div>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm539726292848"></a>126.2.1.2.2. 配置 RKE</h5></div></div></div>
+			
+			<p></p>
+			<pre class="screen">
+		
+[root@localhost ~]# /srv/rancher/bin/rke_linux-amd64 config
+[+] Cluster Level SSH Private Key Path [~/.ssh/id_rsa]: 
+		
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm539726291312"></a>126.2.1.2.3. 启动 RKE</h5></div></div></div>
 			
 			<pre class="screen">
 			
-cd /tmp
-wget https://github.com/rancher/cli/releases/download/v2.2.0-rc16/rancher-linux-amd64-v2.2.0-rc16.tar.xz
-tar Jxvf rancher-linux-amd64-v2.2.0-rc16.tar.xz
-mv ./rancher-v2.2.0-rc16/rancher /usr/local/bin/
-cd
+[root@localhost ~]# /srv/rancher/bin/rke_linux-amd64 up			
 			
 			</pre>
-
-
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="rancher-compose"></a>126.2.1.5. rancher-compose</h4></div></div></div>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm539726289984"></a>126.2.1.3. Rancher CLI</h4></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm539726289344"></a>126.2.1.3.1. 二进制安装</h5></div></div></div>
 			
-			<p>Rancher Compose是一个多主机版本的Docker Compose</p>
-			<p>
-				下载地址：
-				<a class="ulink" href="https://github.com/rancher/rancher-compose/releases" target="_top">https://github.com/rancher/rancher-compose/releases</a>
-			</p>
+
+			<p>http://mirror.cnrancher.com</p>
+			<pre class="screen">
+			
+cd /usr/local/src
+wget http://rancher-mirror.cnrancher.com/cli/v2.4.13/rancher-linux-amd64-v2.4.13.tar.xz
+tar Jxvf rancher-linux-amd64-v2.4.13.tar.xz
+install rancher-v2.4.13/rancher /usr/local/bin/
+			
+			</pre>
+			<p></p>
+			<pre class="screen">
+			
+[root@localhost src]# rancher
+Rancher CLI, managing containers one UTF-8 character at a time
+
+Usage: rancher [OPTIONS] COMMAND [arg...]
+
+Version: v2.4.13
+
+Options:
+  --debug                   Debug logging
+  --config value, -c value  Path to rancher config (default: "/root/.rancher") [$RANCHER_CONFIG_DIR]
+  --help, -h                show help
+  --version, -v             print the version
+  
+Commands:
+  apps, [app]                                       Operations with apps. Uses helm. Flags prepended with "helm" can also be accurately described by helm documentation.
+  catalog                                           Operations with catalogs
+  clusters, [cluster]                               Operations on clusters
+  context                                           Operations for the context
+  globaldns                                         Operations on global DNS providers and entries
+  inspect                                           View details of resources
+  kubectl                                           Run kubectl commands
+  login, [l]                                        Login to a Rancher server
+  multiclusterapps, [multiclusterapp mcapps mcapp]  Operations with multi-cluster apps
+  namespaces, [namespace]                           Operations on namespaces
+  nodes, [node]                                     Operations on nodes
+  projects, [project]                               Operations on projects
+  ps                                                Show workloads in a project
+  server                                            Operations for the server
+  settings, [setting]                               Show settings for the current server
+  ssh                                               SSH into a node
+  up                                                apply compose config
+  wait                                              Wait for resources cluster, app, project, multiClusterApp
+  token                                             Authenticate and generate new kubeconfig token
+  help, [h]                                         Shows a list of commands or help for one command
+  
+Run 'rancher COMMAND --help' for more information on a command.
+			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm539726286752"></a>126.2.1.3.2. Mac 安装</h5></div></div></div>
+			
+			<pre class="screen">
+			
+Neo-iMac:~ neo$ brew install rancher-cli
+
+Neo-iMac:~ neo$ rancher -v
+rancher version 2.4.13
+			
+			</pre>
+		</div>
+		
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="rancher-compose"></a>126.2.1.4. rancher-compose</h4></div></div></div>
+		
+		<p>Rancher Compose是一个多主机版本的Docker Compose</p>
+		<p>
+			下载地址：
+			<a class="ulink" href="https://github.com/rancher/rancher-compose/releases" target="_top">https://github.com/rancher/rancher-compose/releases</a>
+		</p>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm539726282624"></a>126.2.1.4.1. v0.12.5</h5></div></div></div>
+			
 			<pre class="screen">
 			
 cd /tmp
@@ -135,15 +254,16 @@ cd
 			</pre>
 		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm256311864528"></a>126.2.2. 快速入门</h3></div></div></div>
+</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm539726281184"></a>126.2.2. 快速入门</h3></div></div></div>
 		
 		<p>
 			<a class="ulink" href="https://www.cnrancher.com/docs/rancher/v2.x/cn/overview/quick-start-guide/" target="_top">https://www.cnrancher.com/docs/rancher/v2.x/cn/overview/quick-start-guide/</a>
 		</p>
-		<div><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="800"><tr><td><img src="../images/rancher/password.png" width="800" /></td></tr></table></div>
+
 		<div><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="800"><tr><td><img src="../images/rancher/url.png" width="800" /></td></tr></table></div>
 		<div><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="800"><tr><td><img src="../images/rancher/webui.png" width="800" /></td></tr></table></div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm256311857696"></a>126.2.2.1. API</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm539726276848"></a>126.2.2.1. API</h4></div></div></div>
 			
 			<div><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="800"><tr><td><img src="../images/rancher/api1.png" width="800" /></td></tr></table></div>
 			<div><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="800"><tr><td><img src="../images/rancher/api2.png" width="800" /></td></tr></table></div>
@@ -152,24 +272,140 @@ cd
 			<div><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="800"><tr><td><img src="../images/rancher/api5.png" width="800" /></td></tr></table></div>
 		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm256311850624"></a>126.2.3. Rancher CLI</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm539726269712"></a>126.2.3. Rancher Compose</h3></div></div></div>
 		
+		<p>Rancher Compose 工具的工作方式是跟 Docker Compose 的工作方式是相似的，Docker Compose 不能远程部署，Rancher Compose 可以部署到指定URL的 Rancher 上。</p>
 		<pre class="screen">
 		
-[root@localhost ~]# rancher
+[root@localhost ~]# rancher-compose 
+Usage: rancher-compose [OPTIONS] COMMAND [arg...]
+
+Docker-compose to Rancher
+
+Version: v0.12.5
+
+Author:
+  Rancher Labs, Inc.
+
+Options:
+  --verbose, --debug               
+  --file value, -f value           Specify one or more alternate compose files (default: docker-compose.yml) [$COMPOSE_FILE]
+  --project-name value, -p value   Specify an alternate project name (default: directory name) [$COMPOSE_PROJECT_NAME]
+  --url value                      Specify the Rancher API endpoint URL [$RANCHER_URL]
+  --access-key value               Specify Rancher API access key [$RANCHER_ACCESS_KEY]
+  --secret-key value               Specify Rancher API secret key [$RANCHER_SECRET_KEY]
+  --rancher-file value, -r value   Specify an alternate Rancher compose file (default: rancher-compose.yml)
+  --env-file value, -e value       Specify a file from which to read environment variables
+  --bindings-file value, -b value  Specify a file from which to read bindings
+  --help, -h                       show help
+  --version, -v                    print the version
+  
+Commands:
+  create      Create all services but do not start
+  up          Bring all services up
+  start       Start services
+  logs        Get service logs
+  restart     Restart services
+  stop, down  Stop services
+  scale       Scale services
+  rm          Delete services
+  pull        Pulls images for services
+  upgrade     Perform rolling upgrade between services
+  help        Shows a list of commands or help for one command
+  
+Run 'rancher-compose COMMAND --help' for more information on a command.
+		
+		
+		</pre>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm539726267952"></a>126.2.3.1. Rancher Compose 命令</h4></div></div></div>
+			
+			<div class="tip" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Tip"><tr><td rowspan="2" align="center" valign="top" width="25"><img alt="[提示]" src="/graphics/tip.png" /></td><th align="left">提示</th></tr><tr><td align="left" valign="top">Rancher Compose 目前不支持 V3 版的 Docker Compose</td></tr></table></div>
+			<p>为 RANCHER COMPOSE 设置 RANCHER SERVER</p>
+			<pre class="screen">
+			
+# Set the url that Rancher is on
+$ export RANCHER_URL=http://server_ip/
+# Set the access key, i.e. username
+$ export RANCHER_ACCESS_KEY=&lt;username_of_environment_api_key&gt;
+# Set the secret key, i.e. password
+$ export RANCHER_SECRET_KEY=&lt;password_of_environment_api_key&gt;				
+			
+			</pre>
+			<p>如果你不想设置环境变量，那么你需要在Rancher Compose 命令中手动送入这些变量:</p>
+			<pre class="screen">
+			
+$ rancher-compose --url http://server_ip --access-key &lt;username_of_environment_api_key&gt; --secret-key &lt;password_of_environment_api_key&gt; up		
+			
+			</pre>
+			<p>Rancher Compose 支持所有 Docker Compose 支持的命令</p>
+			<pre class="screen">
+			
+Name		Description
+create		创建所有服务但不启动
+up		启动所有服务
+start		启动服务
+logs		输出服务日志
+restart		重启服务
+stop, down	停止服务
+scale		缩放服务
+rm		删除服务
+pull		拉取所有服务的镜像
+upgrade		服务之间进行滚动升级
+help, h		输出命令列表或者指定命令的帮助列表
+			
+			</pre>
+			<p>RANCHER COMPOSE 选项</p>
+			<pre class="screen">
+			
+无论何时你使用 Rancher Compose 命令，这些不同的选项你都可以使用
+
+Name	Description
+--verbose, --debug	 
+--file, -f [–file option –file option]	指定一个compose 文件 (默认: docker-compose.yml) [$COMPOSE_FILE]
+--project-name, -p	指定一个项目名称 (默认: directory name)
+--url				执行 Rancher API接口 URL [$RANCHER_URL]
+--access-key		指定 Rancher API access key [$RANCHER_ACCESS_KEY]
+--secret-key		指定 Rancher API secret key [$RANCHER_SECRET_KEY]
+--rancher-file, -r	指定一个 Rancher Compose 文件 (默认: rancher-compose.yml)
+--env-file, -e		指定一个环境变量配置文件
+--help, -h			输出帮助文本
+--version, -v		输出 Rancher Compose 版本	
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm539726267696"></a>126.2.3.2. 操作演示</h4></div></div></div>
+			
+			<p>API</p>
+			<div><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="800"><tr><td><img src="../images/rancher/api5.png" width="800" /></td></tr></table></div>
+			<p>准备 docker-compose.yml 文件</p>
+			<pre class="screen">
+			
+rancher-compose --url https://rancher.netkiller.cn/v3 --access-key token-pk9n2 --secret-key p2twn42xps9nmh74qm5k5fhfn8rxqhlwv7q9hzcvbvqk5tsqwdh4tc up
+			
+			</pre>
+		</div>
+	</div>
+	
+<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm539726258320"></a>126.2.4. Rancher CLI</h3></div></div></div>
+	
+	<p>帮助信息</p>
+	<pre class="screen">
+		
+[root@localhost ~]# rancher 
 Rancher CLI, managing containers one UTF-8 character at a time
 
 Usage: rancher [OPTIONS] COMMAND [arg...]
 
-Version: v2.2.0-rc16
+Version: v2.4.13
 
 Options:
-  --debug        Debug logging
-  --help, -h     show help
-  --version, -v  print the version
+  --debug                   Debug logging
+  --config value, -c value  Path to rancher config (default: "/root/.rancher") [$RANCHER_CONFIG_DIR]
+  --help, -h                show help
+  --version, -v             print the version
   
 Commands:
-  apps, [app]                                       Operations with apps
+  apps, [app]                                       Operations with apps. Uses helm. Flags prepended with "helm" can also be accurately described by helm documentation.
   catalog                                           Operations with catalogs
   clusters, [cluster]                               Operations on clusters
   context                                           Operations for the context
@@ -182,126 +418,129 @@ Commands:
   nodes, [node]                                     Operations on nodes
   projects, [project]                               Operations on projects
   ps                                                Show workloads in a project
+  server                                            Operations for the server
   settings, [setting]                               Show settings for the current server
   ssh                                               SSH into a node
   up                                                apply compose config
-  wait                                              Wait for resources cluster, app, project
+  wait                                              Wait for resources cluster, app, project, multiClusterApp
+  token                                             Authenticate and generate new kubeconfig token
   help, [h]                                         Shows a list of commands or help for one command
   
-Run 'rancher COMMAND --help' for more information on a command.		
+Run 'rancher COMMAND --help' for more information on a command.
 		
+	</pre>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="rancher.login"></a>126.2.4.1. 登陆 Rancher</h4></div></div></div>
+		
+		<p>链接到 Rancher</p>
+		<pre class="screen">
+			
+$ rancher login https://&lt;SERVER_URL&gt; --token &lt;BEARER_TOKEN&gt;
+			
 		</pre>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm256311849440"></a>126.2.3.1. 登陆 Rancher</h4></div></div></div>
+		<p>登陆演示</p>
+		<pre class="screen">
 			
-			<p>链接到 Rancher</p>
-			<pre class="screen">
-			
-$ rancher login https://&lt;SERVER_URL&gt; --token &lt;BEARER_TOKEN&gt;			
-			
-			</pre>
-			<p>登陆演示</p>
-			<pre class="screen">
-			
-[root@localhost ~]# rancher login https://192.168.0.157/v3 --token token-ljjbw:6flrltb5fw7j7rnjlzvx574p9jckr74bkl2l9jcxn55wpk8drwzpkj
-The authenticity of server 'https://192.168.0.157' can't be established.
+[root@localhost ~]# rancher login https://192.168.30.13 --token token-5q6kw:8b7w2hj85z7cwkwhhvjlp2rw5ls5n8d4gj7vj74jbdch9gv4dzq9km
+The authenticity of server 'https://192.168.30.13' can't be established.
 Cert chain is : [Certificate:
     Data:
         Version: 3 (0x2)
-        Serial Number: 3365063357028956089 (0x2eb31b4b5a64f7b9)
-    Signature Algorithm: SHA256-RSA
-        Issuer: O=the-ranch,CN=cattle-ca
+        Serial Number: 5708461865883058034 (0x4f3887d281d2bf72)
+    Signature Algorithm: ECDSA-SHA256
+        Issuer: O=dynamiclistener-org,CN=dynamiclistener-ca
         Validity
-            Not Before: Mar 19 08:51:53 2019 UTC
-            Not After : Mar 18 08:53:05 2020 UTC
-        Subject: O=the-ranch,CN=cattle
+            Not Before: Nov 29 07:00:54 2021 UTC
+            Not After : Nov 29 08:53:00 2022 UTC
+        Subject: O=dynamic,CN=dynamic
         Subject Public Key Info:
-            Public Key Algorithm: RSA
-                Public-Key: (2048 bit)
-                Modulus:
-                    c1:33:e9:64:5d:a6:23:a8:4e:c1:3c:2f:97:1b:2c:
-                    ad:27:17:1c:e4:bf:a9:e0:45:96:ae:e6:2e:96:28:
-                    f9:f5:dd:aa:97:12:1c:14:84:6b:15:df:f3:56:33:
-                    27:5b:70:fe:5a:be:65:6d:25:df:92:55:17:82:97:
-                    a4:2e:07:d4:56:de:48:3c:21:c9:ae:f4:66:5d:30:
-                    8e:7a:a6:89:b6:41:b9:27:15:44:4d:37:64:84:3d:
-                    e3:70:85:b5:aa:74:83:71:c9:81:e3:2c:c9:1f:5b:
-                    3b:13:1d:3a:37:cf:be:be:45:da:b7:36:2d:71:29:
-                    86:fc:ba:91:10:44:f2:b0:0d:97:dc:9b:5f:55:7f:
-                    7e:fa:85:d4:b0:61:b0:63:68:e7:8c:75:83:0c:1e:
-                    21:a4:0d:78:ff:97:53:ca:f4:92:cb:a0:02:8b:f1:
-                    04:7c:63:2a:e9:d8:da:fe:77:61:c9:d0:d8:6a:f5:
-                    11:b2:bf:cb:46:fa:9a:59:f0:24:97:39:58:eb:ce:
-                    21:53:b4:b4:5e:c6:f3:d7:1e:8f:e8:54:b4:86:5a:
-                    62:e3:0c:5a:9f:24:ca:02:2b:ad:76:a4:f8:8f:87:
-                    f4:fe:06:38:31:e8:13:6f:07:26:6e:74:08:eb:4c:
-                    a4:34:1e:ff:99:f1:c6:c2:c7:e9:7f:df:cc:66:1b:
-                    29
-                Exponent: 65537 (0x10001)
+            Public Key Algorithm: ECDSA
+                Public-Key: (256 bit)
+                X:
+                    1c:f4:1d:86:32:a7:57:6c:d5:6c:59:86:18:b9:9f:
+                    40:10:e2:f2:99:96:04:96:10:d4:88:82:2c:06:5c:
+                    e7:7c
+                Y:
+                    16:86:d8:41:0a:f3:c3:f0:e7:0c:29:a4:69:e0:b2:
+                    41:34:73:a6:78:58:e0:a0:df:84:4d:c9:9e:83:3f:
+                    bd:fd
+                Curve: P-256
         X509v3 extensions:
             X509v3 Key Usage: critical
                 Digital Signature, Key Encipherment
             X509v3 Extended Key Usage:
                 TLS Web Server Authentication
+            X509v3 Authority Key Identifier:
+                keyid:3D:40:3F:96:30:78:9F:C1:84:1F:94:E0:A2:4D:1C:E1:69:3D:F3:E4
             X509v3 Subject Alternative Name:
-                DNS:
-                IP Address:192.168.0.157
+                DNS:localhost, DNS:rancher.cattle-system
+                IP Address:127.0.0.1, IP Address:172.19.0.3, IP Address:192.168.30.13
 
-    Signature Algorithm: SHA256-RSA
-         74:6a:32:54:e2:89:35:94:e1:22:35:4e:58:d9:74:dc:6c:9b:
-         83:03:99:b5:0d:99:09:64:95:75:93:4c:c9:eb:b1:ab:5a:4a:
-         c3:b7:b6:78:34:16:ad:5d:2f:a5:5c:c3:0b:15:10:a1:d4:de:
-         22:ee:df:18:36:96:0c:ed:c4:ad:28:15:d7:1e:40:5b:7c:d1:
-         1c:53:d3:57:0b:47:4b:ae:b7:e8:e0:7c:29:3b:6d:63:b4:29:
-         cc:0a:bd:58:c3:a4:bf:5d:55:83:ec:96:0f:f3:af:dd:c6:fe:
-         90:b4:7a:71:d1:48:2f:5d:ac:59:8d:98:c2:d8:bd:81:92:63:
-         5d:75:bf:cc:25:01:c2:40:d8:8d:a5:de:59:b3:8d:59:e1:10:
-         d0:0d:29:ec:a4:97:7b:65:3a:00:d0:2a:13:1a:06:8f:aa:a1:
-         98:88:0d:87:fe:4b:83:4e:d2:bc:8c:33:fd:6c:f6:65:49:ec:
-         a1:fc:e7:d3:46:59:eb:af:fe:b8:e7:66:3c:83:10:be:d1:1d:
-         97:55:72:aa:34:2d:6b:d0:3b:dc:92:f9:18:d5:6c:25:bb:30:
-         c2:81:06:d5:12:b0:50:3d:a0:be:de:fa:42:2c:f6:ca:6b:3c:
-         af:89:1e:42:a1:8a:93:2b:06:fc:52:35:c1:c8:f4:41:96:c9:
-         51:3f:4d:d6
+    Signature Algorithm: ECDSA-SHA256
+         30:45:02:21:00:e5:f1:e7:2d:14:fc:25:1f:5c:ea:ce:9a:8d:
+         7a:95:e2:d8:bc:64:7a:38:83:3e:84:bc:2e:c7:83:5c:44:5f:
+         21:02:20:7c:91:46:fe:2f:bc:f9:18:41:e7:8d:70:0b:1b:c7:
+         e3:c2:b3:12:c5:4f:44:ef:fa:00:15:88:6c:3a:c2:e1:23
 ] 
 Do you want to continue connecting (yes/no)? yes
-INFO[0004] Saving config to /root/.rancher/cli2.json    			
+INFO[0002] Saving config to /root/.rancher/cli2.json  			
 			
-			</pre>
-		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm256311847104"></a>126.2.3.2. 查看集群</h4></div></div></div>
-			
-			<pre class="screen">
+		</pre>
+		<p>配置文件</p>
+		<pre class="screen">
+		
+[root@localhost ~]# cat /root/.rancher/cli2.json | jq
+{
+  "Servers": {
+    "rancherDefault": {
+      "accessKey": "token-5q6kw",
+      "secretKey": "8b7w2hj85z7cwkwhhvjlp2rw5ls5n8d4gj7vj74jbdch9gv4dzq9km",
+      "tokenKey": "token-5q6kw:8b7w2hj85z7cwkwhhvjlp2rw5ls5n8d4gj7vj74jbdch9gv4dzq9km",
+      "url": "https://192.168.30.13",
+      "project": "local:p-8rzzk",
+      "cacert": "-----BEGIN CERTIFICATE-----\nMIIBpzCCAU2gAwIBAgIBADAKBggqhkjOPQQDAjA7MRwwGgYDVQQKExNkeW5hbWlj\nbGlzdGVuZXItb3JnMRswGQYDVQQDExJkeW5hbWljbGlzdGVuZXItY2EwHhcNMjEx\nMTI5MDcwMDU0WhcNMzExMTI3MDcwMDU0WjA7MRwwGgYDVQQKExNkeW5hbWljbGlz\ndGVuZXItb3JnMRswGQYDVQQDExJkeW5hbWljbGlzdGVuZXItY2EwWTATBgcqhkjO\nPQIBBggqhkjOPQMBBwNCAARppCv2i2N7k6tF4DWBaJAHhOdwC1SMfymJaj8LUwOP\nfGsMhpLVlI/6Go7FIRPAIkGxoPqc0CeayxrcGun0R66Ao0IwQDAOBgNVHQ8BAf8E\nBAMCAqQwDwYDVR0TAQH/BAUwAwEB/zAdBgNVHQ4EFgQUPUA/ljB4n8GEH5Tgok0c\n4Wk98+QwCgYIKoZIzj0EAwIDSAAwRQIhAJn4aRTOGsJCaQllCXzDw/vl3o3AmY0a\nqTSMjPRo91vMAiBTnYJMP92NZUoqVV6tG8H+PdsTK/QeTSHm1m4iju1JBg==\n-----END CERTIFICATE-----",
+      "kubeCredentials": null,
+      "kubeConfigs": null
+    }
+  },
+  "CurrentServer": "rancherDefault"
+}		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="rancher.clusters"></a>126.2.4.2. 查看集群</h4></div></div></div>
+		
+		<pre class="screen">
 			
 [root@localhost ~]# rancher clusters
-CURRENT   ID        STATE     NAME      PROVIDER                    NODES     CPU       RAM             PODS
-*         c-b554b   active    test      Rancher Kubernetes Engine   1         0.54/8    0.14/15.57 GB   9/110			
+CURRENT   ID        STATE     NAME      PROVIDER   NODES     CPU       RAM            PODS
+*         local     active    local     Unknown    1         0.10/4    0.07/7.51 GB   5/110			
 			
-			</pre>
-		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm256311845520"></a>126.2.3.3. 查看节点</h4></div></div></div>
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="rancher.nodes"></a>126.2.4.3. 查看节点</h4></div></div></div>
+		
+		<pre class="screen">
 			
-			<pre class="screen">
+[root@localhost ~]# rancher nodes
+ID                    NAME         STATE     POOL      DESCRIPTION
+local:machine-5p4pj   local-node   active 			
 			
-[root@localhost ~]# rancher node
-ID                       NAME      STATE         POOL      DESCRIPTION
-c-b554b:m-6353a97eb992   ubuntu    unavailable      			
-			
-			</pre>
-		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm256311844112"></a>126.2.3.4. catalog</h4></div></div></div>
-			
-			<pre class="screen">
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="rancher.catalog"></a>126.2.4.4. catalog</h4></div></div></div>
+		
+		<pre class="screen">
 			
 [root@localhost ~]# rancher catalog
 ID        NAME      URL                                                 BRANCH    KIND
 helm      helm      https://kubernetes-charts.storage.googleapis.com/   master    helm
 library   library   https://git.rancher.io/charts                       master    helm			
 			
-			</pre>
-		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm256311842528"></a>126.2.3.5. 查看设置</h4></div></div></div>
-			
-			<pre class="screen">
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="rancher.settings"></a>126.2.4.5. 查看设置</h4></div></div></div>
+		
+		<pre class="screen">
 			
 [root@localhost ~]# rancher settings
 ID               NAME             VALUE
@@ -358,174 +597,142 @@ whitelist-domain          whitelist-domain          forums.rancher.com
 windows-agent-image       windows-agent-image       rancher/rancher-agent:v2.1.6-nanoserver-1803
 			
 			
-			</pre>
-		</div>
+		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm256311841376"></a>126.2.4. Rancher Compose</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="rancher.kubectl"></a>126.2.4.6. rancher kubectl</h4></div></div></div>
 		
-		<p>Rancher Compose 工具的工作方式是跟 Docker Compose 的工作方式是相似的，Docker Compose 不能远程部署，Rancher Compose 可以部署到指定URL的 Rancher 上。</p>
 		<pre class="screen">
 		
-[root@localhost ~]# rancher-compose 
-Usage: rancher-compose [OPTIONS] COMMAND [arg...]
-
-Docker-compose to Rancher
-
-Version: v0.12.5
-
-Author:
-  Rancher Labs, Inc.
-
-Options:
-  --verbose, --debug               
-  --file value, -f value           Specify one or more alternate compose files (default: docker-compose.yml) [$COMPOSE_FILE]
-  --project-name value, -p value   Specify an alternate project name (default: directory name) [$COMPOSE_PROJECT_NAME]
-  --url value                      Specify the Rancher API endpoint URL [$RANCHER_URL]
-  --access-key value               Specify Rancher API access key [$RANCHER_ACCESS_KEY]
-  --secret-key value               Specify Rancher API secret key [$RANCHER_SECRET_KEY]
-  --rancher-file value, -r value   Specify an alternate Rancher compose file (default: rancher-compose.yml)
-  --env-file value, -e value       Specify a file from which to read environment variables
-  --bindings-file value, -b value  Specify a file from which to read bindings
-  --help, -h                       show help
-  --version, -v                    print the version
-  
-Commands:
-  create      Create all services but do not start
-  up          Bring all services up
-  start       Start services
-  logs        Get service logs
-  restart     Restart services
-  stop, down  Stop services
-  scale       Scale services
-  rm          Delete services
-  pull        Pulls images for services
-  upgrade     Perform rolling upgrade between services
-  help        Shows a list of commands or help for one command
-  
-Run 'rancher-compose COMMAND --help' for more information on a command.
-		
+[root@localhost ~]# rancher kubectl get pods --all-namespaces 
+NAMESPACE                   NAME                                READY   STATUS    RESTARTS   AGE
+cattle-fleet-local-system   fleet-agent-59b74595c-xgnjg         1/1     Running   5          129m
+cattle-fleet-system         fleet-controller-66cc4c6b5b-xswdl   1/1     Running   5          131m
+cattle-fleet-system         gitjob-5778966b7c-jqdtj             1/1     Running   5          131m
+cattle-system               rancher-webhook-6979fbd4bf-gs8vk    1/1     Running   5          129m
+kube-system                 coredns-7448499f4d-4n2vt            1/1     Running   5          134m		
 		
 		</pre>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm256311839616"></a>126.2.4.1. Rancher Compose 命令</h4></div></div></div>
-			
-			<div class="tip" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Tip"><tr><td rowspan="2" align="center" valign="top" width="25"><img alt="[提示]" src="/graphics/tip.png" /></td><th align="left">提示</th></tr><tr><td align="left" valign="top">Rancher Compose 目前不支持 V3 版的 Docker Compose</td></tr></table></div>
-			<p>为 RANCHER COMPOSE 设置 RANCHER SERVER</p>
-			<pre class="screen">
-			
-# Set the url that Rancher is on
-$ export RANCHER_URL=http://server_ip/
-# Set the access key, i.e. username
-$ export RANCHER_ACCESS_KEY=&lt;username_of_environment_api_key&gt;
-# Set the secret key, i.e. password
-$ export RANCHER_SECRET_KEY=&lt;password_of_environment_api_key&gt;				
-			
-			</pre>
-			<p>如果你不想设置环境变量，那么你需要在Rancher Compose 命令中手动送入这些变量:</p>
-			<pre class="screen">
-			
-$ rancher-compose --url http://server_ip --access-key &lt;username_of_environment_api_key&gt; --secret-key &lt;password_of_environment_api_key&gt; up		
-			
-			</pre>
-			<p>Rancher Compose 支持所有 Docker Compose 支持的命令</p>
-			<pre class="screen">
-			
-Name		Description
-create		创建所有服务但不启动
-up		启动所有服务
-start		启动服务
-logs		输出服务日志
-restart		重启服务
-stop, down	停止服务
-scale		缩放服务
-rm		删除服务
-pull		拉取所有服务的镜像
-upgrade		服务之间进行滚动升级
-help, h		输出命令列表或者指定命令的帮助列表
-			
-			</pre>
-			<p>RANCHER COMPOSE 选项</p>
-			<pre class="screen">
-			
-无论何时你使用 Rancher Compose 命令，这些不同的选项你都可以使用
-
-Name	Description
---verbose, --debug	 
---file, -f [–file option –file option]	指定一个compose 文件 (默认: docker-compose.yml) [$COMPOSE_FILE]
---project-name, -p	指定一个项目名称 (默认: directory name)
---url				执行 Rancher API接口 URL [$RANCHER_URL]
---access-key		指定 Rancher API access key [$RANCHER_ACCESS_KEY]
---secret-key		指定 Rancher API secret key [$RANCHER_SECRET_KEY]
---rancher-file, -r	指定一个 Rancher Compose 文件 (默认: rancher-compose.yml)
---env-file, -e		指定一个环境变量配置文件
---help, -h			输出帮助文本
---version, -v		输出 Rancher Compose 版本	
-			
-			</pre>
-		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm256311839360"></a>126.2.4.2. 操作演示</h4></div></div></div>
-			
-			<p>API</p>
-			<div><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="800"><tr><td><img src="../images/rancher/api5.png" width="800" /></td></tr></table></div>
-			<p>准备 docker-compose.yml 文件</p>
-			<pre class="screen">
-			
-rancher-compose --url https://rancher.netkiller.cn/v3 --access-key token-pk9n2 --secret-key p2twn42xps9nmh74qm5k5fhfn8rxqhlwv7q9hzcvbvqk5tsqwdh4tc up
-			
-			</pre>
-		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm256311829728"></a>126.2.5. Rancher Kubernetes Engine (RKE)</h3></div></div></div>
+</div>
+
+	
+<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm539726244192"></a>126.2.5. Rancher Demo</h3></div></div></div>
+	
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="rancher.nginx"></a>126.2.5.1. Rancher 部署 Nginx</h4></div></div></div>
 		
-		<p>
-			<a class="ulink" href="https://github.com/rancher/rke/releases" target="_top">https://github.com/rancher/rke/releases</a>
-		</p>
-		<p>https://rancher.com/an-introduction-to-rke/</p>
+		<p>准备编排脚本</p>
 		<pre class="screen">
 		
-[root@localhost ~]# wget https://github.com/rancher/rke/releases/download/v0.1.17/rke
-[root@localhost ~]# chmod +x rke 
-[root@localhost ~]# ./rke --version
-rke version v0.1.17		
+[root@localhost ~]# cat nginx.yaml 
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx
+  labels:
+    app: nginx
+spec:
+  ports:
+  - port: 88
+    targetPort: 80
+  selector:
+    app: nginx
+  type: NodePort
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+  labels:
+    app: nginx
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest
+        ports:
+        - containerPort: 80		
+		
+		</pre>
+		<p>部署</p>
+		<pre class="screen">
+		
+[root@localhost ~]# rancher kubectl create -f nginx.yaml 
+service/nginx created
+deployment.apps/nginx created
+		
+		</pre>
+		<p>查看状态</p>
+		<pre class="screen">
+		
+[root@localhost ~]# rancher kubectl get deployment -n default
+NAME    READY   UP-TO-DATE   AVAILABLE   AGE
+nginx   3/3     3            3           113s
+
+[root@localhost ~]# rancher kubectl get service -n default
+NAME         TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
+kubernetes   ClusterIP   10.43.0.1       &lt;none&gt;        443/TCP        156m
+nginx        NodePort    10.43.111.205   &lt;none&gt;        88:32646/TCP   119s		
+		
+[root@localhost ~]# rancher kubectl get pods -n default
+NAME                    READY   STATUS              RESTARTS   AGE
+nginx-585449566-kd2mk   0/1     ContainerCreating   0          14s
+nginx-585449566-mdl8n   0/1     ContainerCreating   0          14s
+nginx-585449566-v8s5k   0/1     ContainerCreating   0          14s		
 		
 		</pre>
 		<p></p>
 		<pre class="screen">
 		
-
+[root@localhost ~]# rancher kubectl describe services nginx
+Name:                     nginx
+Namespace:                default
+Labels:                   app=nginx
+Annotations:              field.cattle.io/publicEndpoints: [{"port":32646,"protocol":"TCP","serviceName":"default:nginx","allNodes":true}]
+Selector:                 app=nginx
+Type:                     NodePort
+IP Family Policy:         SingleStack
+IP Families:              IPv4
+IP:                       10.43.111.205
+IPs:                      10.43.111.205
+Port:                     &lt;unset&gt;  88/TCP
+TargetPort:               80/TCP
+NodePort:                 &lt;unset&gt;  32646/TCP
+Endpoints:                10.42.0.40:80,10.42.0.41:80,10.42.0.42:80
+Session Affinity:         None
+External Traffic Policy:  Cluster
+Events:                   &lt;none&gt;		
 		
 		</pre>
 	</div>
-
-
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="rancher.cli"></a>126.2.6. Rancher CLI</h3></div></div></div>
+</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm539726236864"></a>126.2.6. FAQ</h3></div></div></div>
 		
-		<pre class="screen">
-		
-rancher export project &amp;&amp; cd project &amp;&amp;  rancher up -p --force-upgrade --batch-size 99 -u -c -d &amp;&amp; cd .. &amp;&amp; rm -rf project
-		
-		</pre>
-	</div>
-
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm256311824512"></a>126.2.7. 调试</h3></div></div></div>
-		
-		<pre class="screen">
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm539726236128"></a>126.2.6.1. 调试 Rancher 查看日志</h4></div></div></div>
+			
+			<pre class="screen">
 		
 neo@ubuntu:~$ docker logs -f rancher		
 		
-		</pre>
+			</pre>
 
-		<pre class="screen">
+			<pre class="screen">
 		
 $ curl -L http://127.0.0.1:2379/health
 
 {"health": "true"}
 		
 		
-		</pre>
-	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm256311822832"></a>126.2.8. FAQ</h3></div></div></div>
-		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm256311822112"></a>126.2.8.1.  [network] Host [rancher.netkiller.cn] is not able to connect to the following ports: [rancher.netkiller.cn:2379]. Please check network policies and firewall rules</h4></div></div></div>
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm539726234256"></a>126.2.6.2.  [network] Host [rancher.netkiller.cn] is not able to connect to the following ports: [rancher.netkiller.cn:2379]. Please check network policies and firewall rules</h4></div></div></div>
 			
 			<p>提示错误</p>
 			<p> [network] Host [rancher.netkiller.cn] is not able to connect to the following ports: [rancher.netkiller.cn:2379]. Please check network policies and firewall rules</p>

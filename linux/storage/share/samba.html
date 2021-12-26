@@ -18,7 +18,7 @@
 	
 	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="install"></a>69.2.1. install</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm256394835088"></a>69.2.1.1. CentOS 8 Stream</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm539728939184"></a>69.2.1.1. CentOS 8 Stream</h4></div></div></div>
 			
 			<p>服务器端</p>
 			<pre class="screen">
@@ -36,7 +36,7 @@
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm256394832496"></a>69.2.1.2. Ubuntu</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm539728936592"></a>69.2.1.2. Ubuntu</h4></div></div></div>
 			
 			<p>环境 ubuntu 17.10</p>
 			<pre class="screen">
@@ -124,7 +124,7 @@ valid users = '%S'登录用户，'neo'允许neo访问
 read only = 'No'读写模式，'Yes'只读模式
 browseable = 'No'不显示, 'Yes'显示
 		</pre>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm256394817856"></a>69.2.2.1. Security consideration</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm539728921952"></a>69.2.2.1. Security consideration</h4></div></div></div>
 			
 			<pre class="screen">
 [global]
@@ -132,7 +132,7 @@ interfaces = lo, eth0
 bind interfaces only = true
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm256394816480"></a>69.2.2.2. 共享目录</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm539728920576"></a>69.2.2.2. 共享目录</h4></div></div></div>
 			
 			<p>添加账号</p>
 			<pre class="screen">
@@ -173,7 +173,99 @@ finance:1000:
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm256394811696"></a>69.2.2.3. 限制IP地址访问</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm539728915792"></a>69.2.2.3. 匿名共享</h4></div></div></div>
+			
+			<p>匿名共享无需用户登陆，任何人都可以向该文件夹内写入和删除数据</p>
+			<p>编辑配置文件 /etc/samba/smb.conf</p>
+			<p>[global] 下增加 map to guest = Bad User</p>
+			<pre class="screen">
+			
+[global]
+	workgroup = SAMBA
+	security = user
+
+	passdb backend = tdbsam
+
+	printing = cups
+	printcap name = cups
+	load printers = yes
+	cups options = raw
+	map to guest = Bad User 			
+			
+			</pre>
+			<p>增加 [share] 配置项</p>
+			<pre class="screen">
+			
+[share]
+        comment = File share
+        path = /opt/backup/share
+        browseable = Yes
+        writable = Yes
+        create mask = 0644
+        directory mask = 0755
+		guest ok = Yes 
+		public = Yes			
+			
+			</pre>
+			<p>完成的配置</p>
+			<pre class="screen">
+			
+[root@netkiller home]# cat /etc/samba/smb.conf
+# See smb.conf.example for a more detailed config file or
+# read the smb.conf manpage.
+# Run 'testparm' to verify the config is correct after
+# you modified it.
+
+[global]
+	workgroup = SAMBA
+	security = user
+
+	passdb backend = tdbsam
+
+	printing = cups
+	printcap name = cups
+	load printers = yes
+	cups options = raw
+	map to guest = Bad User  
+
+[homes]
+	comment = Home Directories
+	valid users = %S, %D%w%S
+	browseable = No
+	read only = No
+	inherit acls = Yes
+
+[printers]
+	comment = All Printers
+	path = /var/tmp
+	printable = Yes
+	create mask = 0600
+	browseable = No
+
+[print$]
+	comment = Printer Drivers
+	path = /var/lib/samba/drivers
+	write list = @printadmin root
+	force group = @printadmin
+	create mask = 0664
+	directory mask = 0775
+
+[share]
+        comment = File share
+        path = /opt/backup/share
+        browseable = Yes
+        writable = Yes
+        create mask = 0644
+        directory mask = 0755
+		guest ok = Yes 
+		public = Yes
+		#read only = no
+        #valid users = 
+        write list = share			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm539728911088"></a>69.2.2.4. 限制IP地址访问</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -182,7 +274,7 @@ hosts deny=192.168.50.10 192.168.10.   ## 禁止IP 192.168.50.10 及 192.168.10.
 			</pre>
 		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm256394819440"></a>69.2.3. Samba 相关命令</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm539728909744"></a>69.2.3. Samba 相关命令</h3></div></div></div>
 		
 
 		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="testparm"></a>69.2.3.1. testparm - check an smb.conf configuration file for internal correctness</h4></div></div></div>
@@ -311,7 +403,7 @@ $ mount -t cifs //192.168.0.2/ /mnt/
 			<pre class="screen">
 $ sudo apt-get install smbclient
 		</pre>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm256394794400"></a>69.2.3.6.1. 显示共享目录</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm539728893792"></a>69.2.3.6.1. 显示共享目录</h5></div></div></div>
 				
 				<span class="command"><strong>$ smbclient -L 172.16.1.3</strong></span>
 				<pre class="screen">
@@ -337,7 +429,7 @@ Domain=[WORKGROUP] OS=[Unix] Server=[Samba 3.4.0]
         WORKGROUP            DEBIAN
 			</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm256394791808"></a>69.2.3.6.2. 访问共享资源</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm539728891200"></a>69.2.3.6.2. 访问共享资源</h5></div></div></div>
 				
 				<p>访问developer共享目录</p>
 				<pre class="screen">
@@ -371,7 +463,7 @@ smb: \&gt; ls
 smb: \&gt;
 			</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm256394790160"></a>69.2.3.6.3. 用户登录</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm539728889552"></a>69.2.3.6.3. 用户登录</h5></div></div></div>
 				
 				<p>使用用户Neo登录</p>
 				<pre class="screen">
@@ -416,7 +508,7 @@ smb: \&gt; quit
 			<pre class="screen">
 sudo cp /etc/samba/smb.conf /etc/samba/smb.conf.original
 		</pre>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm256394785408"></a>69.2.3.8.1. share</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm539728884800"></a>69.2.3.8.1. share</h5></div></div></div>
 				
 				<p>security = share</p>
 				<pre class="screen">
@@ -445,7 +537,7 @@ sudo cp /etc/samba/smb.conf /etc/samba/smb.conf.original
 			
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm256394783312"></a>69.2.3.8.2. user</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm539728882704"></a>69.2.3.8.2. user</h5></div></div></div>
 				
 				<pre class="screen">
 sudo cp /etc/samba/smb.conf /etc/samba/smb.conf.original
@@ -468,7 +560,7 @@ sudo smbpasswd -L -x neo
 			</pre>
 			</div>
 
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm256394779104"></a>69.2.3.8.3. test</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm539728878496"></a>69.2.3.8.3. test</h5></div></div></div>
 				
 				<p>测试配置文件是否正确</p>
 				<pre class="screen">
@@ -516,7 +608,7 @@ developer  Disk  Development
 
 	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="faq"></a>69.2.4. FAQ</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm256394773664"></a>69.2.4.1. smbd/service.c:make_connection_snum(1013)</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm539728873056"></a>69.2.4.1. smbd/service.c:make_connection_snum(1013)</h4></div></div></div>
 			
 			<pre class="screen">
   '/www' does not exist or permission denied when connecting to [www] Error was Permission denied
