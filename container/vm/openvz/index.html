@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>5.3. OpenVZ</title><link rel="stylesheet" type="text/css" href="../../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="openvz,vz,vzctl,vzquota,vzyum,vztmpl,vzpkgcache,vzsplit,vzcfgvalidate,vzctl" /><meta name="keywords" content="qmeu,kvm,xen,openvz, docker, coreos,docker-compose, kubernetes,kubeadmin,kubectl, netkiller-devops" /><link rel="home" href="../../index.html" title="Netkiller Container 手札" /><link rel="up" href="../index.html" title="第 5 章 Virtual Machine(虚拟机)" /><link rel="prev" href="../xen/index.html" title="5.2. Xen" /><link rel="next" href="../vagrant.html" title="5.4. vagrant - Tool for building and distributing virtualized development environments" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+   	    <a xmlns="" href="https://edu.51cto.com/lecturer/1703915.html">51CTO学院</a> |
+	    <a xmlns="" href="https://edu.csdn.net/lecturer/6423">CSDN程序员研修院</a> |
+	    <a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">腾讯云社区</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">阿里云栖社区</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">5.3. OpenVZ</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="../xen/index.html">上一页</a> </td><th width="60%" align="center">第 5 章 Virtual Machine(虚拟机)</th><td width="20%" align="right"> <a accesskey="n" href="../vagrant.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="index"></a>5.3. OpenVZ</h2></div></div></div>
+	
+	
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="openvz.install"></a>5.3.1. 安装OpenVZ</h3></div></div></div>
+		
+		<div class="procedure"><a id="idm296159254944"></a><p class="title"><strong>过程 5.1. OpenVZ 安装步骤</strong></p><ol class="procedure" type="1"><li class="step">
+				<p>获得OpenVZ yum安装源</p>
+				<pre class="screen">
+# cd /etc/yum.repos.d
+# wget http://download.openvz.org/openvz.repo
+# rpm --import  http://download.openvz.org/RPM-GPG-Key-OpenVZ
+				</pre>
+			</li><li class="step">
+				<p>安装OpenVZ核心以及头文件</p>
+				<pre class="screen">
+# yum install ovzkernel[-flavor]
+				</pre>
+			</li><li class="step">
+				<p>修改启动所使用的内核为OpenVZ内核，使OpenVZ内核为默认启动内核</p>
+				<pre class="screen">
+# vim /etc/grub.conf
+				</pre>
+				<p>将类似下面的内容</p>
+				<pre class="screen">
+title Fedora Core (2.6.8-022stab029.1)
+       root (hd0,0)
+       kernel /vmlinuz-2.6.8-022stab029.1 ro root=/dev/sda5 quiet rhgb vga=0x31B
+       initrd /initrd-2.6.8-022stab029.1.img
+				</pre>
+				<p>修改为类似这样</p>
+				<pre class="screen">
+title OpenVZ (2.6.8-022stab029.1)
+        root (hd0,0)
+        kernel /vmlinuz-2.6.8-022stab029.1 ro root=/dev/sda5
+        initrd /initrd-2.6.8-022stab029.1.img
+				</pre>
+				<p>或直接在里面寻找类似开头为</p>
+				<pre class="screen">
+title CentOS (2.6.18-194.3.1.el5.028stab069.6)
+
+				</pre>
+				<p>的项目，并且把default改为他的下标，下标从0开始</p>
+			</li><li class="step">
+				<p>修改LINUX网络配置文件</p>
+				<pre class="screen">
+/etc/sysctl.conf
+# On Hardware Node we generally need
+# packet forwarding enabled and proxy arp disabled
+net.ipv4.ip_forward = 1 #修改
+
+net.ipv6.conf.default.forwarding = 1 #添加
+net.ipv6.conf.all.forwarding = 1 #添加
+net.ipv4.conf.default.proxy_arp = 0 #添加
+
+# Enables source route verification
+net.ipv4.conf.all.rp_filter = 1 #修改
+
+# Enables the magic-sysrq key
+kernel.sysrq = 1 #修改
+
+# We do not want all our interfaces to send redirects
+net.ipv4.conf.default.send_redirects = 1 #添加
+net.ipv4.conf.all.send_redirects = 0 #添加
+				</pre>
+			</li><li class="step">
+				<p>关闭SELinux</p>
+				<pre class="screen">
+# lokkit --selinux=disabled
+				</pre>
+				<pre class="screen">
+SELINUX=disabled
+				</pre>
+			</li><li class="step">
+				<p>重启LINUX</p>
+				<pre class="screen">
+# reboot
+				</pre>
+			</li><li class="step">
+				<p>安装OpenVZ管理工具</p>
+				<pre class="screen">
+# yum install vzctl
+# yum install vzquota
+# yum install vzyum
+				</pre>
+				<p>用到什么工具就安装什么工具，具体可以使用# yum search vz*搜索一下</p>
+			</li><li class="step">
+				<p>启动OpenVZ服务</p>
+				<pre class="screen">
+# /sbin/service vz start
+				</pre>
+			</li></ol></div>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="openvz.tmpl"></a>5.3.2. 使用OpenVZ &amp; 建立VPS</h3></div></div></div>
+		
+		<p>由于VZ是半虚拟化的，所以VZ和VM不同的是VZ需要系统模板，而不是VM那样只需要一个ISO文件就可以安装</p>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm296159237184"></a>5.3.2.1. 安装操作系统模板</h4></div></div></div>
+			
+			<div class="procedure"><ol class="procedure" type="1"><li class="step">
+					<p>搜索系统模板</p>
+					<pre class="screen">
+# yum search vztmpl
+					</pre>
+				</li><li class="step">
+					<p>在搜索出来的结果中选用你想安装的操作系统</p>
+					<pre class="screen">
+# yum install vztmpl-centos-4 -y
+					</pre>
+				</li><li class="step">
+					<p>为操作系统模板建立缓存</p>
+					<p>在我装的最小化CENTOS中，此步要下载很多包，需要很长时间完成</p>
+					<pre class="screen">
+# vzpkgcache
+					</pre>
+					<p>该命令将建立centos-4-i386-minimal.tar.gz和centos-4-i386-default.tar.gz文件 或</p>
+					<pre class="screen">
+# vzpkgcache centos-4-i386-minimal
+					</pre>
+					<p>建立 centos-4-i386-minimal.tar.gz</p>
+					<pre class="screen">
+# vzpkgcache centos-4-i386-default
+					</pre>
+					<p>建立 centos-4-i386-default.tar.gz</p>
+					<p>出现Cache file centos-4-i386-default.tar.gz [120M] created.表示创建成功</p>
+					<div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Note: 注意：本次步骤可能会出现如下错误"><tr><td rowspan="2" align="center" valign="top" width="25"><img alt="[注意]" src="/graphics/note.png" /></td><th align="left">注意：本次步骤可能会出现如下错误</th></tr><tr><td align="left" valign="top">
+						
+						<pre class="screen">
+cp: cannot stat `/etc/sysconfig/vz-scripts//ve-vps.basic.conf-sample': No such file or directory
+ERROR: Can't copy VPS config
+						</pre>
+						<p>解决方法：进入/etc/sysconfig/vz-scripts/目录，将ve.basic.conf-sample 拷贝一份重命名为ve-vps.basic.conf-sample</p>
+						<p>查看系统中已经存在的操作系统缓存</p>
+						<pre class="screen">
+# vzpkgls
+						</pre>
+					</td></tr></table></div>
+				</li></ol></div>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm296159225840"></a>5.3.2.2. 创建OpenVZ操作系统节点（VPS）</h4></div></div></div>
+			
+			<div class="procedure"><ol class="procedure" type="1"><li class="step">
+					<p>准备配置文件</p>
+					<p>平分主机系统资源（当然，如果你对配置文件的修改很熟悉也可以自己定制）</p>
+					<pre class="screen">
+cd /etc/sysconfig/vz-scripts/
+vzsplit -n 3 -f vps.zenw.org
+					</pre>
+					<p>这样，系统资源就被平均分成了3分，并且产生了一个配置文件示例</p>
+				</li><li class="step">
+					<p>验证配置文件有效性</p>
+					<pre class="screen">
+vzcfgvalidate ve-vps.zenw.org.conf-sample
+					</pre>
+				</li><li class="step">
+					<p>创建VPS节点</p>
+					<pre class="screen">
+vzctl create 100 --ostemplate centos-4-i386-minimal --config vps.zenw.org
+					</pre>
+					<p>其中100是该节点的编号，可以自己定义</p>
+				</li><li class="step">
+					<p>配置该VPS</p>
+					<pre class="screen">
+设置VPS的hostname
+vzctl set 100 --hostname zenw.org --save
+设置VPS的ip
+vzctl set 100 --ipadd 192.168.xxx.xxx --save
+设置VPS的管理员帐号和密码
+vzctl set 100 --userpasswd root:xxxxxxxxx
+设置VPS的DNS服务器
+vzctl set 100 --nameserver 8.8.8.8 --save
+设置VPS自启动
+vzctl set 100 --onboot yes --save
+启动VPS节点
+vzctl start 100
+执行VPS内部的命令（这里是开启VPS的ssh服务）
+vzctl exec 100 service sshd start
+加入VPS节点
+vzctl enter 100
+停止VPS节点
+vzctl stop 100
+					</pre>
+				</li></ol></div>
+		</div>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="openvz.config"></a>5.3.3. 设置VPS参数</h3></div></div></div>
+		
+		<div class="procedure"><ol class="procedure" type="1"><li class="step">
+				<p>修改VPS节点的配置文件</p>
+				<pre class="screen">
+vim /etc/sysconfig/vz-scripts/100.conf
+在文件中添加或修改 DISK_QUOTA=no
+
+重启VPS节点
+vzctl restart 100
+查看当前磁盘大小
+vzctl exec 100 df
+设置磁盘大小
+vzctl set 100 --diskinodes 75000000:79000000 --save
+vzctl set 100 --quotatime 600 --save
+查看修改后的磁盘大小
+vzctl exec 100 df
+vzctl exec 100 stat -f /
+
+
+vzctl set 100 --quotaugidlimit 100 --save
+vzctl restart 100
+
+vzctl exec 100 rpm -q quota
+
+vzyum 100 install quota
+
+vzquota stat 100 -t
+				</pre>
+			</li><li class="step">
+				<p>为VPS节点安装yum工具或其他工具</p>
+				<pre class="screen">
+				
+vzyum 100 install &lt;软件名称&gt;
+vzyum 100 install yum
+				
+				</pre>
+			</li></ol></div>
+		<p>另外,如果vzctl enter进入节点时出现错误，或无法ssh节点，需要运行以下命令： vzctl exec 112 "cd /dev; /sbin/MAKEDEV pty; /sbin/MAKEDEV tty; /sbin/MAKEDEV generic"</p>
+	</div>
+</div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
+window.changyan.api.config({
+appid: 'cyvwjQUG3',
+conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
+});
+</script><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="../xen/index.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="../index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="../vagrant.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">5.2. Xen </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 5.4. vagrant - Tool for building and distributing virtualized development environments</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script></body></html>
