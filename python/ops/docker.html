@@ -1,0 +1,697 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>18.5. 使用 python 优雅地编排 Docker 容器</title><link rel="stylesheet" type="text/css" href="../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="php,pear,pecl,phar, python, , " /><link rel="home" href="../index.html" title="Netkiller Python 手札" /><link rel="up" href="index.html" title="第 18 章 自动化运维" /><link rel="prev" href="container.html" title="18.4. 容器" /><link rel="next" href="kubernetes.html" title="18.6. 使用 Python 优雅地编排 Kubernetes" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+   	    <a xmlns="" href="https://edu.51cto.com/lecturer/1703915.html">51CTO学院</a> |
+	    <a xmlns="" href="https://edu.csdn.net/lecturer/6423">CSDN程序员研修院</a> |
+	    <a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">腾讯云社区</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">阿里云栖社区</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">18.5. 使用 python 优雅地编排 Docker 容器</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="container.html">上一页</a> </td><th width="60%" align="center">第 18 章 自动化运维</th><td width="20%" align="right"> <a accesskey="n" href="kubernetes.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="docker"></a>18.5. 使用 python 优雅地编排 Docker 容器</h2></div></div></div>
+	
+	<p>用 Python 替代 docker compose 编排容器</p>
+	<p>docker compose 是 docker 的容器编排工具，它是基于 YAML 配置，YAML 是一种配置文件格式，支持传递环境变量，但是对于复杂的容器编排显得力不从心。</p>
+	<p>于是我便开发这个程序，可以像写程序一样编排 docker ，可以充分发挥程序猿的想象力。</p>
+	<pre class="screen">
+		
+pip install netkiller-devops		
+		
+	</pre>
+	<p>快速入门，首先我们参照这个 docker-compose.yaml 脚本，转换成 python 脚本。</p>
+	<pre class="screen">
+	
+version: '3.9'	
+services:
+  nginx:
+    container_name: nginx
+    environment:
+    - TZ=Asia/Shanghai
+    extra_hosts:
+    - db.netkiller.cn:127.0.0.1
+    - cache.netkiller.cn:127.0.0.1
+    - api.netkiller.cn:127.0.0.1
+    hostname: www.netkiller.cn
+    image: nginx:latest
+    ports:
+    - 80:80
+    - 443:443
+    restart: always
+    volumes:
+    - /tmp:/tmp	
+	
+	</pre>
+	<p>转换成 python 语言之后</p>
+	<pre class="programlisting">
+	
+from netkiller.docker import *
+
+service =  Services('nginx')
+service.image('nginx:latest')
+service.container_name('nginx')
+service.restart('always')
+service.hostname('www.netkiller.cn')
+service.extra_hosts(['db.netkiller.cn:127.0.0.1','cache.netkiller.cn:127.0.0.1','api.netkiller.cn:127.0.0.1'])
+service.environment(['TZ=Asia/Shanghai'])
+service.ports(['80:80','443:443'])
+service.volumes(['/tmp:/tmp'])
+# service.debug()
+# print(service.dump())
+
+compose = Composes('development')
+compose.version('3.9')
+compose.services(service)
+# print (compose.debug())
+print(compose.dump())
+compose.save()	
+	
+	</pre>
+	<p>怎么样，只是换了另一种写法，并没有难度。下面我们就系统学习，如何使用 python 编排 docker 容器</p>
+	<p>实际上程序最终还是会转化做 docker-compose 脚本执行。这种写法的有点是更灵活，你可以在程序中使用 if, while, 链接数据库，等等操作，可以做更复杂的容器编排。</p>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm20609186464"></a>18.5.1. 安装依赖库</h3></div></div></div>
+		
+		<pre class="screen">
+		
+neo@MacBook-Pro-Neo ~ % pip install netkiller-devops 		
+		
+		</pre>
+		<p>确认是否安装成功</p>
+		<pre class="screen">
+		
+neo@MacBook-Pro-Neo ~ % pip show netkiller-devops
+Name: netkiller-devops
+Version: 0.2.4
+Summary: DevOps of useful deployment and automation
+Home-page: https://github.com/oscm/devops
+Author: Neo Chen
+Author-email: netkiller@msn.com
+License: BSD
+Location: /usr/local/lib/python3.9/site-packages
+Requires: pyttsx3, requests, redis, pyyaml
+Required-by: 		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm20609184096"></a>18.5.2. 创建一个 Services </h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+from netkiller.docker import *
+
+service =  Services('nginx')
+service.image('nginx:latest')
+service.container_name('nginx')
+service.restart('always')
+service.hostname('www.netkiller.cn')
+service.extra_hosts(['db.netkiller.cn:127.0.0.1','cache.netkiller.cn:127.0.0.1','api.netkiller.cn:127.0.0.1'])
+service.environment(['TZ=Asia/Shanghai'])
+service.ports(['80:80','443:443'])
+service.volumes(['/tmp:/tmp'])
+# service.debug()
+print(service.dump())		
+		
+		</pre>
+		<p>运行结果</p>
+		<pre class="screen">
+		
+nginx:
+  container_name: nginx
+  environment:
+  - TZ=Asia/Shanghai
+  extra_hosts:
+  - db.netkiller.cn:127.0.0.1
+  - cache.netkiller.cn:127.0.0.1
+  - api.netkiller.cn:127.0.0.1
+  hostname: www.netkiller.cn
+  image: nginx:latest
+  ports:
+  - 80:80
+  - 443:443
+  restart: always
+  volumes:
+  - /tmp:/tmp		
+		
+		</pre>
+		<p>来一个复杂的演示</p>
+		<pre class="screen">
+		
+for i in range(10) :
+    cluster =  Services('nginx-'+str(i))
+    cluster.image('nginx:latest').container_name('nginx-'+str(i)).restart('always').hostname('www'+str(i)+'.netkiller.cn')
+    cluster.ports(['8{port}:80'.format(port=i)])
+    print(cluster.dump())		
+		
+		</pre>
+		<p>运行结果</p>
+		<pre class="screen">
+		
+nginx-0:
+  container_name: nginx-0
+  hostname: www0.netkiller.cn
+  image: nginx:latest
+  ports:
+  - 80:80
+  restart: always
+
+nginx-1:
+  container_name: nginx-1
+  hostname: www1.netkiller.cn
+  image: nginx:latest
+  ports:
+  - 81:80
+  restart: always
+
+nginx-2:
+  container_name: nginx-2
+  hostname: www2.netkiller.cn
+  image: nginx:latest
+  ports:
+  - 82:80
+  restart: always
+
+nginx-3:
+  container_name: nginx-3
+  hostname: www3.netkiller.cn
+  image: nginx:latest
+  ports:
+  - 83:80
+  restart: always
+
+nginx-4:
+  container_name: nginx-4
+  hostname: www4.netkiller.cn
+  image: nginx:latest
+  ports:
+  - 84:80
+  restart: always
+
+nginx-5:
+  container_name: nginx-5
+  hostname: www5.netkiller.cn
+  image: nginx:latest
+  ports:
+  - 85:80
+  restart: always
+
+nginx-6:
+  container_name: nginx-6
+  hostname: www6.netkiller.cn
+  image: nginx:latest
+  ports:
+  - 86:80
+  restart: always
+
+nginx-7:
+  container_name: nginx-7
+  hostname: www7.netkiller.cn
+  image: nginx:latest
+  ports:
+  - 87:80
+  restart: always
+
+nginx-8:
+  container_name: nginx-8
+  hostname: www8.netkiller.cn
+  image: nginx:latest
+  ports:
+  - 88:80
+  restart: always
+
+nginx-9:
+  container_name: nginx-9
+  hostname: www9.netkiller.cn
+  image: nginx:latest
+  ports:
+  - 89:80
+  restart: always		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm20609179488"></a>18.5.3. 创建 Composes</h3></div></div></div>
+		
+		<p>Services 对象创建服务，让服务工作还需要 Composes 对象。</p>
+		<pre class="programlisting">
+		
+from netkiller.docker import *
+
+service =  Services('nginx')
+service.image('nginx:latest')
+service.container_name('nginx')
+service.restart('always')
+service.hostname('www.netkiller.cn')
+service.extra_hosts(['db.netkiller.cn:127.0.0.1','cache.netkiller.cn:127.0.0.1','api.netkiller.cn:127.0.0.1'])
+service.environment(['TZ=Asia/Shanghai'])
+service.ports(['80:80','443:443'])
+service.volumes(['/tmp:/tmp'])
+
+compose = Composes('development')
+compose.version('3.9')
+compose.services(service)
+# print (compose.debug())
+print(compose.dump())
+compose.save()
+# compose.save('/tmp/docker-compose.yaml')		
+		
+		</pre>
+		<p>运行结果</p>
+		<pre class="screen">
+		
+services:
+  nginx:
+    container_name: nginx
+    environment:
+    - TZ=Asia/Shanghai
+    extra_hosts:
+    - db.netkiller.cn:127.0.0.1
+    - cache.netkiller.cn:127.0.0.1
+    - api.netkiller.cn:127.0.0.1
+    hostname: www.netkiller.cn
+    image: nginx:latest
+    ports:
+    - 80:80
+    - 443:443
+    restart: always
+    volumes:
+    - /tmp:/tmp
+version: '3.9'		
+		
+		</pre>
+		<p>这已经是一个完善的 docker-compose 脚本了。使用 save 可以保存为 yaml 文件，这是使用 docker-compose -f development.yaml up 就可以启动容器了。</p>
+		<p>Composes 对象同时也携带了完善的 docker-compose 命令和参数，用于自我管理容器。</p>
+		<p>compose.up() 创建容器</p>
+		<pre class="screen">
+		
+compose = Composes('development')
+compose.version('3.9')
+compose.services(service)
+compose.up()
+		
+		</pre>
+		<p>compose.start() 启动已存在的容器</p>
+		<pre class="screen">
+		
+compose = Composes('development')
+compose.version('3.9')
+compose.services(service)
+compose.start()
+		
+		</pre>
+		<p>compose.stop() 停止已存在的容器</p>
+		<pre class="screen">
+		
+compose = Composes('development')
+compose.version('3.9')
+compose.services(service)
+compose.stop()
+		
+		</pre>
+		<p>compose.restart() 重启已存在的容器</p>
+		<pre class="screen">
+		
+compose = Composes('development')
+compose.version('3.9')
+compose.services(service)
+compose.restart()
+		
+		</pre>
+		<p>compose.rm() 销毁已存在的容器</p>
+		<pre class="screen">
+		
+compose = Composes('development')
+compose.version('3.9')
+compose.services(service)
+compose.rm()
+		
+		</pre>
+		<p>compose.logs() 查看容器日志</p>
+		<pre class="screen">
+		
+compose = Composes('development')
+compose.version('3.9')
+compose.services(service)
+compose.logs()
+		
+		</pre>
+		<p>compose.ps() 查看容器运行状态</p>
+		<pre class="screen">
+		
+compose = Composes('development')
+compose.version('3.9')
+compose.services(service)
+compose.ps()
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm20609179360"></a>18.5.4. 容器管理</h3></div></div></div>
+		
+		<p>Docker 对象是让我们摆脱 docker-compose 这个命令，它将接管 docker-compose 这个命令，进行自我管理。</p>
+		<pre class="programlisting">
+		
+#!/usr/bin/python3
+#-*- coding: utf-8 -*-
+##############################################
+# Home	: http://netkiller.github.io
+# Author: Neo &lt;netkiller@msn.com&gt;
+# Upgrade: 2021-09-05
+##############################################
+try:
+	import os,  sys
+	module = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+	sys.path.insert(0,module)
+	from netkiller.docker import *
+except ImportError as err:
+	print("%s" %(err))
+
+nginx =  Services('nginx')
+nginx.image('nginx:latest')
+nginx.container_name('nginx')
+nginx.restart('always')
+nginx.hostname('www.netkiller.cn')
+nginx.environment(['TA=Asia/Shanghai'])
+nginx.ports(['80:80'])
+
+compose = Composes('development')
+compose.version('3.9')
+compose.services(nginx)
+compose.workdir('/tmp/compose')
+
+if __name__ == '__main__':
+	try:
+		docker = Docker()
+		docker.environment(compose)
+		docker.main()
+	except KeyboardInterrupt:
+		print ("Crtl+C Pressed. Shutting down.")		
+		
+		</pre>
+		<p>运行结果</p>
+		<pre class="screen">
+		
+neo@MacBook-Pro-Neo ~ % python3 docker.py
+Usage: docker.py [options] up|rm|start|stop|restart|logs|top|images|exec &lt;service&gt;
+
+Options:
+  -h, --help         show this help message and exit
+  --debug            debug mode
+  -d, --daemon       run as daemon
+  --logfile=LOGFILE  logs file.
+  -l, --list         following logging
+  -f, --follow       following logging
+  -c, --compose      show docker compose
+  -e, --export       export docker compose
+
+Homepage: http://www.netkiller.cn       Author: Neo &lt;netkiller@msn.com&gt;		
+		
+		</pre>
+		<p>Docker 对象提供了与 docker-compose 对等的参数，用法也基本相通。例如</p>
+		<pre class="screen">
+		
+python3 docker.py up = docker-compose up
+python3 docker.py up -d nginx = docker-compose up -d nginx
+python3 docker.py restart nginx = docker-compose restart nginx
+
+python3 docker.py ps = docker-compose ps
+python3 docker.py logs nginx = docker-compose logs nginx
+		
+		</pre>
+		<p>使用 -c 可以查看 compose yaml 脚本，使用 -e 可以导出 docker compose yaml</p>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm20609163392"></a>18.5.5. 演示例子</h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm20609162752"></a>18.5.5.1. Redis 主从配置</h4></div></div></div>
+			
+			<div class="example"><a id="idm20609162112"></a><p class="title"><strong>例 18.1. Redis Master/Slave</strong></p><div class="example-contents">
+				
+				<pre class="screen">
+					
+from netkiller.docker import *
+
+image = 'redis:latest'
+requirepass='11223344'
+
+compose = Composes('redis-master-slave')
+compose.version('3.9')
+
+master =  Services('master')
+master.image(image)
+master.container_name('master')
+master.restart('always')
+master.environment(['TZ=Asia/Shanghai'])
+master.ports('6379:6379')
+master.volumes(['/tmp/master:/data'])
+master.sysctls(['net.core.somaxconn=1024'])
+master.command([
+	'--requirepass '+requirepass,
+	'--appendonly yes'])
+# master.debug()
+# print(master.dump())
+compose.services(master)
+
+
+for i in range(5) :
+    slave =  Services('slave-'+str(i))
+    slave.image(image).container_name('slave-'+str(i)).restart('always')
+    slave.ports(['638{port}:6379'.format(port=i)]).environment(['TZ=Asia/Shanghai'])
+    slave.volumes(['/tmp/slave{n}:/data'.format(n=i)])
+    slave.sysctls(['net.core.somaxconn=1024']).command([
+        '--slaveof master 6379',
+        '--masterauth '+requirepass,
+        '--requirepass ' + requirepass,
+        '--appendonly yes'
+    ])
+
+    # print(cluster.dump())
+    compose.services(slave)
+
+# print (compose.debug())
+print(compose.dump())
+# compose.save()
+compose.up()					
+					
+				</pre>
+			</div></div><br class="example-break" />
+		</div>
+	</div>
+
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm20609160704"></a>18.5.6. 使用 Python 编排 Dockerfile</h3></div></div></div>
+		
+		<p></p>
+		<pre class="programlisting">
+		
+from netkiller.docker import *
+
+# 实例化 Dockerfile() 对象
+nginx = Dockerfile()
+
+# 基于什么镜像
+nginx.image('nginx:latest')
+
+# 配置挂载卷
+nginx.volume(['/etc/nginx','/var/log/nginx','/opt'])
+
+# 运行脚本
+nginx.run('apt update -y &amp;&amp; apt install -y procps')
+
+# 暴漏端口
+nginx.expose(['80','443'])
+
+# 设置工作目录
+nginx.workdir('/opt')
+
+# 打印 Dockerfile
+nginx.show()		
+		
+		</pre>
+		<p>运行结果</p>
+		<pre class="screen">
+		
+FROM nginx:latest
+VOLUME ["/etc/nginx","/var/log/nginx","/opt"]
+RUN apt update -y &amp;&amp; apt install -y procps
+EXPOSE 80 443
+WORKDIR /opt		
+		
+		</pre>
+		<p>另一种写法</p>
+		<pre class="programlisting">
+		
+from netkiller.docker import *
+
+nginx = Dockerfile() 
+nginx.image('nginx:latest').volume(['/etc/nginx','/var/log/nginx']).run('apt update -y &amp;&amp; apt install -y procps').expose(['80','443']).workdir('/opt')
+nginx.render()
+nginx.save('/tmp/Dockerfile')
+		
+		</pre>
+		<p>构建 Docker 镜像</p>
+		<pre class="programlisting">
+		
+from netkiller.docker import *
+
+# 编排 Docker 镜像
+dockerfile = Dockerfile()
+dockerfile.image('openjdk:8').volume(['/srv']).run(
+    'apt update -y &amp;&amp; apt install -y procps net-tools iputils-ping iproute2 telnet'
+).expose(['80', '443']).workdir('/srv')
+
+# 通过 Service 设置镜像名称是 netkiller:openjdk8
+image = Services('image')
+image.build(dockerfile)
+image.image('netkiller:openjdk8')
+
+# 构建镜像
+demo = Composes('demo')
+demo.version('3.9')
+demo.services(image)
+demo.build()		
+		
+		</pre>
+		<p>完整演示</p>
+		<pre class="screen">
+		
+#!/usr/bin/python3
+#-*- coding: utf-8 -*-
+##############################################
+# Home	: http://netkiller.github.io
+# Author: Neo &lt;netkiller@msn.com&gt;
+# Upgrade: 2021-11-17
+##############################################
+try:
+	import os,  sys
+	module = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+	print(module)
+	sys.path.insert(0,module)
+	from netkiller.docker import *
+except ImportError as err:
+	print("%s" %(err))
+
+dockerfile = Dockerfile() 
+# dockerfile.label({'org.opencontainers.image.authors':'netkiller'})
+dockerfile.image('openjdk:8-alpine')
+# dockerfile.image('openjdk:8')
+dockerfile.env({'ROCKETMQ_VERSION':'4.9.2','ROCKETMQ_HOME':'/srv/rocketmq', 'PATH':'${ROCKETMQ_HOME}/bin:$PATH'}) # 'JAVA_OPT':'"${JAVA_OPT} -server -Xms512m -Xmx2048m -Xmn128m"'
+dockerfile.arg({'user':'rocketmq', 'group':'nogroup'})
+dockerfile.run('wget https://dlcdn.apache.org/rocketmq/4.9.2/rocketmq-all-4.9.2-bin-release.zip &amp;&amp; unzip rocketmq-all-4.9.2-bin-release.zip')
+dockerfile.run('mv rocketmq-4.9.2 /srv/rocketmq-4.9.2 &amp;&amp; rm -rf rocketmq-all-4.9.2-bin-release.zip')
+dockerfile.run('ln -s /srv/rocketmq-${ROCKETMQ_VERSION} /srv/rocketmq')
+dockerfile.run('adduser -S -D ${user}')
+dockerfile.run(['chown ${user}:${group} -R /srv/rocketmq-${ROCKETMQ_VERSION}'])
+dockerfile.expose(['9876'])
+dockerfile.expose(['10909','10911','10912'])
+dockerfile.copy('docker-entrypoint.sh','/srv/docker-entrypoint.sh')
+dockerfile.run('chmod a+x /srv/docker-entrypoint.sh')
+dockerfile.entrypoint('["/srv/docker-entrypoint.sh"]') 
+dockerfile.workdir('${ROCKETMQ_HOME}')
+# dockerfile.render()
+# dockerfile.save('/tmp/Dockerfile')
+
+rocketmq = Services('rocketmq')
+rocketmq.build(dockerfile).image('registry.netkiller.cn/rocketmq/rocketmq:4.9.2').container_name('rocketmq')
+# rocketmq.entrypoint('/srv/rocketmq/bin/mqnamesrv')
+# rocketmq.ports('9876:9876').command('/srv/rocketmq/bin/mqnamesrv')
+
+dockerfile = Dockerfile() 
+dockerfile.image('registry.netkiller.cn/rocketmq/rocketmq:4.9.2')
+dockerfile.run('ln -s /srv/rocketmq-${ROCKETMQ_VERSION} /srv/mqnamesrv')
+dockerfile.cmd('/srv/mqnamesrv/bin/mqnamesrv')
+dockerfile.workdir('/srv/mqnamesrv')
+dockerfile.user('rocketmq:nogroup')
+dockerfile.volume([
+ 	'/home/rocketmq/logs/rocketmqlogs'
+])
+
+mqnamesrv = Services('mqnamesrv')
+mqnamesrv.build(dockerfile).image('registry.netkiller.cn/rocketmq/mqnamesrv:4.9.2').container_name('mqnamesrv').ports('9876:9876')
+mqnamesrv.command('mqnamesrv')
+
+dockerfile = Dockerfile() 
+dockerfile.image('registry.netkiller.cn/rocketmq/rocketmq:4.9.2')
+dockerfile.run('ln -s /srv/rocketmq-${ROCKETMQ_VERSION} /srv/mqbroker')
+dockerfile.cmd('/srv/rocketmq/bin/mqbroker')
+dockerfile.workdir('/srv/mqbroker')
+dockerfile.user('rocketmq:nogroup')
+dockerfile.volume([
+ 	'/home/rocketmq/logs/rocketmqlogs'
+])
+
+mqbroker = Services('mqbroker')
+mqbroker.build(dockerfile).image('registry.netkiller.cn/rocketmq/mqbroker:4.9.2').container_name('mqbroker').ports(['10909:10909','10911:10911','10912:10912'])
+mqbroker.command('mqbroker -n mqnamesrv:9876 -c /srv/rocketmq/conf/broker.conf')
+mqbroker.volumes(['/tmp/logs:/home/rocketmq/logs/rocketmqlogs'])
+
+composes = Composes('test')
+composes.version('3.9')
+composes.services(rocketmq)
+composes.services(mqnamesrv)
+composes.services(mqbroker)
+
+
+# cat &gt;&gt; /srv/docker-entrypoint.sh &lt;&lt;'EOF'
+# EOF
+
+entrypoint='''#!/bin/sh
+if [ "$1" = 'mqnamesrv' ]; then
+	exec /srv/rocketmq/bin/mqnamesrv
+fi
+exec "$@"
+'''
+
+if __name__ == '__main__':
+	try:
+		docker = Docker({'DOCKER_HOST':'ssh://root@192.168.30.11','NAMESRV_ADDR':'localhost:9876'}) 
+		docker.createfile('rocketmq/rocketmq/docker-entrypoint.sh',entrypoint)
+		docker.environment(composes)
+		docker.main()
+	except KeyboardInterrupt:
+		print ("Crtl+C Pressed. Shutting down.")
+		
+		</pre>
+		<p>运行</p>
+		<pre class="screen">
+		
+python3 demo.py -e test -b rocketmq
+		
+		</pre>
+	</div>
+</div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
+window.changyan.api.config({
+appid: 'cyvwjQUG3',
+conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
+});
+</script><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="container.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="kubernetes.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">18.4. 容器 </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 18.6. 使用 Python 优雅地编排 Kubernetes</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script></body></html>
