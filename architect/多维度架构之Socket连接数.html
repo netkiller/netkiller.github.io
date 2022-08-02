@@ -18,7 +18,7 @@
 	
 	<p>在上一节《多维度架构之会话数》中从运维角度详细介绍了会话数，本章将从开发角度介绍TCP Socket最大连接数。</p>
 	<div class="orderedlist"><p class="title"><strong>我先来问几个问题，然后带着问题思考，最后我再逐一解答。</strong></p><ol class="orderedlist" type="1"><li class="listitem">一台服务器究竟最大能支持多少个网络连接？</li><li class="listitem">一台服务器能做到百万的连接数吗？</li><li class="listitem">你想过怎么实现百万的连接吗？</li></ol></div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm518011069888"></a>2.18.1. 理解服务器端与客户端</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm452865452432"></a>2.18.1. 理解服务器端与客户端</h3></div></div></div>
 		
 		<p>服务器端：是指提供服务的一端，例如 WEB 服务器，服务器通常使用 1 ～ 1024 端口，WEB 服务器是 80 端口，服务器端的端口是固定的。</p>
 		<p>客户端：是指消费服务的一端，例如浏览器，与服务器80端口建立连接，本地也会消耗一个端口，客户端的端口范围通常是 1025～65535。</p>
@@ -30,7 +30,7 @@
 		</pre>
 		<p>Nginx 本身是服务器，但是同时它也是客户端，同理 fastcgi/tomcat 也是如此。也就是说 Nginx 会消耗掉服务器上的 80端口和1024～65535 之间端口号。</p>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm518011066384"></a>2.18.2. 影响连接的因素有哪些？</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm452865448928"></a>2.18.2. 影响连接的因素有哪些？</h3></div></div></div>
 		
 		<p>上面解释了服务器端与客户端，服务器能开出的端口数量会影响最终连接数的数量。除此之外还有哪些因素呢？</p>
 		<p>文件打开数量，还以WEB服务器为例，浏览器请求HTML资源，Nginx 会到磁盘上索引对应的文件并打开，将文件内容读到内存，并返回给浏览器。如果系统限制了文件打开数量，Socket 请求仍会失败。如果是 Unix Socket 文件打开数量限制，直接影响 Socket 连接数。</p>
@@ -41,7 +41,7 @@
 		<p>网络设备，交换机容量和背板带宽，从客户端到服务器端，需要经过交换机，交换机的交换能力，和背板带宽（交换机内存）决定了你从客户能发出多少链接，服务器端能接受多少链接。交换机不给力，并发就上不去。还有路由器或防火墙的会话数，这部分请参看《多维度架构之会话数》</p>
 		<p>以上设置通过 ulimit / sysctl 两个命令完成内核参数的调整。这里不多介绍，有兴趣看笔者相关文章，如果比较懒可以到我的知乎主页，点付费咨询。</p>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm518011060464"></a>2.18.3. 程序怎么写？</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm452865443008"></a>2.18.3. 程序怎么写？</h3></div></div></div>
 		
 		<p>直接进入主题，服务器内核参数调整完毕，网络设备调试完成，一切就绪，程序改怎么写才能达到百万级TCP链接呢？</p>
 		<p>不知你是否注意到 nginx 有一个 listen 配置项，Redis 里有一个 bind 配置项。很多人可能都不理解时用来干什么的。</p>
