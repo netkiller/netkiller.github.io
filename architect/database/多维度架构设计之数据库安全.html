@@ -1,0 +1,1117 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>3.4. 数据库安全</title><link rel="stylesheet" type="text/css" href="../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><link rel="home" href="../index.html" title="Netkiller Architect 手札" /><link rel="up" href="index.html" title="第 3 章 数据库设计" /><link rel="prev" href="多维度架构设计之数据库并行访问控制.html" title="3.3. 数据库并行访问控制" /><link rel="next" href="db.exmaple.html" title="3.5. 参考例子" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+   	    <a xmlns="" href="https://edu.51cto.com/lecturer/1703915.html">51CTO学院</a> |
+	    <a xmlns="" href="https://edu.csdn.net/lecturer/6423">CSDN程序员研修院</a> |
+	    <a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">腾讯云社区</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">阿里云栖社区</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">3.4. 数据库安全</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="多维度架构设计之数据库并行访问控制.html">上一页</a> </td><th width="60%" align="center">第 3 章 数据库设计</th><td width="20%" align="right"> <a accesskey="n" href="db.exmaple.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="多维度架构设计之数据库安全"></a>3.4. 数据库安全</h2></div></div></div>
+	
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="mysql.struct"></a>3.4.1. 数据库结构版本控制</h3></div><div><h4 class="subtitle">http://netkiller.github.io/journal/mysql.struct.html</h4></div></div></div>
+		
+		
+
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="what"></a>3.4.1.1. 什么是数据库结构版本控制</h4></div></div></div>
+			
+			<p>首先说说什么是数据库结构，什么是版本控制。</p>
+			<p>数据库结构是指数据库表结构，数据库定义语言导出的DDL语句。主要由CREATE TABLE, DROP TABLE等等构成。</p>
+			<p>再来说说什么是版本控制，如果你从事开发工作应该会很容易理解，版本控制就是记录每一次提交的变化，可以随时查看历史记录，并可回撤到指定版本。</p>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="why"></a>3.4.1.2. 为什么要做数据库结构本版控制</h4></div></div></div>
+			
+			<p>软件开发过程中需要常常对数据库结构作调整，这是无法避免的。例如需求还不明确，开发人员只能按照所理解需求创建表。需求往往会发生变化，一旦变化，代码需要修改，表结构也避免不了。
+				我们常常刚改好数据库结构，需求部门有发来通知，不用修改了，维持原有设计。甚至是过了几周再次回撤。
+			</p>
+			<p>所以我们要将数据库结构的变化进行版本控制，通常的做法是DBA人工管理，但我觉完全可以自动化的工作，没有必要浪费人力资源，且自动化不会犯错更稳定，仅仅需要人工定期查看工作状态即可。</p>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="when"></a>3.4.1.3. 何时做数据库结构本版控制</h4></div></div></div>
+			
+			<p>任何时候都可以部署下面的脚本，对现有系统无任何影响。</p>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="where"></a>3.4.1.4. 在哪里做数据库结构本版控制</h4></div></div></div>
+			
+			<p>可以在版本控制服务器上，建议GIT仓库push到远程。</p>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="who"></a>3.4.1.5. 谁来负责数据库结构本版控制</h4></div></div></div>
+			
+			<p>DBA与配置管理员都可以做，通常DBA不接触版本库这块，建议创建一个backup用户给配置管理员。</p>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="how"></a>3.4.1.6. 怎样做数据库结构本版控制</h4></div></div></div>
+			
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm65917789296"></a>3.4.1.6.1. 安装脚本</h5></div></div></div>
+				
+				<p>首先下载脚本 https://github.com/oscm/devops/blob/master/shell/backup.mysql.struct.sh</p>
+				<pre class="screen">
+wget https://raw.githubusercontent.com/oscm/devops/master/shell/backup.mysql.struct.sh
+mv backup.mysql.struct.sh /usr/local/bin
+chmod +x /usr/local/bin/backup.mysql.struct
+			</pre>
+				<p>创建备份用户</p>
+				<pre class="screen">
+CREATE USER 'backup'@'localhost' IDENTIFIED BY 'SaJePoM6BAPOmOFOd7Xo3e1A52vEPE';
+GRANT SELECT, LOCK TABLES  ON *.* TO 'backup'@'localhost';
+FLUSH PRIVILEGES;
+SHOW GRANTS FOR 'backup'@'localhost';
+			</pre>
+				<p>配置脚本</p>
+				<pre class="screen">
+BACKUP_HOST="localhost"			数据库主机
+BACKUP_USER="backup"			备份用户
+BACKUP_PASS="chen"				备份密码
+BACKUP_DBNAME="test aabbcc"		版本控制那些数据库，多个数据库使用空格分隔
+BACKUP_DIR=~/backup				数据库结构放在那里
+			</pre>
+				<p>初始化仓库</p>
+				<pre class="screen">
+# /usr/local/bin/backup.mysql.struct init
+Initialized empty Git repository in /www/database/struct/.git/
+			</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm65917784336"></a>3.4.1.6.2. 启动脚本，停止脚本</h5></div></div></div>
+				
+				<pre class="screen">
+# /usr/local/bin/backup.mysql.struct
+Usage: /usr/local/bin/backup.mysql.struct {init|start|stop|status|restart}
+			</pre>
+				<p>开始脚本</p>
+				<pre class="screen">
+# /usr/local/bin/backup.mysql.struct start
+			</pre>
+				<p>查看状态</p>
+				<pre class="screen">
+# /usr/local/bin/backup.mysql.struct status
+ 9644 pts/1    S      0:00 /bin/bash /usr/local/bin/backup.mysql.struct start
+			</pre>
+				<p>停止脚本</p>
+				<pre class="screen">
+# /usr/local/bin/backup.mysql.struct status
+			</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm65917780320"></a>3.4.1.6.3. 查看历史版本</h5></div></div></div>
+				
+				<p>通过 git log 命令查看历史版本</p>
+				<pre class="screen">
+			
+# cd /www/database/struct/
+
+# git status
+# On branch master
+nothing to commit (working directory clean)
+
+# git log
+commit d38fc624c21cad0e2f55f0228bff0c1be981827c
+Author: root &lt;root@slave.example.com&gt;
+Date:   Wed Dec 17 12:33:55 2014 +0800
+
+    2014-12-17.04:33:55			
+			
+				</pre>
+				<p>
+					这里仅仅是讲数据库结构版本控制，关于版本控制软件更多细节，延伸阅读
+					<a class="ulink" href="http://netkiller.github.io/version/index.html" target="_top">《Netkiller Version 手札》</a>
+				</p>
+			</div>
+		</div>
+
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="table"></a>3.4.2. 保护表</h3></div></div></div>
+		
+		<p>保护表中的数据不被删除，当记录被用户删除时会提示"Permission denied" 权限拒绝</p>
+		<pre class="programlisting">
+		
+CREATE DEFINER=`root`@`192.168.%` TRIGGER `member_before_delete` BEFORE DELETE ON `member` FOR EACH ROW BEGIN
+	SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Permission denied', MYSQL_ERRNO = 1001;
+END		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="column"></a>3.4.3. 保护表字段</h3></div></div></div>
+		
+		<p>通过触发器，使之无法修改某些字段的数据，同时不影响修改其他字段。</p>
+		<pre class="programlisting">
+		
+DROP TRIGGER IF EXISTS `members`;
+SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='';
+DELIMITER //
+CREATE TRIGGER `members` BEFORE UPDATE ON `members` FOR EACH ROW BEGIN
+	set new.name = old.name;
+	set new.cellphone = old.cellphone;
+	set new.email = old.email;
+	set new.password = old.password;
+END//
+DELIMITER ;
+SET SQL_MODE=@OLD_SQL_MODE;
+		
+		</pre>
+		<p>再举一个例子</p>
+		<pre class="programlisting">
+		
+CREATE TABLE `account` (
+	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+	`user` VARCHAR(50) NOT NULL DEFAULT '0',
+	`cash` FLOAT NOT NULL DEFAULT '0',
+	PRIMARY KEY (`id`)
+)
+COLLATE='utf8_general_ci'
+ENGINE=InnoDB;
+		
+		</pre>
+		<p>每一次数据变化新增一条数据</p>
+		<pre class="programlisting">
+		
+INSERT INTO `test`.`account` (`user`, `cash`) VALUES ('neo', -10);
+INSERT INTO `test`.`account` (`user`, `cash`) VALUES ('neo', -5);
+INSERT INTO `test`.`account` (`user`, `cash`) VALUES ('neo', 30);
+INSERT INTO `test`.`account` (`user`, `cash`) VALUES ('neo', -20);
+		
+		</pre>
+		<p>保护用户的余额不被修改</p>
+		<pre class="programlisting">
+		
+DROP TRIGGER IF EXISTS `account`;
+SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='';
+DELIMITER //
+CREATE TRIGGER `account` BEFORE UPDATE ON `account` FOR EACH ROW BEGIN
+	set new.cash = old.cash;
+END//
+DELIMITER ;
+SET SQL_MODE=@OLD_SQL_MODE;
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="time"></a>3.4.4. 时间一致性</h3></div></div></div>
+		
+		<p>经常会因为每个服务器的时间不同，导致插入数据有问题，虽然可以采用ntp服务同步时间，但由于各种因素仍然会出问题，怎么解决？我建议以数据库时间为准。</p>
+		<p>MySQL 5.6 之前的版本</p>
+		<p>默认值为当前时间</p>
+		<pre class="programlisting">
+		
+CREATE TABLE `tdate` (
+	`id` INT(11) NOT NULL AUTO_INCREMENT,
+	`ctime` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+	`mtime` TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00' COMMENT '修改时间',
+	PRIMARY KEY (`id`)
+)
+COLLATE='utf8_general_ci'
+ENGINE=InnoDB;
+		
+		</pre>
+		<p>MySQL不允许一个表拿有两个默认时间。我一无法兼顾修改时间，我们舍弃创建时间，当有数据变化ON UPDATE CURRENT_TIMESTAMP自动修改时间</p>
+		<pre class="programlisting">
+		
+CREATE TABLE `tdate` (
+	`id` INT(11) NOT NULL AUTO_INCREMENT,
+	`ctime` TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00' COMMENT '创建时间',
+	`mtime` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+	PRIMARY KEY (`id`)
+)
+COLLATE='utf8_general_ci'
+ENGINE=InnoDB;
+		
+		</pre>
+		<p>插入创建时间 insert into tdate(ctime) values(CURRENT_TIMESTAMP); 不要采用 insert into tdate(ctime) values('2013-12-02 08:20:06');这种方法，尽量让数据库处理时间。</p>
+		<p>MySQL 5.6 之后版本，可以实现创建时间为系统默认，修改时间创建的时候默认为空，当修改数据的时候更新时间。</p>
+		<pre class="programlisting">
+		
+CREATE TABLE `tdate` (
+	`id` INT(11) NOT NULL AUTO_INCREMENT,
+	`ctime` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+	`mtime` TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+	PRIMARY KEY (`id`)
+)
+COLLATE='utf8_general_ci'
+ENGINE=InnoDB;
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="db.grant"></a>3.4.5. 为数据安全而分库</h3></div></div></div>
+		
+		<p>我们通常使用一个数据库开发，该数据库包含了前后台所有的功能，我建议将前后台等等功能进行分库然后对应各种平台分配用户权限，例如</p>
+		<p>我们创建三个数据库cms,frontend,backend 同时对应创建三个用户 cms,frontend,backend 三个用户只能分别访问自己的数据库，注意在系统的设计之初你要考虑好这样的划分随之系统需要做相应的调整。</p>
+		<pre class="programlisting">
+		
+CREATE DATABASE `cms` /*!40100 COLLATE 'utf8_general_ci' */;
+CREATE DATABASE `frontend` /*!40100 COLLATE 'utf8_general_ci' */;
+CREATE DATABASE `backend` /*!40100 COLLATE 'utf8_general_ci' */;
+		
+		</pre>
+		<p>backend 负责后台，权限最高</p>
+		<pre class="programlisting">
+		
+mysql&gt; SHOW GRANTS FOR 'backend'@'localhost';
++--------------------------------------------------------------------------------------+
+| Grants for backend@localhost |
++--------------------------------------------------------------------------------------+
+| GRANT USAGE ON *.* TO 'backend'@'localhost' |
+| GRANT SELECT, INSERT, UPDATE, DELETE ON `cms`.* TO 'backend'@'localhost' |
+| GRANT SELECT, INSERT, UPDATE, DELETE ON `frontend`.* TO 'backend'@'localhost' |
+| GRANT SELECT, INSERT, UPDATE, DELETE, CREATE ON `backend`.* TO 'backend'@'localhost' |
++--------------------------------------------------------------------------------------+
+4 rows in set (0.04 sec)
+		
+		</pre>
+		<p>frontend 是前台权限，主要是用户用户中心，用户注册，登录，用户信息资料编辑，查看新闻等等</p>
+		<pre class="programlisting">
+		
+mysql&gt; SHOW GRANTS FOR 'frontend'@'localhost';
++------------------------------------------------------------------------+
+| Grants for frontend@localhost |
++------------------------------------------------------------------------+
+| GRANT USAGE ON *.* TO 'frontend'@'localhost' |
+| GRANT SELECT, INSERT, UPDATE ON `frontend`.* TO 'frontend'@'localhost' |
+| GRANT SELECT ON `cms`.`news` TO 'frontend'@'localhost' |
++------------------------------------------------------------------------+
+3 rows in set (0.00 sec)
+		
+		</pre>
+		<p>cms 用户是网站内容管理，主要负责内容更新，但登陆CMS后台需要`backend`.`Employees`表用户认证，所以他需要读取权限，但不允许修改其中的数据。</p>
+		<pre class="programlisting">
+		
+mysql&gt; SHOW GRANTS FOR 'cms'@'localhost';
++----------------------------------------------------------------------+
+| Grants for cms@localhost |
++----------------------------------------------------------------------+
+| GRANT USAGE ON *.* TO 'cms'@'localhost' |
+| GRANT SELECT, INSERT, UPDATE, DELETE ON `cms`.* TO 'cms'@'localhost' |
+| GRANT SELECT ON `backend`.`Employees` TO 'cms'@'localhost' |
++----------------------------------------------------------------------+
+3 rows in set (0.00 sec)
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="history"></a>3.4.6. 内容版本控制,撰改留痕</h3></div></div></div>
+		
+		<p>主表</p>
+		<pre class="programlisting">
+		
+CREATE TABLE `article` (
+	`article_id` MEDIUMINT(8) UNSIGNED NOT NULL AUTO_INCREMENT,
+	`cat_id` SMALLINT(5) NOT NULL DEFAULT '0',
+	`title` VARCHAR(150) NOT NULL DEFAULT '',
+	`content` LONGTEXT NOT NULL,
+	`author` VARCHAR(30) NOT NULL DEFAULT '',
+	`keywords` VARCHAR(255) NOT NULL DEFAULT '',
+	PRIMARY KEY (`article_id`),
+	INDEX `cat_id` (`cat_id`)
+)
+ENGINE=MyISAM
+ROW_FORMAT=DEFAULT
+AUTO_INCREMENT=1
+		
+		</pre>
+		<p>用于记录每次修改变动，通过该表，可以追朔数据库记录被什么时候修改过，修改了那些内容。</p>
+		<pre class="programlisting">
+		
+CREATE TABLE `article_history` (
+	`id` MEDIUMINT(8) UNSIGNED NOT NULL AUTO_INCREMENT,
+	`article_id` MEDIUMINT(8) UNSIGNED NOT NULL,
+	`cat_id` SMALLINT(5) NOT NULL DEFAULT '0',
+	`title` VARCHAR(150) NOT NULL DEFAULT '',
+	`content` LONGTEXT NOT NULL,
+	`author` VARCHAR(30) NOT NULL DEFAULT '',
+	`keywords` VARCHAR(255) NOT NULL DEFAULT '',
+	PRIMARY KEY (`id`),
+	INDEX `article_id` (`article_id`)
+)
+ENGINE=MyISAM
+ROW_FORMAT=DEFAULT
+AUTO_INCREMENT=1
+		
+		</pre>
+		<p>版本控制触发器</p>
+		<pre class="programlisting">
+		
+DROP TRIGGER article_history;
+
+DELIMITER //
+CREATE TRIGGER article_history BEFORE update ON article FOR EACH ROW
+BEGIN
+	INSERT INTO article_history SELECT * FROM article WHERE article_id = OLD.article_id;
+END; //
+DELIMITER;
+		
+		</pre>
+		<p>进一步优化，我们可以为 history 历史表增加时间字段，用于记录被撰改那一时刻的时间。</p>
+		<pre class="programlisting">
+		
+CREATE TABLE `article_history` (
+	`id` MEDIUMINT(8) UNSIGNED NOT NULL AUTO_INCREMENT,
+	`article_id` MEDIUMINT(8) UNSIGNED NOT NULL,
+	`cat_id` SMALLINT(5) NOT NULL DEFAULT '0',
+	`title` VARCHAR(150) NOT NULL DEFAULT '',
+	`content` LONGTEXT NOT NULL,
+	`author` VARCHAR(30) NOT NULL DEFAULT '',
+	`keywords` VARCHAR(255) NOT NULL DEFAULT '',
+	`ctime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Created Time',
+  	`mtime` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT 'Modified Time',
+	PRIMARY KEY (`id`),
+	INDEX `article_id` (`article_id`)
+)
+ENGINE=MyISAM
+ROW_FORMAT=DEFAULT
+AUTO_INCREMENT=1
+		
+		</pre>
+		<p>我们还可以为该表（article_history）增加出发器，任何修改将被拒绝.</p>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="audit"></a>3.4.7. 数据库审计表</h3></div></div></div>
+		
+		<p>与上一章节所提到的历史表不同，历史表需要经常翻查所以我们需要用到索引。审计表通常是数据归档，不允许修改，且基本上很少访问。</p>
+		<pre class="programlisting">
+		
+CREATE TABLE `order` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '订单ID',
+  `name` varchar(45) NOT NULL COMMENT '订单名称',
+  `price` float NOT NULL COMMENT '价格',
+  `ctime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='订单表'		
+		
+		</pre>
+		<p>基于 order 表创建 order_audit 审计表</p>
+		<pre class="programlisting">
+		
+create table order_audit engine=archive as select * from `order`;
+		
+		</pre>
+		<p>order_audit 表结构如下</p>
+		<pre class="programlisting">
+		
+CREATE TABLE `order_audit` (
+  `id` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '订单ID',
+  `name` varchar(45) NOT NULL COMMENT '订单名称',
+  `price` float NOT NULL COMMENT '价格',
+  `ctime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间'
+) ENGINE=ARCHIVE DEFAULT CHARSET=utf8		
+		
+		</pre>
+		<p>创建插入和更新触发器，用于插入和修改的时候同事写入一份到归档表中。</p>
+		<pre class="programlisting">
+		
+DROP TRIGGER IF EXISTS `test`.`order_AFTER_INSERT`;
+
+DELIMITER $$
+USE `test`$$
+CREATE DEFINER=`dba`@`%` TRIGGER `test`.`order_AFTER_INSERT` AFTER INSERT ON `order` FOR EACH ROW
+BEGIN
+	INSERT INTO order_audit SELECT * FROM `order` WHERE id = NEW.id; 
+END$$
+DELIMITER ;
+DROP TRIGGER IF EXISTS `test`.`order_AFTER_UPDATE`;
+
+DELIMITER $$
+USE `test`$$
+CREATE DEFINER=`dba`@`%` TRIGGER `test`.`order_AFTER_UPDATE` AFTER UPDATE ON `order` FOR EACH ROW
+BEGIN
+	INSERT INTO order_audit SELECT * FROM `order` WHERE id = NEW.id; 
+END$$
+DELIMITER ;
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="role"></a>3.4.8. 用户/角色认证</h3></div></div></div>
+		
+		<p>本小节我们实现一个功能，当用户插入，修改或者删除数据时，判断该操作是否具备应有的权限。如果权限不符合就拒绝操作同时提示用户。</p>
+		<pre class="programlisting">
+		
+CREATE TABLE `staff` (
+	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '员工ID',
+	`name` VARCHAR(50) NOT NULL COMMENT '员工名字',
+	PRIMARY KEY (`id`)
+)
+COMMENT='员工表'
+COLLATE='utf8_general_ci'
+ENGINE=InnoDB;
+
+
+INSERT INTO `staff` (`id`, `name`) VALUES
+	(1, 'Neo'),
+	(2, 'Luke'),
+	(2, 'Jack');
+		
+		</pre>
+		<p>staff 是员工表与下面的staff_has_role配合使用，形成员工与权限一对多关系。</p>
+		<pre class="programlisting">
+		
+CREATE TABLE `staff_has_role` (
+	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+	`staff_id` INT(10) UNSIGNED NOT NULL COMMENT '员工ID',
+	`role` ENUM('Create','Update','Delete') NOT NULL COMMENT '角色',
+	PRIMARY KEY (`id`),
+	INDEX `FK_staff_has_role_staff` (`staff_id`),
+	CONSTRAINT `FK_staff_has_role_staff` FOREIGN KEY (`staff_id`) REFERENCES `staff` (`id`) ON UPDATE CASCADE ON DELETE CASCADE
+)
+COLLATE='utf8_general_ci'
+ENGINE=InnoDB;
+
+INSERT INTO `staff_has_role` (`id`, `staff_id`, `role`) VALUES
+	(1, 1, 'Create'),
+	(2, 1, 'Delete'),
+	(3, 1, 'Update'),
+	(4, 2, 'Delete'),
+	(5, 3, 'Create');
+	(6, 3, 'Update');
+
+		
+		</pre>
+		<p>权限表可以进一步优化，角色拥有组功能，实现颗粒度更细的权限控制，有情趣看前面的相关章节。</p>
+		<pre class="programlisting">
+		
+CREATE TABLE `product` (
+	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '唯一ID',
+	`name` VARCHAR(10) NOT NULL COMMENT '名称',
+	`sn` VARCHAR(10) NOT NULL COMMENT '序列号',
+	`price` FLOAT NOT NULL COMMENT '价格',
+	`amount` SMALLINT(6) NOT NULL COMMENT '数量',
+	`staff_id` INT(10) UNSIGNED NOT NULL COMMENT '员工ID',
+	`ctime` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+	`mtime` TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+	PRIMARY KEY (`id`),
+	UNIQUE INDEX `sn` (`sn`),
+	INDEX `FK_product_staff` (`staff_id`),
+	CONSTRAINT `FK_product_staff` FOREIGN KEY (`staff_id`) REFERENCES `staff` (`id`)
+)
+COMMENT='产品表'
+COLLATE='utf8_general_ci'
+ENGINE=InnoDB;
+		
+		</pre>
+		<p>以产品表为例，这里要实现的是对产品表记录的权限控制。例如Neo有用插入，修改和删除权限，Luke的Create与Update权限被吊销，只能删除他之前创建的数据。而Jack只有能创建于更新数据。</p>
+		<p>下面的三个触发器完成具体的权限控制。同样你可以进一步优化下面的代码的权限颗粒度，使之能控制到具体列，甚至具体的记录。</p>
+		<pre class="programlisting">
+		
+CREATE DEFINER=`root`@`%` TRIGGER `product_before_delete` BEFORE DELETE ON `product` FOR EACH ROW BEGIN
+	if not exists(select id from staff where id=OLD.staff_id and role="delete") then
+		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Permission denied', MYSQL_ERRNO = 1001;
+	end if;
+END
+
+CREATE DEFINER=`root`@`%` TRIGGER `product_before_insert` BEFORE INSERT ON `product` FOR EACH ROW BEGIN
+	 if not exists(select id from staff where id=NEW.staff_id and role="create") then
+	       SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = "The staff's role is not correct or it does not exist.", MYSQL_ERRNO = 1001;
+	 end if;
+END
+
+CREATE DEFINER=`root`@`%` TRIGGER `product_before_update` BEFORE UPDATE ON `product` FOR EACH ROW BEGIN
+	if not exists(select id from staff where id=NEW.staff_id and role="update") then
+		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = "The staff's role cannot update data.", MYSQL_ERRNO = 1001;
+	end if;
+END
+		
+		</pre>
+		<p>Neo 测试如下</p>
+		<pre class="programlisting">
+		
+INSERT INTO `test`.`product` (`name`, `sn`, `price`, `amount`, `staff_id`, `ctime`) VALUES ('Iphone', '678624', '5000', '77', '1', '2010-08-18 15:38:23');
+SELECT LAST_INSERT_ID();
+
+UPDATE `test`.`product` SET `name`='HTC', `sn`='5544467', `price`='2000' WHERE  `id`=2;
+
+DELETE FROM `test`.`product` WHERE  `id`=1;
+		
+		</pre>
+		<p>Luke 测试如下：</p>
+		<pre class="programlisting">
+		
+INSERT INTO `test`.`product` (`name`, `sn`, `price`, `amount`, `staff_id`) VALUES ('Nokia', '65722', '800', '55', '2');
+/* SQL错误（1001）：The staff's role is not correct or it does not exist. */
+
+UPDATE `test`.`product` SET `name`='HTC', `sn`='5544467', `price`='2000', staff_id=2 WHERE  `id`=2;
+/* SQL错误（1001）：The staff's role cannot update data. */
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="token"></a>3.4.9. Token 认证</h3></div></div></div>
+		
+		<p>我们在staff表的基础上增加 token 字段</p>
+		<pre class="programlisting">
+		
+CREATE TABLE `staff` (
+	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '员工ID',
+	`name` VARCHAR(50) NOT NULL COMMENT '员工名字',
+	`token` VARCHAR(32) NOT NULL COMMENT 'Token 校验',
+	PRIMARY KEY (`id`)
+)
+COMMENT='员工表'
+COLLATE='utf8_general_ci'
+ENGINE=InnoDB;		
+		
+		</pre>
+		<p>插入数据的时候增加一些干扰字符串，这里使用concat(NEW.id,'+',NEW.name,'-')</p>
+		<pre class="programlisting">
+		
+CREATE DEFINER=`root`@`%` TRIGGER `staff_before_insert` BEFORE INSERT ON `staff` FOR EACH ROW BEGIN
+
+if md5(concat(NEW.id,'+',NEW.name,'-')) != NEW.token then
+		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Permission denied', MYSQL_ERRNO = 1001;
+	end if;
+
+END
+		
+		</pre>
+		<p>注意表权限可以授权给用户，触发器权限不让普通用户查看。否则用户看到 concat(NEW.id,'+',NEW.name,'-') 就没有意义了。</p>
+		<p>下面开始测试：</p>
+		<pre class="programlisting">
+		
+INSERT INTO `test`.`staff` (`name`, `token`) VALUES ('John', '678797066');
+/* SQL错误（1001）：Permission denied */	
+		
+		</pre>
+		<p>下面再测试，首先生成一个正确的tokon, 然后使用该token插入数据：</p>
+		<pre class="programlisting">
+		
+-- 通过下面语句生成一个 Token
+select md5(concat('5','+','Jam','-')) as token;
+
+-- 使用上面的 Token 插入数据
+INSERT INTO `test`.`staff` (`id`, `name`, `token`) VALUES (5, 'Jam', '1b033ce21cbadacabc9f0c38fb58dbb2');
+
+SELECT * FROM `test`.`staff` WHERE `id` = 5;
+		
+		</pre>
+		<p>开发注意事项, Token 生成算法要保密，不要使用下面SQL提交数据</p>
+		<pre class="programlisting">
+			INSERT INTO `test`.`staff` (`id`, `name`, `token`) VALUES (5, 'Jam', md5(concat('5','+','Jam','-')));
+		</pre>
+		<p>应该分两步，一是计算Token，二是插入数据。可以将Token计算交给程序而不是SQL，并且封装在。jar(Java)中或者。so(PHP 扩展中).</p>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="aes"></a>3.4.10. 数据加密</h3></div></div></div>
+		
+		<p>数据库中有很多敏感字段，不允许随意查看，例如开发人员，运维人员，甚至DBA数据库管理员。另外加密主要是防止被黑客脱库（盗走）</p>
+		<p>敏感数据加密有很多办法，可以用数据库内部加密函数，也可以在外部处理后写入数据库。加密算法有很多种，但通常两类比较常用，一种是通过key加密解密，另一种是通过证书加密解密。</p>
+		<p>通常程序员负责写程序，程序交给运维配置，运维将key设置好，运维不能有数据库权限，DBA只能登陆数据库，没有key权限。</p>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm65917720992"></a>3.4.10.1. AES_ENCRYPT / AES_DECRYPT</h4></div></div></div>
+			
+			<p>这里介绍AES加密与解密简单用法</p>
+			<pre class="screen">
+			
+mysql&gt; select AES_ENCRYPT('helloworld','key');
++---------------------------------+
+| AES_ENCRYPT('helloworld','key') |
++---------------------------------+
+|                                 |
++---------------------------------+
+1 row in set (0.00 sec)
+
+mysql&gt; select AES_DECRYPT(AES_ENCRYPT('helloworld','key'),'key');
++----------------------------------------------------+
+| AES_DECRYPT(AES_ENCRYPT('helloworld','key'),'key') |
++----------------------------------------------------+
+| helloworld                                         |
++----------------------------------------------------+
+1 row in set (0.00 sec)
+
+mysql&gt;
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm65917719296"></a>3.4.10.2. 加密字段</h4></div></div></div>
+			
+			<p>加密数据入库</p>
+			<pre class="screen">
+			
+CREATE TABLE `encryption` (
+	`mobile` VARBINARY(16) NOT NULL,
+	`key` VARCHAR(32) NOT NULL
+)
+ENGINE=InnoDB;
+
+INSERT INTO encryption(`mobile`,`key`)VALUES( AES_ENCRYPT('13691851789',md5('13691851789')), md5('13691851789')) 
+select AES_DECRYPT(mobile,`key`), length(mobile) from encryption;
+			
+			</pre>
+			<p>这里方便演示将key 写入了数据库，实际应用key应该存储在应用程序配置文件中。通常能把获得key的人不应该用数据库权限。</p>
+		</div>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="plugin"></a>3.4.11. 开发加密插件开发</h3></div></div></div>
+		
+		<p>数据库内部提供的摘要函数MD5/SHA/CRC与现有的AES/DES加密函数以及不能满足我们的需求，所以我们有必要开发外挂插件实现数据加密。</p>
+		<p>
+			这里有一个例子，是我早年开发的
+			<a class="ulink" href="https://github.com/netkiller/mysql-safenet-plugin" target="_top">https://github.com/netkiller/mysql-safenet-plugin</a>
+			这个UDF是链接 Safenet设备，实现数据库加密记录。
+		</p>
+		<p>saftnet.h</p>
+		<pre class="programlisting">
+		
+my_bool safenet_encrypt_init(UDF_INIT *initid, UDF_ARGS *args, char *message);
+char *safenet_encrypt(UDF_INIT *initid, UDF_ARGS *args, char *result, unsigned long *length, char *is_null, char *error);
+void safenet_encrypt_deinit(UDF_INIT *initid);
+
+my_bool safenet_decrypt_init(UDF_INIT *initid, UDF_ARGS *args, char *message);
+char *safenet_decrypt(UDF_INIT *initid, UDF_ARGS *args, char *result, unsigned long *length, char *is_null, char *error);
+void safenet_decrypt_deinit(UDF_INIT *initid);
+
+my_bool safenet_config_init(UDF_INIT *initid, UDF_ARGS *args, char *message);
+char *safenet_config(UDF_INIT *initid, UDF_ARGS *args, char *result, unsigned long *length, char *is_null, char *error);
+void safenet_config_deinit(UDF_INIT *initid);		
+		
+		</pre>
+		<p>safenet.c</p>
+		<pre class="programlisting">
+		
+/*
+Homepage: http://netkiller.github.io/
+Author: netkiller&lt;netkiller@msn.com&gt;
+*/
+
+#include &lt;mysql.h&gt;
+#include &lt;string.h&gt;
+
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;curl/curl.h&gt;
+#include "safenet.h"
+
+#define SAFENET_URL "http://localhost/safe/interface" 
+#define SAFENET_KEY "Web01-key" 
+
+char *safe_url;
+char *safe_key;
+
+
+void get_safenet_env(){
+    if (getenv("SAFENET_URL")){
+	safe_url = getenv("SAFENET_URL");
+    }else{
+	safe_url = SAFENET_URL;
+    }
+    if (getenv("SAFENET_KEY")){
+	safe_key = getenv("SAFENET_KEY");
+    }else{
+	safe_key = SAFENET_KEY;
+    }
+}
+
+/* CURL FUNCTION BEGIN*/
+struct string {
+  char *ptr;
+  size_t len;
+};
+
+void init_string(struct string *s) {
+  s-&gt;len = 0;
+  s-&gt;ptr = malloc(s-&gt;len+1);
+  if (s-&gt;ptr == NULL) {
+    fprintf(stderr, "malloc() failed\n");
+    exit(EXIT_FAILURE);
+  }
+  s-&gt;ptr[0] = '\0';
+}
+
+size_t writefunc(void *ptr, size_t size, size_t nmemb, struct string *s)
+{
+  size_t new_len = s-&gt;len + size*nmemb;
+  s-&gt;ptr = realloc(s-&gt;ptr, new_len+1);
+  if (s-&gt;ptr == NULL) {
+    fprintf(stderr, "realloc() failed\n");
+    exit(EXIT_FAILURE);
+  }
+  memcpy(s-&gt;ptr+s-&gt;len, ptr, size*nmemb);
+  s-&gt;ptr[new_len] = '\0';
+  s-&gt;len = new_len;
+
+  return size*nmemb;
+}
+
+char * safenet(char *url, char *mode, char *key, char *in )
+{ 
+    CURL *curl;
+    CURLcode res;
+    char *fields;
+    char *data;
+
+//  curl_global_init(CURL_GLOBAL_ALL);
+ 
+    /* get a curl handle */ 
+    curl = curl_easy_init();
+    if(curl) {
+        struct string s;
+        init_string(&amp;s); 
+        
+        asprintf(&amp;fields, "mode=%s&amp;keyname=%s&amp;input=%s", mode, key, in);    
+    
+        curl_easy_setopt(curl, CURLOPT_URL, url);
+        curl_easy_setopt(curl, CURLOPT_USERAGENT, "safenet/1.0 by netkiller &lt;netkiller@msn.com&gt;");
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writefunc);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &amp;s);
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, fields);
+     
+        /* Perform the request, res will get the return code */ 
+        res = curl_easy_perform(curl);
+        /* Check for errors */ 
+        if(res != CURLE_OK)
+          fprintf(stderr, "curl_easy_perform() failed: %s\n",
+                  curl_easy_strerror(res));
+     
+        asprintf(&amp;data, "%s", s.ptr);
+        //printf("Encrypt: %s\n", data);
+    
+        free(s.ptr);
+        /* always cleanup */ 
+        curl_easy_cleanup(curl);
+    }
+    else{
+	strcpy(data,"");
+    }
+
+    return data;
+  //curl_global_cleanup();
+}
+/* CURL FUNCTION END*/
+
+/* ------------------------ safenet encrypt ----------------------------- */
+
+my_bool safenet_encrypt_init(UDF_INIT *initid, UDF_ARGS *args, char *message)
+{
+
+  if (args-&gt;arg_count != 1)
+  {
+    strncpy(message,
+            "two arguments must be supplied: safenet_encrypt('&lt;data&gt;').",
+            MYSQL_ERRMSG_SIZE);
+    return 1;
+  }
+  get_safenet_env(); 
+  args-&gt;arg_type[0]= STRING_RESULT;
+
+  return 0;
+}
+
+char *safenet_encrypt(UDF_INIT *initid, UDF_ARGS *args,
+                __attribute__ ((unused)) char *result,
+               unsigned long *length,
+                __attribute__ ((unused)) char *is_null,
+                __attribute__ ((unused)) char *error)
+{
+
+    char *data;
+    data = safenet(safe_url, "encrypt", safe_key, args-&gt;args[0]);
+    *length = strlen(data);
+    return ((char *)data);
+
+}
+
+void safenet_encrypt_deinit(UDF_INIT *initid)
+{
+  return;
+}
+
+/* ------------------------ safenet decrypt ----------------------------- */
+
+my_bool safenet_decrypt_init(UDF_INIT *initid, UDF_ARGS *args, char *message)
+{
+
+  if (args-&gt;arg_count != 1)
+  {
+    strncpy(message,
+            "two arguments must be supplied: safenet_decrypt('&lt;data&gt;').",
+            MYSQL_ERRMSG_SIZE);
+    return 1;
+  }
+
+  get_safenet_env();
+  args-&gt;arg_type[0]= STRING_RESULT;
+
+  return 0;
+}
+
+char *safenet_decrypt(UDF_INIT *initid, UDF_ARGS *args,
+                __attribute__ ((unused)) char *result,
+               unsigned long *length,
+                __attribute__ ((unused)) char *is_null,
+                __attribute__ ((unused)) char *error)
+{
+
+    char *data;
+    if(strlen(args-&gt;args[0]) != 512){
+        data = args-&gt;args[0];
+    }else{
+        data = safenet(safe_url, "decrypt", safe_key, args-&gt;args[0]);
+    }
+    *length = strlen(data);
+    return ((char *)data);
+
+}
+
+void safenet_decrypt_deinit(UDF_INIT *initid)
+{
+  return;
+}
+
+/* ------------------------ safenet config ----------------------------- */
+
+my_bool safenet_config_init(UDF_INIT *initid, UDF_ARGS *args, char *message)
+{
+
+    get_safenet_env();
+    return 0;
+}
+
+char *safenet_config(UDF_INIT *initid, UDF_ARGS *args,
+                __attribute__ ((unused)) char *result,
+               unsigned long *length,
+                __attribute__ ((unused)) char *is_null,
+                __attribute__ ((unused)) char *error)
+{
+
+  char *config;
+  asprintf(&amp;config, "SAFENET_URL=%s, SAFENET_KEY=%s", safe_url, safe_key);
+  *length = strlen(config);
+  return ((char *)config);
+}
+
+void safenet_config_deinit(UDF_INIT *initid)
+{
+   return;
+}
+		
+		</pre>
+		<p>CMakeLists.txt</p>
+		<pre class="programlisting">
+		
+cmake_minimum_required(VERSION 2.8)
+PROJECT(safenet)
+ADD_LIBRARY(safenet SHARED safenet.c)
+INCLUDE_DIRECTORIES(/usr/include/mysql)
+TARGET_LINK_LIBRARIES(safenet curl)
+INSTALL(PROGRAMS libsafenet.so DESTINATION /usr/lib64/mysql/plugin/)
+		
+		</pre>
+
+		<p>Installation Plugin</p>
+		<pre class="programlisting">
+		
+yum install -y libcurl-devel
+
+cd src
+cmake .
+make 
+make install
+
+cat &gt; /etc/sysconfig/mysqld &lt;&lt;EOF
+export SAFENET_URL=http://host.localdomain/safe/interface
+export SAFENET_KEY=Web01-key
+EOF
+		
+		</pre>
+		<p>Create Function</p>
+		<pre class="programlisting">
+		
+create function safenet_encrypt returns string soname 'libsafenet.so';
+create function safenet_decrypt returns string soname 'libsafenet.so';
+create function safenet_config returns string soname 'libsafenet.so';
+		
+		</pre>
+		<p>Example</p>
+		<pre class="programlisting">
+		
+mysql&gt; select safenet_encrypt('Helloworld!!!');
++----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| safenet_encrypt('Helloworld!!!')                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
++----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| 994BAB7BC417F0559A09ECE94EDCB695AC1D5705F7ABA9F3562158F5AFAC4720FA9B3E53F30DF65C1726E0F02A93A9CAE7E486349F41AE4F504DC2B49F809C5AF77FEF4DE49D03D8DEC4000B15F2F2A2296500AA6159491E65DEFDFE75FB2E79D31D9BF0CC67932ADA212C34C0B04BF30F222102FAD857F440404C0FE92B8626EA3126B0B5A4FA0B1D09F1CC9EF45EBB6A72123AE82D39F659C717A5AA4F7FB5BDBBC7977C7021F61BBC26B9DB78C9A8657C6BC291CAE5C07F9DF485D71A1E9CC8888793B03BB5AF2DDB57AAEFB6D2EA569226651092414F96BA0880B35B0D8A01A1F7B82C308A2316D07C0FD4E0A298ECB33F4E4EB9F1A1E53760B0BFBE7449 |
++----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+1 row in set (0.58 sec)
+
+mysql&gt; select safenet_decrypt(safenet_encrypt('Helloworld!!!'));
++---------------------------------------------------+
+| safenet_decrypt(safenet_encrypt('Helloworld!!!')) |
++---------------------------------------------------+
+| Helloworld!!!                                     |
++---------------------------------------------------+
+1 row in set (0.31 sec)
+
+mysql&gt; select safenet_config();	
+		
+		</pre>
+		<p>Drop Function</p>
+		<pre class="programlisting">
+		
+drop function safenet_encrypt;
+drop function safenet_decrypt;
+drop function safenet_config;	
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="chain"></a>3.4.12. 数据区块链</h3></div></div></div>
+		
+		<p>背景：例如我们需要一个排行榜，存储活动的报名顺序或者考试成绩。我们防止有人作弊或者撰改，包括DBA在内。</p>
+		<p>任务：1.数据检查，2.发现撰改，2.风险提示</p>
+		<p>方案：使用链表指针方案,将数据看成一个链条，中间任何改动，就如同链条被剪断，改动之处之后的数据全部视为无效。</p>
+		<p>结果：达到数据后发现是否撰改，提示风险目的</p>
+		<pre class="programlisting">
+		
+CREATE TABLE `top100_list` (
+	`id` INT,
+	`name` VARBINARY(16) NOT NULL,
+	......
+	......
+	`extend` VARCHAR(32) NULL
+)
+ENGINE=InnoDB;
+		
+		</pre>
+		<p>演示数据</p>
+		<pre class="screen">
+		
+id | extend | ...
+1 | 0 | ...
+2 | 1 | ...
+3 | 2 | ...
+4 | 3 | ...		
+5 | 4 | ...
+		
+		</pre>
+		<p>extend 始终集成上一条记录，保证数据是连续的。但这样还不够，这样只能防止数据被删除，如果其他字段被修改呢</p>
+		<pre class="screen">
+		
+id | extend | ...
+1 | NULL | ...
+2 | crc32(...) | ...
+3 | crc32(...) | ...
+4 | crc32(...) | ...		
+5 | crc32(...) | ...
+		
+		</pre>
+		<p>我们使用crc算法运算上一条一整行的数据，你还可以使用 salt 技术干扰，这个 salt 只有软件部署者知道，DBA和开发人员不得而知。</p>
+		<p>对于一般数据crc32 可能做到性能和安全性平衡，如果安全要求更高可以使用 sha256 等等，甚至采用 RSA 非对称秘钥。</p>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm65917705296"></a>3.4.13. 状态保护</h3></div></div></div>
+		
+		<p>表中有一个 Status 字段，是一个状态机，你可以理解为工作流，工作流是有任务流向的，不能随意修改其状态。</p>
+		<pre class="programlisting">
+		
+CREATE TABLE `card` (
+	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+	`uuid` VARCHAR(36) NOT NULL COMMENT 'UUID' COLLATE 'utf8mb4_unicode_ci',
+	`number` VARCHAR(36) NOT NULL COMMENT '充值卡号码' COLLATE 'utf8mb4_unicode_ci',
+	`price` MEDIUMINT(8) UNSIGNED NOT NULL COMMENT '面值',
+	`status` ENUM('New','Activated','Recharged','Discard') NOT NULL DEFAULT 'New' COMMENT '充值卡状态' COLLATE 'utf8mb4_unicode_ci',
+	`ctime` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+	`mtime` TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+	PRIMARY KEY (`id`),
+	UNIQUE INDEX `number` (`number`),
+	UNIQUE INDEX `uuid` (`uuid`)
+)
+COMMENT='充值卡表'
+COLLATE='utf8mb4_unicode_ci'
+ENGINE=InnoDB
+AUTO_INCREMENT=1;
+		
+		</pre>
+		<p>状态流向</p>
+		<pre class="screen">
+		
+	+----------+    +-----------+    +-----------+    
+	| New      | -&gt; | Activated | -&gt; | Recharged |
+	+----------+    +-----------+    +-----------+    
+		 |                |
+		 V                |
+	+----------+          |
+    | Discard  | &lt;--------+
+	+----------+
+		
+		</pre>
+		<p>为此我们创建触发器保护状态正确走向。</p>
+		<pre class="programlisting">
+		
+CREATE DEFINER=`root`@`%` TRIGGER `card_before_update` BEFORE UPDATE ON `card` FOR EACH ROW BEGIN
+	set new.uuid 		= old.uuid;
+	set new.number		= old.number;
+	set new.price		= old.price;
+	set new.ctime		= old.ctime;
+	
+	IF old.status = "New" THEN
+		IF new.status NOT IN ("Activated","Discard") THEN
+			SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Status denied', MYSQL_ERRNO = 1001;
+		END IF;
+	END IF;
+	IF old.status = "Activated" THEN
+		IF new.status NOT IN ("Recharged") THEN
+			SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Status denied', MYSQL_ERRNO = 1001;
+		END IF;
+	END IF;
+	IF old.status = "Recharged" THEN
+		set new.status	= old.status;
+	END IF;
+END
+		
+		</pre>
+		<p>保护记录不被删除</p>
+		<pre class="programlisting">
+		
+CREATE DEFINER=`root`@`%` TRIGGER `card_before_delete` BEFORE DELETE ON `card` FOR EACH ROW BEGIN
+	SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Permission denied', MYSQL_ERRNO = 1001;
+END
+		
+		</pre>
+		<p>这个方案很容易移植到其他场景中，例如购物，发货，收货等等</p>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm65917699024"></a>3.4.14. 数据归档</h3></div></div></div>
+		
+		<p>MySQL 提供 ARCHIVE 引擎，ARCHIVE归档的数据不能够修改，这个引擎只提供插入操作</p>
+		<pre class="programlisting">
+		
+CREATE TABLE `logging` (
+	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+	`tag` ENUM('unknow','www','user','admin') NOT NULL DEFAULT 'unknow' COMMENT '日志标签',
+	`time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '产生时间',
+	`facility` ENUM('card','payment','sms','blockchain') NOT NULL COMMENT '类别',
+	`priority` ENUM('info','warning','error','critical','exception','debug') NOT NULL COMMENT '级别',
+	`message` VARCHAR(1024) NOT NULL COMMENT '内容',
+	PRIMARY KEY (`id`)
+)
+COMMENT='日志表'
+COLLATE='utf8_general_ci'
+ENGINE=ARCHIVE
+AUTO_INCREMENT=1;
+		
+		
+		</pre>
+	</div>
+</div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
+window.changyan.api.config({
+appid: 'cyvwjQUG3',
+conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
+});
+</script><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="多维度架构设计之数据库并行访问控制.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="db.exmaple.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">3.3. 数据库并行访问控制 </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 3.5. 参考例子</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script></body></html>

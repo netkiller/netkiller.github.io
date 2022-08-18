@@ -1,0 +1,1485 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>3.7. Spring Data 最佳实践</title><link rel="stylesheet" type="text/css" href="../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><link rel="home" href="../index.html" title="Netkiller Architect 手札" /><link rel="up" href="index.html" title="第 3 章 数据库设计" /><link rel="prev" href="多维度架构设计之NoSQL.html" title="3.6. NoSQL OOD(Object-Oriented Design)" /><link rel="next" href="../system/index.html" title="部分 I. 运维篇" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+   	    <a xmlns="" href="https://edu.51cto.com/lecturer/1703915.html">51CTO学院</a> |
+	    <a xmlns="" href="https://edu.csdn.net/lecturer/6423">CSDN程序员研修院</a> |
+	    <a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">腾讯云社区</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">阿里云栖社区</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">3.7. Spring Data 最佳实践</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="多维度架构设计之NoSQL.html">上一页</a> </td><th width="60%" align="center">第 3 章 数据库设计</th><td width="20%" align="right"> <a accesskey="n" href="../system/index.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="多维度架构设计之SpringData"></a>3.7. Spring Data 最佳实践</h2></div></div></div>
+	
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="spring.data.mysql"></a>3.7.1. MySQL</h3></div></div></div>
+		
+
+		<p>ORM的出现解决了程序猿学习数据库学历成本，也加快了开发的速度。程序猿无需再学习数据库定义语言DDL以及数据库客户端，也无需关注建表这些繁琐的工作，同时也降低了数据库结构变更管理中与DBA频繁沟通的成本。。
+		</p>
+		<p>在过去的两年中我们采用 Spring Data JPA 定义数据库，访问数据库，积累了很多经验，最终我们发现使用 Spring
+			Data 实体定义完全可以代替 DBA 的建模工作。
+		</p>
+		<p>
+			下面我们采用案例，一个一个讲解，各种数据库实体关系的定义。相关数据库建模知识请先阅读
+			<a class="ulink" href="http://www.netkiller.cn/architect/index.html" target="_top">《Netkiller Architect 手札》</a>
+			以及
+			<a class="ulink" href="http://www.netkiller.cn/spring/index.html" target="_top">《Netkiller Spring 手札》</a>
+		</p>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="category"></a>3.7.1.1. 分类表</h4></div></div></div>
+			
+			<p>这是一个通用分类表，常见的父子关系加上path路径</p>
+			<pre class="screen">
+		
+ +-----------+
+ | category  |
+ |-----------|
+ |id         | &lt;---+
+ |name       |     |
+ |description|    1:n
+ |status     |     |
+ |pid        | o---+
+ |path       |
+ |status     |
+ |ctime      |
+ |mtime      |
+ +-----------+
+		
+			</pre>
+			<pre class="programlisting">
+		
+package cn.netkiller.domain;
+
+import java.util.Date;
+import java.util.Set;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+
+import org.springframework.format.annotation.DateTimeFormat;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+@Entity
+public class Category {
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "id", unique = true, nullable = false, insertable = true, updatable = false)
+	public int id;
+	public String name;
+	public String description;
+	public String path;
+
+	@Column(columnDefinition = "enum('Enabled','Disabled') DEFAULT 'Enabled' COMMENT '状态'")
+	public String status;
+
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+	@Column(columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间'")
+	public Date ctime;
+
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+	@Column(columnDefinition = "TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更改时间'")
+	public Date mtime;
+
+	@ManyToOne(cascade = { CascadeType.PERSIST, CascadeType.REMOVE })
+	@JoinColumn(name = "pid", referencedColumnName = "id")
+	private Category categorys;
+
+	@JsonIgnore
+	@OneToMany(cascade = CascadeType.ALL, mappedBy = "category", fetch = FetchType.EAGER)
+	private Set&lt;Category&gt; category;
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	public String getPath() {
+		return path;
+	}
+
+	public void setPath(String path) {
+		this.path = path;
+	}
+
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
+	}
+
+	public Date getCtime() {
+		return ctime;
+	}
+
+	public void setCtime(Date ctime) {
+		this.ctime = ctime;
+	}
+
+	public Date getMtime() {
+		return mtime;
+	}
+
+	public void setMtime(Date mtime) {
+		this.mtime = mtime;
+	}
+
+	public Category getCategorys() {
+		return categorys;
+	}
+
+	public void setCategorys(Category categorys) {
+		this.categorys = categorys;
+	}
+
+	public Set&lt;Category&gt; getCategory() {
+		return category;
+	}
+
+	public void setCategory(Set&lt;Category&gt; category) {
+		this.category = category;
+	}
+
+	@Override
+	public String toString() {
+		return "Category [id=" + id + ", name=" + name + ", description=" + description + ", path=" + path + ", status="
+				+ status + ", ctime=" + ctime + ", mtime=" + mtime + ", categorys=" + categorys + ", category="
+				+ category + "]";
+	}
+
+}
+		
+		
+			</pre>
+			<p>期望结果</p>
+			<pre class="programlisting">
+		
+CREATE TABLE `category` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `ctime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '',
+  `description` varchar(255) DEFAULT NULL,
+  `mtime` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '',
+  `name` varchar(255) DEFAULT NULL,
+  `path` varchar(255) DEFAULT NULL,
+  `status` enum('Enabled','Disabled') DEFAULT 'Enabled' COMMENT '',
+  `pid` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8
+		
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="spring.data.index"></a>3.7.1.2. 为字段增加索引</h4></div></div></div>
+			
+			<p>我们希望为 name 和 path 字段增加普通索引</p>
+			<pre class="programlisting">
+		
+package cn.netkiller.domain;
+
+import java.util.Date;
+import java.util.Set;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Index;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
+
+import org.springframework.format.annotation.DateTimeFormat;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+@Entity
+@Table(indexes = { @Index(name = "name", columnList = "name DESC"), @Index(name = "path", columnList = "path") })
+public class Category {
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "id", unique = true, nullable = false, insertable = true, updatable = false)
+	public int id;
+	public String name;
+	public String description;
+	public String path;
+
+	@Column(columnDefinition = "enum('Enabled','Disabled') DEFAULT 'Enabled' COMMENT '状态'")
+	public String status;
+
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+	@Column(columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间'")
+	public Date ctime;
+
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+	@Column(columnDefinition = "TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更改时间'")
+	public Date mtime;
+
+	@ManyToOne(cascade = { CascadeType.PERSIST, CascadeType.REMOVE })
+	@JoinColumn(name = "pid", referencedColumnName = "id")
+	private Category categorys;
+
+	@JsonIgnore
+	@OneToMany(cascade = CascadeType.ALL, mappedBy = "category", fetch = FetchType.EAGER)
+	private Set&lt;Category&gt; category;
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	public String getPath() {
+		return path;
+	}
+
+	public void setPath(String path) {
+		this.path = path;
+	}
+
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
+	}
+
+	public Date getCtime() {
+		return ctime;
+	}
+
+	public void setCtime(Date ctime) {
+		this.ctime = ctime;
+	}
+
+	public Date getMtime() {
+		return mtime;
+	}
+
+	public void setMtime(Date mtime) {
+		this.mtime = mtime;
+	}
+
+	public Category getCategorys() {
+		return categorys;
+	}
+
+	public void setCategorys(Category categorys) {
+		this.categorys = categorys;
+	}
+
+	public Set&lt;Category&gt; getCategory() {
+		return category;
+	}
+
+	public void setCategory(Set&lt;Category&gt; category) {
+		this.category = category;
+	}
+
+	@Override
+	public String toString() {
+		return "Category [id=" + id + ", name=" + name + ", description=" + description + ", path=" + path + ", status="
+				+ status + ", ctime=" + ctime + ", mtime=" + mtime + ", categorys=" + categorys + ", category="
+				+ category + "]";
+	}
+
+}
+				
+		
+			</pre>
+			<p>期望结果</p>
+			<pre class="programlisting">
+		
+CREATE TABLE `category` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `ctime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '????',
+  `description` varchar(255) DEFAULT NULL,
+  `mtime` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '????',
+  `name` varchar(255) DEFAULT NULL,
+  `path` varchar(255) DEFAULT NULL,
+  `status` enum('Enabled','Disabled') DEFAULT 'Enabled' COMMENT '??',
+  `pid` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `name` (`name`),
+  KEY `path` (`path`),
+  KEY `FKeiel7nqjxu4kmefso9tm9qcsu` (`pid`),
+  CONSTRAINT `FKeiel7nqjxu4kmefso9tm9qcsu` FOREIGN KEY (`pid`) REFERENCES `category` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8		
+		
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="UniqueConstraint"></a>3.7.1.3. 复合索引</h4></div></div></div>
+			
+			<p>创建由多个字段组成的复合索引，如： "member_id", "articleId"</p>
+			<pre class="programlisting">
+		
+package cn.netkiller.api.model;
+
+import java.io.Serializable;
+import java.util.Date;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+import javax.persistence.UniqueConstraint;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+
+@Entity
+@Table(name = "comment", uniqueConstraints = { @UniqueConstraint(columnNames = { "member_id", "articleId" }) })
+public class Comment implements Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -1484408775034277681L;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "id", unique = true, nullable = false, insertable = true, updatable = false)
+	private int id;
+
+	@ManyToOne(cascade = { CascadeType.ALL })
+	@JoinColumn(name = "member_id")
+	private Member member;
+
+	private int articleId;
+
+	private String message;
+
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(updatable = false)
+	@org.hibernate.annotations.CreationTimestamp
+	protected Date createDate;
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
+	public Member getMember() {
+		return member;
+	}
+
+	public void setMember(Member member) {
+		this.member = member;
+	}
+
+	public int getArticleId() {
+		return articleId;
+	}
+
+	public void setArticleId(int articleId) {
+		this.articleId = articleId;
+	}
+
+	public String getMessage() {
+		return message;
+	}
+
+	public void setMessage(String message) {
+		this.message = message;
+	}
+
+	public Date getCreateDate() {
+		return createDate;
+	}
+
+	public void setCreateDate(Date createDate) {
+		this.createDate = createDate;
+	}
+}
+		
+			</pre>
+			<p>期望结果</p>
+			<pre class="screen">
+		
+CREATE TABLE `comment` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `article_id` int(11) NOT NULL,
+  `create_date` datetime DEFAULT NULL,
+  `message` varchar(255) DEFAULT NULL,
+  `member_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UK5qxfiu92nwlvgli7bl3evl11m` (`member_id`,`article_id`),
+  CONSTRAINT `FKmrrrpi513ssu63i2783jyiv9m` FOREIGN KEY (`member_id`) REFERENCES `member` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+		
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="spring.data.1n"></a>3.7.1.4. 一对多实例</h4></div></div></div>
+			
+			<p>如下图，我们将实现 categroy 和 article 的一对多关系</p>
+			<pre class="programlisting">
+		
+      +-----------+
+      | category  |
+      |-----------|
+  +--&gt;|id         | &lt;---+
+  |   |title      |     |
+  |   |description|    1:n
+  |   |status     |     |
+  |   |parent_id  | o---+
+  |   +-----------+
+  |
+ 1:n
+  |
+  |   +-----------------+            +-----------------+
+  |   | article         |            | feedback        |
+  |   |-----------------|            |-----------------|
+  |   |id               |&lt;--1:n--+   |id               |
+  |   |title            |        |   |title            |
+  |   |content          |        |   |content          |
+  |   |datetime         |        |   |datetime         |
+  |   |status           |        |   |status           |
+  +--o|category_id      |        +--o|article_id       |
+  +--o|member_id        |        +--&gt;|member_id        |
+  |   +-----------------+        |   +-----------------+
+  |   | 2007,2008,2009  |        |   | 2007,2008,2009  |
+  |   +-----------------+        |   +-----------------+
+  |                              |
+ 1:n  +----------+     +---1:n---+
+  |   | member   |     |
+  |   |----------|     |
+  +--&gt;|id        | &lt;---+
+      |user      |
+      |passwd    |
+      |nickname  |
+      |status    |
+      +----------+
+		
+			</pre>
+			<p>首先定义分类实体类</p>
+			<pre class="programlisting">
+		
+package cn.netkiller.domain;
+
+import java.util.Date;
+import java.util.Set;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Index;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
+
+import org.springframework.format.annotation.DateTimeFormat;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+@Entity
+@Table(indexes = { @Index(name = "name", columnList = "name DESC"), @Index(name = "path", columnList = "path") })
+public class Category {
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "id", unique = true, nullable = false, insertable = true, updatable = false)
+	public int id;
+	public String name;
+	public String description;
+	public String path;
+
+	@Column(columnDefinition = "enum('Enabled','Disabled') DEFAULT 'Enabled' COMMENT '状态'")
+	public String status;
+
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+	@Column(columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间'")
+	public Date ctime;
+
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+	@Column(columnDefinition = "TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更改时间'")
+	public Date mtime;
+
+	@ManyToOne(cascade = { CascadeType.PERSIST, CascadeType.REMOVE })
+	@JoinColumn(name = "pid", referencedColumnName = "id")
+	private Category categorys;
+
+	@JsonIgnore
+	@OneToMany(cascade = CascadeType.ALL, mappedBy = "category", fetch = FetchType.EAGER)
+	private Set&lt;Category&gt; category;
+
+	@JsonIgnore
+	@OneToMany(cascade = CascadeType.ALL, mappedBy = "category", orphanRemoval = true)
+	private Set&lt;Article&gt; article;
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	public String getPath() {
+		return path;
+	}
+
+	public void setPath(String path) {
+		this.path = path;
+	}
+
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
+	}
+
+	public Date getCtime() {
+		return ctime;
+	}
+
+	public void setCtime(Date ctime) {
+		this.ctime = ctime;
+	}
+
+	public Date getMtime() {
+		return mtime;
+	}
+
+	public void setMtime(Date mtime) {
+		this.mtime = mtime;
+	}
+
+	public Category getCategorys() {
+		return categorys;
+	}
+
+	public void setCategorys(Category categorys) {
+		this.categorys = categorys;
+	}
+
+	public Set&lt;Category&gt; getCategory() {
+		return category;
+	}
+
+	public void setCategory(Set&lt;Category&gt; category) {
+		this.category = category;
+	}
+
+	@Override
+	public String toString() {
+		return "Category [id=" + id + ", name=" + name + ", description=" + description + ", path=" + path + ", status="
+				+ status + ", ctime=" + ctime + ", mtime=" + mtime + ", categorys=" + categorys + ", category="
+				+ category + "]";
+	}
+
+}
+
+		
+			</pre>
+			<p>定义文章实体类</p>
+			<pre class="programlisting">
+		
+package cn.netkiller.domain;
+
+import java.io.Serializable;
+import java.util.Date;
+import java.util.Set;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
+
+import org.springframework.format.annotation.DateTimeFormat;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+@Entity
+@Table(name = "article")
+public class Article implements Serializable {
+	private static final long serialVersionUID = 7603772682950271321L;
+
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "id", unique = true, nullable = false, insertable = true, updatable = false)
+	public int id;
+	public String title;
+	@Column(name = "short")
+	public String shortTitle;
+	public String description;
+	public String author;
+	public int star;
+	public String tag;
+	public boolean share;
+	public boolean status;
+	public String content;
+
+	@ManyToOne(cascade = { CascadeType.PERSIST, CascadeType.REMOVE })
+	@JoinColumn(name = "category_id", referencedColumnName = "id")
+	private Category category;
+
+	@ManyToOne(cascade = { CascadeType.PERSIST, CascadeType.REMOVE })
+	@JoinColumn(name = "site_id", referencedColumnName = "id")
+	private Site site;
+
+	@ManyToOne(cascade = { CascadeType.ALL })
+	@JoinColumn(name = "member_id", referencedColumnName = "id")
+	private Member member;
+
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+	@Column(columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间'")
+	public Date ctime;
+
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+	@Column(columnDefinition = "TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更改时间'")
+	public Date mtime;
+
+	@JsonIgnore
+	@OneToMany(cascade = CascadeType.ALL, mappedBy = "article", fetch = FetchType.EAGER)
+	private Set&lt;Comment&gt; comment;
+
+	@JsonIgnore
+	@OneToMany(cascade = CascadeType.ALL, mappedBy = "article", fetch = FetchType.EAGER)
+	private Set&lt;Favorites&gt; favorites;
+
+	@JsonIgnore
+	@OneToMany(cascade = CascadeType.ALL, mappedBy = "article", orphanRemoval = true)
+	private Set&lt;Statistics&gt; statistics;
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
+	public String getTitle() {
+		return title;
+	}
+
+	public void setTitle(String title) {
+		this.title = title;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	public Date getCtime() {
+		return ctime;
+	}
+
+	public void setCtime(Date ctime) {
+		this.ctime = ctime;
+	}
+
+	public String getShortTitle() {
+		return shortTitle;
+	}
+
+	public void setShortTitle(String shortTitle) {
+		this.shortTitle = shortTitle;
+	}
+
+	public String getAuthor() {
+		return author;
+	}
+
+	public void setAuthor(String author) {
+		this.author = author;
+	}
+
+	public int getStar() {
+		return star;
+	}
+
+	public void setStar(int star) {
+		this.star = star;
+	}
+
+	public String getTag() {
+		return tag;
+	}
+
+	public void setTag(String tag) {
+		this.tag = tag;
+	}
+
+	public boolean isShare() {
+		return share;
+	}
+
+	public void setShare(boolean share) {
+		this.share = share;
+	}
+
+	public boolean isStatus() {
+		return status;
+	}
+
+	public void setStatus(boolean status) {
+		this.status = status;
+	}
+
+	public String getContent() {
+		return content;
+	}
+
+	public void setContent(String content) {
+		this.content = content;
+	}
+
+	public Category getCategory() {
+		return category;
+	}
+
+	public void setCategory(Category category) {
+		this.category = category;
+	}
+
+	public Member getMember() {
+		return member;
+	}
+
+	public void setMember(Member member) {
+		this.member = member;
+	}
+
+	public Set&lt;Comment&gt; getComment() {
+		return comment;
+	}
+
+	public void setComment(Set&lt;Comment&gt; comment) {
+		this.comment = comment;
+	}
+
+	public Set&lt;Favorites&gt; getFavorites() {
+		return favorites;
+	}
+
+	public void setFavorites(Set&lt;Favorites&gt; favorites) {
+		this.favorites = favorites;
+	}
+
+	public Set&lt;Statistics&gt; getStatistics() {
+		return statistics;
+	}
+
+	public void setStatistics(Set&lt;Statistics&gt; statistics) {
+		this.statistics = statistics;
+	}
+
+	public Site getSite() {
+		return site;
+	}
+
+	public void setSite(Site site) {
+		this.site = site;
+	}
+
+	public Date getMtime() {
+		return mtime;
+	}
+
+	public void setMtime(Date mtime) {
+		this.mtime = mtime;
+	}
+
+	@Override
+	public String toString() {
+		return "Article [id=" + id + ", title=" + title + ", shortTitle=" + shortTitle + ", description=" + description
+				+ ", author=" + author + ", star=" + star + ", tag=" + tag + ", share=" + share + ", status=" + status
+				+ ", content=" + content + ", category=" + category + ", site=" + site + ", member=" + member
+				+ ", ctime=" + ctime + ", mtime=" + mtime + ", comment=" + comment + ", favorites=" + favorites
+				+ ", statistics=" + statistics + "]";
+	}
+
+}
+
+		
+			</pre>
+			<p>希望结果</p>
+			<pre class="programlisting">
+		
+CREATE TABLE `category` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `ctime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '????',
+  `description` varchar(255) DEFAULT NULL,
+  `mtime` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '????',
+  `name` varchar(255) DEFAULT NULL,
+  `path` varchar(255) DEFAULT NULL,
+  `status` enum('Enabled','Disabled') DEFAULT 'Enabled' COMMENT '??',
+  `pid` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `name` (`name`),
+  KEY `path` (`path`),
+  KEY `FKeiel7nqjxu4kmefso9tm9qcsu` (`pid`),
+  CONSTRAINT `FKeiel7nqjxu4kmefso9tm9qcsu` FOREIGN KEY (`pid`) REFERENCES `category` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `article` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `author` varchar(255) DEFAULT NULL,
+  `content` varchar(255) DEFAULT NULL,
+  `ctime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '????',
+  `description` varchar(255) DEFAULT NULL,
+  `mtime` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '????',
+  `share` bit(1) NOT NULL,
+  `short` varchar(255) DEFAULT NULL,
+  `star` int(11) NOT NULL,
+  `status` bit(1) NOT NULL,
+  `tag` varchar(255) DEFAULT NULL,
+  `title` varchar(255) DEFAULT NULL,
+  `category_id` int(11) DEFAULT NULL,
+  `member_id` int(11) DEFAULT NULL,
+  `site_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `FKy5kkohbk00g0w88fi05k2hcw` (`category_id`),
+  KEY `FK6l9vkfd5ixw8o8kph5rj1k7gu` (`member_id`),
+  KEY `FKrxbc33rok9m4n6pnbbwb3piwf` (`site_id`),
+  CONSTRAINT `FK6l9vkfd5ixw8o8kph5rj1k7gu` FOREIGN KEY (`member_id`) REFERENCES `member` (`id`),
+  CONSTRAINT `FKrxbc33rok9m4n6pnbbwb3piwf` FOREIGN KEY (`site_id`) REFERENCES `site` (`id`),
+  CONSTRAINT `FKy5kkohbk00g0w88fi05k2hcw` FOREIGN KEY (`category_id`) REFERENCES `category` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+		
+			</pre>
+			<p>现在我们已经将 categroy 与 article 两张表一对多关系建立起来。</p>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="ManyToMany"></a>3.7.1.5. ManyToMany 多对多</h4></div></div></div>
+			
+			<p>用户与角色就是一个多对多的关系，多对多是需要中间表做关联的。所以需要一个 user_has_role 表。</p>
+			<pre class="programlisting">
+			
+    +----------+          +---------------+            +--------+
+    | users    |          | user_has_role |            | role   |
+    +----------+          +---------------+            +--------+
+    | id       | &lt;------o | user_id       |      /---&gt; | id     |
+    | name     |          | role_id       | o---+      | name   |
+    | password |          |               |            |        |
+    +----------+          +---------------+            +--------+
+			
+			</pre>
+			<p>创建 User 表</p>
+			<pre class="programlisting">
+			
+package cn.netkiller.api.domain.test;
+
+import java.io.Serializable;
+import java.util.Set;
+
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+import javax.persistence.Table;
+import javax.persistence.JoinColumn;
+
+@Entity
+@Table(name = "users")
+public class Users implements Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -2480194112597046349L;
+	@Id
+	@GeneratedValue(strategy = GenerationType.AUTO)
+	private int id;
+	private String name;
+	private String password;
+
+	@ManyToMany(fetch = FetchType.EAGER)
+	@JoinTable(name = "user_has_role", joinColumns = { @JoinColumn(name = "user_id", referencedColumnName = "id") }, inverseJoinColumns = { @JoinColumn(name = "role_id", referencedColumnName = "id") })
+	private Set&lt;Roles&gt; roles;
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
+	}
+
+	public Set&lt;Roles&gt; getRoles() {
+		return roles;
+	}
+
+	public void setRoles(Set&lt;Roles&gt; roles) {
+		this.roles = roles;
+	}
+
+	@Override
+	public String toString() {
+		return "Users [id=" + id + ", name=" + name + ", password=" + password + ", roles=" + roles + "]";
+	}
+
+}
+			
+			</pre>
+			<p>创建 Role 表</p>
+			<pre class="programlisting">
+			
+package cn.netkiller.api.domain.test;
+
+import java.io.Serializable;
+import java.util.Set;
+
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.ManyToMany;
+import javax.persistence.Table;
+
+@Entity
+@Table(name = "roles")
+public class Roles implements Serializable {
+	private static final long serialVersionUID = 6737037465677800326L;
+	@Id
+	@GeneratedValue(strategy = GenerationType.AUTO)
+	private int id;
+	private String name;
+	@ManyToMany(mappedBy = "roles")
+	private Set&lt;Users&gt; users;
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public Set&lt;Users&gt; getUsers() {
+		return users;
+	}
+
+	public void setUsers(Set&lt;Users&gt; users) {
+		this.users = users;
+	}
+
+	@Override
+	public String toString() {
+		return "Roles [id=" + id + ", name=" + name + ", users=" + users + "]";
+	}
+
+}
+
+			
+			</pre>
+			<p>最终产生数据库表如下</p>
+			<pre class="programlisting">
+			
+CREATE TABLE `users` (
+	`id` INT(11) NOT NULL AUTO_INCREMENT,
+	`name` VARCHAR(255) NULL DEFAULT NULL,
+	`password` VARCHAR(255) NULL DEFAULT NULL,
+	PRIMARY KEY (`id`)
+)
+COLLATE='utf8_general_ci'
+ENGINE=InnoDB;	
+
+CREATE TABLE `roles` (
+	`id` INT(11) NOT NULL AUTO_INCREMENT,
+	`name` VARCHAR(255) NULL DEFAULT NULL,
+	PRIMARY KEY (`id`)
+)
+COLLATE='utf8_general_ci'
+ENGINE=InnoDB;
+			
+CREATE TABLE `user_has_role` (
+	`user_id` INT(11) NOT NULL,
+	`role_id` INT(11) NOT NULL,
+	PRIMARY KEY (`user_id`, `role_id`),
+	INDEX `FKsvvq61v3koh04fycopbjx72hj` (`role_id`),
+	CONSTRAINT `FK2dl1ftxlkldulcp934i3125qo` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
+	CONSTRAINT `FKsvvq61v3koh04fycopbjx72hj` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`)
+)
+COLLATE='utf8_general_ci'
+ENGINE=InnoDB;
+			
+			</pre>
+			<pre class="programlisting">
+			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="orphanRemoval"></a>3.7.1.6. 外键级联删除</h4></div></div></div>
+			
+			<p>orphanRemoval = true 可以实现数据级联删除</p>
+			<pre class="programlisting">
+			
+package cn.netkiller.api.domain;
+
+import java.io.Serializable;
+import java.util.Set;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Table;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+@Entity
+@Table(name = "member")
+public class Member implements Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "id", unique = true, nullable = false, insertable = true, updatable = false)
+	private int id;
+
+	private String name;
+	private String sex;
+	private int age;
+	private String wechat;
+
+	@Column(unique = true)
+	private String mobile;
+	private String picture;
+	private String ipAddress;
+
+	@JsonIgnore
+	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "member")
+	private Set&lt;Comment&gt; comment;
+	@JsonIgnore
+	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "member")
+	private Set&lt;StatisticsHistory&gt; statisticsHistory;
+
+	public Member() {
+	}
+
+	public Member(int id) {
+		this.id = id;
+	}
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getSex() {
+		return sex;
+	}
+
+	public void setSex(String sex) {
+		this.sex = sex;
+	}
+
+	public int getAge() {
+		return age;
+	}
+
+	public void setAge(int age) {
+		this.age = age;
+	}
+
+	public String getWechat() {
+		return wechat;
+	}
+
+	public void setWechat(String wechat) {
+		this.wechat = wechat;
+	}
+
+	public String getMobile() {
+		return mobile;
+	}
+
+	public void setMobile(String mobile) {
+		this.mobile = mobile;
+	}
+
+	public String getPicture() {
+		return picture;
+	}
+
+	public void setPicture(String picture) {
+		this.picture = picture;
+	}
+
+	public String getIpAddress() {
+		return ipAddress;
+	}
+
+	public void setIpAddress(String ipAddress) {
+		this.ipAddress = ipAddress;
+	}
+
+	@Override
+	public String toString() {
+		return "Member [id=" + id + ", name=" + name + ", sex=" + sex + ", age=" + age + ", wechat=" + wechat + ", mobile=" + mobile + ", picture=" + picture + ", ipAddress=" + ipAddress + "]";
+	}
+
+}
+			
+			
+			</pre>
+		</div>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="spring.data.mongo"></a>3.7.2. MongoDB</h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm65917596112"></a>3.7.2.1. 枚举定义</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+package api.pojo;
+
+public class Enum {
+
+	public enum Authority {
+		USER, EXPERTS, ORGANIZATION, ADMIN
+	}
+
+	public enum Status {
+		Enabled, Disabled, Yes, No, Y, N
+	}
+
+	public enum Examine {
+		New, Pending, Rejected, Approved
+	}
+
+	public enum Task {
+		New, Processing, Canceled, Completed
+	}
+
+	public enum Sex {
+		True, False, T, F, Male, Female, Boy, Girl
+	}
+
+	public Enum() {
+		// TODO Auto-generated constructor stub
+	}
+}
+			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm65917565632"></a>3.7.2.2. 日志表</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+package api.domain;
+
+import java.util.Date;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+@Document
+public class Logging {
+
+	public enum Priority {
+		info, warning, error, critical, exception, debug
+	}
+
+	public enum Facility {
+		app, sms, ios, android, api, db
+	}
+
+	@Id
+	private String id;
+	private String tag;
+	private Date time;
+	private Facility facility;
+	private Priority priority;
+	private String message;
+
+	public Logging() {
+		// TODO Auto-generated constructor stub
+	}
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	public String getTag() {
+		return tag;
+	}
+
+	public void setTag(String tag) {
+		this.tag = tag;
+	}
+
+	public Date getTime() {
+		return time;
+	}
+
+	public void setTime(Date time) {
+		this.time = time;
+	}
+
+	public Facility getFacility() {
+		return facility;
+	}
+
+	public void setFacility(Facility facility) {
+		this.facility = facility;
+	}
+
+	public Priority getPriority() {
+		return priority;
+	}
+
+	public void setPriority(Priority priority) {
+		this.priority = priority;
+	}
+
+	public String getMessage() {
+		return message;
+	}
+
+	public void setMessage(String message) {
+		this.message = message;
+	}
+
+	@Override
+	public String toString() {
+		return "Logging [id=" + id + ", tag=" + tag + ", time=" + time + ", facility=" + facility + ", priority=" + priority + ", message=" + message + "]";
+	}
+
+}
+
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm65917564480"></a>3.7.2.3. 地址与定位</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+package cn.netkiller.api.domain;
+
+import org.springframework.data.geo.Point;
+import org.springframework.data.redis.core.index.GeoIndexed;
+import org.springframework.data.redis.core.index.Indexed;
+
+public class Address {
+
+	private @Indexed String city;
+	private String country;
+	private @GeoIndexed Point location;
+
+	public Address(String city, String country, Point location) {
+		this.city = city;
+		this.country = country;
+		this.location = location;
+	}
+
+	public String getCity() {
+		return city;
+	}
+
+	public void setCity(String city) {
+		this.city = city;
+	}
+
+	public String getCountry() {
+		return country;
+	}
+
+	public void setCountry(String country) {
+		this.country = country;
+	}
+
+	public Point getLocation() {
+		return location;
+	}
+
+	public void setLocation(Point location) {
+		this.location = location;
+	}
+
+}			
+			
+			</pre>
+		</div>
+	</div>
+</div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
+window.changyan.api.config({
+appid: 'cyvwjQUG3',
+conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
+});
+</script><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="多维度架构设计之NoSQL.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="../system/index.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">3.6. NoSQL OOD(Object-Oriented Design) </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 部分 I. 运维篇</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script></body></html>
