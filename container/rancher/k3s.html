@@ -16,11 +16,17 @@
 	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
 	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">3.5. K3s</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="rancher.cli.html">上一页</a> </td><th width="60%" align="center">第 3 章 Rancher - Multi-Cluster Kubernetes Management</th><td width="20%" align="right"> <a accesskey="n" href="ch03s06.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="k3s"></a>3.5. K3s</h2></div></div></div>
 	
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm6251435440"></a>3.5.1. 安装 K3s</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm80219182464"></a>3.5.1. 安装 K3s</h3></div></div></div>
 		
 		<p>K3S 的安装方式有多种，官方提供的 k3s-install.sh，还有第三方的 k3d 和 k3sup</p>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm6251434416"></a>3.5.1.1. 官方 k3s-install.sh</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm80219181328"></a>3.5.1.1. Server 服务安装</h4></div></div></div>
 			
+			<p></p>
+			<pre class="screen">
+			
+hostnamectl set-hostname master
+			
+			</pre>
 			<pre class="screen">
 			
 curl -sfL https://get.k3s.io | sh -			
@@ -29,28 +35,69 @@ curl -sfL https://get.k3s.io | sh -
 			<p>国内镜像</p>
 			<pre class="screen">
 		
-curl -sfL http://rancher-mirror.cnrancher.com/k3s/k3s-install.sh | INSTALL_K3S_MIRROR=cn sh -		
+curl -sfL http://rancher-mirror.cnrancher.com/k3s/k3s-install.sh | INSTALL_K3S_MIRROR=cn sh -
+systemctl enable k3s
 		
 			</pre>
-			<p></p>
+			<p>查看节点启动状态</p>
 			<pre class="screen">
-		
-k3s server &amp;
-		
+			
+[root@master ~]# kubectl get node
+NAME                    STATUS   ROLES                  AGE    VERSION
+localhost.localdomain   Ready    control-plane,master   28m    v1.24.4+k3s1
+			
 			</pre>
+			<p>查看节点 Pod 状态</p>
 			<pre class="screen">
 		
-k3s kubectl get node		
+kubectl --kubeconfig /etc/rancher/k3s/k3s.yaml get pods --all-namespaces
 		
 			</pre>
 		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm80219181072"></a>3.5.1.2. Agent 代理安装</h4></div></div></div>
+			
+			<p></p>
+			<pre class="screen">
+			
+hostnamectl set-hostname node1			
+			
+			</pre>
+			<p>查看 Master Token</p>
+			<pre class="screen">
+			
+[root@master ~]# kubectl get node
+NAME                    STATUS   ROLES                  AGE    VERSION
+localhost.localdomain   Ready    control-plane,master   28m    v1.24.4+k3s1
 
-
+[root@master ~]# cat /var/lib/rancher/k3s/server/node-token
+K1000ba39a142b3712d2ffb1459a63f6a7f58b082aeb53406dab15d8cee0f3c2ff0::server:5713047feb086388c19663f69cccc966
+			
+			</pre>
+			<p>在节点服务器安装代理</p>
+			<pre class="screen">
+			
+SERVER=172.18.200.5
+TOKEN=K1000ba39a142b3712d2ffb1459a63f6a7f58b082aeb53406dab15d8cee0f3c2ff0::server:5713047feb086388c19663f69cccc966			
+curl -sfL https://rancher-mirror.oss-cn-beijing.aliyuncs.com/k3s/k3s-install.sh | INSTALL_K3S_MIRROR=cn K3S_URL=https://${SERVER}:6443 K3S_TOKEN=${TOKEN} sh -
+systemctl enable k3s-agent
+			
+			</pre>
+			<p>回到 Master 查看节点</p>
+			<pre class="screen">
+			
+[root@master ~]# kubectl get node
+NAME                    STATUS   ROLES                  AGE    VERSION
+localhost.localdomain   Ready    control-plane,master   28m    v1.24.4+k3s1
+node1                   Ready    &lt;none&gt;                 117s   v1.24.4+k3s1			
+			
+			</pre>
+		</div>
 	</div>
 	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="k3d"></a>3.5.2. k3d</h3></div></div></div>
 		
-		<p>k3d is a lightweight wrapper to run k3s (Rancher Lab’s minimal Kubernetes distribution) in docker.</p>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm6251430000"></a>3.5.2.1. 安装 k3d</h4></div></div></div>
+		<p>k3d is a lightweight wrapper to run k3s (Rancher Lab’s minimal
+			Kubernetes distribution) in docker.</p>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm80219169712"></a>3.5.2.1. 安装 k3d</h4></div></div></div>
 			
 
 			<p>Mac 安装 k3d</p>
@@ -60,7 +107,9 @@ Neo-iMac:~ neo$ brew install k3d
 			
 			</pre>
 			<p>Linux 安装 k3d</p>
-			<span class="command"><strong>wget -q -O - https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash</strong></span>
+			<span class="command"><strong>wget -q -O -
+				https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
+			</strong></span>
 			<pre class="screen">
 			
 [root@netkiller ~]# wget -q -O - https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
@@ -70,7 +119,7 @@ Run 'k3d --help' to see what you can do with it.
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm6251427024"></a>3.5.2.2. 创建集群</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm80219166512"></a>3.5.2.2. 创建集群</h4></div></div></div>
 			
 			<p>创建并启动集群</p>
 			<pre class="screen">
@@ -167,7 +216,7 @@ $ k3d cluster create --config /path/to/mycluster.yaml
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm6251426768"></a>3.5.2.3. 查看信息</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm80219166384"></a>3.5.2.3. 查看信息</h4></div></div></div>
 			
 			<p></p>
 			<pre class="screen">
@@ -198,7 +247,7 @@ k3d-mycluster-server-0   Ready    control-plane,master   2m10s   v1.21.7+k3s1
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm6251418592"></a>3.5.2.4. 删除集群</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm80219157424"></a>3.5.2.4. 删除集群</h4></div></div></div>
 			
 			<p>删除集群</p>
 			<pre class="screen">
@@ -213,9 +262,9 @@ INFO[0003] Successfully deleted cluster mycluster!
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm6251416512"></a>3.5.2.5. 演示</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm80219155264"></a>3.5.2.5. 演示</h4></div></div></div>
 			
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm6251415872"></a>3.5.2.5.1. 部署 nginx</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm80219154624"></a>3.5.2.5.1. 部署 nginx</h5></div></div></div>
 				
 				<pre class="screen">
 				
@@ -284,9 +333,9 @@ Commercial support is available at
 				</pre>
 			</div>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm6251412032"></a>3.5.2.6. 配置文件</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm80219150576"></a>3.5.2.6. 配置文件</h4></div></div></div>
 			
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm6251410608"></a>3.5.2.6.1. 导出集群配置文件</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm80219149200"></a>3.5.2.6.1. 导出集群配置文件</h5></div></div></div>
 				
 				<pre class="screen">
 				
@@ -316,7 +365,7 @@ users:
 				</pre>
 			</div>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm6251409328"></a>3.5.2.7. 镜像管理</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm80219147760"></a>3.5.2.7. 镜像管理</h4></div></div></div>
 			
 			<p>导入本地镜像</p>
 			<pre class="screen">
@@ -343,14 +392,14 @@ INFO[0355] Successfully imported 1 image(s) into 1 cluster(s)
 		</div>
 
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm6251405952"></a>3.5.3. 管理 k3d 集群</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm80219144416"></a>3.5.3. 管理 k3d 集群</h3></div></div></div>
 		
 		<pre class="screen">
 		
 [root@netkiller k3d]# k3d cluster start mycluster		
 		
 		</pre>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm6251404768"></a>3.5.3.1. 配置 api-port 端口</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm80219143168"></a>3.5.3.1. 配置 api-port 端口</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -379,7 +428,7 @@ success
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm6251401696"></a>3.5.3.2. </h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm80219139936"></a>3.5.3.2. </h4></div></div></div>
 			
 			<p></p>
 			<pre class="screen">
@@ -388,9 +437,10 @@ k3d cluster create netkiller --api-port 172.16.0.1:6443 --servers 1 --agents 1 -
 			
 			</pre>
 			export http_proxy="socks://127.0.0.1:1080"
-			export https_proxy="socks://127.0.0.1:1080"
+			export
+			https_proxy="socks://127.0.0.1:1080"
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm6251400224"></a>3.5.3.3. kubectl 管理指定集群</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm80219138208"></a>3.5.3.3. kubectl 管理指定集群</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -424,7 +474,7 @@ users:
 			</pre>
 		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm6251397856"></a>3.5.4. 容器镜像库</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm80219135696"></a>3.5.4. 容器镜像库</h3></div></div></div>
 		
 		<pre class="screen">
 		
@@ -444,7 +494,7 @@ neo@Netkiller-iMac ~&gt; k3d cluster create mycluster --api-port 6443 --servers 
 	</div>
 	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="traefik"></a>3.5.5. traefik 配置</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm6251394928"></a>3.5.5.1. 增加 Redis 6379 端口</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm80219132432"></a>3.5.5.1. 增加 Redis 6379 端口</h4></div></div></div>
 			
 
 			<pre class="screen">
@@ -605,9 +655,9 @@ OK
 		</div>
 
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm6251387696"></a>3.5.6. ingress-nginx</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="k3d.ingress-nginx"></a>3.5.6. ingress-nginx</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm6251387056"></a>3.5.6.1. 卸载 traefik</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm80219123856"></a>3.5.6.1. 卸载 traefik</h4></div></div></div>
 			
 			<p>我们希望使用 nginx ingress，所以需要讲 traefik 卸载</p>
 			<pre class="screen">
@@ -617,9 +667,10 @@ helm uninstall traefik-crd --namespace kube-system
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm6251385280"></a>3.5.6.2. 安装 ingress-nginx</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm80219121984"></a>3.5.6.2. 安装 ingress-nginx</h4></div></div></div>
 			
-			<p>ingress-nginx: https://kubernetes.github.io/ingress-nginx/deploy/</p>
+			<p>ingress-nginx:
+				https://kubernetes.github.io/ingress-nginx/deploy/</p>
 			<pre class="screen">
 			
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.3.0/deploy/static/provider/cloud/deploy.yaml
@@ -672,7 +723,7 @@ kube-system     svclb-ingress-nginx-controller-8b62cc7d-qbqtv   2/2     Running 
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm6251380160"></a>3.5.6.3. 验证安装是否正确</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm80219116672"></a>3.5.6.3. 验证安装是否正确</h4></div></div></div>
 			
 			<p>部署 Nginx Web 服务器，用来检查 ingress</p>
 			<pre class="screen">
@@ -710,11 +761,11 @@ EOF
 			
 			</pre>
 		</div>
-		
+
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm6251377184"></a>3.5.7. FAQ</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm80219113536"></a>3.5.7. FAQ</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm6251376544"></a>3.5.7.1. ghcr.io 镜像下载问题</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm80219112896"></a>3.5.7.1. ghcr.io 镜像下载问题</h4></div></div></div>
 			
 			<p>创建集群始终停止在这里，这是因为 ghcr.io 被墙，无法访问。</p>
 			<pre class="screen">
