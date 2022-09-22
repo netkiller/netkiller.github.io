@@ -16,7 +16,7 @@
 	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
 	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">123.7. Docker 网络管理</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="docker.volume.html">上一页</a> </td><th width="60%" align="center">第 123 章 Docker</th><td width="20%" align="right"> <a accesskey="n" href="docker.log-driver.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="docker.network"></a>123.7. Docker 网络管理</h2></div></div></div>
 	
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm189808121120"></a>123.7.1. docker0 IP地址</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm266862663760"></a>123.7.1. docker0 IP地址</h3></div></div></div>
 		
 		<p>查看 docker0 的IP地址</p>
 		<pre class="screen">
@@ -55,7 +55,7 @@ docker0   Link encap:Ethernet  HWaddr 02:42:ad:68:6b:cf
 		<p>曾经遇到一个案例，阿里云使用172.18.0.0/16作为RDS内网IP地址，ECS安装了docker后无法链接RDS属于，因为docker修改了路由表，将docker换到其他网段后工作正常。</p>
 		</td></tr></table></div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm189808094016"></a>123.7.2. 容器指定固定IP地址</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm266862658112"></a>123.7.2. 容器指定固定IP地址</h3></div></div></div>
 		
 		<pre class="screen">
 		
@@ -67,7 +67,7 @@ portainer/portainer
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm189808092672"></a>123.7.3. 创建子网</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm266862656656"></a>123.7.3. 创建子网</h3></div></div></div>
 		
 		<pre class="screen">
 		
@@ -75,7 +75,7 @@ docker network create --subnet=172.32.0.0/24 web
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm189808091456"></a>123.7.4. 创建 overlay 网络</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm266862655424"></a>123.7.4. 创建 overlay 网络</h3></div></div></div>
 		
 		<pre class="screen">
 		
@@ -145,7 +145,7 @@ iMac:redis neo$ docker network inspect test
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm189808087792"></a>123.7.5. 网络命令空间</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm266862651824"></a>123.7.5. 网络命令空间</h3></div></div></div>
 		
 		<pre class="screen">
 		
@@ -160,6 +160,144 @@ default via 192.168.49.1 dev eth0
 172.17.0.0/16 dev docker0 proto kernel scope link src 172.17.0.1 
 192.168.30.0/24 via 192.168.49.1 dev eth0 
 192.168.49.0/24 dev eth0 proto kernel scope link src 192.168.49.2 		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm266862649072"></a>123.7.6. flannel 网络配置</h3></div></div></div>
+		
+		<pre class="screen">
+		
+[root@master ~]# ip -d link show flannel.1
+11: flannel.1: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1450 qdisc noqueue state UNKNOWN mode DEFAULT group default 
+    link/ether c2:51:5c:09:4e:18 brd ff:ff:ff:ff:ff:ff promiscuity 0 minmtu 68 maxmtu 65535 
+    vxlan id 1 local 172.18.200.5 dev enp3s0 srcport 0 0 dstport 8472 nolearning ttl auto ageing 300 udpcsum noudp6zerocsumtx noudp6zerocsumrx addrgenmode eui64 numtxqueues 1 numrxqueues 1 gso_max_size 64000 gso_max_segs 64 
+    
+[root@master ~]# cat /run/flannel/subnet.env
+FLANNEL_NETWORK=10.42.0.0/16
+FLANNEL_SUBNET=10.42.0.1/24
+FLANNEL_MTU=1450
+FLANNEL_IPMASQ=true
+
+[root@master ~]# dockerd --bip=$FLANNEL_SUBNET --mtu=$FLANNEL_MTU 
+	
+		
+		</pre>
+		<pre class="screen">
+		
+[root@agent-1 ~]# ip -d link show flannel.1
+5: flannel.1: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1450 qdisc noqueue state UNKNOWN mode DEFAULT group default 
+    link/ether 56:e0:f3:da:d5:c4 brd ff:ff:ff:ff:ff:ff promiscuity 0 minmtu 68 maxmtu 65535 
+    vxlan id 1 local 172.18.200.51 dev enp3s0 srcport 0 0 dstport 8472 nolearning ttl auto ageing 300 udpcsum noudp6zerocsumtx noudp6zerocsumrx addrgenmode eui64 numtxqueues 1 numrxqueues 1 gso_max_size 64000 gso_max_segs 64 
+    		
+[root@agent-1 ~]# cat /run/flannel/subnet.env 
+FLANNEL_NETWORK=10.42.0.0/16
+FLANNEL_SUBNET=10.42.1.1/24
+FLANNEL_MTU=1450
+FLANNEL_IPMASQ=true	
+
+[root@agent-1 ~]# cat /etc/docker/daemon.json 
+{
+
+"bip":"10.42.1.254/24",
+	"ip-masq":true,
+	"mtu":1472,
+
+  "registry-mirrors": [
+    "https://docker.mirrors.ustc.edu.cn/"
+  ]
+}		
+
+[root@agent-1 ~]# cat /usr/lib/systemd/system/docker.service
+[Unit]
+Description=Docker Application Container Engine
+Documentation=https://docs.docker.com
+After=network-online.target docker.socket firewalld.service containerd.service
+Wants=network-online.target
+Requires=docker.socket containerd.service
+
+[Service]
+Type=notify
+EnvironmentFile=-/run/flannel/subnet.env 
+# the default is not to use systemd for cgroups because the delegate issues still
+# exists and systemd currently does not support the cgroup feature set required
+# for containers run by docker
+ExecStart=/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock --bip=$FLANNEL_SUBNET --mtu=$FLANNEL_MTU 
+ExecReload=/bin/kill -s HUP $MAINPID
+TimeoutSec=0
+RestartSec=2
+Restart=always
+
+# Note that StartLimit* options were moved from "Service" to "Unit" in systemd 229.
+# Both the old, and new location are accepted by systemd 229 and up, so using the old location
+# to make them work for either version of systemd.
+StartLimitBurst=3
+
+# Note that StartLimitInterval was renamed to StartLimitIntervalSec in systemd 230.
+# Both the old, and new name are accepted by systemd 230 and up, so using the old name to make
+# this option work for either version of systemd.
+StartLimitInterval=60s
+
+# Having non-zero Limit*s causes performance problems due to accounting overhead
+# in the kernel. We recommend using cgroups to do container-local accounting.
+LimitNOFILE=infinity
+LimitNPROC=infinity
+LimitCORE=infinity
+
+# Comment TasksMax if your systemd version does not support it.
+# Only systemd 226 and above support this option.
+TasksMax=infinity
+
+# set delegate yes so that systemd does not reset the cgroups of docker containers
+Delegate=yes
+
+# kill only the docker process, not all processes in the cgroup
+KillMode=process
+OOMScoreAdjust=-500
+
+[Install]
+WantedBy=multi-user.target
+		
+		</pre>
+		<pre class="screen">
+		
+[root@master ~]# docker run -it --name test busybox /bin/sh
+/ # ifconfig
+eth0      Link encap:Ethernet  HWaddr 02:42:0A:2A:01:01  
+          inet addr:10.42.0.2  Bcast:10.42.1.255  Mask:255.255.255.0
+          UP BROADCAST RUNNING MULTICAST  MTU:1472  Metric:1
+          RX packets:12 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:0 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:0 
+          RX bytes:1016 (1016.0 B)  TX bytes:0 (0.0 B)
+
+lo        Link encap:Local Loopback  
+          inet addr:127.0.0.1  Mask:255.0.0.0
+          UP LOOPBACK RUNNING  MTU:65536  Metric:1
+          RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:0 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)
+
+
+[root@agent-1 ~]# docker run -it --name test busybox /bin/sh
+/ # ifconfig
+eth0      Link encap:Ethernet  HWaddr 02:42:0A:2A:01:01  
+          inet addr:10.42.1.2  Bcast:10.42.1.255  Mask:255.255.255.0
+          UP BROADCAST RUNNING MULTICAST  MTU:1472  Metric:1
+          RX packets:12 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:0 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:0 
+          RX bytes:1016 (1016.0 B)  TX bytes:0 (0.0 B)
+
+lo        Link encap:Local Loopback  
+          inet addr:127.0.0.1  Mask:255.0.0.0
+          UP LOOPBACK RUNNING  MTU:65536  Metric:1
+          RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:0 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)	
+
+/ # ping 10.42.0.2
 		
 		</pre>
 	</div>
