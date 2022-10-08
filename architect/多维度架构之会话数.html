@@ -19,24 +19,24 @@
 	<p>上几期我们谈了，多维度架构中的网络损耗和超时时间，今天我们谈谈另一个在多维度架构中非常重要的技术点「会话数」。会话数的英文是 Session，请不要与HTTP服务中的SESSION混淆。</p>
 	<p>在无状态服务应用中会话数是不断释放的，例如 HTTP，SMTP 协议，当WEB服务器完成请求后就会关闭 TCP 端口，这是会话数就被释放。但是基于 Socket 长连接的服务器会一直占用会话数。</p>
 	<p>而有状态的 Socket 服务是持久占用会话数，比较好统计。无状态协议（如HTTP）是动态会话数，会有峰值访问，难以预测。会话数达到 80% 的时候，就要预警了。所以监控系统要将会话数也监控起来。</p>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm119858444112"></a>2.4.1. 路由器和防火墙的会话数</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm6996026160"></a>2.4.1. 路由器和防火墙的会话数</h3></div></div></div>
 		
 		<p>之前从没想过会话数会被用光的情况，第一次遇到会话数不够的情况是公司办公室网络出口，公司的出口是一台 Juniper 入门级网络设备，估计会话数2048 左右，适合100人左右的公司。我们遇到的问题就是局域网上网慢，网页加载总是一半或部分资源加载不出来。经过排查发现是会话数不够用了，升级了 Juniper 企业级的设备后，就立即解决了，直到公司员工数量暴涨到800多人，仍能提供服务。</p>
 		<p>后来我们又在IDC也遇到会话数用尽的问题，当时使用 Cisco PIX 防火墙，我们提早发现了可能随着业务的发展，后面会话数会成为瓶颈，提前升级了防火墙 Cisco ASA 5550。</p>
 		<p>网络设备中，交换机的背板带宽决定了数据的转发能力，带宽不够，就会延迟。路由器和防火墙的会话数决定了你能同时建立多少个 TCP连接，会话数不够，即使你的服务器CPU没有负载，内存没有用尽，磁盘IO闲置，用户仍然进不来，无法建立TCP连接。</p>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm119858440832"></a>2.4.2. 负载均衡设备的会话数</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm6996022928"></a>2.4.2. 负载均衡设备的会话数</h3></div></div></div>
 		
 		<p>除了路由器和防火墙还有负载均衡设备，例如F5，Array，A10 一类的设备，也有会话数的概念。购买的时候要询问好。</p>
 		<p>如何解决网络设备会话数不够的问题，答案是用Active，Active 双活方案，业务分流，互为主备。即多台并行使用。</p>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm119858438896"></a>2.4.3. 服务器的会话数</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm6996021072"></a>2.4.3. 服务器的会话数</h3></div></div></div>
 		
 		<p>我曾经写过一篇文章《压力测试中存在的问题》文中谈及，很多压力测试人员，未对Linux系统做优化，仅仅部署应用后，就开始测试。至今还有很多人在犯这种错误。</p>
 		<p>Linux 系统如果不做优化，即使你是16核心，128G内存，是无法提供大并发访问的，系统各种资源都是被限制的。所以必须对服务器做出各种内核参数的调整，系统才能充分使用全部的硬件资源。</p>
 		<p>Linux 中影响服务器的会话数主要是 sysctl, ulimit 两项的配置。包括了文件打开数量，进程数量，内存限额，端口范围等等……</p>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm119858436208"></a>2.4.4. 应用程序的会话数</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm6996018384"></a>2.4.4. 应用程序的会话数</h3></div></div></div>
 		
 		<p>应用程序的会话数就是我们常常说的并发连接数，或叫最大连接数。这是软件开发的配置问题，这里就不深入讨论了。</p>
 		<p>影响应用软件的最大连接数的是系统资源。</p>
