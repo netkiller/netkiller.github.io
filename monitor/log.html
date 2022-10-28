@@ -1,0 +1,1005 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>第 3 章 日志收集和分析</title><link rel="stylesheet" type="text/css" href="docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="rinetd.log, , , " /><meta name="keywords" content="snmp, ipmi,openipmi,freeipmi,ipmitool, cpu,memory,hdd,ssd,raid,power, logwatch, webmin" /><link rel="home" href="index.html" title="Netkiller Monitor 手札" /><link rel="up" href="index.html" title="Netkiller Monitor 手札" /><link rel="prev" href="zabbix/zabbix-agent.html" title="2.4. zabbix-agent" /><link rel="next" href="loki/index.html" title="3.2. Grafana + Loki + Promtail" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+   	    <a xmlns="" href="https://edu.51cto.com/lecturer/1703915.html">51CTO学院</a> |
+	    <a xmlns="" href="https://edu.csdn.net/lecturer/6423">CSDN程序员研修院</a> |
+	    <a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">腾讯云社区</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">阿里云栖社区</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">第 3 章 日志收集和分析</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="zabbix/zabbix-agent.html">上一页</a> </td><th width="60%" align="center"> </th><td width="20%" align="right"> <a accesskey="n" href="loki/index.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td></td><td></td><td></td><td></td></tr></table><div class="chapter"><div class="titlepage"><div><div><h1 class="title"><a id="log"></a>第 3 章 日志收集和分析</h1></div></div></div><div class="toc"><p><strong>目录</strong></p><dl class="toc"><dt><span class="section"><a href="elk/log.html#index">3.1. ElasticSearch + Logstash + Kibana</a></span></dt><dd><dl><dt><span class="section"><a href="elk/log.html#setup">3.1.1. 安装</a></span></dt><dd><dl><dt><span class="section"><a href="elk/log.html#8.x">3.1.1.1. 8.x</a></span></dt><dt><span class="section"><a href="elk/log.html#6.x">3.1.1.2. 6.x</a></span></dt><dt><span class="section"><a href="elk/log.html#5.x">3.1.1.3. ElasticSearch + Logstash + Kibana 安装</a></span></dt><dd><dl><dt><span class="section"><a href="elk/log.html#idm264077014720">3.1.1.3.1. ElasticSearch 安装</a></span></dt><dt><span class="section"><a href="elk/log.html#idm264077013488">3.1.1.3.2. Kibana 安装</a></span></dt><dt><span class="section"><a href="elk/log.html#logstash">3.1.1.3.3. Logstash 安装</a></span></dt><dt><span class="section"><a href="elk/log.html#idm264077011696">3.1.1.3.4. 从 5.x 升级到 6.x</a></span></dt></dl></dd></dl></dd><dt><span class="section"><a href="elk/log.html#logstash.cli">3.1.2. logstash 命令简单应用</a></span></dt><dd><dl><dt><span class="section"><a href="elk/log.html#idm264077009808">3.1.2.1. -e 命令行运行</a></span></dt><dt><span class="section"><a href="elk/log.html#idm264077008624">3.1.2.2. -f 指定配置文件</a></span></dt><dt><span class="section"><a href="elk/log.html#configuration">3.1.2.3. -t：测试配置文件是否正确，然后退出。</a></span></dt><dt><span class="section"><a href="elk/log.html#output">3.1.2.4. -l：日志输出的地址</a></span></dt><dt><span class="section"><a href="elk/log.html#log.level">3.1.2.5. log.level 启动Debug模式</a></span></dt></dl></dd><dt><span class="section"><a href="elk/log.html#redis">3.1.3. 配置 Broker(Redis)</a></span></dt><dd><dl><dt><span class="section"><a href="elk/log.html#indexer">3.1.3.1. indexer</a></span></dt><dt><span class="section"><a href="elk/log.html#shipper">3.1.3.2. shipper</a></span></dt></dl></dd><dt><span class="section"><a href="elk/log.html#logstash">3.1.4. logstash 配置项</a></span></dt><dd><dl><dt><span class="section"><a href="elk/log.html#idm264076997232">3.1.4.1. 多 pipeline 配置</a></span></dt><dt><span class="section"><a href="elk/log.html#input">3.1.4.2. input</a></span></dt><dd><dl><dt><span class="section"><a href="elk/log.html#stdin">3.1.4.2.1. 标准输入输出</a></span></dt><dt><span class="section"><a href="elk/log.html#rubydebug">3.1.4.2.2. rubydebug</a></span></dt><dt><span class="section"><a href="elk/log.html#file">3.1.4.2.3. 本地文件</a></span></dt><dt><span class="section"><a href="elk/log.html#socket">3.1.4.2.4. TCP/UDP</a></span></dt><dt><span class="section"><a href="elk/log.html#redis">3.1.4.2.5. Redis</a></span></dt><dt><span class="section"><a href="elk/log.html#kafka">3.1.4.2.6. Kafka</a></span></dt><dt><span class="section"><a href="elk/log.html#jdbc">3.1.4.2.7. jdbc</a></span></dt></dl></dd><dt><span class="section"><a href="elk/log.html#filter">3.1.4.3. filter</a></span></dt><dd><dl><dt><span class="section"><a href="elk/log.html#date">3.1.4.3.1. 日期格式化</a></span></dt><dt><span class="section"><a href="elk/log.html#filter.patterns">3.1.4.3.2. patterns</a></span></dt><dt><span class="section"><a href="elk/log.html#syslog">3.1.4.3.3. syslog</a></span></dt><dt><span class="section"><a href="elk/log.html#csv">3.1.4.3.4. csv</a></span></dt><dt><span class="section"><a href="elk/log.html#filter.ruby.csv">3.1.4.3.5. 使用ruby 处理 CSV文件</a></span></dt><dt><span class="section"><a href="elk/log.html#filter.ruby">3.1.4.3.6. 执行 ruby 代码</a></span></dt><dt><span class="section"><a href="elk/log.html#grok.debug">3.1.4.3.7. grok debug 工具</a></span></dt></dl></dd><dt><span class="section"><a href="elk/log.html#output">3.1.4.4. output</a></span></dt><dd><dl><dt><span class="section"><a href="elk/log.html#idm264076967728">3.1.4.4.1. stdout</a></span></dt><dt><span class="section"><a href="elk/log.html#file">3.1.4.4.2. file 写入文件</a></span></dt><dt><span class="section"><a href="elk/log.html#elasticsearch">3.1.4.4.3. elasticsearch</a></span></dt><dt><span class="section"><a href="elk/log.html#idm264076962336">3.1.4.4.4. exec 执行脚本</a></span></dt></dl></dd></dl></dd><dt><span class="section"><a href="elk/log.html#logstash.example">3.1.5. Example</a></span></dt><dd><dl><dt><span class="section"><a href="elk/log.html#idm264076960720">3.1.5.1. Spring boot logback</a></span></dt><dt><span class="section"><a href="elk/log.html#idm264076956400">3.1.5.2. 索引切割实例</a></span></dt><dt><span class="section"><a href="elk/log.html#idm264076954608">3.1.5.3. csv 文件实例</a></span></dt></dl></dd><dt><span class="section"><a href="elk/elk/log.html#beats">3.1.6. Beats</a></span></dt><dd><dl><dt><span class="section"><a href="elk/elk/log.html#beta.setup">3.1.6.1. 安装 Beta</a></span></dt><dd><dl><dt><span class="section"><a href="elk/elk/log.html#6.x">3.1.6.1.1. Beats 6.x 安装</a></span></dt><dt><span class="section"><a href="elk/elk/log.html#beats">3.1.6.1.2. Beats 5.x 安装</a></span></dt></dl></dd><dt><span class="section"><a href="elk/elk/log.html#filebeat">3.1.6.2. Filebeat</a></span></dt><dd><dl><dt><span class="section"><a href="elk/elk/log.html#idm264086523600">3.1.6.2.1. 模块管理</a></span></dt><dt><span class="section"><a href="elk/elk/log.html#idm264086522912">3.1.6.2.2. 文件到文件</a></span></dt><dt><span class="section"><a href="elk/elk/log.html#idm264086521984">3.1.6.2.3. TCP</a></span></dt></dl></dd></dl></dd><dt><span class="section"><a href="elk/log.html#faq">3.1.7. FAQ</a></span></dt><dd><dl><dt><span class="section"><a href="elk/log.html#idm264086518832">3.1.7.1. 查看 Kibana 数据库</a></span></dt><dt><span class="section"><a href="elk/log.html#idm264086517744">3.1.7.2. logstash 无法写入 elasticsearch</a></span></dt><dt><span class="section"><a href="elk/log.html#idm264086516672">3.1.7.3. 标准输出</a></span></dt><dt><span class="section"><a href="elk/log.html#">3.1.7.4. 5.x 升级至 6.x 的变化</a></span></dt></dl></dd></dl></dd><dt><span class="section"><a href="loki/index.html">3.2. Grafana + Loki + Promtail</a></span></dt><dd><dl><dt><span class="section"><a href="loki/index.html#idm264159131392">3.2.1. Docker Compose</a></span></dt><dt><span class="section"><a href="loki/index.html#idm264159130480">3.2.2. Helm</a></span></dt><dt><span class="section"><a href="loki/index.html#idm264159127552">3.2.3. promtail</a></span></dt></dl></dd><dt><span class="section"><a href="fluentd/index.html">3.3. fluentd</a></span></dt><dd><dl><dt><span class="section"><a href="fluentd/index.html#idm264159124160">3.3.1. Docker 安装</a></span></dt><dd><dl><dt><span class="section"><a href="fluentd/index.html#docker.fluent-bit">3.3.1.1. fluent-bit</a></span></dt><dt><span class="section"><a href="fluentd/index.html#idm264159121696">3.3.1.2. Fluentd 收集 Docker 日志</a></span></dt><dd><dl><dt><span class="section"><a href="fluentd/index.html#idm264159121280">3.3.1.2.1. fluentd.conf</a></span></dt><dt><span class="section"><a href="fluentd/index.html#idm264159119568">3.3.1.2.2. 标准输出</a></span></dt></dl></dd></dl></dd><dt><span class="section"><a href="fluentd/index.html#idm264159118784">3.3.2. fluent-bit</a></span></dt><dd><dl><dt><span class="section"><a href="fluentd/index.html#idm264159118528">3.3.2.1. 安装 fluent-bit</a></span></dt><dt><span class="section"><a href="fluentd/index.html#idm264159115872">3.3.2.2. 配置 fluent-bit</a></span></dt><dd><dl><dt><span class="section"><a href="fluentd/index.html#idm264159115040">3.3.2.2.1. TCP 配置实例</a></span></dt></dl></dd></dl></dd><dt><span class="section"><a href="fluentd/index.html#fluentd.faq">3.3.3. temporarily failed to flush the buffer</a></span></dt></dl></dd><dt><span class="section"><a href="system.log.html">3.4. log</a></span></dt><dd><dl><dt><span class="section"><a href="system.log.html#logwatch">3.4.1. logwatch</a></span></dt><dt><span class="section"><a href="system.log.html#idm264159101232">3.4.2. logcheck : Analyzes log files and sends noticeable events as email</a></span></dt><dt><span class="section"><a href="system.log.html#nulog">3.4.3. nulog</a></span></dt></dl></dd><dt><span class="section"><a href="web.html">3.5. Web</a></span></dt><dd><dl><dt><span class="section"><a href="web.html#log.apache">3.5.1. Apache Log</a></span></dt><dd><dl><dt><span class="section"><a href="web.html#idm264159095280">3.5.1.1. 刪除日志</a></span></dt><dt><span class="section"><a href="web.html#idm264159094176">3.5.1.2. 统计爬虫</a></span></dt><dt><span class="section"><a href="web.html#idm264159093392">3.5.1.3. 统计浏览器</a></span></dt><dt><span class="section"><a href="web.html#idm264159092576">3.5.1.4. IP 统计</a></span></dt><dt><span class="section"><a href="web.html#idm264159090128">3.5.1.5. 统计域名</a></span></dt><dt><span class="section"><a href="web.html#idm264159089472">3.5.1.6. HTTP Status</a></span></dt><dt><span class="section"><a href="web.html#idm264159088576">3.5.1.7. URL 统计</a></span></dt><dt><span class="section"><a href="web.html#idm264159087920">3.5.1.8. 文件流量统计</a></span></dt><dt><span class="section"><a href="web.html#idm264159086912">3.5.1.9. URL访问量统计</a></span></dt><dt><span class="section"><a href="web.html#idm264159086128">3.5.1.10. 脚本运行速度</a></span></dt><dt><span class="section"><a href="web.html#idm264159084992">3.5.1.11. IP, URL 抽取</a></span></dt></dl></dd><dt><span class="section"><a href="web.html#awstats">3.5.2. awstats</a></span></dt><dd><dl><dt><span class="section"><a href="web.html#idm264159074448">3.5.2.1. 语言</a></span></dt><dt><span class="section"><a href="web.html#idm264159073808">3.5.2.2. 输出HTML文档</a></span></dt><dt><span class="section"><a href="web.html#idm264159073024">3.5.2.3. 多站点配置</a></span></dt><dt><span class="section"><a href="web.html#idm264159070128">3.5.2.4. 合并日志</a></span></dt><dt><span class="section"><a href="web.html#idm264159067968">3.5.2.5. Flush history file on disk (unique url reach flush limit of 5000) 优化</a></span></dt><dt><span class="section"><a href="web.html#idm264159067216">3.5.2.6. JAWStats</a></span></dt></dl></dd><dt><span class="section"><a href="web.html#webalizer">3.5.3. webalizer</a></span></dt><dd><dl><dt><span class="section"><a href="web.html#idm264159059904">3.5.3.1. 手工生成</a></span></dt><dt><span class="section"><a href="web.html#idm264159058512">3.5.3.2. 批量处理历史数据</a></span></dt><dt><span class="section"><a href="web.html#idm264159055232">3.5.3.3. crontab</a></span></dt></dl></dd><dt><span class="section"><a href="web.html#sarg">3.5.4. Sarg - Squid Analysis Report Generator</a></span></dt><dt><span class="section"><a href="web.html#goaccess">3.5.5. goaccess - Fast web log analyzer and interactive viewer.</a></span></dt></dl></dd><dt><span class="section"><a href="tomcat.html">3.6. Tomcat</a></span></dt><dd><dl><dt><span class="section"><a href="tomcat.html#idm264159049488">3.6.1. 截取 0-3 点区间的日志</a></span></dt><dt><span class="section"><a href="tomcat.html#idm264159048672">3.6.2. 监控Redis</a></span></dt></dl></dd><dt><span class="section"><a href="mail.html">3.7. Mail</a></span></dt><dd><dl><dt><span class="section"><a href="mail.html#pflogsumm">3.7.1. pflogsumm.pl - Produce Postfix MTA logfile summary</a></span></dt></dl></dd><dt><span class="section"><a href="secure.html">3.8. OpenSSH 日志 /var/log/secure</a></span></dt><dd><dl><dt><span class="section"><a href="secure.html#idm264159043280">3.8.1. 查看登陆用户</a></span></dt></dl></dd><dt><span class="section"><a href="rinetd.log.html">3.9. rinetd.log</a></span></dt><dt><span class="section"><a href="php-syslog-ng.html">3.10. php-syslog-ng</a></span></dt><dt><span class="section"><a href="log.analyzer.html">3.11. Log Analyzer</a></span></dt><dt><span class="section"><a href="splunk.html">3.12. Splunk</a></span></dt><dt><span class="section"><a href="octopussy.html">3.13. Octopussy</a></span></dt><dt><span class="section"><a href="eventlog-to-syslog.html">3.14. eventlog-to-syslog</a></span></dt><dt><span class="section"><a href="flume.html">3.15. Apache Flume</a></span></dt><dd><dl><dt><span class="section"><a href="flume.html#idm264159032800">3.15.1. 安装 Apache flume</a></span></dt><dt><span class="section"><a href="flume.html#idm264159031632">3.15.2. 基本配置</a></span></dt><dt><span class="section"><a href="flume.html#idm264159028832">3.15.3. 配置 MySQL 存储日志</a></span></dt><dt><span class="section"><a href="flume.html#idm264159026528">3.15.4. 配置 HDFS 存储日志</a></span></dt></dl></dd><dt><span class="section"><a href="graylog.html">3.16. graylog - Enterprise Log Management for All</a></span></dt></dl></div><p></p><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="index"></a>3.1. ElasticSearch + Logstash + Kibana</h3></div></div></div><p>
+		官方网站
+		<a class="ulink" href="https://www.elastic.co" target="_top">https://www.elastic.co</a>
+	</p><p>环境准备:</p><p>操作系统： CentOS 7</p><p>Java 1.8</p><p>Redis</p><p>ElasticSearch + Logstash + Kibana 均使用 5.2 版本</p><p>以下安装均使用 Netkiller OSCM 脚本一键安装</p><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="setup"></a>3.1.1. 安装</h4></div></div></div><div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="8.x"></a>3.1.1.1. 8.x</h5></div></div></div><pre class="screen">
+			
+curl -s https://raw.githubusercontent.com/netkiller/shell/master/search/elastic/elastic-8.x.sh | bash
+			
+			</pre><p>手工安装</p><pre class="screen">
+			
+rpm --import https://artifacts.elastic.co/GPG-KEY-elasticsearch
+
+cat &gt;&gt; /etc/yum.repos.d/logstash.repo &lt;&lt;EOF
+[logstash-8.x]
+name=Elastic repository for 8.x packages
+baseurl=https://artifacts.elastic.co/packages/8.x/yum
+gpgcheck=1
+gpgkey=https://artifacts.elastic.co/GPG-KEY-elasticsearch
+enabled=1
+autorefresh=1
+type=rpm-md
+EOF
+
+dnf install -y logstash
+
+cp /etc/logstash/logstash.yml{,.original}
+chown logstash:logstash -R /etc/logstash
+
+systemctl daemon-reload
+systemctl enable logstash.service
+systemctl start logstash.service			
+			
+			</pre><p>修改启动用户，否则启动会失败</p><pre class="screen">
+			
+[root@netkiller ~]# vim /etc/logstash/conf.d/file.conf
+User=logstash
+Group=logstash
+修改
+User=root
+Group=root
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="6.x"></a>3.1.1.2. 6.x</h5></div></div></div><pre class="screen">
+			
+curl -s https://raw.githubusercontent.com/netkiller/shell/master/search/elastic/elastic-6.x.sh | bash
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="5.x"></a>3.1.1.3. ElasticSearch + Logstash + Kibana 安装</h5></div></div></div><div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm264077014720"></a>3.1.1.3.1. ElasticSearch 安装</h6></div></div></div><p>粘贴下面命令到Linux控制台即可一键安装</p><pre class="screen">
+				
+curl -s https://raw.githubusercontent.com/netkiller/shell/master/search/elasticsearch/elasticsearch-5.x.sh | bash
+				
+				</pre></div><div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm264077013488"></a>3.1.1.3.2. Kibana 安装</h6></div></div></div><pre class="screen">
+				
+curl -s https://raw.githubusercontent.com/netkiller/shell/master/log/kibana/kibana-5.x.sh | bash
+				
+				</pre></div><div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="logstash"></a>3.1.1.3.3. Logstash 安装</h6></div></div></div><pre class="screen">
+					curl -s https://raw.githubusercontent.com/netkiller/shell/master/log/kibana/logstash-5.x.sh | bash
+				</pre></div><div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm264077011696"></a>3.1.1.3.4. 从 5.x 升级到 6.x</h6></div></div></div><p>升级仓库</p><pre class="screen">
+				
+curl -s https://raw.githubusercontent.com/netkiller/shell/master/search/elastic/elastic-6.x.sh | bash		
+				
+				</pre><pre class="screen">
+				
+yum update logstash
+				
+				</pre></div></div></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="logstash.cli"></a>3.1.2. logstash 命令简单应用</h4></div></div></div><div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm264077009808"></a>3.1.2.1. -e 命令行运行</h5></div></div></div><p>logstash -e "input {stdin{}} output {stdout{}}"</p><pre class="screen">
+			
+/usr/share/logstash/bin/logstash  -e 'input{file {path =&gt; "/etc/centos-release" start_position =&gt; "beginning"}} output { stdout {}}'			
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm264077008624"></a>3.1.2.2. -f 指定配置文件</h5></div></div></div><p></p><pre class="screen">
+			
+/usr/share/logstash/bin/logstash -f stdin.conf		
+
+/usr/share/logstash/bin/logstash -f jdbc.conf --path.settings /etc/logstash --path.data /tmp	
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="configuration"></a>3.1.2.3. -t：测试配置文件是否正确，然后退出。</h5></div></div></div><pre class="screen">
+			
+root@netkiller ~/logstash % /usr/share/logstash/bin/logstash -t -f test.conf
+WARNING: Default JAVA_OPTS will be overridden by the JAVA_OPTS defined in the environment. Environment JAVA_OPTS are -server -Xms2048m -Xmx4096m
+WARNING: Could not find logstash.yml which is typically located in $LS_HOME/config or /etc/logstash. You can specify the path using --path.settings. Continuing using the defaults
+Could not find log4j2 configuration at path /usr/share/logstash/config/log4j2.properties. Using default config which logs errors to the console
+Configuration OK
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="output"></a>3.1.2.4. -l：日志输出的地址</h5></div></div></div><p>默认就是stdout直接在控制台中输出</p></div><div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="log.level"></a>3.1.2.5. log.level 启动Debug模式</h5></div></div></div><pre class="screen">
+			
+% /usr/share/logstash/bin/logstash -f nginx.conf --path.settings /etc/logstash --log.level debug			
+			
+			</pre></div></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="redis"></a>3.1.3. 配置 Broker(Redis)</h4></div></div></div><div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="indexer"></a>3.1.3.1. indexer</h5></div></div></div><p>
+				</p><div><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="NaN"><tr><td><img src="../images/elk/Redis.png" width="NaN" /></td></tr></table></div><p>
+			</p><p>/etc/logstash/conf.d/indexer.conf</p><pre class="screen">
+			
+input {
+  redis {
+    host =&gt; "127.0.0.1"
+    port =&gt; "6379" 
+    key =&gt; "logstash:demo"
+    data_type =&gt; "list"
+    codec  =&gt; "json"
+    type =&gt; "logstash-redis-demo"
+    tags =&gt; ["logstashdemo"]
+  }
+}
+
+output {
+  stdout { codec =&gt; rubydebug }
+  elasticsearch {
+    hosts =&gt; ["127.0.0.1:9200"]
+  }
+}	
+			
+			</pre><p>测试</p><pre class="screen">
+			
+# redis-cli 
+127.0.0.1:6379&gt; RPUSH logstash:demo "{\"time\": \"2012-01-01T10:20:00\", \"message\": \"logstash demo message\"}"
+(integer) 1
+127.0.0.1:6379&gt; exit
+			
+			</pre><p>如果执行成功日志如下</p><pre class="screen">
+			
+# cat /var/log/logstash/logstash-plain.log 
+[2017-03-22T15:54:36,491][INFO ][logstash.outputs.elasticsearch] Elasticsearch pool URLs updated {:changes=&gt;{:removed=&gt;[], :added=&gt;[http://127.0.0.1:9200/]}}
+[2017-03-22T15:54:36,496][INFO ][logstash.outputs.elasticsearch] Running health check to see if an Elasticsearch connection is working {:healthcheck_url=&gt;http://127.0.0.1:9200/, :path=&gt;"/"}
+[2017-03-22T15:54:36,600][WARN ][logstash.outputs.elasticsearch] Restored connection to ES instance {:url=&gt;#&lt;URI::HTTP:0x20dae6aa URL:http://127.0.0.1:9200/&gt;}
+[2017-03-22T15:54:36,601][INFO ][logstash.outputs.elasticsearch] Using mapping template from {:path=&gt;nil}
+[2017-03-22T15:54:36,686][INFO ][logstash.outputs.elasticsearch] Attempting to install template {:manage_template=&gt;{"template"=&gt;"logstash-*", "version"=&gt;50001, "settings"=&gt;{"index.refresh_interval"=&gt;"5s"}, "mappings"=&gt;{"_default_"=&gt;{"_all"=&gt;{"enabled"=&gt;true, "norms"=&gt;false}, "dynamic_templates"=&gt;[{"message_field"=&gt;{"path_match"=&gt;"message", "match_mapping_type"=&gt;"string", "mapping"=&gt;{"type"=&gt;"text", "norms"=&gt;false}}}, {"string_fields"=&gt;{"match"=&gt;"*", "match_mapping_type"=&gt;"string", "mapping"=&gt;{"type"=&gt;"text", "norms"=&gt;false, "fields"=&gt;{"keyword"=&gt;{"type"=&gt;"keyword"}}}}}], "properties"=&gt;{"@timestamp"=&gt;{"type"=&gt;"date", "include_in_all"=&gt;false}, "@version"=&gt;{"type"=&gt;"keyword", "include_in_all"=&gt;false}, "geoip"=&gt;{"dynamic"=&gt;true, "properties"=&gt;{"ip"=&gt;{"type"=&gt;"ip"}, "location"=&gt;{"type"=&gt;"geo_point"}, "latitude"=&gt;{"type"=&gt;"half_float"}, "longitude"=&gt;{"type"=&gt;"half_float"}}}}}}}}
+[2017-03-22T15:54:36,693][INFO ][logstash.outputs.elasticsearch] Installing elasticsearch template to _template/logstash
+[2017-03-22T15:54:36,780][INFO ][logstash.outputs.elasticsearch] New Elasticsearch output {:class=&gt;"LogStash::Outputs::ElasticSearch", :hosts=&gt;[#&lt;URI::Generic:0x2f9efc89 URL://127.0.0.1&gt;]}
+[2017-03-22T15:54:36,787][INFO ][logstash.pipeline        ] Starting pipeline {"id"=&gt;"main", "pipeline.workers"=&gt;8, "pipeline.batch.size"=&gt;125, "pipeline.batch.delay"=&gt;5, "pipeline.max_inflight"=&gt;1000}
+[2017-03-22T15:54:36,792][INFO ][logstash.inputs.redis    ] Registering Redis {:identity=&gt;"redis://@127.0.0.1:6379/0 list:logstash:demo"}
+[2017-03-22T15:54:36,793][INFO ][logstash.pipeline        ] Pipeline main started
+[2017-03-22T15:54:36,838][INFO ][logstash.agent           ] Successfully started Logstash API endpoint {:port=&gt;9600}
+[2017-03-22T15:55:10,018][WARN ][logstash.runner          ] SIGTERM received. Shutting down the agent.
+[2017-03-22T15:55:10,024][WARN ][logstash.agent           ] stopping pipeline {:id=&gt;"main"}			
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="shipper"></a>3.1.3.2. shipper</h5></div></div></div><pre class="screen">
+			
+input {
+  file {
+    path =&gt; [ "/var/log/nginx/access.log" ]
+    start_position =&gt; "beginning"
+  }
+}
+
+filter {
+  grok {
+    match =&gt; { "message" =&gt; "%{NGINXACCESS}" }
+    add_field =&gt; { "type" =&gt; "access" }
+  }
+  date {
+    match =&gt; [ "timestamp" , "dd/MMM/YYYY:HH:mm:ss Z" ]
+  }
+  geoip {
+    source =&gt; "clientip"
+  }
+}
+
+output {
+  redis {
+    host =&gt; "127.0.0.1"
+    port =&gt; 6379
+    data_type =&gt; "list"
+    key =&gt; "logstash:demo"
+  }
+}
+			
+			</pre></div></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="logstash"></a>3.1.4. logstash 配置项</h4></div></div></div><div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm264076997232"></a>3.1.4.1. 多 pipeline 配置</h5></div></div></div><pre class="screen">
+			
+[root@netkiller ~]# cat /etc/logstash/pipelines.yml
+# This file is where you define your pipelines. You can define multiple.
+# For more information on multiple pipelines, see the documentation:
+#   https://www.elastic.co/guide/en/logstash/current/multiple-pipelines.html
+
+- pipeline.id: main
+  path.config: "/etc/logstash/conf.d/*.conf"			
+			
+			</pre><p>配置 pipelines.yml 文件</p><pre class="screen">
+			
+- pipeline.id: main
+  path.config: "/etc/logstash/conf.d/*.conf"
+- pipeline.id: finance
+  path.config: "/etc/logstash/conf.finance/*.conf"
+- pipeline.id: market
+  path.config: "/etc/logstash/conf.market/*.conf"
+- pipeline.id: customer
+  path.config: "/etc/logstash/conf.customer/*.conf"  
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="input"></a>3.1.4.2. input</h5></div></div></div><div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="stdin"></a>3.1.4.2.1. 标准输入输出</h6></div></div></div><pre class="screen">
+root@netkiller ~ % /usr/share/logstash/bin/logstash -e "input {stdin{}} output {stdout{}}"
+Helloworld
+ERROR StatusLogger No log4j2 configuration file found. Using default configuration: logging only errors to the console.
+WARNING: Could not find logstash.yml which is typically located in $LS_HOME/config or /etc/logstash. You can specify the path using --path.settings. Continuing using the defaults
+Could not find log4j2 configuration at path //usr/share/logstash/config/log4j2.properties. Using default config which logs to console
+18:03:38.340 [[main]-pipeline-manager] INFO logstash.pipeline - Starting pipeline {"id"=&gt;"main", "pipeline.workers"=&gt;8, "pipeline.batch.size"=&gt;125, "pipeline.batch.delay"=&gt;5, "pipeline.max_inflight"=&gt;1000}
+18:03:38.356 [[main]-pipeline-manager] INFO logstash.pipeline - Pipeline main started
+The stdin plugin is now waiting for input:
+2017-08-03T10:03:38.375Z localhost Helloworld
+18:03:38.384 [Api Webserver] INFO logstash.agent - Successfully started Logstash API endpoint {:port=&gt;9601}				
+				
+				</pre></div><div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="rubydebug"></a>3.1.4.2.2. rubydebug</h6></div></div></div><p>rubydebug提供以json格式输出到屏幕</p><pre class="screen">
+								
+root@netkiller ~ % /usr/share/logstash/bin/logstash -e 'input{stdin{}}output{stdout{codec=&gt;rubydebug}}'
+My name is neo
+ERROR StatusLogger No log4j2 configuration file found. Using default configuration: logging only errors to the console.
+WARNING: Could not find logstash.yml which is typically located in $LS_HOME/config or /etc/logstash. You can specify the path using --path.settings. Continuing using the defaults
+Could not find log4j2 configuration at path //usr/share/logstash/config/log4j2.properties. Using default config which logs to console
+18:05:02.734 [[main]-pipeline-manager] INFO logstash.pipeline - Starting pipeline {"id"=&gt;"main", "pipeline.workers"=&gt;8, "pipeline.batch.size"=&gt;125, "pipeline.batch.delay"=&gt;5, "pipeline.max_inflight"=&gt;1000}
+18:05:02.747 [[main]-pipeline-manager] INFO logstash.pipeline - Pipeline main started
+The stdin plugin is now waiting for input:
+{
+"@timestamp" =&gt; 2017-08-03T10:05:02.764Z,
+"@version" =&gt; "1",
+"host" =&gt; "localhost",
+"message" =&gt; "My name is neo"
+}
+18:05:02.782 [Api Webserver] INFO logstash.agent - Successfully started Logstash API endpoint {:port=&gt;9601}
+				
+				</pre></div><div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="file"></a>3.1.4.2.3. 本地文件</h6></div></div></div><pre class="screen">
+				
+input {
+  file {
+    type =&gt; "syslog"
+    path =&gt; [ "/var/log/maillog", "/var/log/messages", "/var/log/secure" ]
+    start_position =&gt; "beginning"
+  }
+}
+output {
+  stdout { codec =&gt; rubydebug }
+  elasticsearch { 
+    hosts =&gt; ["127.0.0.1:9200"] 
+  }
+}		
+				
+				</pre><p>start_position =&gt; "beginning" 从头开始读，如果没有这个选项，只会读取最后更新的数据。</p><div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="input.type"></a>3.1.4.2.3.1. 指定文件类型</h6></div></div></div><pre class="screen">
+					
+input { 
+ file { path =&gt;"/var/log/messages" type =&gt;"syslog"} 
+ file { path =&gt;"/var/log/apache/access.log" type =&gt;"apache"} 
+}					 
+					
+					</pre><div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="type.nginx"></a>3.1.4.2.3.1.1. Nginx</h6></div></div></div><pre class="screen">
+						
+input {
+        file {
+                type =&gt; "nginx_access"
+                path =&gt; ["/usr/share/nginx/logs/test.access.log"]
+        }
+}
+output {
+        redis {
+                host =&gt; "localhost"
+                data_type =&gt; "list"
+                key =&gt; "logstash:redis"
+        }
+}						
+						
+						</pre></div></div></div><div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="socket"></a>3.1.4.2.4. TCP/UDP</h6></div></div></div><pre class="screen">
+				
+input {
+  file {
+    type =&gt; "syslog"
+    path =&gt; [ "/var/log/secure", "/var/log/messages", "/var/log/syslog" ]
+  }
+  tcp {
+    port =&gt; "5145"
+    type =&gt; "syslog-network"
+  }
+  udp {
+    port =&gt; "5145"
+    type =&gt; "syslog-network"
+  }
+}
+output {
+  elasticsearch { 
+    hosts =&gt; ["127.0.0.1:9200"] 
+  }
+}
+				
+				</pre></div><div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="redis"></a>3.1.4.2.5. Redis</h6></div></div></div><pre class="screen">
+				
+input {
+  redis {
+    host =&gt; "127.0.0.1"
+    port =&gt; "6379" 
+    key =&gt; "logstash:demo"
+    data_type =&gt; "list"
+    codec  =&gt; "json"
+    type =&gt; "logstash-redis-demo"
+    tags =&gt; ["logstashdemo"]
+  }
+}
+
+output {
+  elasticsearch {
+    hosts =&gt; ["127.0.0.1:9200"]
+  }
+}
+				
+				</pre><p>指定 Database 10</p><pre class="screen">
+				
+root@netkiller /etc/logstash/conf.d % cat spring-boot-redis.conf 
+input {
+ redis {
+  codec =&gt; json
+  host =&gt; "localhost"
+  port =&gt; 6379
+  db =&gt; 10
+  key =&gt; "logstash:redis"
+  data_type =&gt; "list"
+ }
+}
+
+output {
+  stdout { codec =&gt; rubydebug }
+  elasticsearch {
+    hosts =&gt; ["127.0.0.1:9200"]
+    index =&gt; "logstash-api"
+  }
+}
+				
+				</pre></div><div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="kafka"></a>3.1.4.2.6. Kafka</h6></div></div></div><p>
+					</p><div><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="NaN"><tr><td><img src="../images/elk/Kafka.png" width="NaN" /></td></tr></table></div><p>
+				</p><p></p><pre class="screen">
+				
+input {
+  kafka {
+   zk_connect =&gt; "kafka:2181"
+   group_id =&gt; "logstash"
+   topic_id =&gt; "apache_logs"
+   consumer_threads =&gt; 16
+  }
+}		
+				
+				</pre></div><div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="jdbc"></a>3.1.4.2.7. jdbc</h6></div></div></div><pre class="screen">
+				
+root@netkiller /etc/logstash/conf.d % cat jdbc.conf 
+input {
+  jdbc {
+    jdbc_driver_library =&gt; "/usr/share/java/mysql-connector-java.jar"
+    jdbc_driver_class =&gt; "com.mysql.jdbc.Driver"
+    jdbc_connection_string =&gt; "jdbc:mysql://localhost:3306/cms"
+    jdbc_user =&gt; "cms"
+    jdbc_password =&gt; "123456"
+    schedule =&gt; "* * * * *"
+    statement =&gt; "select * from article where id &gt; :sql_last_value"
+    use_column_value =&gt; true
+    tracking_column =&gt; "id"
+    tracking_column_type =&gt; "numeric" 
+    record_last_run =&gt; true
+    last_run_metadata_path =&gt; "/var/tmp/article.last"
+  }
+  jdbc {
+    jdbc_driver_library =&gt; "/usr/share/java/mysql-connector-java.jar"
+    jdbc_driver_class =&gt; "com.mysql.jdbc.Driver"
+    jdbc_connection_string =&gt; "jdbc:mysql://localhost:3306/cms"
+    jdbc_user =&gt; "cms"
+    jdbc_password =&gt; "123456"
+    schedule =&gt; "* * * * *"	#定时cron的表达式,这里是每分钟执行一次
+    statement =&gt; "select * from article where ctime &gt; :sql_last_value"
+    use_column_value =&gt; true
+    tracking_column =&gt; "ctime"
+    tracking_column_type =&gt; "timestamp" 
+    record_last_run =&gt; true
+    last_run_metadata_path =&gt; "/var/tmp/article-ctime.last"
+  }
+
+}
+output {
+    elasticsearch {
+    	hosts =&gt; "localhost:9200"
+        index =&gt; "information"
+        document_type =&gt; "article"
+        document_id =&gt; "%{id}"
+        action =&gt; "update"
+        doc_as_upsert =&gt; true
+    }
+}				
+				
+				</pre></div></div><div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="filter"></a>3.1.4.3. filter</h5></div></div></div><div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="date"></a>3.1.4.3.1. 日期格式化</h6></div></div></div><p>系统默认是 ISO8601 如果需要转换为 yyyy-MM-dd-HH:mm:ss 参考：</p><pre class="programlisting">
+				
+
+filter {
+  date {
+    match =&gt; [ "ctime", "yyyy-MM-dd HH:mm:ss" ]
+    locale =&gt; "cn"
+  }
+ date {
+    match =&gt; [ "mtime", "yyyy-MM-dd HH:mm:ss" ]
+    locale =&gt; "cn"
+  } 
+}
+				
+				</pre><pre class="screen">
+				
+date {
+    locale =&gt; "zh-CN"
+    #match =&gt; ["@timestamp", "yyyy-MM-dd HH:mm:ss"]
+	match =&gt; ["@timestamp", "ISO8601"]
+    timezone =&gt; "Asia/Shanghai"
+	target =&gt; ["@timestamp"]
+}				
+				
+				</pre></div><div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="filter.patterns"></a>3.1.4.3.2. patterns</h6></div></div></div><p>创建匹配文件 /usr/share/logstash/patterns</p><pre class="screen">
+				
+mkdir /usr/share/logstash/patterns
+vim /usr/share/logstash/patterns
+
+NGUSERNAME [a-zA-Z\.\@\-\+_%]+
+NGUSER %{NGUSERNAME}
+NGINXACCESS %{IPORHOST:clientip} %{NGUSER:ident} %{NGUSER:auth} \[%{HTTPDATE:timestamp}\] "%{WORD:verb} %{URIPATHPARAM:request} HTTP/%{NUMBER:httpversion}" %{NUMBER:response} (?:%{NUMBER:bytes}|-) (?:"(?:%{URI:referrer}|-)"|%{QS:referrer}) %{QS:agent}
+				
+				</pre><pre class="screen">
+				
+filter {
+  if [type] == "nginx-access" {
+    grok {
+      match =&gt; { "message" =&gt; "%{NGINXACCESS}" }
+    }
+  }
+}
+				
+				</pre></div><div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="syslog"></a>3.1.4.3.3. syslog</h6></div></div></div><pre class="screen">
+				
+input {
+  file {
+    type =&gt; "syslog" 
+    path =&gt; [ "/var/log/*.log", "/var/log/messages", "/var/log/syslog" ]
+    sincedb_path =&gt; "/opt/logstash/sincedb-access"
+  }
+  syslog {
+    type =&gt; "syslog"
+    port =&gt; "5544"
+  }
+}
+ 
+filter {
+  grok {
+    type =&gt; "syslog"
+    match =&gt; [ "message", "%{SYSLOGBASE2}" ]
+    add_tag =&gt; [ "syslog", "grokked" ]
+  }
+}
+ 
+output {
+ elasticsearch { host =&gt; "elk.netkiller.cn" }
+}				
+				
+				</pre></div><div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="csv"></a>3.1.4.3.4. csv</h6></div></div></div><pre class="screen">
+				
+input {
+    file {
+        type =&gt; "SSRCode"
+        path =&gt; "/SD/2015*/01*/*.csv"
+        start_position =&gt; "beginning"
+    }
+}
+ 
+filter {
+	csv {
+		columns =&gt; ["Code","Source"]
+		separator =&gt; ","
+	}
+	kv {
+		source =&gt; "uri"
+		field_split =&gt; "&amp;?"
+		value_split =&gt; "="
+	}
+ 
+}
+ 
+# output logs to console and to elasticsearch
+output {
+    stdout {}
+    elasticsearch {
+        hosts =&gt; ["172.16.1.1:9200"]
+    }
+}				
+				
+				</pre></div><div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="filter.ruby.csv"></a>3.1.4.3.5. 使用ruby 处理 CSV文件</h6></div></div></div><pre class="screen">
+				
+input {
+    stdin {}
+}
+filter {
+    ruby {
+        init =&gt; "
+            begin
+                @@csv_file    = 'output.csv'
+                @@csv_headers = ['A','B','C']
+                if File.zero?(@@csv_file) || !File.exist?(@@csv_file)
+                    CSV.open(@@csv_file, 'w') do |csv|
+                        csv &lt;&lt; @@csv_headers
+                    end
+                end
+            end
+        "
+        code =&gt; "
+            begin
+                event['@metadata']['csv_file']    = @@csv_file
+                event['@metadata']['csv_headers'] = @@csv_headers
+            end
+        "
+    }
+    csv {
+        columns =&gt; ["a", "b", "c"]
+    }
+}
+output {
+    csv {
+        fields =&gt; ["a", "b", "c"]
+        path   =&gt; "%{[@metadata][csv_file]}"
+    }
+    stdout {
+        codec =&gt; rubydebug {
+            metadata =&gt; true
+        }
+    }
+}				
+				
+				</pre><p>测试</p><pre class="screen">
+				
+echo "1,2,3\n4,5,6\n7,8,9" | ./bin/logstash -f csv-headers.conf				
+				
+				</pre><p>输出结果</p><pre class="screen">
+				
+A,B,C
+1,2,3
+4,5,6
+7,8,9
+				
+				</pre></div><div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="filter.ruby"></a>3.1.4.3.6. 执行 ruby 代码</h6></div></div></div><p>日期格式化, 将ISO 8601日期格式转换为 %Y-%m-%d %H:%M:%S</p><p>保存下面内容到配置文件data.conf</p><pre class="screen">
+				
+input {
+	stdin{}
+}
+filter {
+
+	ruby {
+		init =&gt; "require 'time'"
+        code =&gt; "event.set('ctime', event.get('ctime').time.localtime.strftime('%Y-%m-%d %H:%M:%S'))"
+    }
+
+	ruby {
+		init =&gt; "require 'time'"
+        code =&gt; "event.set('mtime', event.get('mtime').time.localtime.strftime('%Y-%m-%d %H:%M:%S'))"
+    }
+}
+output {
+
+	stdout {
+		codec =&gt; rubydebug
+	}
+
+}
+				
+				</pre><p>/usr/share/logstash/bin/logstash -f date.conf</p></div><div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="grok.debug"></a>3.1.4.3.7. grok debug 工具</h6></div></div></div><p>http://grokdebug.herokuapp.com</p></div></div><div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="output"></a>3.1.4.4. output</h5></div></div></div><div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm264076967728"></a>3.1.4.4.1. stdout</h6></div></div></div><pre class="screen">
+				
+output {
+	stdout { codec =&gt; rubydebug }
+}				
+				
+				</pre></div><div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="file"></a>3.1.4.4.2. file 写入文件</h6></div></div></div><p>/etc/logstash/conf.d/file.conf</p><pre class="screen">
+				
+output {
+    file {
+        path =&gt; "/path/to/%{host}/%{+yyyy}/%{+MM}/%{+dd}.log.gz"
+        message_format =&gt; "%{message}"
+        gzip =&gt; true
+    }
+}
+				
+				</pre></div><div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="elasticsearch"></a>3.1.4.4.3. elasticsearch</h6></div></div></div><pre class="screen">
+				
+output {
+  stdout { codec =&gt; rubydebug }
+  elasticsearch {
+    hosts =&gt; ["127.0.0.1:9200"]
+    index =&gt; "logging"
+  }
+}				
+				
+				</pre><div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm264076964560"></a>3.1.4.4.3.1. 自定义 index</h6></div></div></div><p>配置实现每日切割一个 index</p><pre class="screen">
+					
+index =&gt; "logstash-%{+YYYY.MM.dd}"
+
+"_index" : "logstash-2017.03.22"	
+					
+					</pre><p>index 自定义 logstash-%{type}-%{+YYYY.MM.dd}</p><pre class="screen">
+					
+input {
+
+    redis {
+        data_type =&gt; "list"
+        key =&gt; "logstash:redis"
+        host =&gt; "127.0.0.1"
+        port =&gt; 6379
+        threads =&gt; 5
+        codec =&gt; "json"
+    }
+}
+filter {
+
+}
+output {
+
+    elasticsearch {
+        hosts =&gt; ["127.0.0.1:9200"]
+        index =&gt; "logstash-%{type}-%{+YYYY.MM.dd}"
+        document_type =&gt; "%{type}"
+        workers =&gt; 1
+        flush_size =&gt; 20
+        idle_flush_time =&gt; 1
+        template_overwrite =&gt; true
+    }
+    stdout{}
+}					
+					
+					</pre></div></div><div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm264076962336"></a>3.1.4.4.4. exec 执行脚本</h6></div></div></div><pre class="screen">
+				
+output {
+    exec {
+        command =&gt; "sendsms.php \"%{message}\" -t %{user}"
+    }
+}
+				
+				</pre></div></div></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="logstash.example"></a>3.1.5. Example</h4></div></div></div><p>https://github.com/kmtong/logback-redis-appender</p><div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm264076960720"></a>3.1.5.1. Spring boot logback</h5></div></div></div><div class="example"><a id="idm264076960336"></a><p class="title"><strong>例 3.1. spring boot logback</strong></p><div class="example-contents"><pre class="screen">
+				
+root@netkiller /etc/logstash/conf.d % cat spring-boot-redis.conf 
+input {
+ redis {
+  codec =&gt; json
+  host =&gt; "localhost"
+  port =&gt; 6379
+  key =&gt; "logstash:redis"
+  data_type =&gt; "list"
+ }
+}
+
+output {
+  elasticsearch {
+    hosts =&gt; ["127.0.0.1:9200"]
+    index =&gt; "logstash-api"
+  }
+}
+				
+				</pre><p>src/main/resources/logback.xml</p><pre class="screen">
+				
+neo@MacBook-Pro ~/deployment % cat api.netkiller.cn/src/main/resources/logback.xml 
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;configuration&gt;
+	&lt;include resource="org/springframework/boot/logging/logback/defaults.xml" /&gt;
+	&lt;include resource="org/springframework/boot/logging/logback/file-appender.xml" /&gt;
+	&lt;property name="type.name" value="test" /&gt;
+	&lt;appender name="LOGSTASH" class="com.cwbase.logback.RedisAppender"&gt;
+		&lt;source&gt;mySource&lt;/source&gt;
+		&lt;sourcePath&gt;mySourcePath&lt;/sourcePath&gt;
+		&lt;type&gt;myApplication&lt;/type&gt;
+		&lt;tags&gt;production&lt;/tags&gt;
+		&lt;host&gt;localhost&lt;/host&gt;
+		&lt;port&gt;6379&lt;/port&gt;
+		&lt;database&gt;0&lt;/database&gt;
+		&lt;key&gt;logstash:api&lt;/key&gt;
+	&lt;/appender&gt;
+	&lt;appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender"&gt;
+		&lt;encoder&gt;
+			&lt;pattern&gt;%date{yyyy-MM-dd HH:mm:ss} %-4relative [%thread] %-5level %logger{35} : %msg %n&lt;/pattern&gt;
+		&lt;/encoder&gt;
+	&lt;/appender&gt;
+	&lt;root level="INFO"&gt;
+		&lt;appender-ref ref="STDOUT" /&gt;
+		&lt;appender-ref ref="FILE" /&gt;
+		&lt;appender-ref ref="LOGSTASH" /&gt;
+	&lt;/root&gt;
+&lt;/configuration&gt;
+				
+				</pre></div></div><br class="example-break" /><p></p><pre class="screen">
+			
+[root@netkiller ~]# cat /etc/logstash/conf.d/file.conf
+input {
+  tcp {
+    port =&gt; 4567 
+    codec =&gt; json_lines
+  }
+}
+
+filter {
+    #ruby {
+    #      code =&gt; "event.set('@timestamp', LogStash::Timestamp.at(event.get('@timestamp').time.localtime + 8*60*60))"
+    #}
+    ruby {
+		code =&gt; "event.set('datetime', event.get('@timestamp').time.localtime.strftime('%Y-%m-%d %H:%M:%S'))"
+    }
+}
+
+output {
+
+    file {
+        path =&gt; "/opt/log/%{app}.%{+yyyy}-%{+MM}-%{+dd}.log.gz"
+		codec =&gt; line { format =&gt; "[%{datetime}] %{level} %{message}"}
+		#codec =&gt; json_lines
+        gzip =&gt; true
+    }
+
+}
+			
+			</pre><p>每个 tags 一个文件</p><pre class="screen">
+			
+[root@netkiller ~]# cat /etc/logstash/conf.d/file.conf 
+input {
+  tcp {
+    port =&gt; 4567 
+    codec =&gt; json_lines
+  }
+}
+
+filter {
+    ruby {
+	code =&gt; "event.set('datetime', event.get('@timestamp').time.localtime.strftime('%Y-%m-%d %H:%M:%S'))"
+    }
+}
+
+output {
+
+	if "finance" in [tags] { 
+	    file {
+	        path =&gt; "/opt/log/%{app}.finance.%{+yyyy}-%{+MM}-%{+dd}.log"
+			codec =&gt; line { format =&gt; "[%{datetime}] %{level} %{message} %{tags}"}
+		}
+	 
+	 } else if "market" in [tags] {
+	
+	    file {
+			path =&gt; "/opt/log/%{app}.market.%{+yyyy}-%{+MM}-%{+dd}.log"
+			codec =&gt; line { format =&gt; "[%{datetime}] %{level} %{message} %{tags}"}
+		}
+	} else {
+	
+	    file {
+			path =&gt; "/opt/log/%{app}.unknow.%{+yyyy}-%{+MM}-%{+dd}.log"
+			codec =&gt; line { format =&gt; "[%{datetime}] %{level} %{message} %{tags}"}
+		}
+    }
+
+}			
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm264076956400"></a>3.1.5.2. 索引切割实例</h5></div></div></div><div class="example"><a id="idm264076956016"></a><p class="title"><strong>例 3.2. Elasticsearch 索引切割示例</strong></p><div class="example-contents"><pre class="screen">
+				
+root@netkiller /opt/api.netkiller.cn % cat /etc/logstash/conf.d/spring-boot-redis.conf 
+input {
+ redis {
+  codec =&gt; json
+  host =&gt; "localhost"
+  port =&gt; 6379
+  db =&gt; 10
+  key =&gt; "logstash:redis"
+  data_type =&gt; "list"
+ }
+}
+
+output {
+  stdout { codec =&gt; rubydebug }
+  elasticsearch {
+    hosts =&gt; ["127.0.0.1:9200"]
+    index =&gt; "logstash-%{type}-%{+YYYY.MM.dd}"
+  }
+}
+
+				
+				</pre><pre class="screen">
+				
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;configuration&gt;
+	&lt;include resource="org/springframework/boot/logging/logback/defaults.xml" /&gt;
+	&lt;include resource="org/springframework/boot/logging/logback/file-appender.xml" /&gt;
+	&lt;property name="logstash.type" value="api" /&gt;
+	&lt;property name="logstash.tags" value="springboot" /&gt;
+	&lt;appender name="LOGSTASH" class="com.cwbase.logback.RedisAppender"&gt;
+		&lt;source&gt;application.properties&lt;/source&gt;
+		&lt;type&gt;${logstash.type}&lt;/type&gt;
+		&lt;tags&gt;${logstash.tags}&lt;/tags&gt;
+
+		&lt;host&gt;localhost&lt;/host&gt;
+		&lt;database&gt;10&lt;/database&gt;
+		&lt;key&gt;logstash:redis&lt;/key&gt;
+
+		&lt;mdc&gt;true&lt;/mdc&gt;
+		&lt;location&gt;true&lt;/location&gt;
+		&lt;callerStackIndex&gt;0&lt;/callerStackIndex&gt;
+
+	&lt;/appender&gt;
+	&lt;appender name="ASYNC" class="ch.qos.logback.classic.AsyncAppender"&gt;
+		&lt;appender-ref ref="LOGSTASH" /&gt;
+	&lt;/appender&gt;
+
+	&lt;appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender"&gt;
+		&lt;encoder&gt;
+			&lt;pattern&gt;%date{yyyy-MM-dd HH:mm:ss} %-4relative [%thread] %-5level %logger{35} : %msg %n&lt;/pattern&gt;
+		&lt;/encoder&gt;
+	&lt;/appender&gt;
+	&lt;root level="INFO"&gt;
+		&lt;appender-ref ref="STDOUT" /&gt;
+		&lt;appender-ref ref="FILE" /&gt;
+		&lt;appender-ref ref="LOGSTASH" /&gt;
+	&lt;/root&gt;
+&lt;/configuration&gt;
+				
+				</pre></div></div><br class="example-break" /></div><div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm264076954608"></a>3.1.5.3. csv 文件实例</h5></div></div></div><pre class="screen">
+			
+			
+input {
+    file {
+        path =&gt; ["/home/test/data.csv"]
+        start_position =&gt; "beginning" #从什么位置读取，beginnig时导入原有数据
+        sincedb_path =&gt; "/test/111"
+                type =&gt; "csv"
+                tags =&gt; ["optical", "gather"]
+    }
+}
+
+filter {
+        if [type] == "csv" { #多个配置文件同时执行的区分
+        csv {
+            columns =&gt;["name","device_id"]
+            separator =&gt; "^"
+			quote_char =&gt; "‰"
+			remove_field =&gt; ["device_id","branch_id","area_type"]
+       }
+   }
+output{
+}			
+			
+			
+			</pre></div></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="beats"></a>3.1.6. Beats</h4></div><div><h5 class="subtitle">Beats 是一个免费且开放的平台，集合了多种单一用途数据采集器。它们从成百上千或成千上万台机器和系统向 Logstash 或 Elasticsearch 发送数据。</h5></div></div></div><div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="beta.setup"></a>3.1.6.1. 安装 Beta</h5></div></div></div><div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="6.x"></a>3.1.6.1.1. Beats 6.x 安装</h6></div></div></div><pre class="screen">
+			
+curl -s https://raw.githubusercontent.com/netkiller/shell/master/search/elastic/elastic-6.x.sh | bash
+curl -s https://raw.githubusercontent.com/netkiller/shell/master/search/elastic/beats/beats.sh | bash
+			
+				</pre></div><div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="beats"></a>3.1.6.1.2. Beats 5.x 安装</h6></div></div></div><pre class="screen">
+					curl -s https://raw.githubusercontent.com/netkiller/shell/master/log/beats/beats-5.x.sh | bash
+				</pre></div></div><div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="filebeat"></a>3.1.6.2. Filebeat</h5></div></div></div><div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm264086523600"></a>3.1.6.2.1. 模块管理</h6></div></div></div><pre class="screen">
+				
+filebeat modules list				
+				
+				</pre></div><div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm264086522912"></a>3.1.6.2.2. 文件到文件</h6></div></div></div><pre class="screen">
+				
+filebeat.inputs:
+- type: log
+  paths:
+    - /data/logs/*
+  fields:
+    project: ${PROJECT}
+    group: ${GROUP}
+    stage: ${STAGE}
+    format: ${FORMAT}
+
+processors:
+  - add_cloud_metadata:
+  - add_host_metadata:
+
+output.file:
+  path: "/tmp"
+  filename: filebeat			
+				
+				</pre></div><div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm264086521984"></a>3.1.6.2.3. TCP</h6></div></div></div><pre class="screen">
+				
+[docker@netkiller ~]$ cat filebeat.tcp.yml 
+filebeat.inputs:
+- type: tcp
+  max_message_size: 10MiB
+  host: "localhost:9000"
+
+output.file:
+  path: "/tmp"
+  filename: filebeat.log			
+				
+				</pre><p></p><pre class="screen">
+				
+[docker@netkiller ~]$ sudo chmod go-w /home/docker/filebeat.tcp.yml				
+				
+				</pre><pre class="screen">
+				
+[docker@netkiller ~]$ ss -lnt | grep 9000
+LISTEN 0      1024       127.0.0.1:9000       0.0.0.0:*  				
+				
+				</pre><pre class="screen">
+				
+[docker@netkiller ~]$ echo "Hello world!!!" | nc localhost 9000
+echo "Hello worldss -lnt | grep 9000!" | nc localhost 9000
+
+[docker@netkiller ~]$ cat /etc/filesystems | nc localhost 9000
+
+[docker@netkiller ~]$ sudo cat /tmp/filebeat.log-20220728.ndjson |jq | grep message
+  "message": "Hello worldss -lnt | grep 9000!"
+  "message": "ext4",
+  "message": "ext3",
+  "message": "ext2",
+  "message": "nodev proc",
+  "message": "nodev devpts",
+  "message": "iso9660"
+  "message": "vfat",
+  "message": "hfs",
+  "message": "hfsplus",
+  "message": "*",				
+				
+				</pre></div></div></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="faq"></a>3.1.7. FAQ</h4></div></div></div><div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm264086518832"></a>3.1.7.1. 查看 Kibana 数据库</h5></div></div></div><pre class="screen">
+			
+# curl 'http://localhost:9200/_search?pretty'
+{
+  "took" : 1,
+  "timed_out" : false,
+  "_shards" : {
+    "total" : 1,
+    "successful" : 1,
+    "failed" : 0
+  },
+  "hits" : {
+    "total" : 1,
+    "max_score" : 1.0,
+    "hits" : [
+      {
+        "_index" : ".kibana",
+        "_type" : "config",
+        "_id" : "5.2.2",
+        "_score" : 1.0,
+        "_source" : {
+          "buildNum" : 14723
+        }
+      }
+    ]
+  }
+}			
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm264086517744"></a>3.1.7.2. logstash 无法写入 elasticsearch</h5></div></div></div><p>elasticsearch 的配置不能省略 9200 端口，否则将无法链接elasticsearch</p><pre class="screen">
+			
+  elasticsearch {
+    hosts =&gt; ["127.0.0.1:9200"]
+  }			
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm264086516672"></a>3.1.7.3. 标准输出</h5></div></div></div><pre class="screen">
+			
+#cd /etc/logstash/conf.d
+#vim logstash_server.conf
+input {
+    redis {
+        port =&gt; "6379"
+        host =&gt; "127.0.0.1"
+        data_type =&gt; "list"
+        key =&gt; "logstash-redis"
+        type =&gt; "redis-input"
+   }
+}
+output {
+    stdout {
+    	codec =&gt; rubydebug
+    }
+}			
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h5 class="title"><a id=""></a>3.1.7.4. 5.x 升级至 6.x 的变化</h5></div></div></div><p>5.x type类型如果是date，那么系统默认使用 ISO8601 格式。 6.x 修复了这个问题。"ctime": "2017-12-18 11:21:57"</p></div></div></div></div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
+window.changyan.api.config({
+appid: 'cyvwjQUG3',
+conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
+});
+</script><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="zabbix/zabbix-agent.html">上一页</a> </td><td width="20%" align="center"> </td><td width="40%" align="right"> <a accesskey="n" href="loki/index.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">2.4. zabbix-agent </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 3.2. Grafana + Loki + Promtail</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script></body></html>

@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>3.3. fluentd</title><link rel="stylesheet" type="text/css" href="../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="rinetd.log, , , " /><meta name="keywords" content="snmp, ipmi,openipmi,freeipmi,ipmitool, cpu,memory,hdd,ssd,raid,power, logwatch, webmin" /><link rel="home" href="../index.html" title="Netkiller Monitor 手札" /><link rel="up" href="../log.html" title="第 3 章 日志收集和分析" /><link rel="prev" href="../loki/index.html" title="3.2. Grafana + Loki + Promtail" /><link rel="next" href="../system.log.html" title="3.4. log" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+   	    <a xmlns="" href="https://edu.51cto.com/lecturer/1703915.html">51CTO学院</a> |
+	    <a xmlns="" href="https://edu.csdn.net/lecturer/6423">CSDN程序员研修院</a> |
+	    <a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">腾讯云社区</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">阿里云栖社区</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">3.3. fluentd</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="../loki/index.html">上一页</a> </td><th width="60%" align="center">第 3 章 日志收集和分析</th><td width="20%" align="right"> <a accesskey="n" href="../system.log.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="index"></a>3.3. fluentd</h3></div></div></div><p>OS Linux/FreeBSD</p><p>Web Apache/Lighttpd/Nginx</p><p>DB MySQL/PostgreSQL</p><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm264159124160"></a>3.3.1. Docker 安装</h4></div></div></div><div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="docker.fluent-bit"></a>3.3.1.1. fluent-bit</h5></div></div></div><p>运行 fluent-bit</p><pre class="screen">
+	
+docker run -ti cr.fluentbit.io/fluent/fluent-bit	
+	
+		</pre><p>采集 cpu 数据</p><pre class="screen">
+	
+docker run -ti cr.fluentbit.io/fluent/fluent-bit -i cpu -o stdout -f 1
+	
+		</pre></div><div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm264159121696"></a>3.3.1.2. Fluentd 收集 Docker 日志</h5></div></div></div><div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm264159121280"></a>3.3.1.2.1. fluentd.conf</h6></div></div></div><pre class="screen">
+		
+&lt;source&gt;
+  @type forward
+&lt;/source&gt;
+
+&lt;match **&gt;
+  @type file
+  path               /var/log/fluentd/${tag}
+  append             true
+  &lt;format&gt;
+    @type            single_value
+    message_key      log
+  &lt;/format&gt;
+  &lt;buffer tag,time&gt;
+    @type             file
+    timekey           1d
+    timekey_wait      10m
+    flush_mode        interval
+    flush_interval    30s
+  &lt;/buffer&gt;
+&lt;/match&gt;		
+		
+			</pre><p>docker-compose.yaml</p><pre class="screen">
+		
+version: '3.9'
+services:		
+  fluentd:
+    image: fluent/fluentd:latest
+    container_name: fluentd
+    hostname: fluentd.netkiller.cn
+    restart: always
+    volumes:
+      - /opt/netkiller.cn/ops.netkiller.cn/fluentd/conf:/fluentd/etc
+      - /var/log/fluentd:/var/log/fluentd
+    ports:
+      - "24224:24224"
+      - "24224:24224/udp"
+    environment:
+      FLUENTD_CONF: fluentd.conf		
+  api:
+    image: openjdk:8
+    container_name: api
+    restart: always
+    hostname: api.netkiller.cn
+    extra_hosts:
+      - cfca.netkiller.cn:139.196.170.132
+      - raweb.netkiller.cn:139.196.170.132
+      - eos.netkiller.cn:192.168.30.120
+    environment:
+      TZ: Asia/Shanghai
+      JAVA_OPTS: -Xms1024m -Xmx4096m -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=512m
+    ports:
+      - 8088:8080
+    volumes:
+      - /opt/netkiller.cn/api.netkiller.cn:/app
+      - /opt/netkiller.cn/api.netkiller.cn/logs:/app/logs
+    working_dir: /app
+    links:
+      - fluentd
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: localhost:24224
+        tag: api.netkiller.cn
+    entrypoint: java -jar /app/api.netkiller.cn.jar
+    command:
+      --spring.profiles.active=test
+      --server.port=8080		
+		
+			</pre></div><div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm264159119568"></a>3.3.1.2.2. 标准输出</h6></div></div></div><pre class="screen">
+	
+&lt;source&gt;
+  @type udp
+  tag docker
+  format json
+  port 5160
+&lt;/source&gt;
+
+&lt;match docker&gt;
+  @type stdout
+&lt;/match&gt;
+	
+			</pre></div></div></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm264159118784"></a>3.3.2. fluent-bit</h4></div></div></div><div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm264159118528"></a>3.3.2.1. 安装 fluent-bit</h5></div></div></div><pre class="screen">
+			
+cat &gt; /etc/yum.repos.d/fluent-bit.repo &lt;&lt;-'EOF'
+[fluent-bit]
+name = Fluent Bit
+baseurl = https://packages.fluentbit.io/centos/$releasever/$basearch/
+gpgcheck=1
+gpgkey=https://packages.fluentbit.io/fluentbit.key
+repo_gpgcheck=1
+enabled=1
+EOF
+			
+			</pre><pre class="screen">
+		
+[root@netkiller ~]# dnf search fluent-bit
+Last metadata expiration check: 3:25:14 ago on Thu 27 Oct 2022 10:44:59 AM CST.
+====================================================================================================== Name Exactly Matched: fluent-bit ======================================================================================================
+fluent-bit.x86_64 : Fast data collector for Linux
+
+[root@netkiller ~]# dnf install -y fluent-bit
+		
+			</pre><pre class="screen">
+		
+[root@netkiller ~]# rpm -ql fluent-bit
+/etc/fluent-bit
+/etc/fluent-bit/fluent-bit.conf
+/etc/fluent-bit/parsers.conf
+/etc/fluent-bit/plugins.conf
+/usr/bin/fluent-bit
+/usr/lib/.build-id
+/usr/lib/.build-id/28
+/usr/lib/.build-id/28/cfd98997f846eecd5117bdbd0be440e3c75a58
+/usr/lib/systemd/system/fluent-bit.service
+/usr/share/doc/fluent-bit
+/usr/share/doc/fluent-bit/CODE_OF_CONDUCT.md
+/usr/share/doc/fluent-bit/CONTRIBUTING.md
+/usr/share/doc/fluent-bit/GOLANG_OUTPUT_PLUGIN.md
+/usr/share/doc/fluent-bit/GOVERNANCE.md
+/usr/share/doc/fluent-bit/MAINTAINERS.md
+/usr/share/doc/fluent-bit/README.md
+/usr/share/licenses/fluent-bit
+/usr/share/licenses/fluent-bit/LICENSE		
+		
+			</pre></div><div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm264159115872"></a>3.3.2.2. 配置 fluent-bit</h5></div></div></div><pre class="screen">
+			
+cp /etc/fluent-bit/fluent-bit.conf{,.original}
+cp /etc/fluent-bit/parsers.conf{,.original}
+cp /etc/fluent-bit/plugins.conf{,.original}
+			
+			</pre><div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm264159115040"></a>3.3.2.2.1. TCP 配置实例</h6></div></div></div><p></p><pre class="screen">
+				
+[root@netkiller ~]# cat /etc/fluent-bit/fluent-bit.conf | grep -v '#' | grep -v '^$'
+[SERVICE]
+    flush        1
+    daemon       Off
+    log_level    info
+    parsers_file parsers.conf
+    plugins_file plugins.conf
+    http_server  Off
+    http_listen  0.0.0.0
+    http_port    2020
+    storage.metrics on
+[INPUT]
+    Name        tcp
+    Listen      0.0.0.0
+    Port        5170
+    Chunk_Size  32
+    Buffer_Size 64
+    Format      json
+[OUTPUT]
+    Name file
+    Match *
+    Path /opt/log
+    Mkdir true			
+				
+				</pre><p>启动 fluent-bit</p><pre class="screen">
+				
+[root@netkiller ~]# /opt/fluent-bit/bin/fluent-bit -c /etc/fluent-bit/fluent-bit.conf				
+				
+				</pre><p>产生一条日志</p><pre class="screen">
+				
+[root@netkiller log]# echo '{"key 1": 123456789, "key 2": "abcdefg"}' | nc 127.0.0.1 5170				
+				
+				</pre><p>观察日志</p><pre class="screen">
+				
+[root@netkiller log]# tail /opt/log/tcp.0 
+tcp.0: [1666855978.575643295, {"key 1":123456789,"key 2":"abcdefg"}]
+				
+				</pre></div></div></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="fluentd.faq"></a>3.3.3. temporarily failed to flush the buffer</h4></div></div></div><p></p><pre class="screen">
+		
+2020-10-19 03:22:24 +0000 [warn]: temporarily failed to flush the buffer. next_retry=2020-10-19 03:22:26 +0000 error_class="Elasticsearch::Transport::Transport::Errors::NotAcceptable" error="[406] {\"error\":\"Content-Type header [] is not supported\",\"status\":406}" plugin_id="object:2b246e6b2084"
+2020-10-19 03:22:24 +0000 [warn]: suppressed same stacktrace		
+		
+		</pre></div></div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
+window.changyan.api.config({
+appid: 'cyvwjQUG3',
+conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
+});
+</script><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="../loki/index.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="../log.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="../system.log.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">3.2. Grafana + Loki + Promtail </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 3.4. log</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script></body></html>
