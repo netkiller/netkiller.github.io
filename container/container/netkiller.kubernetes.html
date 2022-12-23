@@ -1,0 +1,2778 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>5.3. 使用 Python 优雅地编排 Kubernetes</title><link rel="stylesheet" type="text/css" href="../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="qmeu,kvm,xen,openvz, docker, coreos,docker-compose, kubernetes,kubeadmin,kubectl, netkiller-devops" /><link rel="home" href="../index.html" title="Netkiller Container 手札" /><link rel="up" href="index.html" title="第 5 章 netkiller 容器编排工具" /><link rel="prev" href="netkiller.docker.html" title="5.2. 使用 python 优雅地编排 Docker 容器" /><link rel="next" href="../vm/index.html" title="第 6 章 Virtual Machine(虚拟机)" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
+		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
+	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
+	    <a xmlns="" href="/journal/index.html">杂文</a> |
+	    <a xmlns="" href="https://github.com/netkiller">Github</a> |
+	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
+   	    <a xmlns="" href="https://edu.51cto.com/lecturer/1703915.html">51CTO学院</a> |
+	    <a xmlns="" href="https://edu.csdn.net/lecturer/6423">CSDN程序员研修院</a> |
+	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
+	    <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">腾讯云社区</a> |
+	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">阿里云栖社区</a> |
+	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
+	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
+	    <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">5.3. 使用 Python 优雅地编排 Kubernetes</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="netkiller.docker.html">上一页</a> </td><th width="60%" align="center">第 5 章 netkiller 容器编排工具</th><td width="20%" align="right"> <a accesskey="n" href="../vm/index.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="netkiller.kubernetes"></a>5.3. 使用 Python 优雅地编排 Kubernetes</h2></div></div></div>
+	
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm65228347792"></a>5.3.1. 快速演示编排Nginx</h3></div></div></div>
+		
+
+		<p>你还用 yaml编排 kubernetes 吗？你是否意识到YAML的局限性，例如你无法定义变量，不能循环重复内容，不能跟高级语言互动，于是你转向了 HELM， helm 提供模版技术，可以在模版中实现包含引用，定义变量，循环等等操作，但也仅此而已。
+			YAML 和 HELM 方案更多是给运维人员准备的，对开发并不友好，那么有没有更好的解决方案呢？
+		</p>
+		<p>我用 python 写的一个工具吧 netkiller-devops，安装方法</p>
+		<pre class="screen">
+		
+pip install netkiller-devops		
+		
+		</pre>
+		<p>下面编排一个 nginx 给大家演示一下。运行环境使用 macOS + k3d</p>
+		<div class="tip" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Tip"><tr><td rowspan="2" align="center" valign="top" width="25"><img alt="[提示]" src="/graphics/tip.png" /></td><th align="left">提示</th></tr><tr><td align="left" valign="top">
+			<p>k3s 是由 Rancher Labs 推出的一款轻量级 Kubernetes 发行版，满足在边缘计算环境中运行在 x86、ARM64 处理器上的小型、易于管理的 Kubernetes 集群日益增长的需求。</p>
+			<p>k3s 除了在边缘计算领域的应用外，在研发侧的表现也十分出色。我们可以快速在本地拉起一个轻量级的 k8s 集群，而 k3d 则是 k3s 社区创建的一个小工具，可以在一个 docker 进程中运行整个 k3s 集群，相比直接使用 k3s 运行在本地，更好管理和部署。</p>
+		</td></tr></table></div>
+		<p>安装 k3d</p>
+		<pre class="screen">
+		
+brew install k3d		
+		
+		</pre>
+		<p>启动集群</p>
+		<pre class="screen">
+		
+k3d cluster create mycluster --api-port 6443 --servers 1 --agents 1 --port '80:80@loadbalancer' --port '443:443@loadbalancer'		
+		
+		</pre>
+		<p>现在创建一个 python 文件 例如 nginx.py 把下面内容复制进去</p>
+		<pre class="programlisting">
+		
+import os, sys
+
+module = os.path.dirname(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+print(module)
+sys.path.insert(0, module)
+from netkiller.kubernetes import *
+
+namespace = Namespace()
+namespace.metadata.name('development')
+namespace.metadata.namespace('development')
+# namespace.debug()
+
+service = Service()
+service.metadata().name('nginx')
+service.metadata().namespace('development')
+service.spec().selector({'app': 'nginx'})
+service.spec().type('NodePort')
+service.spec().ports([{
+    'name': 'http',
+    'protocol': 'TCP',
+    'port': 80,
+    'targetPort': 80
+}])
+
+deployment = Deployment()
+deployment.apiVersion('apiVersion: apps/v1')
+deployment.metadata().name('nginx').labels({'app': 'nginx'}).namespace('development')
+deployment.spec().replicas(2)
+deployment.spec().selector({'matchLabels': {'app': 'nginx'}})
+deployment.spec().template().metadata().labels({'app': 'nginx'})
+deployment.spec().template().spec().containers().name('nginx').image(
+    'nginx:latest').ports([{
+        'containerPort': 80
+    }])
+# deployment.debug()
+
+ingress = Ingress()
+ingress.apiVersion('networking.k8s.io/v1')
+ingress.metadata().name('nginx')
+ingress.metadata().namespace('development')
+ingress.metadata().annotations({'ingress.kubernetes.io/ssl-redirect': "false"})
+ingress.spec().rules([{
+    # 'host': 'www.netkiller.cn',
+    'http': {
+        'paths': [{
+            'path': '/',
+            'pathType': 'Prefix',
+            'backend': {
+                'service': {
+                    'name': 'nginx',
+                    'port': {
+                        'number': 80
+                    }
+                }
+            }
+        }]
+    }
+}])
+
+# ingress.debug()
+
+compose = Compose('development')
+compose.add(namespace)
+compose.add(service)
+compose.add(deployment)
+compose.add(ingress)
+# compose.debug()
+# compose.yaml()
+# compose.save('/tmp/test.yaml')
+
+kubernetes = Kubernetes()
+kubernetes.compose(compose)
+# kubernetes.debug()
+# print(kubernetes.dump())
+kubernetes.main()		
+		
+		</pre>
+		<p>查看帮助信息 /usr/bin/python3 nginx.py -h</p>
+		<pre class="screen">
+		
+➜  devops git:(master) ✗ /usr/bin/python3 nginx.py -h
+Usage: nginx.py [options] &lt;command&gt;
+
+Options:
+  -h, --help            show this help message and exit
+  -e development|testing|production, --environment=development|testing|production
+                        environment
+  -l, --list            print service of environment
+
+  Cluster Management Commands:
+    -g, --get           Display one or many resources
+    -c, --create        Create a resource from a file or from stdin
+    -d, --delete        Delete resources by filenames, stdin, resources and
+                        names, or by resources and label selector
+    -r, --replace       Replace a resource by filename or stdin
+
+  Namespace:
+    -n, --namespace     Display namespace
+    -s, --service       Display service
+
+  Others:
+    --logfile=LOGFILE   logs file.
+    -y, --yaml          show yaml compose
+    --export            export docker compose
+    --debug             debug mode
+    -v, --version       print version information		
+		
+		</pre>
+		<p>现在开始部署 nginx 使用参数 -c，命令 /usr/bin/python3 nginx.py -c</p>
+		<pre class="screen">
+		
+➜  devops git:(master) ✗ /usr/bin/python3 nginx.py -c
+namespace/development created
+service/nginx created
+deployment.apps/nginx created
+ingress.networking.k8s.io/nginx created		
+		
+		</pre>
+		<p>查看部署状态</p>
+		<pre class="screen">
+		
+➜  devops git:(master) ✗ kubectl get namespace
+NAME              STATUS   AGE
+default           Active   3h15m
+kube-system       Active   3h15m
+kube-public       Active   3h15m
+kube-node-lease   Active   3h15m
+development       Active   21m
+
+➜  devops git:(master) ✗ kubectl get service -n development
+NAME    TYPE       CLUSTER-IP    EXTERNAL-IP   PORT(S)        AGE
+nginx   NodePort   10.43.19.13   &lt;none&gt;        80:31258/TCP   21m
+
+➜  devops git:(master) ✗ kubectl get deployment -n development
+NAME    READY   UP-TO-DATE   AVAILABLE   AGE
+nginx   2/2     2            2           21m
+
+➜  devops git:(master) ✗ kubectl get ingress -n development
+NAME    CLASS    HOSTS   ADDRESS                 PORTS   AGE
+nginx   &lt;none&gt;   *       172.23.0.2,172.23.0.3   80      21m
+		
+		
+		</pre>
+		<p>检验 nginx 启动情况</p>
+		<pre class="screen">
+		
+➜  devops git:(master) ✗ curl http://localhost
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+&lt;title&gt;Welcome to nginx!&lt;/title&gt;
+&lt;style&gt;
+html { color-scheme: light dark; }
+body { width: 35em; margin: 0 auto;
+font-family: Tahoma, Verdana, Arial, sans-serif; }
+&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;h1&gt;Welcome to nginx!&lt;/h1&gt;
+&lt;p&gt;If you see this page, the nginx web server is successfully installed and
+working. Further configuration is required.&lt;/p&gt;
+
+&lt;p&gt;For online documentation and support please refer to
+&lt;a href="http://nginx.org/"&gt;nginx.org&lt;/a&gt;.&lt;br/&gt;
+Commercial support is available at
+&lt;a href="http://nginx.com/"&gt;nginx.com&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;Thank you for using nginx.&lt;/em&gt;&lt;/p&gt;
+&lt;/body&gt;
+&lt;/html&gt;				
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm65228335568"></a>5.3.2. 创建命名空间</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+import os, sys
+from netkiller.kubernetes import *
+
+print("=" * 40, "Namespace", "=" * 40)
+namespaces = []
+environment = ['development','testing','production']
+for name in environment :
+    namespace = Namespace(name)
+    namespace.metadata().name(name)
+    namespace.metadata().namespace(name)
+    # namespace.debug()
+    namespaces.append(namespace)
+
+compose = Compose('development')
+for ns in namespaces :
+    compose.add(ns)
+
+# compose.debug()
+# compose.save('/tmp/test.yaml')
+# compose.delete()
+compose.create()		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm65228332720"></a>5.3.3. ConfigMap/Secret 编排演示</h3></div></div></div>
+		
+		<p>ConfigMap 实例</p>
+		<pre class="programlisting">
+			
+from netkiller.kubernetes import *
+
+config = ConfigMap()
+config.apiVersion('v1')
+config.metadata().name('test').namespace('test')
+config.data({'host':'localhost','port':3306,'user':'root','pass':'123456'})
+config.data({'redis.conf':pss(
+    'pidfile /var/lib/redis/redis.pid\n'
+    'dir /var/lib/redis\n'
+    'port 6379\n'
+    'bind 0.0.0.0\n'
+    'appendonly yes\n'
+    'protected-mode no\n'
+    'requirepass 123456\n'
+    )
+    })
+config.data({'dbhost':'localhost','dbport':3306,'dbuser':'root','dbpass':'123456'}).data({'mysql.cnf':pss('''\
+mysql.db = devops
+mysql.host = 127.0.0.1
+mysql.user = root
+mysql.pwd  = root123
+mysql.port = 3306
+''')})
+config.json()
+config.debug()				
+			
+		</pre>
+		<p>输出结果</p>
+		<pre class="screen">
+			
+metadata:
+  name: test
+  namespace: test
+data:
+  host: localhost
+  port: 3306
+  user: root
+  pass: '123456'
+  redis.conf: |
+    pidfile /var/lib/redis/redis.pid
+    dir /var/lib/redis
+    port 6379
+    bind 0.0.0.0
+    appendonly yes
+    protected-mode no
+    requirepass 123456
+  dbhost: localhost
+  dbport: 3306
+  dbuser: root
+  dbpass: '123456'
+  mysql.cnf: |
+    mysql.db = devops
+    mysql.host = 127.0.0.1
+    mysql.user = root
+    mysql.pwd  = root123
+    mysql.port = 3306
+apiVersion: v1
+kind: ConfigMap		
+			
+		</pre>
+		<p>Secret 实例</p>
+		<pre class="programlisting">
+			
+secret = Secret()
+secret.metadata().name('tls').namespace('development')
+secret.data({'tls.crt':' ','tls.key':' '})
+secret.type('kubernetes.io/tls')
+secret.debug()			
+			
+		</pre>
+		<p>Secret 运行结果</p>
+		<pre class="screen">
+			
+metadata:
+  name: tls
+  namespace: development
+data:
+  tls.crt: ' '
+  tls.key: ' '
+type: kubernetes.io/tls
+apiVersion: v1
+kind: Secret			
+			
+		</pre>
+		<p>从文件创建 ConfigMap</p>
+		<pre class="programlisting">
+			
+from netkiller.kubernetes import *
+
+print("=" * 40, "ConfigMap", "=" * 40)
+config = ConfigMap()
+config.apiVersion('v1')
+config.metadata().name('test').namespace('default')
+config.from_file('redis.conf', '/etc/redis/redis.conf').from_file('nginx.conf','/etc/nginx/nginx.conf')			
+			
+		</pre>
+		<p>从环境变量文件创建 ConfigMap</p>
+		<pre class="programlisting">
+			
+config = ConfigMap('test')
+config.apiVersion('v1')
+config.metadata().name('test').namespace('test')
+config.from_env_file('config.env')
+config.debug()			
+			
+		</pre>
+		<p></p>
+		<pre class="programlisting">
+			
+neo@Netkiller-iMac ~/w/d/d/k8s (master) [1]&gt; cat config.env 
+key=value
+dev.logfile=/tmp/logfile.log
+dev.tmpdir=/tmp			
+			
+		</pre>
+		<p>运行结果</p>
+		<pre class="screen">
+			
+neo@Netkiller-iMac ~/w/d/d/k8s (master)&gt; python3 /Users/neo/workspace/devops/demo/k8s/demo.py
+metadata:
+  name: test
+  namespace: test
+data:
+  key: value
+  dev.logfile: /tmp/logfile.log
+  dev.tmpdir: /tmp
+apiVersion: v1
+kind: ConfigMap
+			
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm65228332032"></a>5.3.4. Pod 挂载 ConfigMap 编排演示</h3></div></div></div>
+		
+		<pre class="programlisting">
+			
+from netkiller.kubernetes import *
+
+print("=" * 40, "ConfigMap", "=" * 40)
+config = ConfigMap()
+config.apiVersion('v1')
+config.metadata().name('test').namespace('default')
+config.data({'redis.conf':pss(
+    'pidfile /var/lib/redis/redis.pid\n'
+    'dir /var/lib/redis\n'
+    'port 6379\n'
+    'bind 0.0.0.0\n'
+    'appendonly yes\n'
+    'protected-mode no\n'
+    'requirepass 123456\n'
+    )
+    })
+config.debug()
+
+print("=" * 40, "Pod", "=" * 40)
+
+pod = Pod()
+pod.metadata().name('busybox')
+pod.spec().containers().name('test').image('busybox').command([ "/bin/sh","-c","cat /tmp/config/redis.conf" ]).volumeMounts([{'name':'config-volume','mountPath':'/tmp/config/redis.conf','subPath':'redis.conf'}])
+pod.spec().volumes().name('config-volume').configMap({'name':'test'}) # , 'items':[{'key':'redis.conf','path':'keys'}]
+pod.debug()
+
+print("=" * 40, "Compose", "=" * 40)
+compose = Compose('development')
+# compose.add(namespace)
+compose.add(config)
+compose.add(pod)
+
+compose.delete()
+compose.create()
+
+print("=" * 40, "Busybox", "=" * 40)
+os.system("sleep 10 &amp;&amp; kubectl logs busybox")			
+			
+		</pre>
+		<p>生成 yaml 内容</p>
+		<pre class="programlisting">
+			
+metadata:
+  name: test
+  namespace: default
+data:
+  redis.conf: |
+    pidfile /var/lib/redis/redis.pid
+    dir /var/lib/redis
+    port 6379
+    bind 0.0.0.0
+    appendonly yes
+    protected-mode no
+    requirepass 123456
+apiVersion: v1
+kind: ConfigMap
+---
+metadata:
+  name: busybox
+spec:
+  containers:
+    - name: test
+      image: busybox
+      command:
+        - /bin/sh
+        - -c
+        - cat /tmp/config/redis.conf
+      volumeMounts:
+        - name: config-volume
+          mountPath: /tmp/config/redis.conf
+          subPath: redis.conf
+  volumes:
+    - name: config-volume
+      configMap:
+        name: test
+apiVersion: v1
+kind: Pod			
+			
+		</pre>
+		<p>运行结果</p>
+		<pre class="screen">
+			
+configmap "test" deleted
+pod "busybox" deleted
+configmap/test created
+pod/busybox created
+======================================== Busybox ========================================
+pidfile /var/lib/redis/redis.pid
+dir /var/lib/redis
+port 6379
+bind 0.0.0.0
+appendonly yes
+protected-mode no
+requirepass 123456			
+			
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm65228318608"></a>5.3.5. Pod 挂载 ConfigMap 设置环境变量</h3></div></div></div>
+		
+		<pre class="programlisting">
+			
+import os,sys
+sys.path.insert(0, '/Users/neo/workspace/devops')
+from netkiller.kubernetes import *
+
+print("=" * 40, "ConfigMap", "=" * 40)
+config = ConfigMap()
+config.apiVersion('v1')
+config.metadata().name('test').namespace('default')
+config.data({'host':'localhost','port':'3306','user':'root','pass':'123456'})
+config.from_file('nginx.conf', '/etc/nginx/nginx.conf').from_env_file('redis.conf','redis.env')
+
+pod = Pod()
+pod.metadata().name('busybox')
+pod.spec().containers().name('test').image('busybox').command([ "/bin/sh","-c","env" ]).env([{'name':'DBHOST','valueFrom':{'configMapKeyRef':{'name':'test','key':'host'}}}])
+
+compose = Compose('development')
+compose.add(config)
+compose.add(pod)
+compose.delete()
+compose.create()
+
+print("=" * 40, "Busybox", "=" * 40)
+os.system("sleep 10 &amp;&amp; kubectl logs busybox")			
+			
+		</pre>
+		<p>输出结果</p>
+		<pre class="screen">
+			
+configmap "test" deleted
+pod "busybox" deleted
+configmap/test created
+pod/busybox created
+======================================== Busybox ========================================
+KUBERNETES_PORT=tcp://10.43.0.1:443
+KUBERNETES_SERVICE_PORT=443
+HOSTNAME=busybox
+SHLVL=1
+HOME=/root
+DBHOST=localhost
+KUBERNETES_PORT_443_TCP_ADDR=10.43.0.1
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+KUBERNETES_PORT_443_TCP_PORT=443
+KUBERNETES_PORT_443_TCP_PROTO=tcp
+KUBERNETES_SERVICE_PORT_HTTPS=443
+KUBERNETES_PORT_443_TCP=tcp://10.43.0.1:443
+KUBERNETES_SERVICE_HOST=10.43.0.1
+PWD=/			
+			
+		</pre>
+		<p>DBHOST=localhost</p>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="netkiller.ingress.ssl"></a>5.3.6. Ingress 挂载 SSL 证书</h3></div></div></div>
+		
+		<p>准备 SSL 证书，如果你没有，可以使用下面命令创建</p>
+		<pre class="screen">
+			
+制作私钥证书
+openssl genrsa -out ingress.key 2048
+
+制作公钥证书
+openssl req -new -x509 -days 3650 -key ingress.key -out ingress.crt
+
+mkdir -p cert/private
+cp ingress.crt cert/netkiller.cn.crt
+cp ingress.key cert/private/netkiller.cn.key
+			
+		</pre>
+		<p>编排脚本</p>
+		<pre class="programlisting">
+			
+import sys
+sys.path.insert(0, '/Users/neo/workspace/devops')
+from netkiller.kubernetes import *
+
+namespace = 'default'
+
+# namespace = Namespace()
+# namespace.metadata().name(namespace)
+# namespace.metadata().namespace(namespace)
+# namespace.debug()
+
+secret = Secret('ingress-secret')
+secret.metadata().name('tls').namespace(namespace)
+# secret.data({'tls.crt':' ','tls.key':' '})
+secret.cert('cert/netkiller.cn.crt')
+secret.key('cert/private/netkiller.cn.key')
+secret.type('kubernetes.io/tls')
+# secret.save()
+# secret.debug()
+# exit() 
+
+service = Service()
+service.metadata().name('nginx')
+service.metadata().namespace(namespace)
+service.spec().selector({'app': 'nginx'})
+service.spec().type('NodePort')
+service.spec().ports([{
+    'name': 'http',
+    'protocol': 'TCP',
+    'port': 80,
+    'targetPort': 80
+}])
+
+deployment = Deployment()
+deployment.apiVersion('apps/v1')
+
+deployment.metadata().name('nginx').labels(
+    {'app': 'nginx'}).namespace(namespace)
+deployment.spec().replicas(1)
+deployment.spec().selector({'matchLabels': {'app': 'nginx'}})
+deployment.spec().template().metadata().labels({'app': 'nginx'})
+deployment.spec().template().spec().containers().name('nginx').image(
+    'nginx:latest').ports([{
+        'containerPort': 80
+    }])
+# deployment.debug()
+# deployment.json()
+
+ingress = Ingress()
+ingress.apiVersion('networking.k8s.io/v1')
+ingress.metadata().name('nginx')
+ingress.metadata().namespace(namespace)
+ingress.metadata().annotations({'ingress.kubernetes.io/ssl-redirect': "true"})
+ingress.spec().tls([{'hosts':['www.netkiller.cn','admin.netkiller.cn'],'secretName':'tls'}])
+ingress.spec().rules([{
+    'host': 'www.netkiller.cn',
+    'http': {
+        'paths': [{
+            'path': '/',
+            'pathType': 'Prefix',
+            'backend': {
+                'service': {
+                    'name': 'nginx',
+                    'port': {
+                        'number': 80
+                    }
+                }
+            }
+        }]
+    }
+}])
+
+# ingress.debug()
+
+print("=" * 40, "Compose", "=" * 40)
+compose = Compose('development')
+# compose.add(namespace)
+compose.add(secret)
+compose.add(service)
+compose.add(deployment)
+compose.add(ingress)
+# compose.debug()
+# compose.save('/tmp/test.yaml')
+compose.delete()
+compose.create()
+
+print("=" * 40, "Busybox", "=" * 40)
+os.system("sleep 5")
+for cmd in ['kubectl get secret tls','kubectl get pods','kubectl get service','kubectl get deployment','kubectl get ingress'] :
+    os.system(cmd)
+    print("-" * 50)
+
+			
+		</pre>
+		<p>启动后使用 openssl 检查证书</p>
+		<pre class="screen">
+			
+neo@Netkiller-iMac ~&gt; openssl s_client -connect www.netkiller.cn:443
+CONNECTED(00000003)
+depth=0 CN = TRAEFIK DEFAULT CERT
+verify error:num=20:unable to get local issuer certificate
+verify return:1
+depth=0 CN = TRAEFIK DEFAULT CERT
+verify error:num=21:unable to verify the first certificate
+verify return:1
+---
+Certificate chain
+ 0 s:/CN=TRAEFIK DEFAULT CERT
+   i:/CN=TRAEFIK DEFAULT CERT
+---
+Server certificate
+-----BEGIN CERTIFICATE-----
+MIIDXjCCAkagAwIBAgIRAPLS5GFlqTUbZuNxXxu9SGEwDQYJKoZIhvcNAQELBQAw
+HzEdMBsGA1UEAxMUVFJBRUZJSyBERUZBVUxUIENFUlQwHhcNMjIwMTE0MDQwNDU2
+WhcNMjMwMTE0MDQwNDU2WjAfMR0wGwYDVQQDExRUUkFFRklLIERFRkFVTFQgQ0VS
+VDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALtuaTUNs89KKUm6dG8M
+JUcdqsNLsG0a369O+VjSSgJnrYb9BL8ZTCTYTu44y8cepH+mMdq1SVmDpXwyMVPu
+CuXYDnrK2n6Zdv9T9K59pKOu08GoRmF7kmxmA8d4UGbDR5D01AEjOLvd8EKzRJqi
+tB8KP5KEjdVUQYB7ZUy3EHSsfyM+grN/XbWn0Sfj7VGWnUBS+WG9Huvi+vgHwU5W
+r+JL5ojsWw7q6glG45x3iIjqYNaVWqRwuSoH905AIA9Q2mCpRjNNQJL1sUYxHFfd
+mYlOW47ovKIw/OR48lqlwZy8/YblDveIn66kEAF7Y3EGDQuUB21lSW6q7qNum7lq
+S5MCAwEAAaOBlDCBkTAOBgNVHQ8BAf8EBAMCA7gwEwYDVR0lBAwwCgYIKwYBBQUH
+AwEwDAYDVR0TAQH/BAIwADBcBgNVHREEVTBTglE0NWNjOThiNDQ0MTlmOTM2ODcw
+YTU5YTZkN2EyZWRhZC5lMWIyMDRmZTVjMTlhZGJjNWE4NjE3NjA0YzkxNGI4OS50
+cmFlZmlrLmRlZmF1bHQwDQYJKoZIhvcNAQELBQADggEBAG+BrjgG0Z8j4/G08eCJ
+elVpUaxCXzWEC6KgPmQPpgYGh98PcrZNe4E/FnaKJ9pjtA7NpG8Y2Ke+D3D8H+MQ
+hutT9+XtGRU93zxpT3SVxJLHQnx3511s0jAfj3sCxyvuv17bT+q8C0KjQf9k6HMT
+X/oBsND0HXrDbdsUK4f2sCdmql0CK/uAj0ibjfjajfCc5Ve5hQw1a5x2StCvQZAB
+6TO8YQpFR+TeIbyclr++tYLBBocl0E3nXFommYPt2zxiY1K129fNPRfmq+yKbuzV
+4u1KLRWIUJnab6Ue7ezJLCNT5T0bVXSG089yeaB/MdPRVkbAMHXF+AxQDUu9iZx+
+8Aw=
+-----END CERTIFICATE-----
+subject=/CN=TRAEFIK DEFAULT CERT
+issuer=/CN=TRAEFIK DEFAULT CERT
+---
+No client certificate CA names sent
+Server Temp Key: ECDH, X25519, 253 bits
+---
+SSL handshake has read 1454 bytes and written 289 bytes
+---
+New, TLSv1/SSLv3, Cipher is ECDHE-RSA-AES256-GCM-SHA384
+Server public key is 2048 bit
+Secure Renegotiation IS supported
+Compression: NONE
+Expansion: NONE
+No ALPN negotiated
+SSL-Session:
+    Protocol  : TLSv1.2
+    Cipher    : ECDHE-RSA-AES256-GCM-SHA384
+    Session-ID: 0A39917DAE8C45B5495FA7CDEF733CF524A117E070B37428C984550AB9382993
+    Session-ID-ctx: 
+    Master-Key: F9F5464856CE3D12437AC45843A07732C1A313E99240F6C8AAD6A8BEC957786237846A687B62C5A4A6362FD738B68F2D
+    TLS session ticket:
+    0000 - ca 1d cc 1f fa ea 48 88-f2 d8 b2 94 ac 32 d0 f4   ......H......2..
+    0010 - 4f ad 8c de 17 49 97 c8-7f 73 2d 3d 04 86 86 f0   O....I...s-=....
+    0020 - 9c 51 e3 60 50 c6 ab 70-3d a6 8a a5 5c 50 c7 04   .Q.`P..p=...\P..
+    0030 - 89 93 89 a6 d5 c5 73 ac-2a 3f f6 1c 7b 26 5f 70   ......s.*?..{&amp;_p
+    0040 - 0b 27 ae bd 5b 37 b0 f4-76 79 5d 9d 90 10 f5 24   .'..[7..vy]....$
+    0050 - ef 64 04 4b cd ad c3 83-2b f3 a4 37 6a 83 f8 ce   .d.K....+..7j...
+    0060 - 6e 18 e3 72 64 a9 c1 6c-7d 24 9a 1d f6 b7 76 d7   n..rd..l}$....v.
+    0070 - 68 ee 8f 76 27 06 bf 84-4d 6d 33 f3 b7 c5 4e d4   h..v'...Mm3...N.
+    0080 - 32                                                2
+
+    Start Time: 1642133830
+    Timeout   : 7200 (sec)
+    Verify return code: 21 (unable to verify the first certificate)
+---
+			
+			
+		</pre>
+		<p>证书载入正确，就可以使用 curl 命令或者Safari测试了</p>
+		<pre class="screen">
+			
+neo@Netkiller-iMac ~&gt; curl https://www.netkiller.cn
+			
+		</pre>
+		<p>如果是自签名证书，需要使用 -k 参数</p>
+		<pre class="screen">
+			
+neo@Netkiller-iMac ~&gt; curl -k https://www.netkiller.cn			
+			
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="StatefulSet"></a>5.3.7. StatefulSet 部署 Redis</h3></div></div></div>
+		
+		<pre class="programlisting">
+			
+import sys
+sys.path.insert(0, '/Users/neo/workspace/devops')
+from netkiller.kubernetes import *
+namespace = 'default'
+
+config = ConfigMap('redis')
+config.metadata().name('redis').namespace(namespace).labels({'app': 'redis'})
+config.data({'redis.conf': pss('''\
+pidfile /var/lib/redis/redis.pid
+dir /data
+port 6379
+bind 0.0.0.0
+appendonly yes
+protected-mode yes
+requirepass passw0rd
+maxmemory 2mb
+maxmemory-policy allkeys-lru
+''')})
+# config.debug()
+
+
+statefulSet = StatefulSet()
+statefulSet.metadata().name('redis')
+statefulSet.spec().replicas(1)
+statefulSet.spec().serviceName('redis')
+statefulSet.spec().selector({'matchLabels': {'app': 'redis'}})
+statefulSet.spec().template().metadata().labels({'app': 'redis'})
+# statefulSet.spec().template().spec().initContainers().name('busybox').image('busybox').command(['sh','-c','mkdir -p /var/lib/redis &amp;&amp; echo 2048 &gt; /proc/sys/net/core/somaxconn &amp;&amp; echo never &gt; /sys/kernel/mm/transparent_hugepage/enabled']).volumeMounts([
+#         {'name': 'data', 'mountPath': '/var/lib/redis'}])
+statefulSet.spec().template().spec().containers().name('redis').image(
+    'redis:latest').command(['sh', '-c', 'redis-server /usr/local/etc/redis.conf']).ports([{
+        'name': 'redis',
+        'protocol': 'TCP',
+        'containerPort': 6379
+    }]).volumeMounts([
+        {'name': 'config', 'mountPath': '/usr/local/etc/redis.conf',
+            'subPath': 'redis.conf'},
+        {'name': 'data', 'mountPath': '/data',
+            'subPath': 'default.conf'}
+    ]).imagePullPolicy('IfNotPresent')
+statefulSet.spec().template().spec().volumes().name(
+    'config').configMap({'name': 'redis'})
+statefulSet.spec().template().spec().volumes().name(
+    'data').hostPath({'path': '/var/lib/redis'})
+# statefulSet.debug()
+# exit()
+
+service = Service()
+service.metadata().name('redis')
+service.metadata().namespace(namespace).labels({'app': 'redis'})
+service.spec().selector({'app': 'redis'})
+# service.spec().type('NodePort')
+service.spec().ports([{
+    # 'name': 'redis',
+    # 'protocol': 'TCP',
+    'port': 6379,
+    'targetPort': 6379
+}])
+
+ingress = IngressRouteTCP()
+ingress.metadata().name('redis')
+ingress.metadata().namespace(namespace)
+ingress.spec().entryPoints(['redis'])
+ingress.spec().routes([{
+    'match': 'HostSNI(`*`)',
+    'services': [{
+        'name': 'redis',
+        'port': 6379
+    }]
+}])
+# ingress.debug()
+
+print("=" * 40, "Compose", "=" * 40)
+compose = Compose('development')
+# compose.add(namespace)
+compose.add(config)
+compose.add(statefulSet)
+compose.add(service)
+compose.add(ingress)
+compose.debug()
+# compose.save()
+compose.delete()
+compose.create()
+			
+		</pre>
+		<p>检查 redis 是否工作正常</p>
+		<pre class="screen">
+			
+neo@Netkiller-iMac ~&gt; kubectl get pods
+NAME                    READY   STATUS             RESTARTS   AGE
+nginx-88c84c4d8-gb5rg   1/1     Running            1          3d16h
+redis-0                 1/1     Running            0          14h
+busybox                 0/1     CrashLoopBackOff   256        21h
+
+neo@Netkiller-iMac ~&gt; kubectl exec -it "redis-0" bash
+kubectl exec [POD] [COMMAND] is DEPRECATED and will be removed in a future version. Use kubectl exec [POD] -- [COMMAND] instead.
+root@redis-0:/data# redis-cli -a passw0rd
+Warning: Using a password with '-a' or '-u' option on the command line interface may not be safe.
+127.0.0.1:6379&gt; set nickname netkiller
+OK
+127.0.0.1:6379&gt; get nickname
+"netkiller"
+127.0.0.1:6379&gt; 
+			
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="StorageClass"></a>5.3.8. StorageClass</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+storageClass = StorageClass('local-storage')
+storageClass.metadata().name('local-storage')
+storageClass.provisioner('kubernetes.io/no-provisioner')
+storageClass.volumeBindingMode('WaitForFirstConsumer')
+# storageClass.json()
+# storageClass.debug()		
+		
+		</pre>
+		<pre class="programlisting">
+		
+persistentVolume = PersistentVolume()
+persistentVolume.metadata().name('redis').annotations({'pv.kubernetes.io/provisioned-by': 'rancher.io/local-path'})
+persistentVolume.spec().capacity({'storage': '1Gi'})
+persistentVolume.spec().accessModes(['ReadWriteOnce'])
+persistentVolume.spec().persistentVolumeReclaimPolicy('Retain')
+persistentVolume.spec().storageClassName('local-path')
+# persistentVolume.spec().local('/opt/redis')
+persistentVolume.spec().hostPath({'path': '/var/lib/rancher/k3s/storage/redis', 'type': 'DirectoryOrCreate'})
+persistentVolume.spec().nodeAffinity({
+    'required':{
+      'nodeSelectorTerms':[
+       {'matchExpressions':[
+         {'key': 'kubernetes.io/hostname',
+          'operator': 'In',
+          'values':['node1']
+            }]
+        }]
+    }
+})		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="netkiller.mysql"></a>5.3.9. 部署 MySQL 到 kubernetes</h3></div></div></div>
+		
+		<pre class="programlisting">
+			
+from netkiller.kubernetes import *
+namespace = 'default'
+
+config = ConfigMap('mysql')
+config.metadata().name('mysql').namespace(namespace).labels({'app': 'mysql'})
+config.data({'mysql.cnf': pss('''\
+[mysqld]
+max_connections=2048
+max_execution_time=120
+connect_timeout=120
+max_allowed_packet=32M
+net_read_timeout=120
+net_write_timeout=120
+# --wait_timeout=60
+# --interactive_timeout=60
+
+sql_mode=STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION
+character-set-server=utf8mb4
+collation-server=utf8mb4_general_ci
+explicit_defaults_for_timestamp=true
+max_execution_time=0
+''')})
+config.data({'MYSQL_ROOT_PASSWORD': '123456', 'MYSQL_DATABASE': 'test',
+            'MYSQL_USER': 'test', 'MYSQL_PASSWORD': 'test'})
+# config.debug()
+
+
+storageClassName = 'manual'
+persistentVolume = PersistentVolume('mysql-pv')
+persistentVolume.metadata().name(
+    'mysql-pv').labels({'type': 'local'})
+persistentVolume.spec().storageClassName(storageClassName)
+persistentVolume.spec().capacity({'storage': '2Gi'}).accessModes(
+    ['ReadWriteOnce']).hostPath({'path': "/var/lib/mysql"})
+persistentVolume.debug()
+
+persistentVolumeClaim = PersistentVolumeClaim('mysql-pvc')
+persistentVolumeClaim.metadata().name('mysql-pvc')
+persistentVolumeClaim.spec().storageClassName(storageClassName)
+persistentVolumeClaim.spec().resources({'requests': {'storage':'2Gi'}})
+persistentVolumeClaim.spec().accessModes(
+    ['ReadWriteOnce'])
+persistentVolumeClaim.debug()
+# exit()
+
+
+statefulSet = StatefulSet()
+statefulSet.metadata().name('mysql')
+statefulSet.spec().replicas(1)
+statefulSet.spec().serviceName('mysql')
+statefulSet.spec().selector({'matchLabels': {'app': 'mysql'}})
+statefulSet.spec().template().metadata().labels({'app': 'mysql'})
+statefulSet.spec().replicas(1)
+statefulSet.spec().template().spec().containers().name('mysql').image(
+    'mysql:latest').ports([{
+        'name': 'mysql',
+        'protocol': 'TCP',
+        'containerPort': 3306
+    }]).env([{'name': 'MYSQL_ROOT_PASSWORD', 'value': '123456'}]).volumeMounts([
+        {'name': 'config', 'mountPath': '/etc/mysql/conf.d/mysql.cnf',
+            'subPath': 'mysql.cnf'},
+        {'name': 'data', 'mountPath': '/var/lib/mysql'}
+    ]).imagePullPolicy('IfNotPresent')
+statefulSet.spec().template().spec().volumes().name(
+    'config').configMap({'name': 'mysql'})
+statefulSet.spec().template().spec().volumes().name(
+    'data').persistentVolumeClaim('mysql-pvc')
+# statefulSet.debug()
+
+service = Service()
+service.metadata().name('mysql')
+service.metadata().namespace(namespace).labels({'app': 'mysql'})
+service.spec().selector({'app': 'mysql'})
+service.spec().type('NodePort')
+service.spec().ports([{
+    'name': 'mysql',
+    'protocol': 'TCP',
+    'port': 3306,
+    'targetPort': 3306
+}])
+
+print("=" * 40, "Compose", "=" * 40)
+compose = Compose('development')
+# compose.add(namespace)
+compose.add(config)
+compose.add(persistentVolume)
+compose.add(persistentVolumeClaim)
+compose.add(statefulSet)
+compose.add(service)
+compose.debug()
+# compose.save()
+compose.delete()
+compose.create()
+			
+		</pre>
+		<p></p>
+		<pre class="screen">
+			
+neo@Netkiller-iMac ~&gt; kubectl get pods
+NAME                    READY   STATUS             RESTARTS   AGE
+nginx-88c84c4d8-gb5rg   1/1     Running            1          4d
+redis-0                 1/1     Running            0          22h
+mysql-0                 1/1     Running            0          9m11s
+busybox                 0/1     CrashLoopBackOff   346        29h
+
+neo@Netkiller-iMac ~&gt; kubectl get service
+NAME         TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE
+kubernetes   ClusterIP   10.43.0.1       &lt;none&gt;        443/TCP          12d
+nginx        NodePort    10.43.125.134   &lt;none&gt;        80:31656/TCP     4d
+redis        ClusterIP   10.43.91.64     &lt;none&gt;        6379/TCP         22h
+mysql        NodePort    10.43.198.188   &lt;none&gt;        3306:32322/TCP   9m22s
+ 
+neo@Netkiller-iMac ~ [1]&gt; kubectl exec mysql-0 -it bash
+kubectl exec [POD] [COMMAND] is DEPRECATED and will be removed in a future version. Use kubectl exec [POD] -- [COMMAND] instead.
+
+root@mysql-0:/# mysql -uroot -p
+Enter password: 
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 9
+Server version: 8.0.27 MySQL Community Server - GPL
+
+Copyright (c) 2000, 2021, Oracle and/or its affiliates.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql&gt; show databases;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| mysql              |
+| performance_schema |
+| sys                |
++--------------------+
+4 rows in set (0.00 sec)
+
+mysql&gt; create database test;
+Query OK, 1 row affected (0.16 sec)
+
+mysql&gt; exit
+Bye
+root@mysql-0:/#			
+			
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="netkiller.mongodb"></a>5.3.10. MongoDB</h3></div></div></div>
+		
+		<pre class="programlisting">
+			
+import sys
+sys.path.insert(0, '/Users/neo/workspace/devops')
+from netkiller.kubernetes import *
+namespace = 'default'
+
+config = ConfigMap('mongo')
+config.metadata().name('mongo').namespace(namespace).labels({'app': 'mongo'})
+config.data({'mongod.cnf': pss('''\
+# mongod.conf
+
+# for documentation of all options, see:
+#   http://docs.mongodb.org/manual/reference/configuration-options/
+
+# Where and how to store data.
+storage:
+  dbPath: /var/lib/mongo
+  journal:
+    enabled: true
+#  engine:
+#  wiredTiger:
+
+# where to write logging data.
+systemLog:
+  destination: file
+  logAppend: true
+  path: /var/log/mongodb/mongod.log
+
+# network interfaces
+net:
+  port: 27017
+  bindIp: 0.0.0.0
+
+
+# how the process runs
+processManagement:
+  timeZoneInfo: /usr/share/zoneinfo
+
+security:
+  authorization: enabled
+
+#operationProfiling:
+
+#replication:
+
+#sharding:
+
+## Enterprise-Only Options:
+
+#auditLog:
+
+#snmp:
+''')})
+config.data({'mongo_ROOT_PASSWORD': '123456', 'mongo_DATABASE': 'test',
+            'mongo_USER': 'test', 'mongo_PASSWORD': 'test'})
+# config.debug()
+
+
+storageClassName = 'manual'
+persistentVolume = PersistentVolume('mongo-pv')
+persistentVolume.metadata().name(
+    'mongo-pv').labels({'type': 'local'})
+persistentVolume.spec().storageClassName(storageClassName)
+persistentVolume.spec().capacity({'storage': '2Gi'}).accessModes(
+    ['ReadWriteOnce']).hostPath({'path': "/var/lib/mongodb"})
+persistentVolume.debug()
+
+persistentVolumeClaim = PersistentVolumeClaim('mongo-pvc')
+persistentVolumeClaim.metadata().name('mongo-pvc')
+persistentVolumeClaim.spec().storageClassName(storageClassName)
+persistentVolumeClaim.spec().resources({'requests': {'storage':'2Gi'}})
+persistentVolumeClaim.spec().accessModes(
+    ['ReadWriteOnce'])
+persistentVolumeClaim.debug()
+# exit()
+
+
+statefulSet = StatefulSet()
+statefulSet.metadata().name('mongo')
+statefulSet.spec().replicas(1)
+statefulSet.spec().serviceName('mongo')
+statefulSet.spec().selector({'matchLabels': {'app': 'mongo'}})
+statefulSet.spec().template().metadata().labels({'app': 'mongo'})
+statefulSet.spec().replicas(1)
+statefulSet.spec().template().spec().containers().name('mongo').image(
+    'mongo:latest').ports([{
+        'name': 'mongo',
+        'protocol': 'TCP',
+        'containerPort': 27017
+    }]).env([
+        {'name': 'TZ', 'value': 'Asia/Shanghai'},
+        {'name': 'LANG', 'value': 'en_US.UTF-8'},
+        {'name': 'MONGO_INITDB_DATABASE', 'value': 'admin'},
+        {'name': 'MONGO_INITDB_ROOT_USERNAME', 'value': 'admin'},
+        {'name': 'MONGO_INITDB_ROOT_PASSWORD', 'value': 'A8nWiX7vitsqOsqoWVnTtv4BDG6uMbexYX9s'}
+    ]).volumeMounts([
+        {'name': 'config', 'mountPath': '/etc/mongod.conf',
+            'subPath': 'mongo.cnf'},
+        {'name': 'data', 'mountPath': '/var/lib/mongodb'}
+    ]).imagePullPolicy('IfNotPresent')
+statefulSet.spec().template().spec().volumes().name(
+    'config').configMap({'name': 'mongo'})
+statefulSet.spec().template().spec().volumes().name(
+    'data').persistentVolumeClaim('mongo-pvc')
+# statefulSet.debug()
+# exit()
+
+service = Service()
+service.metadata().name('mongo')
+service.metadata().namespace(namespace).labels({'app': 'mongo'})
+service.spec().selector({'app': 'mongo'})
+service.spec().type('NodePort')
+service.spec().ports([{
+    'name': 'mongo',
+    'protocol': 'TCP',
+    'port': 27017,
+    'targetPort': 27017
+}])
+
+ingress = IngressRouteTCP()
+ingress.metadata().name('mongo')
+ingress.metadata().namespace(namespace)
+ingress.spec().entryPoints(['mongo'])
+ingress.spec().routes([{
+    'match': 'HostSNI(`*`)',
+    'services': [{
+        'name': 'mongo',
+        'port': 27017,
+    }]
+}])
+# ingress.debug()
+
+print("=" * 40, "Compose", "=" * 40)
+compose = Compose('development')
+# compose.add(namespace)
+compose.add(config)
+compose.add(persistentVolume)
+compose.add(persistentVolumeClaim)
+compose.add(statefulSet)
+compose.add(service)
+compose.add(ingress)
+compose.debug()
+# compose.save()
+compose.delete()
+compose.create()
+			
+		</pre>
+		<p>进入容器，检查是否工作正常</p>
+		<pre class="screen">
+			
+neo@Netkiller-iMac ~&gt; kubectl get all
+NAME                        READY   STATUS             RESTARTS   AGE
+pod/mongo-0                 1/1     Running            0          164m
+pod/mysql-0                 1/1     Running            0          149m
+pod/nginx-88c84c4d8-dwz9x   1/1     Running            0          147m
+pod/redis-0                 1/1     Running            0          132m
+pod/busybox                 0/1     CrashLoopBackOff   436        2d2h
+
+NAME                 TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)           AGE
+service/kubernetes   ClusterIP   10.43.0.1       &lt;none&gt;        443/TCP           13d
+service/mongo        NodePort    10.43.135.49    &lt;none&gt;        27017:32598/TCP   164m
+service/mysql        NodePort    10.43.186.2     &lt;none&gt;        3306:32440/TCP    149m
+service/nginx        NodePort    10.43.235.124   &lt;none&gt;        80:32124/TCP      147m
+service/redis        NodePort    10.43.134.73    &lt;none&gt;        6379:30376/TCP    133m
+
+NAME                    READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/nginx   1/1     1            1           147m
+
+NAME                              DESIRED   CURRENT   READY   AGE
+replicaset.apps/nginx-88c84c4d8   1         1         1       147m
+
+NAME                     READY   AGE
+statefulset.apps/mongo   1/1     164m
+statefulset.apps/mysql   1/1     149m
+statefulset.apps/redis   1/1     133m
+
+neo@Netkiller-iMac ~&gt; kubectl exec -it mongo-0 -- bash
+root@mongo-0:/# ps ax
+  PID TTY      STAT   TIME COMMAND
+    1 ?        Ssl    1:43 mongod --auth --bind_ip_all
+  133 pts/0    Ss     0:00 bash
+  141 pts/0    R+     0:00 ps ax
+
+
+root@mongo-0:/# mongosh mongodb://admin:A8nWiX7vitsqOsqoWVnTtv4BDG6uMbexYX9s@localhost/admin
+
+
+Current Mongosh Log ID:	61e7acde14e7858c6d5dfcf6
+Connecting to:		mongodb://&lt;credentials&gt;@localhost/admin?directConnection=true&amp;serverSelectionTimeoutMS=2000
+Using MongoDB:		5.0.5
+Using Mongosh:		1.1.7
+
+For mongosh info see: https://docs.mongodb.com/mongodb-shell/
+
+
+To help improve our products, anonymous usage data is collected and sent to MongoDB periodically (https://www.mongodb.com/legal/privacy-policy).
+You can opt-out by running the disableTelemetry() command.
+
+------
+   The server generated these startup warnings when booting:
+   2022-01-19T11:30:22.969+08:00: Using the XFS filesystem is strongly recommended with the WiredTiger storage engine. See http://dochub.mongodb.org/core/prodnotes-filesystem
+------
+
+admin&gt; 
+Browserslist: caniuse-lite is outdated. Please run:
+npx browserslist@latest --update-db
+
+Why you should do it regularly:
+https://github.com/browserslist/browserslist#browsers-data-updating
+
+admin&gt; use test
+switched to db test
+test&gt; db.createCollection("mycollection")	
+{ ok: 1 }
+test&gt; exit
+root@mongo-0:/# exit
+exit
+
+			
+		</pre>
+		<p>端口转发</p>
+		<pre class="screen">
+			
+neo@Netkiller-iMac ~&gt; kubectl port-forward --address 0.0.0.0 service/mongo 27017
+Forwarding from 0.0.0.0:27017 -&gt; 27017
+			
+		</pre>
+		<p>远程登陆</p>
+		<pre class="screen">
+			
+[root@gitlab ~]# mongo mongodb://admin:A8nWiX7vitsqOsqoWVnTtv4BDG6uMbexYX9s@192.168.30.131/admin
+MongoDB shell version v5.0.5
+connecting to: mongodb://192.168.30.131:27017/admin?compressors=disabled&amp;gssapiServiceName=mongodb
+Implicit session: session { "id" : UUID("22b2d5ec-9643-492e-93df-12bb81ba21f4") }
+MongoDB server version: 5.0.5
+================
+Warning: the "mongo" shell has been superseded by "mongosh",
+which delivers improved usability and compatibility.The "mongo" shell has been deprecated and will be removed in
+an upcoming release.
+For installation instructions, see
+https://docs.mongodb.com/mongodb-shell/install/
+================
+---
+The server generated these startup warnings when booting: 
+        2022-01-19T11:30:22.969+08:00: Using the XFS filesystem is strongly recommended with the WiredTiger storage engine. See http://dochub.mongodb.org/core/prodnotes-filesystem
+---
+---
+        Enable MongoDB's free cloud-based monitoring service, which will then receive and display
+        metrics about your deployment (disk utilization, CPU, operation statistics, etc).
+
+        The monitoring data will be available on a MongoDB website with a unique URL accessible to you
+        and anyone you share the URL with. MongoDB may use this information to make product
+        improvements and to suggest MongoDB products and deployment options to you.
+
+        To enable free monitoring, run the following command: db.enableFreeMonitoring()
+        To permanently disable this reminder, run the following command: db.disableFreeMonitoring()
+---
+&gt; show databases
+admin   0.000GB
+config  0.000GB
+local   0.000GB
+test    0.000GB
+&gt; use test
+switched to db test
+&gt; show tables
+mycollection
+&gt; exit
+bye			
+			
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="netkiller.nacos"></a>5.3.11. Nacos</h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm65228295472"></a>5.3.11.1. 单节点部署</h4></div></div></div>
+			
+			<pre class="programlisting">
+				
+import sys
+sys.path.insert(0, '/Users/neo/workspace/devops')
+from netkiller.kubernetes import *
+
+namespace = 'default'
+
+# namespace = Namespace()
+# namespace.metadata().name(namespace)
+# namespace.metadata().namespace(namespace)
+# namespace.debug()
+
+config = ConfigMap('nacos')
+config.apiVersion('v1')
+config.metadata().name('nacos').namespace(namespace)
+config.from_file('custom.properties', 'nacos/init.d/custom.properties')
+config.data({'application.properties':pss('''\
+    # spring
+    server.servlet.contextPath=/nacos
+    server.contextPath=/nacos
+    server.port=8848
+    spring.datasource.platform=mysql
+    # nacos.cmdb.dumpTaskInterval=3600
+    # nacos.cmdb.eventTaskInterval=10
+    # nacos.cmdb.labelTaskInterval=300
+    # nacos.cmdb.loadDataAtStart=false
+    db.num=1
+    # db.url.0=jdbc:mysql://mysql-0.mysql:3306/nacos?characterEncoding=utf8&amp;connectTimeout=30000&amp;socketTimeout=30000&amp;autoReconnect=true&amp;useSSL=false&amp;serverTimezone=GMT%2B8
+    # db.url.1=jdbc:mysql://mysql-0.mysql:3306/nacos?characterEncoding=utf8&amp;connectTimeout=30000&amp;socketTimeout=30000&amp;autoReconnect=true&amp;useSSL=false&amp;serverTimezone=GMT%2B8
+    db.url.0=jdbc:mysql://192.168.30.12:3306/nacos?characterEncoding=utf8&amp;connectTimeout=30000&amp;socketTimeout=30000&amp;autoReconnect=true&amp;useSSL=false&amp;serverTimezone=GMT%2B8
+    db.url.1=jdbc:mysql://192.168.30.12:3306/nacos?characterEncoding=utf8&amp;connectTimeout=30000&amp;socketTimeout=30000&amp;autoReconnect=true&amp;useSSL=false&amp;serverTimezone=GMT%2B8
+    # db.url.1=jdbc:mysql://mysql-0.mysql.default.svc.cluster.local:3306/nacos?characterEncoding=utf8&amp;connectTimeout=3000&amp;socketTimeout=3000&amp;autoReconnect=true&amp;useSSL=false&amp;serverTimezone=Asia/Shanghai
+    db.user=nacos
+    db.password=nacos
+    ### The auth system to use, currently only 'nacos' is supported:
+    nacos.core.auth.system.type=nacos
+
+
+    ### The token expiration in seconds:
+    nacos.core.auth.default.token.expire.seconds=${NACOS_AUTH_TOKEN_EXPIRE_SECONDS:18000}
+
+    ### The default token:
+    nacos.core.auth.default.token.secret.key=${NACOS_AUTH_TOKEN:SecretKey012345678901234567890123456789012345678901234567890123456789}
+
+    ### Turn on/off caching of auth information. By turning on this switch, the update of auth information would have a 15 seconds delay.
+    nacos.core.auth.caching.enabled=${NACOS_AUTH_CACHE_ENABLE:false}
+    nacos.core.auth.enable.userAgentAuthWhite=${NACOS_AUTH_USER_AGENT_AUTH_WHITE_ENABLE:false}
+    nacos.core.auth.server.identity.key=${NACOS_AUTH_IDENTITY_KEY:serverIdentity}
+    nacos.core.auth.server.identity.value=${NACOS_AUTH_IDENTITY_VALUE:security}
+    server.tomcat.accesslog.enabled=${TOMCAT_ACCESSLOG_ENABLED:false}
+    server.tomcat.accesslog.pattern=%h %l %u %t "%r" %s %b %D
+    # default current work dir
+    server.tomcat.basedir=
+    ## spring security config
+    ### turn off security
+    nacos.security.ignore.urls=${NACOS_SECURITY_IGNORE_URLS:/,/error,/**/*.css,/**/*.js,/**/*.html,/**/*.map,/**/*.svg,/**/*.png,/**/*.ico,/console-fe/public/**,/v1/auth/**,/v1/console/health/**,/actuator/**,/v1/console/server/**}
+    # metrics for elastic search
+    management.metrics.export.elastic.enabled=false
+    management.metrics.export.influx.enabled=false
+
+    nacos.naming.distro.taskDispatchThreadCount=10
+    nacos.naming.distro.taskDispatchPeriod=200
+    nacos.naming.distro.batchSyncKeyCount=1000
+    nacos.naming.distro.initDataRatio=0.9
+    nacos.naming.distro.syncRetryDelay=5000
+    nacos.naming.data.warmup=true    
+'''    
+)})
+# config.save()
+# config.debug()
+
+# statefulSet = StatefulSet()
+deployment = StatefulSet()
+deployment.apiVersion('apps/v1')
+deployment.metadata().name('nacos').labels(
+    {'app': 'nacos'}).namespace(namespace)
+deployment.spec().replicas(1)
+deployment.spec().serviceName('nacos')
+deployment.spec().selector({'matchLabels': {'app': 'nacos'}})
+deployment.spec().template().metadata().labels({'app': 'nacos'})
+deployment.spec().template().spec().containers().name('nacos').image(
+    'nacos/nacos-server:2.0.3').env([
+        {'name': 'TZ', 'value': 'Asia/Shanghai'},
+        {'name': 'LANG', 'value': 'en_US.UTF-8'},
+        {'name': 'PREFER_HOST_MODE', 'value': 'hostname'},
+        {'name': 'MODE', 'value': 'standalone'},
+        {'name': 'SPRING_DATASOURCE_PLATFORM', 'value': 'mysql'},
+        {'name': 'JVM_XMX', 'value': '4g'},
+        {'name': 'NACOS_DEBUG', 'value': 'true'},
+        {'name': 'TOMCAT_ACCESSLOG_ENABLED', 'value': 'true'},
+    ]).ports([
+        {'containerPort': 8848},
+        {'containerPort': 9848},
+        {'containerPort': 9555}
+    ]).volumeMounts([
+        {'name': 'config', 'mountPath': '/home/nacos/conf/custom.properties', 'subPath': 'custom.properties'},
+        {'name': 'config', 'mountPath': '/home/nacos/conf/application.properties', 'subPath': 'application.properties'}
+]).resources({'limits':{'memory': "4Gi"}, 'requests': {'memory': "2Gi"}})
+# deployment.spec().template().spec().securityContext({'sysctls':[{'name': 'fs.file-max', 'value': '60000'}]})
+deployment.spec().template().spec().volumes().name(
+    'config').configMap({'name': 'nacos'})
+# deployment.debug()
+# deployment.json()
+
+service = Service()
+service.metadata().name('nacos')
+service.metadata().namespace(namespace)
+service.spec().selector({'app': 'nacos'})
+service.spec().type('ClusterIP')
+service.spec().ports([
+    {'name': 'http', 'protocol': 'TCP', 'port': 8848, 'targetPort': 8848},
+    {'name': 'rpc', 'protocol': 'TCP', 'port': 9848, 'targetPort': 9848},
+    # {'name': 'http', 'protocol': 'TCP', 'port': 9555, 'targetPort': 9555}
+])
+
+print("=" * 40, "Compose", "=" * 40)
+compose = Compose('development')
+# compose.add(namespace)
+compose.add(config)
+compose.add(deployment)
+compose.add(service)
+# compose.debug()
+compose.save()
+compose.delete()
+compose.create()
+
+print("=" * 40, "Busybox", "=" * 40)
+os.system("sleep 5")
+for cmd in ['kubectl get secret tls', 'kubectl get configmap', 'kubectl get pods', 'kubectl get service', 'kubectl get deployment', 'kubectl get ingress']:
+    os.system(cmd)
+    print("-" * 50)
+				
+				
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm65228296448"></a>5.3.11.2. 集群部署</h4></div></div></div>
+			
+			<pre class="programlisting">
+				
+import sys
+sys.path.insert(0, '/Users/neo/workspace/devops')
+from netkiller.kubernetes import *
+
+namespace = 'default'
+
+# namespace = Namespace()
+# namespace.metadata().name(namespace)
+# namespace.metadata().namespace(namespace)
+# namespace.debug()
+
+config = ConfigMap('nacos')
+config.apiVersion('v1')
+config.metadata().name('nacos').namespace(namespace)
+config.from_file('custom.properties', 'nacos/init.d/custom.properties')
+config.data({'application.properties':pss('''\
+    # spring
+    server.servlet.contextPath=/nacos
+    server.contextPath=/nacos
+    server.port=8848
+    spring.datasource.platform=mysql
+    # nacos.cmdb.dumpTaskInterval=3600
+    # nacos.cmdb.eventTaskInterval=10
+    # nacos.cmdb.labelTaskInterval=300
+    # nacos.cmdb.loadDataAtStart=false
+    db.num=1
+    # db.url.0=jdbc:mysql://mysql-0.mysql:3306/nacos?characterEncoding=utf8&amp;connectTimeout=30000&amp;socketTimeout=30000&amp;autoReconnect=true&amp;useSSL=false&amp;serverTimezone=GMT%2B8
+    # db.url.1=jdbc:mysql://mysql-0.mysql:3306/nacos?characterEncoding=utf8&amp;connectTimeout=30000&amp;socketTimeout=30000&amp;autoReconnect=true&amp;useSSL=false&amp;serverTimezone=GMT%2B8
+    # db.url.1=jdbc:mysql://mysql-0.mysql.default.svc.cluster.local:3306/nacos?characterEncoding=utf8&amp;connectTimeout=3000&amp;socketTimeout=3000&amp;autoReconnect=true&amp;useSSL=false&amp;serverTimezone=Asia/Shanghai
+    db.user=nacos
+    db.password=nacos
+    ### The auth system to use, currently only 'nacos' is supported:
+    nacos.core.auth.system.type=nacos
+
+
+    ### The token expiration in seconds:
+    nacos.core.auth.default.token.expire.seconds=${NACOS_AUTH_TOKEN_EXPIRE_SECONDS:18000}
+
+    ### The default token:
+    nacos.core.auth.default.token.secret.key=${NACOS_AUTH_TOKEN:SecretKey012345678901234567890123456789012345678901234567890123456789}
+
+    ### Turn on/off caching of auth information. By turning on this switch, the update of auth information would have a 15 seconds delay.
+    nacos.core.auth.caching.enabled=${NACOS_AUTH_CACHE_ENABLE:false}
+    nacos.core.auth.enable.userAgentAuthWhite=${NACOS_AUTH_USER_AGENT_AUTH_WHITE_ENABLE:false}
+    nacos.core.auth.server.identity.key=${NACOS_AUTH_IDENTITY_KEY:serverIdentity}
+    nacos.core.auth.server.identity.value=${NACOS_AUTH_IDENTITY_VALUE:security}
+    server.tomcat.accesslog.enabled=${TOMCAT_ACCESSLOG_ENABLED:false}
+    server.tomcat.accesslog.pattern=%h %l %u %t "%r" %s %b %D
+    # default current work dir
+    server.tomcat.basedir=
+    ## spring security config
+    ### turn off security
+    nacos.security.ignore.urls=${NACOS_SECURITY_IGNORE_URLS:/,/error,/**/*.css,/**/*.js,/**/*.html,/**/*.map,/**/*.svg,/**/*.png,/**/*.ico,/console-fe/public/**,/v1/auth/**,/v1/console/health/**,/actuator/**,/v1/console/server/**}
+    # metrics for elastic search
+    management.metrics.export.elastic.enabled=false
+    management.metrics.export.influx.enabled=false
+
+    nacos.naming.distro.taskDispatchThreadCount=10
+    nacos.naming.distro.taskDispatchPeriod=200
+    nacos.naming.distro.batchSyncKeyCount=1000
+    nacos.naming.distro.initDataRatio=0.9
+    nacos.naming.distro.syncRetryDelay=5000
+    nacos.naming.data.warmup=true    
+'''    
+)})
+# config.save()
+# config.debug()
+
+statefulSet = StatefulSet()
+statefulSet = StatefulSet()
+statefulSet.apiVersion('apps/v1')
+statefulSet.metadata().name('nacos').labels(
+    {'app': 'nacos'}).namespace(namespace)
+statefulSet.spec().replicas(3)
+statefulSet.spec().serviceName('nacos')
+statefulSet.spec().selector({'matchLabels': {'app': 'nacos'}})
+statefulSet.spec().template().metadata().labels({'app': 'nacos'})
+statefulSet.spec().template().spec().containers().name('nacos').image(
+    'nacos/nacos-server:latest').env([
+        {'name': 'TZ', 'value': 'Asia/Shanghai'},
+        {'name': 'LANG', 'value': 'en_US.UTF-8'},
+        {'name': 'PREFER_HOST_MODE', 'value': 'hostname'},
+        # {'name': 'MODE', 'value': 'standalone'},
+        
+        {'name': 'MODE', 'value': 'cluster'},
+        {'name': 'NACOS_REPLICAS', 'value': '3'},
+        {'name': 'NACOS_SERVERS', 'value': 'nacos-0.nacos.default.svc.cluster.local:8848 nacos-1.nacos.default.svc.cluster.local:8848 nacos-2.nacos.default.svc.cluster.local:8848'},
+
+
+        {'name': 'SPRING_DATASOURCE_PLATFORM', 'value': 'mysql'},
+        {'name': 'MYSQL_SERVICE_HOST', 'value': 'mysql-0.mysql.default.svc.cluster.local'},
+        {'name': 'MYSQL_SERVICE_PORT', 'value': '3306'},
+        {'name': 'MYSQL_SERVICE_DB_NAME', 'value': 'nacos'},
+        {'name': 'MYSQL_SERVICE_USER', 'value': 'nacos'},
+        {'name': 'MYSQL_SERVICE_PASSWORD', 'value': 'nacos'},
+        {'name': 'MYSQL_SERVICE_DB_PARAM', 'value': 'characterEncoding=utf8&amp;connectTimeout=1000&amp;socketTimeout=3000&amp;autoReconnect=true&amp;useSSL=false&amp;serverTimezone=Asia/Shanghai'},
+        {'name': 'JVM_XMX', 'value': '4g'},
+        {'name': 'NACOS_DEBUG', 'value': 'true'},
+        {'name': 'TOMCAT_ACCESSLOG_ENABLED', 'value': 'true'},
+    ]).ports([
+        {'containerPort': 8848},
+        {'containerPort': 9848},
+        {'containerPort': 9555}
+    ]).volumeMounts([
+        {'name': 'config', 'mountPath': '/home/nacos/conf/custom.properties', 'subPath': 'custom.properties'},
+        # {'name': 'config', 'mountPath': '/home/nacos/conf/application.properties', 'subPath': 'application.properties'}
+]).resources({'limits':{'memory': "4Gi"}, 'requests': {'memory': "2Gi"}})
+# statefulSet.spec().template().spec().securityContext({'sysctls':[{'name': 'fs.file-max', 'value': '60000'}]})
+statefulSet.spec().template().spec().volumes().name(
+    'config').configMap({'name': 'nacos'})
+statefulSet.debug()
+# statefulSet.json()
+
+service = Service()
+service.metadata().name('nacos')
+service.metadata().namespace(namespace)
+service.spec().selector({'app': 'nacos'})
+service.spec().type('ClusterIP')
+service.spec().ports([
+    {'name': 'http', 'protocol': 'TCP', 'port': 8848, 'targetPort': 8848},
+    {'name': 'rpc', 'protocol': 'TCP', 'port': 9848, 'targetPort': 9848},
+    # {'name': 'http', 'protocol': 'TCP', 'port': 9555, 'targetPort': 9555}
+])
+
+print("=" * 40, "Compose", "=" * 40)
+compose = Compose('development')
+# compose.add(namespace)
+compose.add(config)
+compose.add(statefulSet)
+compose.add(service)
+# compose.debug()
+compose.save()
+compose.delete()
+compose.create()
+
+print("=" * 40, "Busybox", "=" * 40)
+os.system("sleep 5")
+for cmd in ['kubectl get secret tls', 'kubectl get configmap', 'kubectl get pods', 'kubectl get service', 'kubectl get statefulset', 'kubectl get ingress']:
+    os.system(cmd)
+    print("-" * 50)
+				
+				
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm65228293040"></a>5.3.11.3. Ingress 部署</h4></div></div></div>
+			
+			<pre class="programlisting">
+				
+ingress = Ingress()
+ingress.apiVersion('networking.k8s.io/v1')
+ingress.metadata().name('nginx')
+ingress.metadata().namespace(namespace)
+ingress.metadata().annotations({'ingress.kubernetes.io/ssl-redirect': "true"})
+ingress.spec().tls(
+    [{'hosts': ['www.netkiller.cn', 'job.netkiller.cn','admin.netkiller.cn','nacos.netkiller.cn','test.netkiller.cn','cloud.netkiller.cn'], 'secretName':'tls'}])
+ingress.spec().rules([
+    {
+        'host': 'www.netkiller.cn',
+        'http': {
+            'paths': [{
+                'path': '/',
+                'pathType': 'Prefix',
+                'backend': {
+                    'service': {
+                        'name': 'nginx',
+                        'port': {
+                            'number': 80
+                        }
+                    }
+                }
+            }]
+        },
+    },
+    {
+        'host': 'nacos.netkiller.cn',
+        'http': {
+            'paths': [{
+                'path': '/',
+                'pathType': 'Prefix',
+                'backend': {
+                    'service': {
+                        'name': 'nacos',
+                        'port': {
+                            'number': 8848
+                        }
+                    }
+                }
+            }]
+        },
+    }
+])				
+				
+			</pre>
+			<p>测试地址 https://nacos.netkiller.cn/nacos/</p>
+		</div>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="netkiller.redis"></a>5.3.12. Redis</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+import sys, os
+
+sys.path.insert(0, '/Users/neo/workspace/devops')
+from netkiller.kubernetes import *
+
+namespace = 'default'
+
+config = ConfigMap('redis')
+config.apiVersion('v1')
+config.metadata().name('redis').namespace(namespace)
+# config.from_file('redis.conf', 'redis.conf')
+config.data({
+    'redis.conf':
+    pss('''\
+    pidfile /var/lib/redis/redis.pid
+    dir /data
+    port 6379
+    bind 0.0.0.0
+    appendonly yes
+    protected-mode yes
+    requirepass passw0rd
+    maxmemory 2mb
+    maxmemory-policy allkeys-lru  
+''')
+})
+
+# config.debug()
+
+persistentVolumeClaim = PersistentVolumeClaim()
+persistentVolumeClaim.metadata().name('redis')
+# persistentVolumeClaim.metadata().labels({'app': 'redis', 'type': 'longhorn'})
+# persistentVolumeClaim.spec().storageClassName('longhorn')
+persistentVolumeClaim.spec().storageClassName('local-path')
+persistentVolumeClaim.spec().accessModes(['ReadWriteOnce'])
+persistentVolumeClaim.spec().resources({'requests': {'storage': '2Gi'}})
+
+limits = {
+    'limits': {
+        'cpu': '200m',
+        'memory': '2Gi'
+    },
+    'requests': {
+        'cpu': '200m',
+        'memory': '1Gi'
+    }
+}
+
+livenessProbe = {
+    'tcpSocket': {
+        'port': 6379
+    },
+    'initialDelaySeconds': 30,
+    'failureThreshold': 3,
+    'periodSeconds': 10,
+    'successThreshold': 1,
+    'timeoutSeconds': 5
+}
+readinessProbe = {
+    'tcpSocket': {
+        'port': 6379
+    },
+    'initialDelaySeconds': 5,
+    'failureThreshold': 3,
+    'periodSeconds': 10,
+    'successThreshold': 1,
+    'timeoutSeconds': 5
+}
+
+statefulSet = StatefulSet()
+statefulSet.metadata().name('redis').labels({'app': 'redis'})
+statefulSet.spec().replicas(1)
+statefulSet.spec().serviceName('redis')
+statefulSet.spec().selector({'matchLabels': {'app': 'redis'}})
+statefulSet.spec().template().metadata().labels({'app': 'redis'})
+# statefulSet.spec().template().spec().nodeName('master')
+statefulSet.spec().template().spec().containers(
+).name('redis').image('redis:latest').ports([{
+    'containerPort': 6379
+}]).volumeMounts([
+    {
+        'name': 'data',
+        'mountPath': '/data'
+    },
+    {
+        'name': 'config',
+        'mountPath': '/usr/local/etc/redis.conf',
+        'subPath': 'redis.conf'
+    },
+]).resources(None).livenessProbe(livenessProbe).readinessProbe(readinessProbe)
+# .command(            ["sh -c redis-server /usr/local/etc/redis.conf"])
+statefulSet.spec().template().spec().volumes([{
+    'name': 'data',
+    'persistentVolumeClaim': {
+        'claimName': 'redis'
+    }
+}, {
+    'name': 'config',
+    'configMap': {
+        'name': 'redis'
+    }
+}])
+# statefulSet.spec().volumeClaimTemplates([{
+# 	'metadata':{'name': 'data'},
+#     'spec':{
+#       'accessModes': [ "ReadWriteOnce" ],
+#       'storageClassName': "local-path",
+#       'resources':{'requests':{'storage': '2Gi'}}
+# 	}
+# }])
+
+service = Service()
+service.metadata().name('redis')
+service.metadata().namespace(namespace)
+service.spec().selector({'app': 'redis'})
+service.spec().type('NodePort')
+service.spec().ports([{
+    'name': 'redis',
+    'protocol': 'TCP',
+    'port': 6379,
+    'targetPort': 6379
+}])
+# service.debug()
+
+compose = Compose('development')
+compose.add(config)
+compose.add(persistentVolumeClaim)
+compose.add(statefulSet)
+compose.add(service)
+# compose.debug()
+
+# kubeconfig = '/Volumes/Data/kubernetes/test'
+kubeconfig = os.path.expanduser('~/workspace/ops/k3s.yaml')
+
+kubernetes = Kubernetes(kubeconfig)
+kubernetes.compose(compose)
+kubernetes.main()
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="kube-explorer"></a>5.3.13. Kubernetes 部署 kube-explorer 图形化界面</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+import os
+import sys
+import time
+
+sys.path.insert(0, '/Users/neo/workspace/devops')
+
+from netkiller.kubernetes import *
+
+namespace = 'default'
+name = 'kube-explorer'
+labels = {'app': name}
+annotations = {}
+replicas = 1
+containerPort = 80
+image = 'cnrancher/kube-explorer:latest'
+monitor = '/dashboard'
+livenessProbe = {}
+readinessProbe = {}
+limits = {}
+
+compose = Compose('test', 'k3s.yaml')
+
+config = ConfigMap()
+config.metadata().name(name).namespace(namespace)
+config.from_file('k3s.yaml', 'k3s.yaml')
+compose.add(config)
+
+deployment = Deployment()
+deployment.metadata().name(name).labels(labels).namespace(namespace)
+deployment.metadata().annotations(annotations)
+deployment.spec().replicas(replicas)
+deployment.spec().progressDeadlineSeconds(10)
+deployment.spec().revisionHistoryLimit(10)
+deployment.spec().selector({'matchLabels': {'app': name}})
+# deployment.spec().strategy().type('RollingUpdate').rollingUpdate(1, 0)
+deployment.spec().template().metadata().labels({'app': name})
+
+livenessProbe = {
+    'failureThreshold': 3,
+    'httpGet': {
+        'path': monitor,
+        'port': containerPort,
+        'scheme': 'HTTP'
+    },
+    'initialDelaySeconds': 60,
+    'periodSeconds': 10,
+    'successThreshold': 1,
+    'timeoutSeconds': 5
+}
+readinessProbe = {
+    'failureThreshold': 3,
+    'httpGet': {
+        'path': monitor,
+        'port': containerPort,
+        'scheme': 'HTTP'
+    },
+    'initialDelaySeconds': 30,
+    'periodSeconds': 10,
+    'successThreshold': 1,
+    'timeoutSeconds': 5
+}
+
+# limits = {'limits': {
+# 	# 'cpu': '500m',
+# 	'memory': '1Gi'}, 'requests': {
+# 		# 'cpu': '500m',
+# 	'memory': '1Gi'}}
+
+deployment.spec().template().spec().containers().name(name).image(image).ports(
+    [{
+        'containerPort': containerPort
+    }]).imagePullPolicy('IfNotPresent').volumeMounts([
+        {
+            'name': 'config',
+            'mountPath': '/etc/rancher/k3s/k3s.yaml',
+            'subPath': 'k3s.yaml'
+        },
+    ]).resources(limits).livenessProbe(livenessProbe).readinessProbe(
+        readinessProbe).env([
+            # {
+            #     'name': 'CONTEXT',
+            #     'value': '/dashboard'
+            # },
+            {
+                'name': 'KUBECONFIG',
+                'value': '/etc/rancher/k3s/k3s.yaml'
+            },
+        ]).command([
+            'kube-explorer', '--kubeconfig=/etc/rancher/k3s/k3s.yaml',
+            '--http-listen-port=80', '--https-listen-port=0'
+        ])
+# ,'--ui-path=/dashboard'
+# --context value              [$CONTEXT]
+deployment.spec().template().spec().restartPolicy(Define.restartPolicy.Always)
+# deployment.spec().template().spec().nodeSelector({'group': 'backup'})
+# deployment.spec().template().spec().dnsPolicy(Define.dnsPolicy.ClusterFirst)
+deployment.spec().template().spec().volumes([{
+    'name': 'config',
+    'configMap': {
+        'name': name
+    }
+}])
+compose.add(deployment)
+
+service = Service()
+service.metadata().namespace(namespace)
+service.spec().selector({'app': name})
+service.metadata().name(name)
+service.spec().type(Define.Service.ClusterIP)
+service.spec().ports({
+    'name': 'http',
+    'protocol': 'TCP',
+    'port': 80,
+    'targetPort': containerPort
+})
+compose.add(service)
+
+ingress = Ingress()
+ingress.apiVersion('networking.k8s.io/v1')
+ingress.metadata().name(name)
+ingress.metadata().namespace(namespace)
+# ingress.metadata().annotations({'kubernetes.io/ingress.class': 'nginx'})
+pathType = Define.Ingress.pathType.Prefix
+
+ingress.spec().rules([{
+    # 'host': vhost['host'],
+    'http': {
+        'paths': [{
+            'path': '/dashboard/',
+            'pathType': pathType,
+            'backend': {
+                'service': {
+                    'name': name,
+                    'port': {
+                        'number': 80
+                    }
+                }
+            }
+        }, {
+            'path': '/v1/',
+            'pathType': pathType,
+            'backend': {
+                'service': {
+                    'name': name,
+                    'port': {
+                        'number': 80
+                    }
+                }
+            }
+        }, {
+            'path': '/k8s/',
+            'pathType': pathType,
+            'backend': {
+                'service': {
+                    'name': name,
+                    'port': {
+                        'number': 80
+                    }
+                }
+            }
+        }, {
+            'path': '/apis/',
+            'pathType': pathType,
+            'backend': {
+                'service': {
+                    'name': name,
+                    'port': {
+                        'number': 80
+                    }
+                }
+            }
+        }, {
+            'path': '/api/',
+            'pathType': pathType,
+            'backend': {
+                'service': {
+                    'name': name,
+                    'port': {
+                        'number': 80
+                    }
+                }
+            }
+        }]
+    }
+}])
+
+compose.add(ingress)
+
+kubernetes = Kubernetes()
+kubernetes.compose(compose)
+
+# kubernetes.debug()
+# kubernetes.environment({'test': 'k3s.yaml', 'grey': 'grey.yaml'})
+kubernetes.main()		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="netiller.elk"></a>5.3.14. ELK</h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm65228287264"></a>5.3.14.1. Elasticsearch</h4></div></div></div>
+			
+			<pre class="screen">
+			
+from doctest import master
+import sys, os
+
+sys.path.insert(0, '/Users/neo/workspace/devops')
+from netkiller.kubernetes import *
+
+# https://blog.csdn.net/weihua831/article/details/126172591
+# https://www.jianshu.com/p/05c93cf45971
+
+namespace = 'default'
+# image = 'docker.elastic.co/elasticsearch/elasticsearch:8.4.1'
+image = 'elasticsearch:8.4.1'
+
+compose = Compose('development')
+
+config = ConfigMap('elasticsearch')
+config.apiVersion('v1')
+config.metadata().name('elasticsearch').namespace(namespace).labels({
+    'app':
+    'elasticsearch',
+    'role':
+    'master'
+})
+# config.from_file('redis.conf', 'redis.conf')
+config.data({
+    'elasticsearch.yml':
+    pss('''\
+cluster.name: kubernetes-cluster
+node.name: ${HOSTNAME}
+discovery.seed_hosts: 
+  - elasticsearch-master-0
+cluster.initial_master_nodes: 
+  - elasticsearch-master-0.elasticsearch.default.svc.cluster.local
+  - elasticsearch-data-0.elasticsearch-data.default.svc.cluster.local
+  - elasticsearch-data-1.elasticsearch-data.default.svc.cluster.local
+  - elasticsearch-data-2.elasticsearch-data.default.svc.cluster.local
+
+network.host: 0.0.0.0
+transport.profiles.default.port: 9300
+
+xpack.security.enabled: false
+xpack.monitoring.collection.enabled: true
+''')
+})
+config.debug()
+compose.add(config)
+
+service = Service()
+service.metadata().name('elasticsearch')
+service.metadata().namespace(namespace)
+service.spec().selector({'app': 'elasticsearch', 'role': 'master'})
+# service.spec().type('NodePort')
+service.spec().ports([{
+    'name': 'restful',
+    'protocol': 'TCP',
+    'port': 9200,
+    'targetPort': 9200
+}, {
+    'name': 'transport',
+    'protocol': 'TCP',
+    'port': 9300,
+    'targetPort': 9300
+}])
+# service.debug()
+compose.add(service)
+
+service = Service()
+service.metadata().name('elasticsearch-data').labels({
+    'app': 'elasticsearch',
+    'role': 'data'
+})
+service.metadata().namespace(namespace)
+service.spec().selector({'app': 'elasticsearch', 'role': 'data'})
+# service.spec().type('NodePort')
+service.spec().ports([
+    # {'name': 'restful', 'protocol': 'TCP', 'port': 9200, 'targetPort': 9200},
+    {
+        'name': 'transport',
+        'protocol': 'TCP',
+        'port': 9300,
+        'targetPort': 9300
+    }
+])
+# service.debug()
+compose.add(service)
+
+limits = {
+    'limits': {
+        # 'cpu': '500m',
+        'memory': '1Gi'
+    },
+    'requests': {
+        # 'cpu': '500m',
+        'memory': '1Gi'
+    }
+}
+
+env = [
+    {
+        'name': 'TZ',
+        'value': 'Asia/Shanghai'
+    },
+    {
+        'name': 'LANG',
+        'value': 'en_US.UTF-8'
+    },
+    {
+        'name': 'cluster.name',
+        'value': 'kubernetes-cluster'
+    },
+    {
+        'name': 'node.name',
+        'valueFrom': {
+            'fieldRef': {
+                'fieldPath': 'metadata.name'
+            }
+        }
+    },
+    {
+        'name': 'cluster.initial_master_nodes',
+        'value': 'elasticsearch-master-0,elasticsearch-master-1'
+    },
+    {
+        'name':
+        'discovery.seed_hosts',
+        'value':
+        'elasticsearch-master-0.elasticsearch.default.svc.cluster.local,elasticsearch-data-0.elasticsearch-data.default.svc.cluster.local,elasticsearch-data-1.elasticsearch-data.default.svc.cluster.local,elasticsearch-data-2.elasticsearch-data.default.svc.cluster.local'
+    },
+    {
+        'name': 'xpack.security.enabled',
+        'value': 'false'
+    },
+    {
+        'name': 'ES_JAVA_OPTS',
+        'value': '-Xms2048m -Xmx2048m'
+    },
+    {
+        'name': 'RLIMIT_MEMLOCK',
+        'value': 'unlimited'
+    },
+]
+
+deployment = StatefulSet()
+deployment.metadata().name('elasticsearch-master').labels({
+    'app': 'elasticsearch',
+    'role': 'master'
+}).annotations({
+    # 'security.kubernetes.io/sysctls': 'vm.swappiness=0',
+    'security.kubernetes.io/sysctls': 'vm.max_map_count=262144',
+    # 'security.kubernetes.io/sysctls': 'vm.overcommit_memory=1'
+})
+deployment.spec().replicas(2).revisionHistoryLimit(10)
+deployment.spec().serviceName('elasticsearch')
+deployment.spec().selector(
+    {'matchLabels': {
+        'app': 'elasticsearch',
+        'role': 'master'
+    }})
+deployment.spec().template().metadata().labels({
+    'app': 'elasticsearch',
+    'role': 'master'
+})
+deployment.spec().template().spec().initContainers(
+).name('sysctl').image(image).imagePullPolicy('IfNotPresent').securityContext({
+    'privileged':
+    True,
+    'runAsUser':
+    0
+}).command([
+    "/bin/bash",
+    "-c",
+    "sysctl -w vm.max_map_count=262144 -w vm.swappiness=0 -w vm.overcommit_memory=1",
+])
+deployment.spec().template().spec().containers(
+).name('elasticsearch-master').image(image).resources(None).ports([
+    {
+        'name': 'restful',
+        'protocol': 'TCP',
+        'containerPort': 9200
+    },
+    {
+        'name': 'transport',
+        'protocol': 'TCP',
+        'containerPort': 9300
+    },
+]).volumeMounts([
+    #     {
+    #     'name': 'config',
+    #     'mountPath': '/usr/share/elasticsearch/config/elasticsearch.yml',
+    #     'subPath': 'elasticsearch.yml'
+    # },
+    {
+        'name': 'elasticsearch',
+        'mountPath': '/usr/share/elasticsearch/data'
+    }
+]).env(env).securityContext({'privileged': True})
+deployment.spec().template().spec().volumes([{
+    'name': 'config',
+    'configMap': {
+        'name': 'elasticsearch'
+    }
+}, {
+    'name': 'elasticsearch',
+    'emptyDir': {}
+}])
+# deployment.debug()
+compose.add(deployment)
+
+livenessProbe = {
+    'tcpSocket': {
+        'port': 9300
+    },
+    'initialDelaySeconds': 60,
+    'failureThreshold': 3,
+    'periodSeconds': 10,
+    'successThreshold': 1,
+    'timeoutSeconds': 5
+}
+readinessProbe = {
+    'tcpSocket': {
+        'port': 9300
+    },
+    'initialDelaySeconds': 5,
+    'failureThreshold': 3,
+    'periodSeconds': 10,
+    'successThreshold': 1,
+    'timeoutSeconds': 5
+}
+
+statefulSet = StatefulSet()
+statefulSet.metadata().name('elasticsearch-data').labels({
+    'app': 'elasticsearch',
+    'role': 'data'
+}).annotations({
+    # 'security.kubernetes.io/sysctls': 'vm.swappiness=0',
+    'security.kubernetes.io/sysctls': 'vm.max_map_count=262144',
+    # 'security.kubernetes.io/sysctls': 'vm.overcommit_memory=1'
+})
+statefulSet.spec().replicas(3).revisionHistoryLimit(10)
+statefulSet.spec().serviceName('elasticsearch-data')
+statefulSet.spec().selector(
+    {'matchLabels': {
+        'app': 'elasticsearch',
+        'role': 'data'
+    }})
+statefulSet.spec().template().metadata().labels({
+    'app': 'elasticsearch',
+    'role': 'data'
+})
+statefulSet.spec().template().spec().initContainers(
+).name('sysctl').image(image).imagePullPolicy('IfNotPresent').securityContext({
+    'privileged':
+    True,
+    'runAsUser':
+    0
+}).command([
+    "/bin/bash",
+    "-c",
+    "sysctl -w vm.max_map_count=262144 -w vm.swappiness=0 -w vm.overcommit_memory=1",
+])
+statefulSet.spec().template().spec().containers(
+).name('elasticsearch-data').image(image).ports([
+    # {'name': 'restful', 'protocol': 'TCP', 'containerPort': 9200},
+    {
+        'name': 'transport',
+        'protocol': 'TCP',
+        'containerPort': 9300
+    }
+]).volumeMounts([
+#     {
+#     'name': 'config',
+#     'mountPath': '/usr/share/elasticsearch/config/elasticsearch.yml',
+#     'subPath': 'elasticsearch.yml'
+# }, 
+{
+    'name': 'elasticsearch',
+    'mountPath': '/usr/share/elasticsearch/data'
+}]).env(env).securityContext({
+    'privileged': True
+}).resources(None).livenessProbe(livenessProbe).readinessProbe(readinessProbe)
+statefulSet.spec().template().spec().volumes([
+    {
+        'name': 'config',
+        'configMap': {
+            'name': 'elasticsearch'
+        }
+    }
+])
+# statefulSet.spec().volumeClaimTemplates('a').metadata().name('elasticsearch')
+# statefulSet.spec().volumeClaimTemplates('a').spec().resources({'requests':{'storage': '1Gi'}}).accessModes(['ReadWriteOnce']).storageClassName('local-path')
+statefulSet.spec().volumeClaimTemplates([{
+    'metadata': {
+        'name': 'elasticsearch'
+    },
+    'spec': {
+        'accessModes': ["ReadWriteOnce"],
+        #   'storageClassName': "longhorn-storage",
+        'storageClassName': "local-path",
+        'resources': {
+            'requests': {
+                'storage': '100Gi'
+            }
+        }
+    }
+}])
+# statefulSet.debug()
+compose.add(statefulSet)
+
+ingress = Ingress()
+ingress.apiVersion('networking.k8s.io/v1')
+ingress.metadata().name('elasticsearch').labels({
+    'app': 'elasticsearch',
+    'role': 'master'
+})
+ingress.metadata().namespace(namespace)
+# ingress.metadata().annotations({'kubernetes.io/ingress.class': 'nginx'})
+ingress.spec().rules([{
+    'host': 'es.netkiller.cn',
+    'http': {
+        'paths': [{
+            'pathType': Define.Ingress.pathType.Prefix,
+            'path': '/',
+            'backend': {
+                'service': {
+                    'name': 'elasticsearch',
+                    'port': {
+                        'number': 9200
+                    }
+                }
+            }
+        }]
+    }
+}])
+# ingress.debug()
+compose.add(ingress)
+# compose.debug()
+
+# kubeconfig = '/Volumes/Data/kubernetes/test'
+# kubeconfig =  os.path.expanduser('~/workspace/opsk3d-test.yaml')
+kubeconfig = os.path.expanduser('~/workspace/ops/ensd/k3s.yaml')
+
+kubernetes = Kubernetes(kubeconfig)
+kubernetes.compose(compose)
+kubernetes.main()			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm65228286032"></a>5.3.14.2. Kibana</h4></div></div></div>
+			
+			<pre class="screen">
+			
+import sys, os
+
+sys.path.insert(0, '/Users/neo/workspace/devops')
+from netkiller.kubernetes import *
+
+namespace = 'default'
+
+config = ConfigMap('kibana')
+config.apiVersion('v1')
+config.metadata().name('kibana').namespace(namespace)
+# config.from_file('redis.conf', 'redis.conf')
+config.data({
+    'kibana.yml':
+    pss('''\
+server.name: kibana
+server.host: "0"
+server.basePath: "/kibana"
+monitoring.ui.container.elasticsearch.enabled: true
+xpack.security.enabled: true
+elasticsearch.hosts: [ "http://elasticsearch:9200" ]
+elasticsearch.username: elastic
+elasticsearch.password: I3KEj0MhUmGxKyd510MhUmGxKydSt
+''')
+})
+
+limits = {
+    'limits': {
+        'cpu': '200m',
+        'memory': '2Gi'
+    },
+    'requests': {
+        'cpu': '200m',
+        'memory': '1Gi'
+    }
+}
+
+livenessProbe = {
+    'tcpSocket': {
+        'port': 6379
+    },
+    'initialDelaySeconds': 30,
+    'failureThreshold': 3,
+    'periodSeconds': 10,
+    'successThreshold': 1,
+    'timeoutSeconds': 5
+}
+readinessProbe = {
+    'tcpSocket': {
+        'port': 6379
+    },
+    'initialDelaySeconds': 5,
+    'failureThreshold': 3,
+    'periodSeconds': 10,
+    'successThreshold': 1,
+    'timeoutSeconds': 5
+}
+
+deployment = Deployment()
+deployment.metadata().name('kibana').labels({
+    'app': 'kibana'
+}).namespace(namespace)
+deployment.spec().replicas(1)
+deployment.spec().revisionHistoryLimit(10)
+# deployment.spec().serviceName('redis')
+deployment.spec().selector({'matchLabels': {'app': 'kibana'}})
+deployment.spec().strategy().type('RollingUpdate').rollingUpdate('25%','25%')
+deployment.spec().template().metadata().labels({'app': 'kibana'})
+deployment.spec().template().spec().containers().name('kibana').image(
+    'kibana:8.4.1').ports([{
+        'name': 'http',
+        'containerPort': 5601,
+        'protocol': 'TCP'
+    }]).env([
+        {
+            'name': 'TZ',
+            'value': 'Asia/Shanghai'
+        },
+        {
+            'name': 'ELASTICSEARCH_HOSTS',
+            'value': 'http://elasticsearch.default.svc.cluster.local:9200'
+        },
+    ])
+deployment.spec().template().spec().tolerations([{
+    'key': 'node-role.kubernetes.io/master',
+    'effect': 'NoSchedule'
+}])
+# .volumeMounts([
+    # {
+    #     'name': 'config',
+    #     'mountPath': '/usr/share/kibana/config/kibana.yml',
+    #     'subPath': 'kibana.yml'
+    # },
+# ])
+# .resources(None).livenessProbe(livenessProbe).readinessProbe(readinessProbe)
+
+# deployment.spec().template().spec().volumes([{
+#     'name': 'config',
+#     'configMap': {
+#         'name': 'kibana'
+#     }
+# }])
+
+service = Service()
+service.metadata().name('kibana')
+service.metadata().namespace(namespace)
+service.spec().selector({'app': 'kibana'})
+service.spec().type('ClusterIP')
+service.spec().ports([{
+    'name': 'http',
+    'protocol': 'TCP',
+    'port': 80,
+    'targetPort': 5601
+}])
+# service.debug()
+
+ingress = Ingress()
+ingress.apiVersion('networking.k8s.io/v1')
+ingress.metadata().name('kibana').labels({
+    'app': 'kibana',
+})
+ingress.metadata().namespace(namespace)
+# ingress.metadata().annotations({'kubernetes.io/ingress.class': 'nginx'})
+ingress.spec().rules([
+    {
+        'host': 'kibana.netkiller.cn',
+        'http': {
+            'paths': [{
+                'pathType': Define.Ingress.pathType.Prefix,
+                'path': '/',
+                'backend': {
+                    'service': {
+                        'name': 'kibana',
+                        'port': {
+                            'number': 80
+                        }
+                    }
+                }
+            }]
+        }
+    }
+])
+
+compose = Compose('development')
+compose.add(config)
+compose.add(deployment)
+compose.add(service)
+compose.add(ingress)
+# compose.debug()
+
+# kubeconfig = '/Volumes/Data/kubernetes/test'
+kubeconfig = os.path.expanduser('~/workspace/ops/ensd/k3s.yaml')
+
+kubernetes = Kubernetes(kubeconfig)
+kubernetes.compose(compose)
+kubernetes.main()			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm65228284800"></a>5.3.14.3. 验证是否工作正常</h4></div></div></div>
+			
+			<pre class="screen">
+			
+neo@MacBook-Pro-Neo ~&gt; curl -s -X GET "http://es.netkiller.cn/_cat/nodes?v=true&amp;pretty"
+ip          heap.percent ram.percent cpu load_1m load_5m load_15m node.role   master name
+10.42.2.95            24          19   0    3.79    1.89     0.84 cdfhilmrstw -      elasticsearch-data-2
+10.42.1.221           19          20   0    0.03    0.13     0.21 cdfhilmrstw -      elasticsearch-data-0
+10.42.0.186           20          41   0    0.01    0.14     0.19 cdfhilmrstw -      elasticsearch-data-1
+10.42.2.94            21          19   0    3.79    1.89     0.84 cdfhilmrstw -      elasticsearch-master-0
+10.42.1.220           34          20   0    0.03    0.13     0.21 cdfhilmrstw *      elasticsearch-master-1			
+			
+			</pre>
+			<pre class="screen">
+			
+neo@MacBook-Pro-Neo ~&gt; curl -s -X GET "http://es.netkiller.cn/_cat/health?v&amp;pretty"
+epoch      timestamp cluster            status node.total node.data shards pri relo init unassign pending_tasks max_task_wait_time active_shards_percent
+1662963543 06:19:03  kubernetes-cluster green           5         5      8   4    0    0        0             0                  -                100.0%		
+			
+			</pre>
+		</div>
+	</div>
+    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="sonarqube"></a>5.3.15. sonarqube</h3></div></div></div>
+        
+        <pre class="screen">
+             
+import sys, os
+
+sys.path.insert(0, '/Users/neo/workspace/GitHub/devops')
+from netkiller.kubernetes import *
+
+namespace = 'default'
+
+service = Service()
+service.metadata().name('sonarqube')
+service.metadata().namespace(namespace)
+service.spec().selector({'app': 'sonarqube'})
+service.spec().type('NodePort')
+service.spec().ports([{
+    'name': 'sonarqube',
+    'protocol': 'TCP',
+    'port': 80,
+    'targetPort': 9000
+}])
+# service.debug()
+
+# persistentVolumeClaim = PersistentVolumeClaim()
+# persistentVolumeClaim.metadata().name('sonarqube')
+# persistentVolumeClaim.metadata().namespace(namespace)
+# persistentVolumeClaim.metadata().labels({'app': 'sonarqube', 'type': 'longhorn'})
+# persistentVolumeClaim.spec().storageClassName('longhorn')
+# persistentVolumeClaim.spec().accessModes(['ReadWriteOnce'])
+# persistentVolumeClaim.spec().resources({'requests': {'storage': '2Gi'}})
+
+statefulSet = StatefulSet()
+statefulSet.metadata().namespace(namespace)
+statefulSet.metadata().name('sonarqube').labels({'app': 'sonarqube'})
+statefulSet.spec().replicas(1)
+statefulSet.spec().serviceName('sonarqube')
+statefulSet.spec().selector({'matchLabels': {'app': 'sonarqube'}})
+statefulSet.spec().template().metadata().labels({'app': 'sonarqube'})
+# statefulSet.spec().template().spec().nodeName('master')
+
+statefulSet.spec().template().spec().containers(
+).name('postgresql').image('postgres:latest').ports([{
+    'containerPort': 5432
+}]).env([
+        {'name': 'TZ', 'value': 'Asia/Shanghai'},
+        {'name': 'LANG', 'value': 'en_US.UTF-8'},
+        {'name': 'POSTGRES_USER', 'value': 'sonar'},
+        {'name': 'POSTGRES_PASSWORD', 'value': 'sonar'}
+]).volumeMounts([
+    {
+        'name': 'postgresql',
+        'mountPath': '/var/lib/postgresql'
+    },
+    {
+        'name': 'postgresql',
+        'mountPath': '/var/lib/postgresql/data',
+        'subPath' : 'data'
+    },
+])
+
+statefulSet.spec().template().spec().containers(
+).name('sonarqube').image('sonarqube:community').ports([{
+    'containerPort': 9000
+}]).env([
+        {'name': 'TZ', 'value': 'Asia/Shanghai'},
+        {'name': 'LANG', 'value': 'en_US.UTF-8'},
+        {'name': 'SONAR_JDBC_URL', 'value': 'jdbc:postgresql://localhost:5432/sonar'},
+        {'name': 'SONAR_JDBC_USERNAME', 'value': 'sonar'},
+        {'name': 'SONAR_JDBC_PASSWORD', 'value': 'sonar'}
+]).resources(
+#     {
+#     'limits': {
+#         'cpu': '500m',
+#         'memory': '2Gi'
+#     },
+#     'requests': {
+#         'cpu': '500m',
+#         'memory': '2Gi'
+#     }
+# }
+).livenessProbe(
+#     {
+#     'httpGet': {
+#         'port': 9000,
+#         'path': '/'
+#     },
+#     'initialDelaySeconds': 30,
+#     'failureThreshold': 3,
+#     'periodSeconds': 10,
+#     'successThreshold': 1,
+#     'timeoutSeconds': 5
+# }
+).readinessProbe(
+#     {
+#     'httpGet': {
+#         'port': 9000,
+#         'path': '/'
+#     },
+#     'initialDelaySeconds': 5,
+#     'failureThreshold': 3,
+#     'periodSeconds': 10,
+#     'successThreshold': 1,
+#     'timeoutSeconds': 5
+# }
+).volumeMounts([
+    {
+        'name': 'sonarqube',
+        'mountPath': '/opt/sonarqube/data',
+        'subPath' : 'data'
+    },
+    {
+        'name': 'sonarqube',
+        'mountPath': '/opt/sonarqube/extensions',
+        'subPath' : 'extensions'
+    },
+]).securityContext({'privileged': True})
+       
+# .args(['--appendonly yes','--requirepass sonarqubepass2021'])
+# .command(["sh -c sonarqube-server /usr/local/etc/sonarqube.conf"])
+statefulSet.spec().template().spec().volumes([
+    {
+    'name': 'sonarqube',
+    'persistentVolumeClaim': {
+        'claimName': 'sonarqube'
+    }
+},
+ {
+    'name': 'postgresql',
+    'persistentVolumeClaim': {
+        'claimName': 'postgresql'
+    }
+}
+])
+statefulSet.spec().volumeClaimTemplates([{
+	'metadata':{'name': 'sonarqube'},
+    'spec':{
+      'accessModes': [ "ReadWriteOnce" ],
+      'storageClassName': "local-path",
+      'resources':{'requests':{'storage': '2Gi'}}
+	}
+},{
+	'metadata':{'name': 'postgresql'},
+    'spec':{
+      'accessModes': [ "ReadWriteOnce" ],
+      'storageClassName': "local-path",
+      'resources':{'requests':{'storage': '2Gi'}}
+	}
+}
+])
+
+
+ingress = Ingress()
+ingress.apiVersion('networking.k8s.io/v1')
+ingress.metadata().name('sonarqube')
+ingress.metadata().namespace(namespace)
+# ingress.metadata().annotations({'kubernetes.io/ingress.class': 'nginx'})
+ingress.spec().rules([
+{
+    'host': 'sonarqube.netkiller.cn',
+    'http':{
+        'paths': [{
+            'pathType': Define.Ingress.pathType.Prefix,
+            'path': '/', 
+            'backend':{
+                'service':{
+                    'name':'sonarqube', 
+                    'port':{'number': 80}
+                }
+            }}]}
+},{
+    'http':{
+        'paths': [{
+            'pathType': Define.Ingress.pathType.Prefix,
+            'path': '/sonarqube', 
+            'backend':{
+                'service':{
+                    'name':'sonarqube', 
+                    'port':{'number': 80}
+                }
+            }}]}
+}
+
+])
+
+compose = Compose('development')
+
+# compose.add(persistentVolumeClaim)
+compose.add(service)
+compose.add(statefulSet)
+compose.add(ingress)
+# compose.debug()
+
+kubeconfig = '/Users/neo/workspace/kubernetes/office.yaml'
+# kubeconfig = os.path.expanduser('~/workspace/ops/k3s.yaml')
+
+kubernetes = Kubernetes(kubeconfig)
+kubernetes.compose(compose)
+kubernetes.main()            
+            
+        </pre>
+    </div>
+</div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
+window.changyan.api.config({
+appid: 'cyvwjQUG3',
+conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
+});
+</script><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="netkiller.docker.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="../vm/index.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">5.2. 使用 python 优雅地编排 Docker 容器 </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 6 章 Virtual Machine(虚拟机)</td></tr></table></div><script xmlns="">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11694057-1', 'auto');
+  ga('send', 'pageview');
+
+</script><script xmlns="" async="async">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script xmlns="" async="async">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script></body></html>
