@@ -16,7 +16,15 @@
 	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
 	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">2.3. 按例</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="podman.manual.html">上一页</a> </td><th width="60%" align="center">第 2 章 Podman</th><td width="20%" align="right"> <a accesskey="n" href="../kubernetes/index.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="podman.example"></a>2.3. 按例</h2></div></div></div>
     
-    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm65229158528"></a>2.3.1. mysql</h3></div></div></div>
+    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm503889095440"></a>2.3.1. podman run 用法</h3></div></div></div>
+        
+        <pre class="screen">
+    	
+podman run -v ~/.m2:/root/.m2 -v /root/bottleneck:/root/bottleneck -w /root/bottleneck maven:latest mvn package
+    	
+    	</pre>
+    </div>
+    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm503889094112"></a>2.3.2. mysql</h3></div></div></div>
         
         <pre class="screen">
              
@@ -63,6 +71,359 @@ mysql&gt;
              
 alter user 'root'@'%' identified with mysql_native_password by '密码';            
             
+        </pre>
+    </div>
+    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm503889090480"></a>2.3.3. 制作镜像</h3></div></div></div>
+        
+        <pre class="screen">
+         
+[root@localhost Maven]# podman pull maven:3-openjdk-18
+[root@localhost Maven]# podman run -it --rm --name maven --entrypoint=sh maven:3-openjdk-18 -c "cat /usr/share/maven/conf/settings.xml" &gt; settings.xml
+[root@localhost Maven]# dos2unix settings.xml
+        
+        </pre>
+        <p>修改 settings.xml 文件，加入国内镜像</p>
+        <pre class="screen">
+         
+[root@localhost Maven]# cat settings.xml 
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+
+&lt;!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+--&gt;
+
+&lt;!--
+    | This is the configuration file for Maven. It can be specified at two levels:
+    |
+    |  1. User Level. This settings.xml file provides configuration for a single user,
+    |                 and is normally provided in ${user.home}/.m2/settings.xml.
+    |
+    |                 NOTE: This location can be overridden with the CLI option:
+    |
+    |                 -s /path/to/user/settings.xml
+    |
+    |  2. Global Level. This settings.xml file provides configuration for all Maven
+    |                 users on a machine (assuming they're all using the same Maven
+    |                 installation). It's normally provided in
+    |                 ${maven.conf}/settings.xml.
+    |
+    |                 NOTE: This location can be overridden with the CLI option:
+    |
+    |                 -gs /path/to/global/settings.xml
+    |
+    | The sections in this sample file are intended to give you a running start at
+    | getting the most out of your Maven installation. Where appropriate, the default
+    | values (values used when the setting is not specified) are provided.
+    |
+    |--&gt;
+&lt;settings xmlns="http://maven.apache.org/SETTINGS/1.2.0"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 https://maven.apache.org/xsd/settings-1.2.0.xsd"&gt;
+    &lt;!-- localRepository
+    | The path to the local repository maven will use to store artifacts.
+    |
+    | Default: ${user.home}/.m2/repository
+    &lt;localRepository&gt;/path/to/local/repo&lt;/localRepository&gt;
+    --&gt;
+
+    &lt;!-- interactiveMode
+    | This will determine whether maven prompts you when it needs input. If set to false,
+    | maven will use a sensible default value, perhaps based on some other setting, for
+    | the parameter in question.
+    |
+    | Default: true
+    &lt;interactiveMode&gt;true&lt;/interactiveMode&gt;
+    --&gt;
+
+    &lt;!-- offline
+    | Determines whether maven should attempt to connect to the network when executing a build.
+    | This will have an effect on artifact downloads, artifact deployment, and others.
+    |
+    | Default: false
+    &lt;offline&gt;false&lt;/offline&gt;
+    --&gt;
+
+    &lt;!-- pluginGroups
+    | This is a list of additional group identifiers that will be searched when resolving plugins by their prefix, i.e.
+    | when invoking a command line like "mvn prefix:goal". Maven will automatically add the group identifiers
+    | "org.apache.maven.plugins" and "org.codehaus.mojo" if these are not already contained in the list.
+    |--&gt;
+    &lt;pluginGroups&gt;
+    &lt;!-- pluginGroup
+        | Specifies a further group identifier to use for plugin lookup.
+    &lt;pluginGroup&gt;com.your.plugins&lt;/pluginGroup&gt;
+    --&gt;
+    &lt;/pluginGroups&gt;
+
+    &lt;!-- proxies
+    | This is a list of proxies which can be used on this machine to connect to the network.
+    | Unless otherwise specified (by system property or command-line switch), the first proxy
+    | specification in this list marked as active will be used.
+    |--&gt;
+    &lt;proxies&gt;
+    &lt;!-- proxy
+        | Specification for one proxy, to be used in connecting to the network.
+        |
+    &lt;proxy&gt;
+        &lt;id&gt;optional&lt;/id&gt;
+        &lt;active&gt;true&lt;/active&gt;
+        &lt;protocol&gt;http&lt;/protocol&gt;
+        &lt;username&gt;proxyuser&lt;/username&gt;
+        &lt;password&gt;proxypass&lt;/password&gt;
+        &lt;host&gt;proxy.host.net&lt;/host&gt;
+        &lt;port&gt;80&lt;/port&gt;
+        &lt;nonProxyHosts&gt;local.net|some.host.com&lt;/nonProxyHosts&gt;
+    &lt;/proxy&gt;
+    --&gt;
+    &lt;/proxies&gt;
+
+    &lt;!-- servers
+    | This is a list of authentication profiles, keyed by the server-id used within the system.
+    | Authentication profiles can be used whenever maven must make a connection to a remote server.
+    |--&gt;
+    &lt;servers&gt;
+    &lt;!-- server
+        | Specifies the authentication information to use when connecting to a particular server, identified by
+        | a unique name within the system (referred to by the 'id' attribute below).
+        |
+        | NOTE: You should either specify username/password OR privateKey/passphrase, since these pairings are
+        |       used together.
+        |
+    &lt;server&gt;
+        &lt;id&gt;deploymentRepo&lt;/id&gt;
+        &lt;username&gt;repouser&lt;/username&gt;
+        &lt;password&gt;repopwd&lt;/password&gt;
+    &lt;/server&gt;
+    --&gt;
+
+    &lt;!-- Another sample, using keys to authenticate.
+    &lt;server&gt;
+        &lt;id&gt;siteServer&lt;/id&gt;
+        &lt;privateKey&gt;/path/to/private/key&lt;/privateKey&gt;
+        &lt;passphrase&gt;optional; leave empty if not used.&lt;/passphrase&gt;
+    &lt;/server&gt;
+    --&gt;
+    &lt;/servers&gt;
+
+    &lt;!-- mirrors
+    | This is a list of mirrors to be used in downloading artifacts from remote repositories.
+    |
+    | It works like this: a POM may declare a repository to use in resolving certain artifacts.
+    | However, this repository may have problems with heavy traffic at times, so people have mirrored
+    | it to several places.
+    |
+    | That repository definition will have a unique id, so we can create a mirror reference for that
+    | repository, to be used as an alternate download site. The mirror site will be the preferred
+    | server for that repository.
+    |--&gt;
+    &lt;mirrors&gt;
+    &lt;!-- mirror
+        | Specifies a repository mirror site to use instead of a given repository. The repository that
+        | this mirror serves has an ID that matches the mirrorOf element of this mirror. IDs are used
+        | for inheritance and direct lookup purposes, and must be unique across the set of mirrors.
+        |
+    &lt;mirror&gt;
+        &lt;id&gt;mirrorId&lt;/id&gt;
+        &lt;mirrorOf&gt;repositoryId&lt;/mirrorOf&gt;
+        &lt;name&gt;Human Readable Name for this Mirror.&lt;/name&gt;
+        &lt;url&gt;http://my.repository.com/repo/path&lt;/url&gt;
+    &lt;/mirror&gt;
+    &lt;mirror&gt;
+        &lt;id&gt;maven-default-http-blocker&lt;/id&gt;
+        &lt;mirrorOf&gt;external:http:*&lt;/mirrorOf&gt;
+        &lt;name&gt;Pseudo repository to mirror external repositories initially using HTTP.&lt;/name&gt;
+        &lt;url&gt;http://0.0.0.0/&lt;/url&gt;
+        &lt;blocked&gt;true&lt;/blocked&gt;
+    &lt;/mirror&gt;
+    --&gt;
+    &lt;mirror&gt;
+        &lt;id&gt;aliyunmaven&lt;/id&gt;
+        &lt;mirrorOf&gt;*&lt;/mirrorOf&gt;
+        &lt;name&gt;aliyun&lt;/name&gt;
+        &lt;url&gt;https://maven.aliyun.com/repository/public&lt;/url&gt;
+    &lt;/mirror&gt;
+    &lt;/mirrors&gt;
+
+    &lt;!-- profiles
+    | This is a list of profiles which can be activated in a variety of ways, and which can modify
+    | the build process. Profiles provided in the settings.xml are intended to provide local machine-
+    | specific paths and repository locations which allow the build to work in the local environment.
+    |
+    | For example, if you have an integration testing plugin - like cactus - that needs to know where
+    | your Tomcat instance is installed, you can provide a variable here such that the variable is
+    | dereferenced during the build process to configure the cactus plugin.
+    |
+    | As noted above, profiles can be activated in a variety of ways. One way - the activeProfiles
+    | section of this document (settings.xml) - will be discussed later. Another way essentially
+    | relies on the detection of a system property, either matching a particular value for the property,
+    | or merely testing its existence. Profiles can also be activated by JDK version prefix, where a
+    | value of '1.4' might activate a profile when the build is executed on a JDK version of '1.4.2_07'.
+    | Finally, the list of active profiles can be specified directly from the command line.
+    |
+    | NOTE: For profiles defined in the settings.xml, you are restricted to specifying only artifact
+    |       repositories, plugin repositories, and free-form properties to be used as configuration
+    |       variables for plugins in the POM.
+    |
+    |--&gt;
+    &lt;profiles&gt;
+    &lt;!-- profile
+        | Specifies a set of introductions to the build process, to be activated using one or more of the
+        | mechanisms described above. For inheritance purposes, and to activate profiles via &lt;activatedProfiles/&gt;
+        | or the command line, profiles have to have an ID that is unique.
+        |
+        | An encouraged best practice for profile identification is to use a consistent naming convention
+        | for profiles, such as 'env-dev', 'env-test', 'env-production', 'user-jdcasey', 'user-brett', etc.
+        | This will make it more intuitive to understand what the set of introduced profiles is attempting
+        | to accomplish, particularly when you only have a list of profile id's for debug.
+        |
+        | This profile example uses the JDK version to trigger activation, and provides a JDK-specific repo.
+    &lt;profile&gt;
+        &lt;id&gt;jdk-1.4&lt;/id&gt;
+
+        &lt;activation&gt;
+        &lt;jdk&gt;1.4&lt;/jdk&gt;
+        &lt;/activation&gt;
+
+        &lt;repositories&gt;
+        &lt;repository&gt;
+            &lt;id&gt;jdk14&lt;/id&gt;
+            &lt;name&gt;Repository for JDK 1.4 builds&lt;/name&gt;
+            &lt;url&gt;http://www.myhost.com/maven/jdk14&lt;/url&gt;
+            &lt;layout&gt;default&lt;/layout&gt;
+            &lt;snapshotPolicy&gt;always&lt;/snapshotPolicy&gt;
+        &lt;/repository&gt;
+        &lt;/repositories&gt;
+    &lt;/profile&gt;
+    --&gt;
+
+    &lt;!--
+        | Here is another profile, activated by the system property 'target-env' with a value of 'dev',
+        | which provides a specific path to the Tomcat instance. To use this, your plugin configuration
+        | might hypothetically look like:
+        |
+        | ...
+        | &lt;plugin&gt;
+        |   &lt;groupId&gt;org.myco.myplugins&lt;/groupId&gt;
+        |   &lt;artifactId&gt;myplugin&lt;/artifactId&gt;
+        |
+        |   &lt;configuration&gt;
+        |     &lt;tomcatLocation&gt;${tomcatPath}&lt;/tomcatLocation&gt;
+        |   &lt;/configuration&gt;
+        | &lt;/plugin&gt;
+        | ...
+        |
+        | NOTE: If you just wanted to inject this configuration whenever someone set 'target-env' to
+        |       anything, you could just leave off the &lt;value/&gt; inside the activation-property.
+        |
+    &lt;profile&gt;
+        &lt;id&gt;env-dev&lt;/id&gt;
+
+        &lt;activation&gt;
+        &lt;property&gt;
+            &lt;name&gt;target-env&lt;/name&gt;
+            &lt;value&gt;dev&lt;/value&gt;
+        &lt;/property&gt;
+        &lt;/activation&gt;
+
+        &lt;properties&gt;
+        &lt;tomcatPath&gt;/path/to/tomcat/instance&lt;/tomcatPath&gt;
+        &lt;/properties&gt;
+    &lt;/profile&gt;
+    --&gt;
+    &lt;/profiles&gt;
+
+    &lt;!-- activeProfiles
+    | List of profiles that are active for all builds.
+    |
+    &lt;activeProfiles&gt;
+    &lt;activeProfile&gt;alwaysActiveProfile&lt;/activeProfile&gt;
+    &lt;activeProfile&gt;anotherAlwaysActiveProfile&lt;/activeProfile&gt;
+    &lt;/activeProfiles&gt;
+    --&gt;
+&lt;/settings&gt;                
+        
+        </pre>
+        <p>创建 Dockerfile 文件 </p>
+        <pre class="screen">
+         
+[root@localhost Maven]# cat Dockerfile 
+FROM maven:3-openjdk-18
+
+COPY settings.xml /root/.m2/settings.xml
+        
+        </pre>
+        <p>制作 Maven 镜像</p>
+        <pre class="screen">
+         
+[root@localhost Maven]# podman build -t "docker.io/netkiller/maven:3-openjdk-18" .
+
+[root@localhost Maven]# podman image ls | grep maven
+docker.io/netkiller/maven       3-openjdk-18  3951f6d3aa19  50 seconds ago  829 MB
+docker.io/library/maven         latest        0f909120a578  3 weeks ago     543 MB
+docker.io/library/maven         3-openjdk-18  1e86120a0116  3 weeks ago     829 MB
+
+[root@localhost Maven]# podman login docker.io/netkiller
+Username: netkiller
+Password: 
+Login Succeeded!
+
+[root@localhost Maven]# podman push docker.io/netkiller/maven:3-openjdk-18
+        
+        </pre>
+        <p>使用自制的 Maven 镜像</p>
+        <pre class="screen">
+        
+[root@localhost ~]# podman run -it --rm --name maven -v ~/.m2:/root/.m2 -v /root/bottleneck:/root/bottleneck -w /root/bottleneck docker.io/netkiller/maven:3-openjdk-18 mvn package
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ----------------------&lt; cn.netkiller:bottleneck &gt;-----------------------
+[INFO] Building bottleneck 0.0.1-SNAPSHOT
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- maven-resources-plugin:3.3.0:resources (default-resources) @ bottleneck ---
+[INFO] Copying 1 resource
+[INFO] Copying 4 resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.10.1:compile (default-compile) @ bottleneck ---
+[INFO] Changes detected - recompiling the module!
+[INFO] Compiling 8 source files to /root/bottleneck/target/classeskm
+[INFO] 
+[INFO] --- maven-resources-plugin:3.3.0:testResources (default-testResources) @ bottleneck ---
+[INFO] skip non existing resourceDirectory /root/bottleneck/src/test/resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.10.1:testCompile (default-testCompile) @ bottleneck ---
+[INFO] No sources to compile
+[INFO] 
+[INFO] --- maven-surefire-plugin:2.22.2:test (default-test) @ bottleneck ---
+[INFO] Tests are skipped.
+[INFO] 
+[INFO] --- maven-jar-plugin:3.3.0:jar (default-jar) @ bottleneck ---
+[INFO] Building jar: /root/bottleneck/target/bottleneck-0.0.1-SNAPSHOT.jar
+[INFO] 
+[INFO] --- spring-boot-maven-plugin:3.0.1:repackage (repackage) @ bottleneck ---
+[INFO] Replacing main artifact with repackaged archive
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  1.546 s
+[INFO] Finished at: 2023-01-01T11:58:11Z
+[INFO] ------------------------------------------------------------------------        
+        
         </pre>
     </div>
 </div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">

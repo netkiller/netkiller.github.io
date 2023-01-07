@@ -17,7 +17,7 @@
 	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">6.3. @RestController</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="Controller.html">上一页</a> </td><th width="60%" align="center">第 6 章 Spring MVC</th><td width="20%" align="right"> <a accesskey="n" href="view.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="RestController"></a>6.3. @RestController</h2></div></div></div>
 	
 	<p></p>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm243323297376"></a>6.3.1. 返回实体</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm342599960320"></a>6.3.1. 返回实体</h3></div></div></div>
 		
 		<pre class="programlisting">
 		
@@ -32,7 +32,7 @@
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm243323295904"></a>6.3.2. JSON</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm342599958848"></a>6.3.2. JSON</h3></div></div></div>
 		
 		<p>MediaType.APPLICATION_JSON_VALUE 执行结果反馈json数据</p>
 		<pre class="programlisting">
@@ -110,7 +110,7 @@ public class JacksonConfig {
 		</pre>
 
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm243323290432"></a>6.3.5. XML</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm342599953376"></a>6.3.5. XML</h3></div></div></div>
 		
 		<p>restful 将同时支持 json 和 xml 数据传递</p>
 		<pre class="programlisting">
@@ -158,7 +158,7 @@ public class ArticleRestController {
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm243323288736"></a>6.3.6. 兼容传统 json 接口</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm342599951680"></a>6.3.6. 兼容传统 json 接口</h3></div></div></div>
 		
 		<p>开发中发现很多人不适应新的接口方式，有时候只能妥协，这些顽固不化的人需要这样的数据库格式</p>
 		<pre class="programlisting">
@@ -428,10 +428,47 @@ public class UploadRestController {
 		</pre>
 
 	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="export.csv"></a>6.3.9. Spring boot with csv</h3></div></div></div>
+		
+		<p>下面是一个导出 CSV 文件的例子</p>
+		<pre class="programlisting">
+		
+	@GetMapping("/export")
+	public void export(HttpServletResponse response) throws IOException {
+		response.setContentType("application/csv");
+		// response.setContentType("application/csv;charset=gb18030");
+		response.setHeader("Content-Disposition", "attachment; filename=\"file.csv\"");
+
+		BufferedWriter writer = new BufferedWriter(response.getWriter());
+
+		// 需要写入 utf8bom 头否则会出现中文乱码
+		// byte[] uft8bom = { (byte) 0xef, (byte) 0xbb, (byte) 0xbf };
+		String bom = new String(new byte[] { (byte) 0xEF, (byte) 0xBB, (byte) 0xBF });
+		writer.write(bom);
+		writer.write("A,B,C");
+		writer.newLine();
+		tableRepository.findAll().forEach(table -&gt; {
+			try {
+				String tmp = String.format("%s,%s,%s", table.getId(), table.getMethod(), table.getMoney());
+				writer.write(tmp);
+				writer.newLine();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+		});
+
+		writer.flush();
+		writer.close();
+	}		
+		
+		</pre>
+	</div>
 	
-<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="Jackson"></a>6.3.9. Jackson</h3></div></div></div>
+<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="Jackson"></a>6.3.10. Jackson</h3></div></div></div>
 	
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm243323277056"></a>6.3.9.1. Jackson 相关配置</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm342599934960"></a>6.3.10.1. Jackson 相关配置</h4></div></div></div>
 		
 		<pre class="screen">
 		
@@ -443,7 +480,7 @@ spring.jackson.time-zone=GMT+8
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="@JsonIgnore"></a>6.3.9.2. @JsonIgnore 返回json是不含有该字段</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="@JsonIgnore"></a>6.3.10.2. @JsonIgnore 返回json是不含有该字段</h4></div></div></div>
 		
 		<pre class="programlisting">
 			
@@ -452,9 +489,9 @@ spring.jackson.time-zone=GMT+8
 			
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="@JsonFormat 日期格式化"></a>6.3.9.3. @JsonFormat 格式化 json 时间格式</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="@JsonFormat 日期格式化"></a>6.3.10.3. @JsonFormat 格式化 json 时间格式</h4></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm243323270912"></a>日期格式化</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm342599931920"></a>日期格式化</h5></div></div></div>
 			
 
 			<p>默认 json 中的时间格式是这样的</p>
@@ -483,7 +520,7 @@ private Date createdDate = new Date();
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm243323266752"></a>时区</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm342599926368"></a>时区</h5></div></div></div>
 			
 			<pre class="programlisting">
 			
@@ -495,7 +532,7 @@ public class Test {
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm243323264864"></a>枚举</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm342599924704"></a>枚举</h5></div></div></div>
 			
 			<pre class="programlisting">
 			
@@ -514,7 +551,7 @@ public class Test {
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm243323262960"></a>枚举</h5></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm342599922960"></a>枚举</h5></div></div></div>
 			
 			<pre class="programlisting">
 			
@@ -539,7 +576,7 @@ enum Lang {
 			</pre>
 		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="@JsonComponent"></a>6.3.9.4. @JsonComponent</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="@JsonComponent"></a>6.3.10.4. @JsonComponent</h4></div></div></div>
 		
 		<pre class="programlisting">
 		
@@ -660,7 +697,7 @@ public class SimpleController {
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="ObjectToJson"></a>6.3.9.5. Object to Json</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="ObjectToJson"></a>6.3.10.5. Object to Json</h4></div></div></div>
 		
 		<pre class="programlisting">
 		
@@ -685,7 +722,7 @@ String jsonInString = mapper.writerWithDefaultPrettyPrinter().writeValueAsString
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="JsonToObject"></a>6.3.9.6. Json To Object</h4></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="JsonToObject"></a>6.3.10.6. Json To Object</h4></div></div></div>
 		
 		<pre class="programlisting">
 		
