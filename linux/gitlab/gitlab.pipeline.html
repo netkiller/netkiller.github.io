@@ -131,7 +131,7 @@ deploy-prod-job:
     - echo "Application successfully deployed."
 		
 		</pre>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm292767892640"></a>106.6.1.1. Cache Key</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm507857831968"></a>106.6.1.1. Cache Key</h4></div></div></div>
 			
 			<p>缓存在所有流水线间是共享的，如果同时有两个JOB在跑，缓存就可能受到影响，这时可以使用 cache key 解决。</p>
 			<pre class="screen">
@@ -155,7 +155,7 @@ cache:
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm292767890432"></a>106.6.1.2. 禁用 Cache</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm507857829760"></a>106.6.1.2. 禁用 Cache</h4></div></div></div>
 			
 			<p>当定义了全局 cahce 后，想在 job 中禁用 Cache</p>
 			<pre class="screen">
@@ -169,7 +169,7 @@ job:
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm292767888592"></a>106.6.1.3. 定义多个缓存</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm507857827920"></a>106.6.1.3. 定义多个缓存</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -207,7 +207,7 @@ stages:
 		
 		</pre>
 
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm292767885184"></a>106.6.2.1. 依赖关系</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm507857824512"></a>106.6.2.1. 依赖关系</h4></div></div></div>
 			
 			<p>dependencies 可以设置 job 的依赖关系</p>
 			<pre class="screen">
@@ -246,7 +246,7 @@ deploy_job:
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm292767882944"></a>106.6.2.2. 禁用 stage</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm507857822272"></a>106.6.2.2. 禁用 stage</h4></div></div></div>
 			
 			<p>出于某种原因，我们想禁用某些 stage。可以在 job 前加一个 “.” 禁用它。</p>
 			<pre class="screen">
@@ -279,7 +279,7 @@ job1:
         done		
 		
 		</pre>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm292767879488"></a>106.6.3.1. 列出所有环境变量</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm507857818784"></a>106.6.3.1. 列出所有环境变量</h4></div></div></div>
 			
 			<p>使用 export 列出所有环境变量</p>
 			<pre class="screen">
@@ -431,8 +431,63 @@ variables:
   GIT_SUBMODULE_STRATEGY: recursive		
 		
 			</pre>
-
 		</div>
+    <div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm507857814672"></a>106.6.3.3. 通过条件，设置变量</h4></div></div></div>
+      
+      <pre class="screen">
+       
+job:
+variables:
+  DEPLOY_VARIABLE: "default-deploy"
+rules:
+  - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+    variables:                              # Override DEPLOY_VARIABLE defined
+      DEPLOY_VARIABLE: "deploy-production"  # at the job level.
+  - if: $CI_COMMIT_REF_NAME =~ /feature/
+    variables:
+      IS_A_FEATURE: "true"                  # Define a new variable.
+script:
+  - echo "Run script with $DEPLOY_VARIABLE as an argument"
+  - echo "Run another script if $IS_A_FEATURE exists"      
+      
+      </pre>
+      <p>例子</p>
+      <pre class="screen">
+       
+build-job:
+  stage: build
+  image: registry.ejiayou.com/share/maven:3.8.6-openjdk-8
+  variables:
+    VERSION: -SNAPSHOT
+  rules:
+    - if: $CI_COMMIT_BRANCH == master
+      variables:
+        VERSION: ".RELEASE"
+    - if: $CI_COMMIT_BRANCH == grey
+      variables:
+        VERSION: ".RELEASE"
+  before_script:
+    - rm -rf /root/.m2/repository/com/other/*
+    - sed -i "s/\"dev\"/\"${CI_COMMIT_BRANCH}\"/" ${MODULE}/src/main/resources/log4j2.xml
+    - sed -i "s/2\.3\.7\.RELEASE/2\.7\.7/" ${MODULE}/pom.xml
+  script:
+    - mvn -U -T 1C clean package -Densd.version=$VERSION
+  after_script:
+    - md5sum ${MODULE}/target/*.jar
+  only:
+    - dev
+    - test
+    - grey
+    - master
+  tags:
+    - kubernetes
+  artifacts:
+    name: "$CI_PROJECT_NAME"
+    paths:
+      - ${MODULE}/target/*.jar
+      
+      </pre>
+    </div>
 	</div>
 	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="gitlab-ci.yml.script"></a>106.6.4. script /before_script / after_script</h3></div></div></div>
 		
@@ -517,7 +572,7 @@ deploy-prod-job:
     - echo "Application successfully deployed."		
 		
 		</pre>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm292767872992"></a>106.6.4.1. 条件判断</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm507857808896"></a>106.6.4.1. 条件判断</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -538,7 +593,7 @@ deploy-dev:
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm292767870864"></a>106.6.4.2. 多行脚本</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm507857806816"></a>106.6.4.2. 多行脚本</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -624,7 +679,7 @@ job:
 		
 		</pre>
 		<div class="itemizedlist"><p class="title"><strong>only和except允许使用特殊的关键字：</strong></p><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem">branches 匹配所有 git 分支</li><li class="listitem">tags 匹配所有 git tag</li><li class="listitem">triggers</li></ul></div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm292767861824"></a>106.6.5.1. 匹配 feature / hotfix 分支</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm507857797792"></a>106.6.5.1. 匹配 feature / hotfix 分支</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -695,7 +750,7 @@ deploy-hotfix-job:
 		
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm292767859616"></a>106.6.5.2. 监控文件变化</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm507857795536"></a>106.6.5.2. 监控文件变化</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -753,7 +808,7 @@ artifacts:
   untracked: true		
 		
 		</pre>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm292767854688"></a>106.6.6.1. 禁止 job 下载构建物</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm507857790608"></a>106.6.6.1. 禁止 job 下载构建物</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -891,7 +946,7 @@ job-name:
     - if: '$CI_COMMIT_BRANCH != "potato"'		
 		
 		</pre>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm292767839968"></a>106.6.11.1. 条件判断</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm507857775888"></a>106.6.11.1. 条件判断</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -1185,7 +1240,7 @@ deploy_prod:
  environment: production			
 			
 			</pre>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm292767825120"></a>使用 Docker 编译并收集构建物</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm507857761040"></a>使用 Docker 编译并收集构建物</h5></div></div></div>
 				
 				<pre class="screen">
 			
@@ -1218,7 +1273,7 @@ package:
 				</pre>
 			</div>
 
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm292767824016"></a>Shell 执行器，远程部署物理机/虚拟机</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm507857759936"></a>Shell 执行器，远程部署物理机/虚拟机</h5></div></div></div>
 				
 				<pre class="programlisting">
 		
@@ -1278,7 +1333,7 @@ deploy-job:
 		
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm292767822800"></a>Shell 执行器，远程部使用容器启动项目</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm507857758720"></a>Shell 执行器，远程部使用容器启动项目</h5></div></div></div>
 				
 				<pre class="screen">
 			
@@ -1340,7 +1395,7 @@ deploy-job:
 			
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm292767821584"></a>Docker 执行器</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm507857757504"></a>Docker 执行器</h5></div></div></div>
 				
 				<pre class="screen">
 			
@@ -1598,7 +1653,7 @@ deploy-job:
 		
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm292767813216"></a>106.6.15.6. include 高级用法</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm507857749136"></a>106.6.15.6. include 高级用法</h4></div></div></div>
 			
 			<p>.gitlab-ci.yml</p>
 			<pre class="screen">
