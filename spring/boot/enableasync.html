@@ -15,12 +15,12 @@
 	    <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> |
 	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
 	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">2.47. Spring boot with Async</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="hessian.html">上一页</a> </td><th width="60%" align="center">第 2 章 Spring Boot</th><td width="20%" align="right"> <a accesskey="n" href="web3j.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="enableasync"></a>2.47. Spring boot with Async</h2></div></div></div>
-    
-    <p>异步执行</p>
-    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm537447280576"></a>2.47.1. 最简单的配置</h3></div></div></div>
-        
-        <p></p>
-        <pre class="programlisting">
+	
+	<p>异步执行</p>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="简单异步执行"></a>2.47.1. 最简单的配置</h3></div></div></div>
+		
+		<p></p>
+		<pre class="programlisting">
         
 @SpringBootApplication
 @EnableAsync
@@ -30,33 +30,37 @@ public static void main(String[] args) {
 }
 }
         
-        </pre>
-        <p></p>
-        <pre class="programlisting">
+		</pre>
+		<p></p>
+		<pre class="programlisting">
         
 @Component
 public class Task {
 
-@Async
-public void doTaskOne() throws Exception {
-    // 业务逻辑
-}
-
-@Async
-public void doTaskTwo() throws Exception {
-    // 业务逻辑
-}
-
-@Async
-public void doTaskThree() throws Exception {
-    // 业务逻辑
-}
+	@Async
+	public void doTaskOne() throws Exception {
+	    // 业务逻辑
+	}
+	
+	@Async
+	public void doTaskTwo() throws Exception {
+	    // 业务逻辑
+	}
+	
+	@Async
+	public void doTaskThree() throws Exception {
+	    // 业务逻辑
+	}
 
 }			
         
-        </pre>
-        <p>设置线程池，并且运行完成后推出</p>
-        <pre class="programlisting">
+		</pre>
+
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm539080999680"></a>2.47.2. 线程池</h3></div></div></div>
+		
+		<p>设置线程池</p>
+		<pre class="programlisting">
         
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -70,30 +74,29 @@ import java.util.concurrent.Executor;
 @EnableAsync
 public class Application {
 
-public static void main(String[] args) {
-    // close the application context to shut down the custom ExecutorService
-    SpringApplication.run(Application.class, args).close();
-}
-
-@Bean
-public Executor asyncExecutor() {
-    ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-    executor.setCorePoolSize(2);
-    executor.setMaxPoolSize(2);
-    executor.setQueueCapacity(500);
-    executor.setThreadNamePrefix("Netkiller -");
-    executor.initialize();
-    return executor;
-}
-
+	public static void main(String[] args) {
+	    // close the application context to shut down the custom ExecutorService
+	    SpringApplication.run(Application.class, args).close();
+	}
+	
+	@Bean
+	public Executor asyncExecutor() {
+	    ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+	    executor.setCorePoolSize(2);
+	    executor.setMaxPoolSize(2);
+	    executor.setQueueCapacity(500);
+	    executor.setThreadNamePrefix("Netkiller -");
+	    executor.initialize();
+	    return executor;
+	}
 
 }			
         
-        </pre>
-    </div>
-    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm537447277248"></a>2.47.2. 异步线程池</h3></div></div></div>
-        
-        <pre class="programlisting">
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm539080997888"></a>2.47.3. 定义多个线程池</h3></div></div></div>
+		
+		<pre class="programlisting">
         
 package cn.netkiller.wallet.config;
 
@@ -102,87 +105,128 @@ import org.springframework.scheduling.annotation.EnableAsync;
 
 @Configuration
 @EnableAsync
-public class ExecutorConfig {
-/** Set the ThreadPoolExecutor's core pool size. */
-private int corePoolSize = 10;
-/** Set the ThreadPoolExecutor's maximum pool size. */
-private int maxPoolSize = 200;
-/** Set the capacity for the ThreadPoolExecutor's BlockingQueue. */
-private int queueCapacity = 10;
-
-@Bean
-public Executor OneAsync() {
-    ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-    executor.setCorePoolSize(corePoolSize);
-    executor.setMaxPoolSize(maxPoolSize);
-    executor.setQueueCapacity(queueCapacity);
-    executor.setThreadNamePrefix("MySimpleExecutor-");
-    executor.initialize();
-    return executor;
-}
-
-@Bean
-public Executor TwoAsync() {
-    ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-    executor.setCorePoolSize(corePoolSize);
-    executor.setMaxPoolSize(maxPoolSize);
-    executor.setQueueCapacity(queueCapacity);
-    executor.setThreadNamePrefix("MyExecutor-");
-
-    // rejection-policy：当pool已经达到max size的时候，如何处理新任务
-    // CALLER_RUNS：不在新线程中执行任务，而是有调用者所在的线程来执行
-    executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
-    executor.initialize();
-    return executor;
-}
+public class ExecutorConfiguration {
+	/** Set the ThreadPoolExecutor's core pool size. */
+	private int corePoolSize = 10;
+	/** Set the ThreadPoolExecutor's maximum pool size. */
+	private int maxPoolSize = 200;
+	/** Set the capacity for the ThreadPoolExecutor's BlockingQueue. */
+	private int queueCapacity = 10;
+	
+	@Bean
+	public Executor OneAsync() {
+	    ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+	    executor.setCorePoolSize(corePoolSize);
+	    executor.setMaxPoolSize(maxPoolSize);
+	    executor.setQueueCapacity(queueCapacity);
+	    executor.setThreadNamePrefix("MySimpleExecutor-");
+	    executor.initialize();
+	    return executor;
+	}
+	
+	@Bean
+	public Executor TwoAsync() {
+	    ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+	    executor.setCorePoolSize(corePoolSize);
+	    executor.setMaxPoolSize(maxPoolSize);
+	    executor.setQueueCapacity(queueCapacity);
+	    executor.setThreadNamePrefix("MyExecutor-");
+	
+	    // rejection-policy：当pool已经达到max size的时候，如何处理新任务
+	    // CALLER_RUNS：不在新线程中执行任务，而是有调用者所在的线程来执行
+	    executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+	    executor.initialize();
+	    return executor;
+	}
 
 }
         
         
-        </pre>
+		</pre>
 
-        <pre class="programlisting">
+		<pre class="programlisting">
         
 @Service
 public class DemoAsyncServiceImpl implements DemoAsyncService {
 
-public static Random random =new Random();
-
-@Async("OneAsync")
-public Future&lt;String&gt; doTaskOne() throws Exception {
-    System.out.println("开始做任务一");
-    long start = System.currentTimeMillis();
-    Thread.sleep(random.nextInt(10000));
-    long end = System.currentTimeMillis();
-    System.out.println("完成任务一，耗时：" + (end - start) + "毫秒");
-    return new AsyncResult&lt;&gt;("任务一完成");
-}
-
-@Async("TwoAsync")
-public Future&lt;String&gt; doTaskTwo() throws Exception {
-    System.out.println("开始做任务二");
-    long start = System.currentTimeMillis();
-    Thread.sleep(random.nextInt(10000));
-    long end = System.currentTimeMillis();
-    System.out.println("完成任务二，耗时：" + (end - start) + "毫秒");
-    return new AsyncResult&lt;&gt;("任务二完成");
-}
-
-@Async
-public Future&lt;String&gt; doTaskThree() throws Exception {
-    System.out.println("开始做任务三");
-    long start = System.currentTimeMillis();
-    Thread.sleep(random.nextInt(10000));
-    long end = System.currentTimeMillis();
-    System.out.println("完成任务三，耗时：" + (end - start) + "毫秒");
-    return new AsyncResult&lt;&gt;("任务三完成");
-}
+	public static Random random =new Random();
+	
+	@Async("OneAsync")
+	public Future&lt;String&gt; doTaskOne() throws Exception {
+	    System.out.println("开始做任务一");
+	    long start = System.currentTimeMillis();
+	    Thread.sleep(random.nextInt(10000));
+	    long end = System.currentTimeMillis();
+	    System.out.println("完成任务一，耗时：" + (end - start) + "毫秒");
+	    return new AsyncResult&lt;&gt;("任务一完成");
+	}
+	
+	@Async("TwoAsync")
+	public Future&lt;String&gt; doTaskTwo() throws Exception {
+	    System.out.println("开始做任务二");
+	    long start = System.currentTimeMillis();
+	    Thread.sleep(random.nextInt(10000));
+	    long end = System.currentTimeMillis();
+	    System.out.println("完成任务二，耗时：" + (end - start) + "毫秒");
+	    return new AsyncResult&lt;&gt;("任务二完成");
+	}
+	
+	@Async
+	public Future&lt;String&gt; doTaskThree() throws Exception {
+	    System.out.println("开始做任务三");
+	    long start = System.currentTimeMillis();
+	    Thread.sleep(random.nextInt(10000));
+	    long end = System.currentTimeMillis();
+	    System.out.println("完成任务三，耗时：" + (end - start) + "毫秒");
+	    return new AsyncResult&lt;&gt;("任务三完成");
+	}
 
 }
         
-        </pre>
+		</pre>
 
-    </div>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm539080995328"></a>2.47.4. 线程池监控</h3></div></div></div>
+		
+		<p>监控指标</p>
+		<pre class="screen">
+		
+neo@MacBook-Pro-M2 ~&gt; curl -s http://www.netkiller.cn:8080/actuator/metrics | jq | grep executor
+    "executor.active",
+    "executor.completed",
+    "executor.pool.core",
+    "executor.pool.max",
+    "executor.pool.size",
+    "executor.queue.remaining",
+    "executor.queued",		
+		
+		</pre>
+		<p>获取指标</p>
+		<pre class="screen">
+		
+neo@MacBook-Pro-M2 ~&gt; curl -s http://www.netkiller.cn:8080/actuator/metrics/executor.active | jq
+{
+  "name": "executor.active",
+  "description": "The approximate number of threads that are actively executing tasks",
+  "baseUnit": "threads",
+  "measurements": [
+    {
+      "statistic": "VALUE",
+      "value": 0
+    }
+  ],
+  "availableTags": [
+    {
+      "tag": "name",
+      "values": [
+        "asyncExecutor"
+      ]
+    }
+  ]
+}		
+		
+		</pre>
+	</div>
 </div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
 window.changyan.api.config({
 appid: 'cyvwjQUG3',
