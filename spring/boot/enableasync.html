@@ -16,50 +16,42 @@
 	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
 	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">2.47. Spring boot with Async</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="hessian.html">上一页</a> </td><th width="60%" align="center">第 2 章 Spring Boot</th><td width="20%" align="right"> <a accesskey="n" href="web3j.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="enableasync"></a>2.47. Spring boot with Async</h2></div></div></div>
 	
-	<p>异步执行</p>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="简单异步执行"></a>2.47.1. 最简单的配置</h3></div></div></div>
+
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm536750697520"></a>2.47.1. 启用线程池</h3></div></div></div>
 		
-		<p></p>
+		<p>启用异步执行 @EnableAsync</p>
 		<pre class="programlisting">
-        
-@SpringBootApplication
+		
 @EnableAsync
-public class Application {
-public static void main(String[] args) {
-    SpringApplication.run(Application.class, args);
-}
-}
-        
-		</pre>
-		<p></p>
-		<pre class="programlisting">
-        
-@Component
-public class Task {
+@SpringBootApplication
+public class ThreadPoolApplication {
 
-	@Async
-	public void doTaskOne() throws Exception {
-	    // 业务逻辑
-	}
-	
-	@Async
-	public void doTaskTwo() throws Exception {
-	    // 业务逻辑
-	}
-	
-	@Async
-	public void doTaskThree() throws Exception {
-	    // 业务逻辑
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(ThreadPoolApplication.class, args);
+    }
 
-}			
-        
-		</pre>
-
-	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm539080999680"></a>2.47.2. 线程池</h3></div></div></div>
+}		
 		
-		<p>设置线程池</p>
+		</pre>
+		<p>编写异步执行代码</p>
+		<pre class="programlisting">
+		
+@Component
+@Slf4j
+public class AsyncTask {
+    @Async
+    public void  asyncRun() throws InterruptedException {
+        Thread.sleep(10);
+        log.info(Thread.currentThread().getName()+":处理完成");
+    }
+}		
+		
+		</pre>
+	</div>
+
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm536750694720"></a>2.47.2. 配置线程池</h3></div></div></div>
+		
+		<p>设置线程池参数</p>
 		<pre class="programlisting">
         
 import org.springframework.boot.SpringApplication;
@@ -90,11 +82,121 @@ public class Application {
 	    return executor;
 	}
 
+	@Bean("thread")
+    public Executor taskExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        // 设置核心线程数
+        executor.setCorePoolSize(5);
+        // 设置最大线程数
+        executor.setMaxPoolSize(10);
+        // 设置队列容量
+        executor.setQueueCapacity(20);
+        // 设置线程活跃时间（秒）
+        executor.setKeepAliveSeconds(60);
+        // 设置线程名称
+        executor.setThreadNamePrefix("hello-");
+        // 设置拒绝策略
+        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+        // 等待所有任务结束后再关闭线程池
+        executor.setWaitForTasksToCompleteOnShutdown(true);
+
+        return executor;
+    }
+
 }			
         
 		</pre>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="简单异步执行"></a>2.47.2.1. 最简单的配置</h4></div></div></div>
+			
+			<p></p>
+			<pre class="programlisting">
+        
+@SpringBootApplication
+@EnableAsync
+public class Application {
+public static void main(String[] args) {
+    SpringApplication.run(Application.class, args);
+}
+}
+        
+			</pre>
+			<p></p>
+			<pre class="programlisting">
+        
+@Component
+public class Task {
+
+	@Async
+	public void doTaskOne() throws Exception {
+	    // 业务逻辑
+	}
+	
+	@Async
+	public void doTaskTwo() throws Exception {
+	    // 业务逻辑
+	}
+	
+	@Async("asyncExecutor")
+	public void doTaskThree() throws Exception {
+	    // 业务逻辑
+	}
+
+}			
+        
+			</pre>
+
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm536750690064"></a>2.47.2.2. 队列</h4></div></div></div>
+			
+			<p>线程池能接受多少队列？</p>
+			<p>下面配置是 executor.setQueueCapacity(10); 也就是 10个，但是实测结果跟你想的不同</p>
+			<pre class="programlisting">
+			
+package cn.netkiller.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+
+import java.util.concurrent.ThreadPoolExecutor;
+
+@Configuration
+@EnableAsync
+public class ThreadPoolTaskExecutorConfiguration {
+    @Bean("asyncExecutor")
+    public ThreadPoolTaskExecutor executor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setThreadGroupName("job");
+        executor.setThreadNamePrefix("async-job-");
+        executor.setCorePoolSize(5);
+        executor.setMaxPoolSize(10);
+        executor.setQueueCapacity(10);
+        executor.setKeepAliveSeconds(60);
+        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.AbortPolicy());
+        executor.setAwaitTerminationSeconds(60);
+        executor.setWaitForTasksToCompleteOnShutdown(true);
+        executor.initialize();
+        return executor;
+    }
+}
+			
+			</pre>
+			<p>实测结果是，首次执行可以容纳 20 个线程，20个线程执行完毕之后，再添加任务，就只接受 10 个，超过的部分会跑出异常</p>
+			<pre class="screen">
+			
+ Executor [java.util.concurrent.ThreadPoolExecutor@7e729046[Running, pool size = 10, active threads = 10, queued tasks = 10, completed tasks = 0]] did not accept task: org.springframework.aop.interceptor.AsyncExecutionInterceptor$$Lambda$1775/0x0000000801b6afb0@20eaccc2			
+			
+			</pre>
+			<p>这是因为线程池可以容纳 10 个任务，队列还能排队 10 个任务。</p>
+			<pre class="programlisting">
+			
+			
+			
+			</pre>
+		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm539080997888"></a>2.47.3. 定义多个线程池</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm536750685664"></a>2.47.3. 定义多个线程池</h3></div></div></div>
 		
 		<pre class="programlisting">
         
@@ -186,7 +288,68 @@ public class DemoAsyncServiceImpl implements DemoAsyncService {
 		</pre>
 
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm539080995328"></a>2.47.4. 线程池监控</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm536750683968"></a>2.47.4. 自定义线程池</h3></div></div></div>
+		
+		<p>自定义线程池</p>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm536750682832"></a>2.47.4.1. ThreadPoolExecutor</h4></div></div></div>
+			
+			<p></p>
+			<pre class="programlisting">
+			
+    @Bean("queueThreadPool")
+    public ThreadPoolExecutor queueThreadPool() {
+        ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(
+                5,
+                10,
+                60,
+                TimeUnit.SECONDS,
+                new LinkedBlockingDeque&lt;&gt;(10),
+                Executors.defaultThreadFactory(),
+                new ThreadPoolExecutor.AbortPolicy());
+        return threadPoolExecutor;
+    }
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm536750681200"></a>2.47.4.2. 注入自定义线程池bean</h4></div></div></div>
+			
+			<pre class="programlisting">
+		
+	 // 注入自定义线程池bean
+    @Autowired
+    private ThreadPoolExecutor threadPoolExecutor;
+    
+    threadPoolExecutor.execute(new Runnable() {
+        @Override
+        public void run() {
+            System.out.println("=======");
+
+        }
+    });
+    
+		
+			</pre>
+		</div>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm536750679104"></a>2.47.5. 设置线程名称</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+public static Random random = new Random();
+
+    @Async("jobExecutor")
+    public void doAsyncTask() throws InterruptedException {
+        Thread.currentThread().setName("测试线程-" + random.nextInt(1000));
+        System.out.println("开始做任务一");
+        long start = System.currentTimeMillis();
+        Thread.sleep(random.nextInt(100000));
+        long end = System.currentTimeMillis();
+        System.out.println("完成任务一，耗时：" + (end - start) + "毫秒");
+    }		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm536750677408"></a>2.47.6. 线程池监控</h3></div></div></div>
 		
 		<p>监控指标</p>
 		<pre class="screen">
@@ -224,6 +387,24 @@ neo@MacBook-Pro-M2 ~&gt; curl -s http://www.netkiller.cn:8080/actuator/metrics/e
     }
   ]
 }		
+		
+		</pre>
+		<p></p>
+		<pre class="programlisting">
+		
+    @Autowired
+    ThreadPoolTaskExecutor threadPoolTaskExecutor;
+    		
+    @GetMapping("/pool")
+    public String pool() {
+        int activeCount = threadPoolTaskExecutor.getActiveCount();
+        long completedTaskCount = threadPoolTaskExecutor.getThreadPoolExecutor().getCompletedTaskCount();
+        long taskCount = threadPoolTaskExecutor.getThreadPoolExecutor().getTaskCount();
+        int queue = threadPoolTaskExecutor.getThreadPoolExecutor().getQueue().size();
+        String monitor = String.format("Task: %d, Queue: %d, Active: %d, Completed: %d\n", taskCount, queue, activeCount, completedTaskCount);
+        log.info(monitor);
+        return monitor;
+    }	
 		
 		</pre>
 	</div>
