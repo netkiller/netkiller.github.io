@@ -31,7 +31,7 @@
 		<p>日志切割方案网上有很多，很多运维也是参考这些方案进行配置，网上的例子不完全都是对的，可能你用了很多年配置方案是错误的。 没有出现故障是侥幸，因为笔者15年前就在此处栽过，由于日志太大，我便清空了日志，以为程序仍然会继续写入，最后直到服务器崩溃。 最近发现很多新手再谈cronolog，我便想起当年发生的故障，有必要跟大家分享。</p>
 		<p>首先日志是可以切割的，网上的例子理论上也是可行，但我们不能不求甚解，稀里糊涂的用下去。</p>
 		<p>我们首先了解一下日志是怎么产生的，那种日志可以切割，那些日志不能切割，为什么不能切割，如果需要切割日志怎么处理？</p>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm26333275584"></a>2.5.1.1. 日志是怎么产生的</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm286360288608"></a>2.5.1.1. 日志是怎么产生的</h4></div></div></div>
 			
 			<p>日志生命周期，创建/打开日志文件，追加日志记录，关闭日志文件。请看下面伪代码。</p>
 			<pre class="programlisting">
@@ -152,10 +152,10 @@ main(){ ...
 			</pre>
 			<p>这种代码的适应性非常强，写一个日志函数，但牺牲了IO性能，如果频繁打开/关闭文件同时进行写IO操作，这样的程序很难实现高并发。 所以很多高并发的程序，只会打开一次日志文件（追加模式），不会再运行期间关闭日志文件，直到进程发出退出信号。</p>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm26333304960"></a>2.5.1.2. 让我们看个究竟</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm286360288352"></a>2.5.1.2. 让我们看个究竟</h4></div></div></div>
 			
 			<p>我们手工模拟一次日志分割的过程，首先开启三个Shell终端。</p>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm26333351152"></a>第一种情况，日志文件被重命名</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm286360276976"></a>第一种情况，日志文件被重命名</h5></div></div></div>
 				
 				<pre class="screen">
 			
@@ -174,7 +174,7 @@ cat: /tmp/test.log: No such file or directory
 			
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm26333352480"></a>第二种情况，日志文件被删除</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm286360275056"></a>第二种情况，日志文件被删除</h5></div></div></div>
 				
 				<pre class="screen">
 			
@@ -202,7 +202,7 @@ cat: /tmp/test.log: No such file or directory
 			
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm26333250864"></a>第三种情况，日志没有被删除，也没有被重命名，而是被其他程序做了修改</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm286360273856"></a>第三种情况，日志没有被删除，也没有被重命名，而是被其他程序做了修改</h5></div></div></div>
 				
 				<pre class="screen">
 			
@@ -271,7 +271,7 @@ five
 				</pre>
 			</div>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm26333306096"></a>2.5.1.3. 经典案例分析</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm286360272512"></a>2.5.1.3. 经典案例分析</h4></div></div></div>
 			
 			<p>我们以 Nginx 为例</p>
 			<pre class="screen">
@@ -291,7 +291,7 @@ five
 			</pre>
 			<p>nginx 日志切割后会运行 kill -USR1 这个让nginx 重新创建日志文件或者夺回日志文件的操作权。</p>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm26333337472"></a>2.5.1.4. 怎样监控日志</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm286360269984"></a>2.5.1.4. 怎样监控日志</h4></div></div></div>
 			
 			<p>那么怎样监控日志被删除，写入权被其他程序夺取？对于程序猿一定很关注这个问题。下面我们讲解怎么监控日志。</p>
 			<p>Linux 系统可以使用 inotify 开发包来监控文件的状态变化，包括开打，写入，修改权限等等。你需要启动一个进程或者线程监控日志文件的变化，以便随时reload 你的主程序。</p>
@@ -322,7 +322,7 @@ prog { sign = null
 			</pre>
 			<p>不知你是否看懂，简单的说就是两个并行运行的程序，一个负责日志监控，一个负责干活，一旦日志发生变化就通知主程序 reload。 至于使用进程还是线程去实现，取决于你熟悉那种语言或者你擅长的技术。</p>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm26333322160"></a>2.5.1.5. 总结</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm286360266560"></a>2.5.1.5. 总结</h4></div></div></div>
 			
 			<p>小小的日志文件有如此大的学问，目前很多应用程序写的比较健壮，能够判断出当前日志被删除，改写。程序运行中能够在创建丢失的日志文件，当日志被其他程序改写后，能够夺回写入权。 但这样的程序会影响程序并发性能，鱼和熊掌不能兼得。看了这篇文章我想你应该对日志有了全面了解，也会在接下来的工作中谨慎处理日志。</p>
 		</div>
@@ -356,22 +356,22 @@ prog { sign = null
 			
 			<p>将所有服务器的日志都汇总到一处，有几种方法</p>
 			<div class="itemizedlist"><p class="title"><strong>日志归档常用方法：</strong></p><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem">ftp 定是下载， 这种做法适合小文件且日志量不大，定是下载到指定服务器，缺点是重复传输，实时性差。</li><li class="listitem">rsyslog 一类的程序，比较通用，但扩展不便。</li><li class="listitem">rsync 定是同步，适合打文件同步，好于FTP，实时性差。</li><li class="listitem">logstash, filebates, flume 等等。</li></ul></div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm26333332608"></a>系统日志</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm286360249424"></a>系统日志</h5></div></div></div>
 				
 				<pre class="screen">rsyslog/syslog-ng 实现日志集中管理</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm26333278224"></a>应用程序日志</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm286360248080"></a>应用程序日志</h5></div></div></div>
 				
 				<p>应用程序中没有比较大量记录日志，当开启debug模式时才记录大量日志。</p>
 				<p>但是很多国内开发太过于依赖日志，导致日记非常臃肿</p>
 				<p>程序日志解决方案，请看软件架构相关章节</p>
 			</div>
 
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm26333296320"></a>日志格式转换</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm286360245904"></a>日志格式转换</h5></div></div></div>
 				
 				<p>首先我来介绍一种简单的方案</p>
 				<p>我用D语言写了一个程序将 WEB 日志正则分解然后通过管道传递给数据库处理程序 </p>
-				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm26333294752"></a>将日志放入数据库</h6></div></div></div>
+				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm286360244048"></a>将日志放入数据库</h6></div></div></div>
 					
 					<p>将WEB服务器日志通过管道处理然后写入数据库</p>
 					<p>处理程序源码</p>
@@ -434,7 +434,7 @@ cat  管道名 | match | mysql -hlocalhost -ulog -p123456 logging
 						<p>上面程序稍加修改即可实现Hbase, Hypertable 本版</p>
 					</td></tr></table></div>
 				</div>
-				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm26333294624"></a>Apache Pipe</h6></div></div></div>
+				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm286361107232"></a>Apache Pipe</h6></div></div></div>
 					
 					<p>Apache 日志管道过滤 CustomLog "| /srv/match &gt;&gt; /tmp/access.log" combined</p>
 					<pre class="screen">
@@ -495,7 +495,7 @@ insert into log(remote_addr,unknow,remote_user,time_local,request,status,body_by
 				
 					</pre>
 				</div>
-				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm26332922288"></a>Log format</h6></div></div></div>
+				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm286359513152"></a>Log format</h6></div></div></div>
 					
 					<p>通过定义LogFormat可以直接输出SQL形式的日志</p>
 					<p>Apache</p>
@@ -526,7 +526,7 @@ FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"' ESCAPED BY '\\'
 				</pre>
 				</div>
 
-				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm26332922032"></a>日志导入到 MongoDB</h6></div></div></div>
+				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm286366190240"></a>日志导入到 MongoDB</h6></div></div></div>
 					
 					<pre class="screen">
 # rpm -Uvh http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
@@ -604,13 +604,13 @@ tail -f /var/log/nginx/access.log | mlog | mongo 192.169.0.5/logging -uxxx -pxxx
 
 			</div>
 
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm26332916416"></a>日志中心方案</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm286366184256"></a>日志中心方案</h5></div></div></div>
 				
 				<p>上面的方案虽然简单，但太依赖系统管理员，需要配置很多服务器，每种应用软件产生的日志都不同，所以很复杂。如果中途出现故障，将会丢失一部日志。</p>
 				<p>于是我又回到了起点，所有日志存放在自己的服务器上，定时将他们同步到日志服务器，这样解决了日志归档。远程收集日志，通过UDP协议推送汇总到日志中心，这样解决了日志实时监控、抓取等等对实时性要求较高的需求。</p>
 				<p>为此我用了两三天写了一个软件，下载地址：https://github.com/netkiller/logging</p>
 				<p>这种方案并不是最佳的，只是比较适合我的场景，而且我仅用了两三天就完成了软件的开发。后面我会进一步扩展，增加消息队列传送日志的功能。</p>
-				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm26332908112"></a>软件安装</h6></div></div></div>
+				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm286366180880"></a>软件安装</h6></div></div></div>
 					
 					<pre class="screen">
 $ git clone https://github.com/netkiller/logging.git
@@ -619,7 +619,7 @@ $ python3 setup.py sdist
 $ python3 setup.py install
 				</pre>
 				</div>
-				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm26332906752"></a>节点推送端</h6></div></div></div>
+				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm286366179408"></a>节点推送端</h6></div></div></div>
 					
 					<p>安装启动脚本</p>
 					<p>CentOS</p>
@@ -672,7 +672,7 @@ $ service ulog status
 # service ulog stop				
 				</pre>
 				</div>
-				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm26332906496"></a>日志收集端</h6></div></div></div>
+				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm286366179152"></a>日志收集端</h6></div></div></div>
 					
 					<pre class="screen">
 # cp logging/init.d/ucollection /etc/init.d
@@ -729,7 +729,7 @@ $ init.d/ucollection status
 12441 pts/16   S      0:00 /usr/bin/python3 /usr/local/bin/collection -d -p 1217 -l /tmp/cache/2014/12/16/cache.log
 				</pre>
 				</div>
-				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm26332906240"></a>日志监控</h6></div></div></div>
+				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm286366178896"></a>日志监控</h6></div></div></div>
 					
 					<p>监控来自1217宽口的数据</p>
 					<pre class="screen">
