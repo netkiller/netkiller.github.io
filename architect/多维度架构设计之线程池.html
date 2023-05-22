@@ -14,10 +14,10 @@
 	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
 	    <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> |
 	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
-	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">2.21. 多维度架构设计之线程池</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="多维度架构设计之灰度测试方案.html">上一页</a> </td><th width="60%" align="center">第 2 章 多维度架构设计</th><td width="20%" align="right"> <a accesskey="n" href="cloud/index.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idm286361050928"></a>2.21. 多维度架构设计之线程池</h2></div></div></div>
+	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">2.21. 多维度架构设计之线程池</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="多维度架构设计之灰度测试方案.html">上一页</a> </td><th width="60%" align="center">第 2 章 多维度架构设计</th><td width="20%" align="right"> <a accesskey="n" href="cloud/index.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="多维度架构设计之线程池"></a>2.21. 多维度架构设计之线程池</h2></div></div></div>
 	
 	<p>解决痛点，当我们使用 @Async 注解进行异步执行的时候，一旦请求之后就会进入后台，你不清楚线程什么时候执行完毕，也不清楚它的工作状态，此时你再次请求接口，就会出现两个不同执行的线程。</p>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm286361049344"></a>2.21.1. 并行控制（同步阻塞）</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm189935067984"></a>2.21.1. 并行控制（同步阻塞）</h3></div></div></div>
 		
 		<p>避免接口无序执行，被同时多次执行，使用 synchronized 可以实现同一时间只能有一个请求，请求完毕之后才能进行下一次请求。</p>
 		<pre class="programlisting">
@@ -34,7 +34,7 @@
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm286361047008"></a>2.21.2. 并行控制（异步非阻塞）</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm189935065680"></a>2.21.2. 并行控制（异步非阻塞）</h3></div></div></div>
 		
 		<p>例如我们有这样一个需求，每天进行一次数据汇总，第二天的数据依赖第一天的数据结果，我们需要生成从 1～31 号的数据，希望线程能排队执行，即每天一个线程，必须1号执行完成之后，才能进行2号数据的生成。</p>
 		<p>当生成1号数据的时候，再次请求接口会返回正在执行中。</p>
@@ -108,7 +108,7 @@
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm286360220640"></a>2.21.4. 线程池监控</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm189935059168"></a>2.21.4. 线程池监控</h3></div></div></div>
 		
 		<p>通过 actuator 监控指标</p>
 		<pre class="screen">
@@ -167,7 +167,7 @@ neo@MacBook-Pro-M2 ~&gt; curl -s http://www.netkiller.cn:8080/actuator/metrics/e
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm286359483552"></a>2.21.5. 线程监控</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm189935055120"></a>2.21.5. 线程监控</h3></div></div></div>
 		
 		<p>Springboot 并没有提供对异步 Service 的管理功能，异步执行一旦触发之后便进入后台，你对他再也无法控制，你不知道他的运行状态，不知道它什么时候运行完，只能通过日志监控它。</p>
 		<p>显示进程列表</p>
@@ -228,7 +228,7 @@ neo@MacBook-Pro-M2 ~&gt; curl http://localhost:8080/thread/list
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm286359483296"></a>2.21.6. 线程管理</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm189935049920"></a>2.21.6. 线程管理</h3></div></div></div>
 		
 		<p>Springboot 并没有提供对异步 Service 的管理功能，异步执行一旦触发之后便进入后台，你对他再也无法控制，你不知道他的运行状态，不知道它什么时候运行完，只能通过日志监控它。</p>
 		<p>有时我们希望提前终止线程</p>
@@ -316,7 +316,7 @@ neo@MacBook-Pro-M2 ~&gt; curl http://localhost:8080/thread/list
 		</pre>
 		<p>这样我们就可以随时终止线程</p>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm286357594160"></a>2.21.7. 线程管理代码</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm189935049664"></a>2.21.7. 线程管理代码</h3></div></div></div>
 		
 		<p>线程管理 Serivce</p>
 		<pre class="programlisting">
