@@ -20,7 +20,7 @@
 	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="fifo"></a>2.16.1. 管道通信</h3></div></div></div>
 		
 		<p>你是否想过当数据库中的数据发生变化的时候出发某种操作？但因数据无法与其他进程通信（传递信号）让你放弃，而改用每隔一段时间查询一次数据变化的方法？下面的插件可以解决你的问题。</p>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm75035115664"></a>2.16.1.1. 背景</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm49621297856"></a>2.16.1.1. 背景</h4></div></div></div>
 			
 			<p>你是否有这样的需求：</p>
 			<p>你需要监控访问网站的IP，当同一个IP地址访问次数过多需要做出处理，例如拉黑，直接丢进iptables 防火墙规则连中。你的做法只能每个一段时间查询一次数据库，并且判断是否满足拉黑需求？</p>
@@ -28,7 +28,7 @@
 			<p>你使用数据库做队列，例如发送邮件，短信等等。你要通知发送程序对那些手机或者短线发送数据</p>
 			<p></p>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm75035112480"></a>2.16.1.2. 解决思路</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm49621294672"></a>2.16.1.2. 解决思路</h4></div></div></div>
 			
 			<p>需要让数据库与其他进程通信，传递信号</p>
 			<p>例如，发送短信这个需求，你只要告诉发短信的机器人发送的手机号码即可，机器人永远守候那哪里，只要命令一下立即工作。</p>
@@ -36,7 +36,7 @@
 			<p>这里所提的方案是采用fifo(First In First Out)方案，通过管道相互传递信号，使两个进程协同工作，这样的效率远比定时任务高许多。fifo是用于操作系统内部进程间通信，如果跨越操作系统需要使用Socket，还有一个新名词MQ(Message queue).</p>
 			<p>这里只做fifo演示, 将本程序改为Socket方案，或者直接集成成熟的MQ也是分分钟可以实现。</p>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm75078927200"></a>2.16.1.3. Mysql plugin</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm49621291024"></a>2.16.1.3. Mysql plugin</h4></div></div></div>
 			
 			<p> 我开发了几个 UDF, 共4个 function</p>
 			<div class="variablelist"><p class="title"><strong>UDF</strong></p><dl class="variablelist"><dt><span class="term">fifo_create(pipename)</span></dt><dd>
@@ -50,7 +50,7 @@
 					</dd></dl></div>
 			<p>有了上面的function后你就可以在begin,commit,rollback 直接穿插使用，实现在事物处理期间做你爱做的事。也可以用在触发器与EVENT定时任务中。</p>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm75078916880"></a>2.16.1.4. plugin 的开发与使用</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm49621280896"></a>2.16.1.4. plugin 的开发与使用</h4></div></div></div>
 			
 			<p>编译UDF你需要安装下面的软件包</p>
 			<pre class="screen">
@@ -85,7 +85,7 @@ drop function fifo_read;
 drop function fifo_write;
 		</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm75036346128"></a>2.16.1.5. 插件如何使用</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm49621280640"></a>2.16.1.5. 插件如何使用</h4></div></div></div>
 			
 			<p>插件有很多种用法，这里仅仅一个例</p>
 			<pre class="screen">
@@ -229,7 +229,7 @@ $ tail -f /tmp/demo.log
 [2013-12-16 14:55:48] [OK] 13322993040
 		</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm75036345872"></a>2.16.1.6. 部署相关问题</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm49621274896"></a>2.16.1.6. 部署相关问题</h4></div></div></div>
 			
 			<p>我们可以采用主从数据库，将任务放在专用的从库上执行</p>
 			<p>我们可以创建很多个管道，用于做不同的工作，例如插入一个任务，更新一个任务，发短信一个任务，处理模板与静态化一个任务等等。</p>
@@ -239,7 +239,7 @@ $ tail -f /tmp/demo.log
 	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="messagequeue"></a>2.16.2. 消息队列</h3></div></div></div>
 		
 		<p>这里选择使用ZeroMQ的原因主要考虑的是性能问题，其他MQ方案可能会阻塞数据库。</p>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm75036330976"></a>2.16.2.1. 背景</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm49621260272"></a>2.16.2.1. 背景</h4></div></div></div>
 			
 			<p>之前我发表过一篇文章 http://netkiller.github.io/journal/mysql.plugin.fifo.html</p>
 			<p>该文章中提出了通过fifo 管道，实现数据库与其他进程的通信。属于 IPC 机制(同一个OS/服务器内)，后我有采用ZeroMQ重新实现了一个 RPC 机制的方案，同时兼容IPC（跨越OS/服务器）</p>
@@ -251,13 +251,13 @@ tcp://server001:5555
 ipc:///tmp/feeds/0
 		</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm75036327568"></a>2.16.2.2. 应用场景</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm49621256784"></a>2.16.2.2. 应用场景</h4></div></div></div>
 			
 			<p>如果你想处理数据，由于各种原因你不能在程序中实现，你可以使用这个插件。当数据库中的数据发生变化的时候出发某种操作,你可以使用这个插件。</p>
 			<p>有时候你的项目可能是外包的，项目结束后外包方不会在管你，你有无法改动现有代码，或者根本不敢改。你可以使用这个插件</p>
 			<p>采用MQ技术对数据库无任何压力，与采用程序处理并无不同，省却了写代码</p>
 			<p>处理方法，可以采用同步或者异步方式</p>
-			<div class="example"><a id="idm75036324432"></a><p class="title"><strong>例 2.2. 发送短信</strong></p><div class="example-contents">
+			<div class="example"><a id="idm49621253648"></a><p class="title"><strong>例 2.2. 发送短信</strong></p><div class="example-contents">
 				
 				<p>发送短信、邮件，只需要查询出相应手机号码，发送到MQ的服务端，服务端接收到手机号码后，放入队列中，多线程程序从队列中领取任务，发送短信。</p>
 				<pre class="screen">
@@ -274,7 +274,7 @@ select zmq_client('tcp://localhost:5555',concat('{name:',name,', tel:',mobile,',
 			</pre>
 				<p>建议采用异步方式，MQ端接收到任务立即反馈 “成功”信息，因为我们不太关心是否能发送成功，本身就是盲目性的发送，手机号码是否可用我们无从得知，短信或者邮件的发送到达率不是100%，所以当进入队列后，让程序自行处理，将成功或者失败信息记录到日志中即可。</p>
 			</div></div><br class="example-break" />
-			<div class="example"><a id="idm75036319728"></a><p class="title"><strong>例 2.3. 处理图片</strong></p><div class="example-contents">
+			<div class="example"><a id="idm49621253520"></a><p class="title"><strong>例 2.3. 处理图片</strong></p><div class="example-contents">
 				
 				<p>首先查询出需要处理图片，然后将路径与分辨率传递给MQ另一端的处理程序</p>
 				<pre class="screen">
@@ -282,14 +282,14 @@ select zmq_client('tcp://localhost:5555',concat(image,',800x600}')) from demo;
 			</pre>
 				<p>建议采用异步方式，MQ端接收到任务立即反馈 “成功”信息</p>
 			</div></div><br class="example-break" />
-			<div class="example"><a id="idm75036317360"></a><p class="title"><strong>例 2.4. 身份证号码校验</strong></p><div class="example-contents">
+			<div class="example"><a id="idm49621246576"></a><p class="title"><strong>例 2.4. 身份证号码校验</strong></p><div class="example-contents">
 				
 				<pre class="screen">
 select zmq_client('tcp://localhost:5555',id_number) from demo;
 			</pre>
 				<p>可以采用同步方案，因为MQ款处理几乎不会延迟，直接将处理结构反馈</p>
 			</div></div><br class="example-break" />
-			<div class="example"><a id="idm75036315632"></a><p class="title"><strong>例 2.5. 静态化案例</strong></p><div class="example-contents">
+			<div class="example"><a id="idm49621244848"></a><p class="title"><strong>例 2.5. 静态化案例</strong></p><div class="example-contents">
 				
 				<p>情景模拟，你的项目是你个电商项目，采用外包模式开发，项目已经开发完成。外包放不再负责维护，你现在要做静态化。增加该功能，你要检查多处与商品表相关的造作。</p>
 				<p>于其改代码，不如程序从外部处理，这样更保险。我们只要写一个程序将动态 URL 下载保存成静态即可，当数据发生变化的时候重新下载覆盖即可</p>
@@ -311,13 +311,13 @@ END
 				<p>插入会新建页面，更新会覆盖页面，删除会删除页面</p>
 				<p>这样无论商品的价格，属性改变，静态化程序都会做出相应的处理。</p>
 			</div></div><br class="example-break" />
-			<div class="example"><a id="idm75036311216"></a><p class="title"><strong>例 2.6. 数据同步案例</strong></p><div class="example-contents">
+			<div class="example"><a id="idm49621240480"></a><p class="title"><strong>例 2.6. 数据同步案例</strong></p><div class="example-contents">
 				
 				<p>我们有多个数据库，A 库里面的数据发生变化后，要同步书库到B库，或者处理结果，或者数据转换后写入其他数据库中</p>
 				<p>方法也是采用触发器或者EVENT处理</p>
 			</div></div><br class="example-break" />
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm75036327440"></a>2.16.2.3. Mysql plugin</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm49621256656"></a>2.16.2.3. Mysql plugin</h4></div></div></div>
 			
 			<p> 我开发了几个 UDF, 共4个 function</p>
 			<div class="variablelist"><p class="title"><strong>UDF</strong></p><dl class="variablelist"><dt><span class="term">zmq_client(sockt,message)</span></dt><dd>
@@ -325,7 +325,7 @@ END
 					</dd></dl></div>
 			<p>有了上面的function后你就可以在begin,commit,rollback 直接穿插使用，实现在事物处理期间做你爱做的事。也可以用在触发器与EVENT定时任务中。</p>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm75036304624"></a>2.16.2.4. plugin 的开发与使用</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm49621233792"></a>2.16.2.4. plugin 的开发与使用</h4></div></div></div>
 			
 			<p>编译UDF你需要安装下面的软件包</p>
 			<pre class="screen">
@@ -372,7 +372,7 @@ mysql&gt; SELECT * FROM `mysql`.`func` where name like 'zmq%';
 		
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm75036304368"></a>2.16.2.5. 插件如何使用</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm49621233536"></a>2.16.2.5. 插件如何使用</h4></div></div></div>
 			
 			<p>插件有很多种用法，这里仅仅一个例</p>
 			<p>编译zeromq server 测试程序</p>
@@ -454,7 +454,7 @@ mysql&gt; select zmq_client('tcp://localhost:5555',concat('{name:',name,', tel:'
 	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="images"></a>2.16.3. 数据库与外界文件</h3></div></div></div>
 		
 		<p>你是是不是在开发中常常遇到，删除了数据库记录后，发现该记录对应的图片没有删除，或者删除了图片，数据库中仍有数据存在，你的网站脏数据（图片）成几何数增长，阅读下文这里为你提供了一个完美决方案。 </p>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm75036286032"></a>2.16.3.1. 背景</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm49621215216"></a>2.16.3.1. 背景</h4></div></div></div>
 			
 			<p>我以电商网站为例，一般的网站产品数据存放在数据库中，商品图片是上传到文件服务器，然后通过http服务器浏览商品图片。这是最基本的也是最常见做法。</p>
 			<p>稍复杂的方案是，如果图片数量庞大，会使用分布式文件系统方案。但是这些方案都不能保证数据的完整性，极易产生脏数据（垃圾数据）。脏数据是指当你删除了数据库表中的记录后，图片仍然存在，或者手工删除了图片，而数据库中的记录仍然存在。</p>
@@ -462,11 +462,11 @@ mysql&gt; select zmq_client('tcp://localhost:5555',concat('{name:',name,', tel:'
 			<p>2009年我在走秀网工作，商品图片与缩图文件900GB到2012离职已经有10TB，每天有成百上千的商品上架下架，很多商品下架后永远不会再上架，这些批量下架的商品数据不会删除，仅仅标记为删除，总是期望以后能继续使用，实际上再也不会有人过问，另一方面随着品类经理频繁更换，员工离职，这些商品会石沉大海，再也无人问均。这些商品所对应的图片也就脏数据主要来源。新的品类经理上任后，会重新拍照，上传新图片。</p>
 			<p>总之，删除数据库中的数据不能将图片删除就会产生脏数据。很多采用删除数据的时候去检查图片如果存在先删除图片，再删除数据的方法。这种方案也非完美解决方案，存在这图片先被删除，程序出错SQL没有运行，或者反之。</p>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm75036281456"></a>2.16.3.2. 解决思路</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm49621210656"></a>2.16.3.2. 解决思路</h4></div></div></div>
 			
 			<p>如果删除图片能够成为事物处理中的一个环节，所有问题都能迎刃而解，可彻底解决脏数据的烦恼。</p>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm75036280160"></a>2.16.3.3. 解决方案</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm49621209360"></a>2.16.3.3. 解决方案</h4></div></div></div>
 			
 			<p>mysql plugin 开发 udf。我写几个function</p>
 			<div class="variablelist"><p class="title"><strong>UDF</strong></p><dl class="variablelist"><dt><span class="term">image_check(filename)</span></dt><dd>
@@ -482,7 +482,7 @@ mysql&gt; select zmq_client('tcp://localhost:5555',concat('{name:',name,', tel:'
 					</dd></dl></div>
 			<p>有了上面的function后你就可以在begin,commit,rollback 直接穿插使用，实现在事物处理期间做你爱做的事。</p>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm75036268912"></a>2.16.3.4. plugin 的开发与使用</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm49621198128"></a>2.16.3.4. plugin 的开发与使用</h4></div></div></div>
 			
 			<p>编译UDF你需要安装下面的软件包</p>
 			<pre class="screen">
@@ -519,7 +519,7 @@ drop function image_md5sum;
 drop function image_move;
 		</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm75036268656"></a>2.16.3.5. 在事务中使用该插件</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm49621197872"></a>2.16.3.5. 在事务中使用该插件</h4></div></div></div>
 			
 			<p>插入图片流程，上传图片后，通过插件检查图片是否正确上传，然后插入记录</p>
 			<pre class="screen">
@@ -551,7 +551,7 @@ select image_move('recycle/path/to/images.jpg','path/to/images.jpg');
 image_remove('recycle/path/to/images.jpg');
 		</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm75036258944"></a>2.16.3.6. 通过触发器调用图片处理函数</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm49621188160"></a>2.16.3.6. 通过触发器调用图片处理函数</h4></div></div></div>
 			
 			<p>通过触发器更能保证数据完整性</p>
 			<pre class="screen">
@@ -569,7 +569,7 @@ image_remove('recycle/path/to/images.jpg');
 		
 		<p>TCP 方式还不如使用现在有的消息队列，所以数据库通过 Socket与应用程序通信，我推荐 UDP 方式。</p>
 		<p>UDP 有个好处，丢出去就不管了，性能非常好。并且可以实现组播，广播。下面是 UDP的例子</p>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm75036253504"></a>2.16.4.1. UDP</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm49621182720"></a>2.16.4.1. UDP</h4></div></div></div>
 			
 
 			<p>
