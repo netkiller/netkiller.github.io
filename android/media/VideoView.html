@@ -1,0 +1,486 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>12.2. VideoView 开发</title><link rel="stylesheet" type="text/css" href="../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="Android, Google Play" /><link rel="home" href="../index.html" title="Netkiller Android 手札" /><link rel="up" href="index.html" title="第 12 章 多媒体开发" /><link rel="prev" href="index.html" title="第 12 章 多媒体开发" /><link rel="next" href="SurfaceView.html" title="12.3. SurfaceView" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
+		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://edu.51cto.com/lecturer/1703915.html">51CTO学院</a> | <a xmlns="" href="https://edu.csdn.net/lecturer/6423">CSDN程序员研修院</a> | <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> | <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">腾讯云社区</a> | <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">阿里云栖社区</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">12.2. VideoView 开发</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><th width="60%" align="center">第 12 章 多媒体开发</th><td width="20%" align="right"> <a accesskey="n" href="SurfaceView.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="VideoView"></a>12.2. VideoView 开发</h2></div></div></div><p>VideoView，用于播放一段视频媒体，它继承了SurfaceView，位于"android.widget.VideoView"，是一个视频控件。</p><pre class="screen">
+		
+VideoView也为开发人员提供了对应的方法，这里简单介绍一些常用的：
+
+int getCurrentPosition()：获取当前播放的位置。
+int getDuration()：获取当前播放视频的总长度。
+isPlaying()：当前VideoView是否在播放视频。
+void pause()：暂停
+void seekTo(int msec)：从第几毫秒开始播放。
+void resume()：重新播放。
+void setVideoPath(String path)：以文件路径的方式设置VideoView播放的视频源。
+void setVideoURI(Uri uri)：以Uri的方式设置VideoView播放的视频源，可以是网络Uri或本地Uri。
+void start()：开始播放。
+void stopPlayback()：停止播放。
+setMediaController(MediaController controller)：设置MediaController控制器。
+setOnCompletionListener(MediaPlayer.onCompletionListener l)：监听播放完成的事件。
+setOnErrorListener(MediaPlayer.OnErrorListener l)：监听播放发生错误时候的事件。
+setOnPreparedListener(MediaPlayer.OnPreparedListener l)：：监听视频装载完成的事件。
+		
+		</pre><p>上面的一些方法通过方法名就可以了解用途。和MediaPlayer配合SurfaceView播放视频不同，VideoView播放之前无需编码装载视频，它会在start()开始播放的时候自动装载视频。并且VideoView在使用完之后，无需编码回收资源。</p><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm272075666304"></a>12.2.1. 播放网络视频</h3></div></div></div><p>加入 android.permission.INTERNET 允许访问网络</p><pre class="programlisting">
+			
+&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="cn.netkiller.video"&gt;
+
+    &lt;uses-permission android:name="android.permission.INTERNET" /&gt;
+    &lt;application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme"&gt;
+        &lt;activity android:name=".MainActivity"&gt;
+            &lt;intent-filter&gt;
+                &lt;action android:name="android.intent.action.MAIN" /&gt;
+
+                &lt;category android:name="android.intent.category.LAUNCHER" /&gt;
+            &lt;/intent-filter&gt;
+        &lt;/activity&gt;
+        &lt;activity android:name=".VideoViewActivity"&gt;&lt;/activity&gt;
+    &lt;/application&gt;
+
+&lt;/manifest&gt;
+			
+			</pre><p>最简洁的布局，只有一个 VideoView</p><pre class="programlisting">
+			
+&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".VideoViewActivity"&gt;
+
+    &lt;VideoView
+        android:id="@+id/videoView"
+        android:layout_width="match_parent"
+        android:layout_height="236dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" /&gt;
+
+&lt;/android.support.constraint.ConstraintLayout&gt;			
+			
+			</pre><p>播放的文件来自 IPFS 星际文件系统</p><pre class="programlisting">
+			
+package cn.netkiller.video;
+
+import android.net.Uri;
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+import android.widget.MediaController;
+import android.widget.VideoView;
+
+public class VideoViewActivity extends AppCompatActivity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_video_view);
+
+        Uri uri = Uri.parse("http://ipfs.netkiller.cn/ipfs/QmcA1Fsrt6jGTVqAUNZBqaprMEdFaFkmkzA5s2M6mF85UC");
+        VideoView videoView = (VideoView) this.findViewById(R.id.videoView);
+        videoView.setMediaController(new MediaController(this));
+        videoView.setVideoURI(uri);
+        videoView.start();
+        videoView.requestFocus();
+
+    }
+}
+			
+			</pre><p>运行程序开始播放视频，点击视频会在屏幕下方弹出 MediaController 控制条</p></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="MediaController"></a>12.2.2. MediaController 添加翻页事件</h3></div></div></div><pre class="programlisting">
+			
+package cn.netkiller.video;
+
+import android.net.Uri;
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.MediaController;
+import android.widget.Toast;
+import android.widget.VideoView;
+
+public class VideoViewActivity extends AppCompatActivity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_video_view);
+
+        final Uri uri = Uri.parse("http://ipfs.netkiller.cn/ipfs/QmcA1Fsrt6jGTVqAUNZBqaprMEdFaFkmkzA5s2M6mF85UC");
+        final VideoView videoView = (VideoView) this.findViewById(R.id.videoView);
+        MediaController mediaController = new MediaController(this);
+        mediaController.setMediaPlayer(videoView);
+
+        mediaController.setPrevNextListeners(
+                new View.OnClickListener() {
+
+                    @Override
+                    public void onClick(View v) {
+                        Toast.makeText(VideoViewActivity.this, "下一曲", Toast.LENGTH_SHORT).show();
+                        videoView.setVideoURI(Uri.parse("http://ipfs.netkiller.cn/ipfs/QmUaDftnPB7zCTwTASnSAWLiXWd1L5vNGEeU585rddfVTh"));
+                    }
+                },
+                new View.OnClickListener() {
+
+                    @Override
+                    public void onClick(View v) {
+                        Toast.makeText(VideoViewActivity.this, "上一曲", Toast.LENGTH_SHORT).show();
+                        videoView.setVideoURI(Uri.parse("http://ipfs.netkiller.cn/ipfs/QmbvKvj9X368WMtmkLYFuf59gSwLXYDLcdJuSiSHKPhTG4"));
+                    }
+                });
+
+        videoView.setMediaController(mediaController);
+        videoView.setVideoURI(uri);
+        videoView.start();
+        videoView.requestFocus();
+
+    }
+}
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm272075660560"></a>12.2.3. 静音播放视频</h3></div></div></div><pre class="programlisting">
+			
+		videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+
+            @Override
+            public void onPrepared(MediaPlayer mediaPlayer) {
+                mediaPlayer.setVolume(0f, 0f);
+            }
+        });			
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id=""></a>12.2.4. 更新进度条</h3></div></div></div><pre class="programlisting">
+			
+            new Thread() {
+                @Override
+                public void run() {
+                    try {
+                        while (videoView.isPlaying()) {
+                            // 如果正在播放，没0.5.毫秒更新一次进度条
+                            int current = videoView.getCurrentPosition();
+                            seekBar.setProgress(current);
+                            sleep(500);
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }.start();			
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="videoview.example"></a>12.2.5. 完整的例子</h3></div></div></div><pre class="programlisting">
+			
+&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".VideoViewActivity"&gt;
+
+    &lt;VideoView
+        android:id="@+id/videoView"
+        android:layout_width="match_parent"
+        android:layout_height="236dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" /&gt;
+
+    &lt;LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"&gt;
+
+
+        &lt;LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"&gt;
+
+            &lt;TextView
+                android:id="@+id/textViewTime"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="00:00" /&gt;
+
+            &lt;SeekBar
+                android:id="@+id/seekBar"
+                android:layout_width="270dp"
+                android:layout_height="wrap_content" /&gt;
+
+            &lt;TextView
+                android:id="@+id/textViewCurrentPosition"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="00:00" /&gt;
+        &lt;/LinearLayout&gt;
+
+        &lt;LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"&gt;
+
+            &lt;Button
+                android:id="@+id/buttonPlay"
+                android:layout_width="183dp"
+                android:layout_height="wrap_content"
+                android:text="播放" /&gt;
+
+            &lt;Button
+                android:id="@+id/buttonStop"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="停止" /&gt;
+
+        &lt;/LinearLayout&gt;
+
+    &lt;/LinearLayout&gt;
+
+    &lt;TextView
+        android:id="@+id/textViewStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:text="        "
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/videoView" /&gt;
+&lt;/android.support.constraint.ConstraintLayout&gt;			
+			
+			</pre><pre class="programlisting">
+			
+package cn.netkiller.video;
+
+import android.media.MediaPlayer;
+import android.net.Uri;
+import android.os.Handler;
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.SeekBar;
+import android.widget.TextView;
+import android.widget.Toast;
+import android.widget.VideoView;
+
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+
+public class VideoViewActivity extends AppCompatActivity implements View.OnClickListener {
+
+    private VideoView videoView;
+    private SeekBar seekBar;
+    private Button buttonPlay;
+    private TextView textViewTime;
+    private TextView textViewCurrentPosition;
+    private TextView textViewStatus;
+
+    private Handler handler = new Handler();
+    private Runnable runnable = new Runnable() {
+        public void run() {
+            if (videoView.isPlaying()) {
+                int current = videoView.getCurrentPosition();
+                seekBar.setProgress(current);
+                textViewCurrentPosition.setText(time(videoView.getCurrentPosition()));
+            }
+            handler.postDelayed(runnable, 500);
+        }
+    };
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_video_view);
+
+        final Uri uri = Uri.parse("http://ipfs.netkiller.cn/ipfs/QmcA1Fsrt6jGTVqAUNZBqaprMEdFaFkmkzA5s2M6mF85UC");
+        videoView = (VideoView) this.findViewById(R.id.videoView);
+        videoView.setVideoURI(uri);
+        videoView.requestFocus();
+
+        videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+
+            @Override
+            public void onPrepared(MediaPlayer mediaPlayer) {
+                textViewTime.setText(time(videoView.getDuration()));
+                textViewStatus.setText("视频加载完毕");
+                buttonPlay.setEnabled(true);
+
+            }
+        });
+
+        // 在播放完毕被回调
+        videoView.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                Toast.makeText(VideoViewActivity.this, "播放完成", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        videoView.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+
+            @Override
+            public boolean onError(MediaPlayer mp, int what, int extra) {
+                // 发生错误重新播放
+                play();
+                Toast.makeText(VideoViewActivity.this, "播放出错", Toast.LENGTH_SHORT).show();
+                return false;
+            }
+        });
+
+
+        textViewStatus = (TextView) findViewById(R.id.textViewStatus);
+        textViewStatus.setText("玩命加载中");
+
+        textViewTime = (TextView) findViewById(R.id.textViewTime);
+
+        seekBar = (SeekBar) findViewById(R.id.seekBar);
+        // 为进度条添加进度更改事件
+        seekBar.setOnSeekBarChangeListener(onSeekBarChangeListener);
+
+        textViewCurrentPosition = (TextView) findViewById(R.id.textViewCurrentPosition);
+
+        buttonPlay = (Button) findViewById(R.id.buttonPlay);
+        buttonPlay.setEnabled(false);
+        final Button buttonStop = (Button) findViewById(R.id.buttonStop);
+
+        buttonPlay.setOnClickListener(this);
+        buttonStop.setOnClickListener(this);
+
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.buttonPlay:
+                play();
+                break;
+            case R.id.buttonStop:
+                stop();
+                break;
+            default:
+                break;
+        }
+    }
+
+    private SeekBar.OnSeekBarChangeListener onSeekBarChangeListener = new SeekBar.OnSeekBarChangeListener() {
+        // 当进度条停止修改的时候触发
+        @Override
+        public void onStopTrackingTouch(SeekBar seekBar) {
+            // 取得当前进度条的刻度
+            int progress = seekBar.getProgress();
+            if (videoView.isPlaying()) {
+                // 设置当前播放的位置
+                videoView.seekTo(progress);
+            }
+        }
+
+        @Override
+        public void onStartTrackingTouch(SeekBar seekBar) {
+
+        }
+
+        @Override
+        public void onProgressChanged(SeekBar seekBar, int progress,
+                                      boolean fromUser) {
+
+        }
+    };
+
+    protected void play() {
+
+        if (buttonPlay.getText().equals("播放")) {
+            buttonPlay.setText("暂停");
+            textViewStatus.setText("请您欣赏");
+            // 开始线程，更新进度条的刻度
+            handler.postDelayed(runnable, 0);
+            videoView.start();
+            seekBar.setMax(videoView.getDuration());
+
+        } else
+
+        {
+            buttonPlay.setText("播放");
+            if (videoView.isPlaying()) {
+                videoView.pause();
+            }
+        }
+
+    }
+
+    protected void stop() {
+        if (videoView.isPlaying()) {
+            videoView.stopPlayback();
+        }
+    }
+
+    protected String time(long millionSeconds) {
+
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("mm:ss");
+        Calendar c = Calendar.getInstance();
+        c.setTimeInMillis(millionSeconds);
+        return simpleDateFormat.format(c.getTime());
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        handler.removeCallbacks(runnable);
+    }
+
+}
+			
+			</pre></div></div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
+			window.changyan.api.config({
+			appid: 'cyvwjQUG3',
+			conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
+			});
+</script><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="SurfaceView.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 12 章 多媒体开发 </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 12.3. SurfaceView</td></tr></table></div><script xmlns="">
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+			ga('create', 'UA-11694057-1', 'auto');
+			ga('send', 'pageview');
+
+		</script><script xmlns="" async="async">
+			var _hmt = _hmt || [];
+			(function() {
+			var hm = document.createElement("script");
+			hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(hm, s);
+			})();
+</script><script xmlns="" async="async">
+			(function(){
+			var bp = document.createElement('script');
+			var curProtocol = window.location.protocol.split(':')[0];
+			if (curProtocol === 'https') {
+			bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+			}
+			else {
+			bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+			}
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(bp, s);
+			})();
+</script></body></html>

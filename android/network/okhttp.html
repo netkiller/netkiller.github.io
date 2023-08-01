@@ -1,0 +1,897 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>9.2. OkHttp - An HTTP &amp; HTTP/2 client for Android and Java applications</title><link rel="stylesheet" type="text/css" href="../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="Android, Google Play" /><link rel="home" href="../index.html" title="Netkiller Android 手札" /><link rel="up" href="index.html" title="第 9 章 网络" /><link rel="prev" href="index.html" title="第 9 章 网络" /><link rel="next" href="../camera/index.html" title="第 10 章 相机与相册" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
+		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://edu.51cto.com/lecturer/1703915.html">51CTO学院</a> | <a xmlns="" href="https://edu.csdn.net/lecturer/6423">CSDN程序员研修院</a> | <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> | <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">腾讯云社区</a> | <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">阿里云栖社区</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">9.2. OkHttp - An HTTP &amp; HTTP/2 client for Android and Java
+		applications
+	</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><th width="60%" align="center">第 9 章 网络</th><td width="20%" align="right"> <a accesskey="n" href="../camera/index.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="okhttp"></a>9.2. OkHttp - An HTTP &amp; HTTP/2 client for Android and Java
+		applications
+	</h2></div></div></div><p>
+		<a class="ulink" href="http://square.github.io/okhttp/" target="_top">http://square.github.io/okhttp/</a>
+	</p><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="okhttp.Gradle"></a>9.2.1. Gradle</h3></div></div></div><p>再 app/build.gradle 文件中增加依赖包</p><pre class="screen">
+		
+implementation "com.squareup.okhttp3:okhttp:4.10.0"
+		
+		</pre><p>app/build.gradle</p><pre class="screen">
+		
+neo@MacBook-Pro ~/AndroidStudioProjects/okhttp % cat app/build.gradle
+		
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 28
+    defaultConfig {
+        applicationId "cn.netkiller.okhttp"
+        minSdkVersion 28
+        targetSdkVersion 28
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation 'com.android.support:appcompat-v7:28.0.0'
+    implementation 'com.android.support:design:28.0.0'
+    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+    implementation 'com.squareup.okhttp3:okhttp:3.11.0'
+}
+		
+		
+		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="okhttp.AndroidManifest.xml"></a>9.2.2. AndroidManifest.xml 开启网络访问权限</h3></div></div></div><p>在 app/src/main/AndroidManifest.xml 文件中增加</p><pre class="screen">
+		
+&lt;uses-permission android:name="android.permission.INTERNET" /&gt;		
+		
+		</pre><p>否则 okhttp 无法访问网络，添加后的效果如下。</p><pre class="screen">
+		
+neo@MacBook-Pro ~/AndroidStudioProjects/okhttp % cat app/src/main/AndroidManifest.xml 
+&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="cn.netkiller.okhttp"&gt;
+    &lt;uses-permission android:name="android.permission.INTERNET" /&gt;
+    &lt;application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme"&gt;
+        &lt;activity
+            android:name=".MainActivity"
+            android:label="@string/app_name"&gt;
+            &lt;intent-filter&gt;
+                &lt;action android:name="android.intent.action.MAIN" /&gt;
+
+                &lt;category android:name="android.intent.category.LAUNCHER" /&gt;
+            &lt;/intent-filter&gt;
+        &lt;/activity&gt;
+    &lt;/application&gt;
+
+&lt;/manifest&gt;		
+		
+		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="okhttp.http"></a>9.2.3. okhttp 默认是 HTTPS 开启 HTTP</h3></div></div></div><p>如果你尝试使用 http 链接 OkHttp3 就抛出异常: CLEARTEXT communication to " +
+			host + " not permitted by network security policy
+		</p><p>开发过程中由于 https ssl 需要购买证书，费用较高，通常测试环境我们仍然使用 http 下面方法是开启 http 模式，
+		</p><p>创建文件 res/xml/network_security_config.xml 内容如下</p><pre class="screen">
+		
+neo@MacBook-Pro ~/AndroidStudioProjects/okhttp % cat app/src/main/res/xml/network_security_config.xml 
+&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;network-security-config&gt;
+    &lt;domain-config cleartextTrafficPermitted="true"&gt;
+        &lt;domain includeSubdomains="true"&gt;localhost&lt;/domain&gt;
+    &lt;/domain-config&gt;
+&lt;/network-security-config&gt;		
+		
+		</pre><p>再 app/src/main/AndroidManifest.xml 文件中增加
+			android:networkSecurityConfig="@xml/network_security_config"
+		</p><pre class="screen">
+		
+&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="cn.netkiller.okhttp"&gt;
+
+    &lt;application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme"&gt;
+        &lt;activity
+            android:name=".MainActivity"
+            android:label="@string/app_name"
+            android:networkSecurityConfig="@xml/network_security_config"&gt;
+            &lt;intent-filter&gt;
+                &lt;action android:name="android.intent.action.MAIN" /&gt;
+
+                &lt;category android:name="android.intent.category.LAUNCHER" /&gt;
+            &lt;/intent-filter&gt;
+        &lt;/activity&gt;
+    &lt;/application&gt;
+
+    &lt;uses-permission android:name="android.permission.INTERNET" /&gt;
+&lt;/manifest&gt;		
+		
+		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="okhttp.get"></a>9.2.4. GET</h3></div></div></div><pre class="programlisting">
+		
+	OkHttpClient client = new OkHttpClient();
+ 
+    Request request = new Request.Builder()
+            .url("http://www.netkiller.cn")
+            .build();
+ 
+    Response response = client.newCall(request).execute();
+    if (!response.isSuccessful()) {
+        throw new IOException("服务器端错误: " + response);
+    }
+ 
+    Headers responseHeaders = response.headers();
+    for (int i = 0; i &lt; responseHeaders.size(); i++) {
+        System.out.println(responseHeaders.name(i) + ": " + responseHeaders.value(i));
+    }
+ 
+    System.out.println(response.body().string());		
+		
+		</pre><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm272045458464"></a>9.2.4.1. URL 组装</h4></div></div></div><pre class="programlisting">
+			
+		HttpUrl.Builder urlBuilder = HttpUrl.parse("https://www.netkiller.cn").newBuilder();
+		urlBuilder.addPathSegments("search/cache_vector_chatgpt");
+		urlBuilder.addQueryParameter("question", "Helloworld!!!");
+		String url = urlBuilder.build().toString();
+		
+		Log.d("API", url);
+		OkHttpClient client = new OkHttpClient();
+		try {
+		    Request request = new Request.Builder().url(url).build();
+		    Response response = client.newCall(request).execute();
+		    if (response.isSuccessful()) {
+		        Log.d("API", response.body().string());
+		    }
+		} catch (IOException e) {
+		    throw new RuntimeException(e);
+		}			
+			
+			</pre><p>URL 输出</p><pre class="screen">
+			
+https://www.netkiller.cn/search/cache_vector_chatgpt?question=Helloworld%21%21%21
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm272045456464"></a>9.2.4.2. Get 异步调用</h4></div></div></div><pre class="programlisting">
+			
+        OkHttpClient client = new OkHttpClient();
+
+        Request request = new Request.Builder().url(url).build();
+        Call call = client.newCall(request);
+        call.enqueue(new Callback() {
+            @Override
+            public void onFailure(@NotNull Call call, @NotNull IOException e) {
+
+            }
+
+            @Override
+            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+                if (response.isSuccessful()) {
+                    Log.i("TAG", "Async: " + response.body().string());
+                }
+            }
+        });			
+			
+			</pre></div></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="okhttp.post"></a>9.2.5. POST</h3></div></div></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm272045454560"></a>9.2.5.1. POST Form Data</h4></div></div></div><p>from 数据如下</p><pre class="screen">
+			
+key=value&amp;other=data			
+			
+			</pre><pre class="screen">
+			
+		String url = "https://api.netkiller.cn/oauth/token";
+
+		OkHttpClient client = new OkHttpClient();
+
+        RequestBody formBody = new FormBody.Builder()
+                .add("grant_type", "password")
+                .add("username", "netkiller")
+                .add("password", "123456")
+                .build();
+
+        Request request = new Request.Builder()
+                .url(url)
+                .post(formBody)
+                .build();
+
+        Response response = client.newCall(request).execute();
+        if (!response.isSuccessful()) {
+            throw new IOException("服务器端错误: " + response);
+        }
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm272045452624"></a>9.2.5.2. POST RAW JSON</h4></div></div></div><p>POST RAW Json 数据，数据的形态这样的</p><pre class="screen">
+			
+{"key":"value"}
+			
+			</pre><pre class="programlisting">
+			
+public static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+
+OkHttpClient client = new OkHttpClient();
+
+String post(String url, String json) throws IOException {
+  RequestBody body = RequestBody.create(JSON, json);
+  Request request = new Request.Builder()
+      .url(url)
+      .post(body)
+      .build();
+  Response response = client.newCall(request).execute();
+  return response.body().string();
+}		
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm272045450928"></a>9.2.5.3. 数据流提交</h4></div></div></div><pre class="programlisting">
+			
+OkHttpClient client = new OkHttpClient();
+final MediaType MEDIA_TYPE_TEXT = MediaType.parse("text/plain");
+final String postBody = "Hello World";
+
+RequestBody requestBody = new RequestBody() {
+    @Override
+    public MediaType contentType() {
+        return MEDIA_TYPE_TEXT;
+    }
+    @Override
+    public void writeTo(BufferedSink sink) throws IOException {
+        sink.writeUtf8(postBody);
+    }
+    @Override
+    public long contentLength() throws IOException {
+        return postBody.length();
+    }
+};
+
+Request request = new Request.Builder()
+        .url("https://www.google.com")
+        .post(requestBody)
+        .build();
+Response response = client.newCall(request).execute();
+if (!response.isSuccessful()) {
+    throw new IOException("服务器端错误: " + response);
+}
+System.out.println(response.body().string());			
+			
+			</pre></div></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="okhttp.addheader"></a>9.2.6. http header 相关设置</h3></div></div></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id=""></a>9.2.6.1. 设置 HTTP 头</h4></div></div></div><p>添加Http头</p><pre class="programlisting">
+			
+Request request = new Request.Builder()
+        .url(url)
+        .addHeader("CLIENT", "AD")
+        .addHeader("USERID", "343")
+        .build();		
+			
+			</pre><p>覆盖 HTTP 头</p><pre class="programlisting">
+			
+        Request request = new Request.Builder()
+                .header("Authorization", "replace this text with your token")
+                .url(url)
+                .build();		
+			
+			</pre><pre class="programlisting">
+			
+public class Headers {
+   public static void main(String[] args) throws IOException {
+    OkHttpClient client = new OkHttpClient();
+ 
+    Request request = new Request.Builder()
+            .url("http://www.netkiller.cn")
+            .header("User-Agent", "Apple Mac")
+            .addHeader("Accept", "text/html")
+            .build();
+ 
+    Response response = client.newCall(request).execute();
+    if (!response.isSuccessful()) {
+        throw new IOException("服务器端错误: " + response);
+    }
+ 
+    System.out.println(response.header("Server"));
+    System.out.println(response.headers("Set-Cookie"));
+   }
+}		
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm272045445680"></a>9.2.6.2. Cookie 管理</h4></div></div></div><pre class="programlisting">
+			
+OkHttpClient mHttpClient = new OkHttpClient.Builder().cookieJar(new CookieJar() {
+    private final HashMap&lt;String, List&lt;Cookie&gt;&gt; cookieStore = new HashMap&lt;&gt;();
+    @Override
+    public void saveFromResponse(HttpUrl url, List&lt;Cookie&gt; cookies) {
+        cookieStore.put(url.host(), cookies);
+    }
+    @Override
+    public List&lt;Cookie&gt; loadForRequest(HttpUrl url) {
+        List&lt;Cookie&gt; cookies = cookieStore.get(url.host());
+        return cookies != null ? cookies : new ArrayList&lt;Cookie&gt;();
+    }
+}).build();			
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm272045444496"></a>9.2.6.3. 禁用缓存</h4></div></div></div><pre class="programlisting">
+			
+Request request = new Request.Builder()
+    .cacheControl(new CacheControl.Builder().noCache().build())
+    .url(url)
+    .build();			
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id=""></a>9.2.6.4. 设置缓存 max-age</h4></div></div></div><pre class="programlisting">
+			
+// 等同于 nocache			
+Request request = new Request.Builder()
+    .cacheControl(new CacheControl.Builder()
+        .maxAge(0, TimeUnit.SECONDS)
+        .build())
+    .url("https://www.netkiller.cn")
+    .build();
+    
+// 设置缓存 365 天
+Request request = new Request.Builder()
+    .cacheControl(new CacheControl.Builder()
+        .maxStale(365, TimeUnit.DAYS)
+        .build())
+    .url("https://www.netkiller.cn")
+    .build();    	
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm272045442304"></a>9.2.6.5. 强制缓存</h4></div></div></div><pre class="programlisting">
+			
+Request request = new Request.Builder()
+    .cacheControl(new CacheControl.Builder()
+        .onlyIfCached()
+        .build())
+    .url("https://www.netkiller.cn/helloworld.txt")
+    .build();
+Response forceCacheResponse = client.newCall(request).execute();
+if (forceCacheResponse.code() != 504) {
+  // The resource was cached! Show it.
+} else {
+  // The resource was not cached.
+}			
+			
+			</pre></div></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="okhttp.auth"></a>9.2.7. HTTP Base Auth</h3></div></div></div><pre class="programlisting">
+		
+        OkHttpClient client = new OkHttpClient.Builder().authenticator(
+                new Authenticator(){
+                    public Request authenticate(Route route, Response response) {
+                        String credential = Credentials.basic("api","secret");
+                        return response.request().newBuilder().header("Authorization", credential).build();
+                    }
+                }
+        ).build();		
+		
+		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="HttpUrl.Builder"></a>9.2.8. HttpUrl.Builder 组装 URL 地址参数</h3></div></div></div><p>使用字符串拼接 URL地址特别容易出错</p><pre class="programlisting">
+		
+String url = "https://www.netkiller.cn/article?username="+ username + "&amp;category="+ category;		
+		
+		</pre><p>较好的处理方式是使用 HttpUrl.Builder</p><pre class="programlisting">
+		
+		HttpUrl.Builder builder = HttpUrl.parse("https://www.netkiller.cn/article").newBuilder();
+        builder.addQueryParameter("username", "netkiller");
+        builder.addQueryParameter("category", "android");
+        String url = builder.build().toString();
+
+        Log.d("okhttp", url);		
+		
+		</pre><p>输出结果</p><pre class="screen">
+		
+https://www.netkiller.cn/article?username=netkiller&amp;category=android		
+		
+		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="okhttp.Activity"></a>9.2.9. Android Activity Example</h3></div></div></div><pre class="programlisting">
+		
+package cn.netkiller.okhttp;
+
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+import android.util.Log;
+import android.widget.TextView;
+
+import java.io.IOException;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+
+public class HttpActivity extends AppCompatActivity {
+
+    TextView textView;
+    private Handler mHandler;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_http);
+        
+        textView = (TextView) findViewById(R.id.textView);
+
+        mHandler = new Handler(Looper.getMainLooper()) {
+            @Override
+            public void handleMessage(Message msg) {
+                textView.setText((String) msg.obj);
+            }
+        };
+
+        OkHttpClient client = new OkHttpClient();
+        Request request = new Request.Builder().url("https://api.netkiller.cn/member/json").build();
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                Log.d("okhttp", "Connect timeout. " + e.getMessage());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                String text = response.body().string();
+                Log.d("okhttp", "HTTP Code " + response.code() + " TEXT " + text);
+
+                Message msg = new Message();
+                msg.what = 0;
+                msg.obj = text;
+                mHandler.sendMessage(msg);
+
+            }
+        });
+
+    }
+}
+		
+		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="oauth2.android"></a>9.2.10. Android Oauth2 + Jwt example</h3></div></div></div><p>Oauth 返回数据，通过 Gson 的 fromJson 存储到下面类中。</p><pre class="programlisting">
+		
+package cn.netkiller.okhttp.pojo;
+
+public class Oauth {
+    private String access_token;
+    private String token_type;
+    private String refresh_token;
+    private String expires_in;
+    private String scope;
+    private String jti;
+
+    public String getAccess_token() {
+        return access_token;
+    }
+
+    public void setAccess_token(String access_token) {
+        this.access_token = access_token;
+    }
+
+    public String getToken_type() {
+        return token_type;
+    }
+
+    public void setToken_type(String token_type) {
+        this.token_type = token_type;
+    }
+
+    public String getRefresh_token() {
+        return refresh_token;
+    }
+
+    public void setRefresh_token(String refresh_token) {
+        this.refresh_token = refresh_token;
+    }
+
+    public String getExpires_in() {
+        return expires_in;
+    }
+
+    public void setExpires_in(String expires_in) {
+        this.expires_in = expires_in;
+    }
+
+    public String getScope() {
+        return scope;
+    }
+
+    public void setScope(String scope) {
+        this.scope = scope;
+    }
+
+    public String getJti() {
+        return jti;
+    }
+
+    public void setJti(String jti) {
+        this.jti = jti;
+    }
+
+    @Override
+    public String toString() {
+        return "Oauth{" +
+                "access_token='" + access_token + '\'' +
+                ", token_type='" + token_type + '\'' +
+                ", refresh_token='" + refresh_token + '\'' +
+                ", expires_in='" + expires_in + '\'' +
+                ", scope='" + scope + '\'' +
+                ", jti='" + jti + '\'' +
+                '}';
+    }
+}	
+		
+		</pre><p>Activity 文件</p><pre class="programlisting">
+		
+package cn.netkiller.okhttp;
+
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+import android.util.Log;
+import android.widget.TextView;
+
+import com.google.gson.Gson;
+
+import java.io.IOException;
+
+import cn.netkiller.okhttp.pojo.Oauth;
+import okhttp3.Authenticator;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Credentials;
+import okhttp3.FormBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okhttp3.Route;
+
+public class Oauth2jwtActivity extends AppCompatActivity {
+
+    private TextView token;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_oauth2jwt);
+
+        token = (TextView) findViewById(R.id.token);
+
+        try {
+            get();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+
+    public static Oauth accessToken() throws IOException {
+
+
+        OkHttpClient client = new OkHttpClient.Builder().authenticator(
+                new Authenticator() {
+                    public Request authenticate(Route route, Response response) {
+                        String credential = Credentials.basic("api", "secret");
+                        return response.request().newBuilder().header("Authorization", credential).build();
+                    }
+                }
+        ).build();
+
+        String url = "https://api.netkiller.cn/oauth/token";
+
+        RequestBody formBody = new FormBody.Builder()
+                .add("grant_type", "password")
+                .add("username", "blockchain")
+                .add("password", "123456")
+                .build();
+
+        Request request = new Request.Builder()
+                .url(url)
+                .post(formBody)
+                .build();
+
+        Response response = client.newCall(request).execute();
+        if (!response.isSuccessful()) {
+            throw new IOException("服务器端错误: " + response);
+        }
+
+        Gson gson = new Gson();
+        Oauth oauth = gson.fromJson(response.body().string(), Oauth.class);
+        Log.i("oauth", oauth.toString());
+        return oauth;
+    }
+
+    public void get() throws IOException {
+
+
+        OkHttpClient client = new OkHttpClient.Builder().authenticator(
+                new Authenticator() {
+                    public Request authenticate(Route route, Response response) throws IOException {
+                        return response.request().newBuilder().header("Authorization", "Bearer " + accessToken().getAccess_token()).build();
+                    }
+                }
+        ).build();
+
+        String url = "https://api.netkiller.cn/misc/compatibility";
+
+        Request request = new Request.Builder()
+                .url(url)
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                call.cancel();
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+
+                final String myResponse = response.body().string();
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Log.i("oauth", myResponse);
+                        token.setText(myResponse);
+                    }
+                });
+
+            }
+        });
+    }
+
+	public void post() throws IOException {
+
+
+        OkHttpClient client = new OkHttpClient.Builder().authenticator(
+                new Authenticator() {
+                    public Request authenticate(Route route, Response response) throws IOException {
+                        return response.request().newBuilder().header("Authorization", "Bearer " + accessToken().getAccess_token()).build();
+                    }
+                }
+        ).build();
+
+        String url = "https://api.netkiller.cn/history/create";
+
+        String json = "{\n" +
+                "  \"assetsId\": \"5bced71c432c001c6ea31924\",\n" +
+                "  \"title\": \"添加信息\",\n" +
+                "  \"message\": \"信息内容\",\n" +
+                "  \"status\": \"录入\"\n" +
+                "}";
+
+        final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+        RequestBody body = RequestBody.create(JSON, json);
+
+        Request request = new Request.Builder()
+                .url(url)
+                .post(body)
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                call.cancel();
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+
+                final String myResponse = response.body().string();
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+
+//                        Gson gson = new Gson();
+//                        Oauth oauth = gson.fromJson(myResponse, Oauth.class);
+//                        Log.i("oauth", oauth.toString());
+
+                        token.setText(myResponse);
+                    }
+                });
+
+            }
+        });
+    }
+
+}
+		
+		</pre><p>上面的例子演示了，怎样获取 access token 以及 HTTP 基本操作 GET 和
+			POST，再Restful接口中还可能会用到 PUT, DELETE 等等，原来相同，这里就不在演示。
+		</p></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="okhttp.h2"></a>9.2.11. HTTP/2</h3></div></div></div><p>首先确认你的服务器是支持 HTTP2，HTTP2配置方法可以参考 《Netkiller Web 手札》</p><p>下面是我的例子仅供参考，Nginx 开启 http2 代理后面的 Spring Cloud 接口。</p><pre class="screen">
+		
+server {
+    listen       80;
+    listen 443 ssl http2;
+    server_name  api.netkiller.cn;
+
+    ssl_certificate ssl/netkiller.cn.crt;
+    ssl_certificate_key ssl/netkiller.cn.key;
+    ssl_session_cache shared:SSL:20m;
+    ssl_session_timeout 60m;
+
+    charset utf-8;
+    access_log  /var/log/nginx/api.netkiller.cn.access.log;
+
+    error_page  497              https://$host$uri?$args;
+
+    if ($scheme = http) {
+        return 301 https://$server_name$request_uri;
+    }
+
+    location / {
+		proxy_pass   http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+		proxy_set_header    Host    $host;
+		proxy_set_header    X-Forwarded-For $proxy_add_x_forwarded_for;	
+    }
+
+    #error_page  404              /404.html;
+
+    # redirect server error pages to the static page /50x.html
+    #
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html;
+    }
+
+    # deny access to .htaccess files, if Apache's document root
+    # concurs with nginx's one
+    #
+    #location ~ /\.ht {
+    #    deny  all;
+    #}
+}		
+		
+		</pre><p>安卓程序如下</p><pre class="programlisting">
+		
+		String url = "https://api.netkiller.cn/member/json";
+
+        OkHttpClient client = new OkHttpClient();
+        Request request = new Request.Builder().url(url).build();
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                Log.d("okhttp", "Connect timeout. " + e.getMessage());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                String text = response.body().string();
+                Log.d("okhttp", "HTTP Code " + response.code() + " TEXT " + text);
+                Log.d("okhttp", "Protocol: " + response.protocol());
+            }
+        });
+		
+		</pre><p>运行结果</p><pre class="screen">
+		
+D/okhttp: HTTP Code 200 TEXT {"status":false,"reason":"","code":0,"data":{"id":null,"username":"12322228888","mobile":"12322228888","password":"123456","wechat":"微信ID","role":"Organization","captcha":null,"createDate":"2018-10-25 09:25:23","updateDate":null}}
+    Protocol: h2
+		
+		</pre><p>输出 h2 表示当前接口与服务器连接是通过 http2 完成。</p></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="okhttp3.async"></a>9.2.12. 异步更新 UI</h3></div></div></div><pre class="programlisting">
+		
+ 		buttonSend.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                HttpUrl.Builder urlBuilder = HttpUrl.parse(apiUrl).newBuilder();
+                urlBuilder.addPathSegments("search/cache_vector_chatgpt");
+                urlBuilder.addQueryParameter("question", editTextMessage.getText().toString());
+                String url = urlBuilder.build().toString();
+                Log.d("API", url);
+                OkHttpClient client = new OkHttpClient();
+
+                Request request = new Request.Builder().url(url).build();
+                Call call = client.newCall(request);
+
+                call.enqueue(new Callback() {
+                    @Override
+                    public void onFailure(@NotNull Call call, @NotNull IOException e) {
+
+                    }
+
+                    @Override
+                    public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+                        if (response.isSuccessful()) {
+                            answer = response.body().string();
+                            updateResult(answer);
+                            Log.i("TAG", "Async: " + answer);
+                        }
+                    }
+                });
+            }
+        });		
+		
+		</pre><pre class="programlisting">
+		
+    private void updateResult(final String response) {
+        //在子线程中更新UI
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                // 在这里进行UI操作，将结果显示到界面上
+                text_dashboard.setText(response);
+            }
+        });
+    }		
+		
+		</pre><p>Lambda 表达式 </p><pre class="programlisting">
+		
+	private void showResponse(final String response) {
+        //在子线程中更新UI
+        runOnUiThread(() -&gt; {
+			// 在这里进行UI操作，将结果显示到界面上
+			responseText.setText(response);
+        });
+    }		
+		
+		</pre><p>在 Fragment 中需这样使用 getActivity().runOnUiThread()</p><pre class="programlisting">
+		
+        buttonSend.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                
+                HttpUrl.Builder urlBuilder = HttpUrl.parse(apiUrl).newBuilder();
+                urlBuilder.addPathSegments("search/cache_vector_chatgpt");
+                urlBuilder.addQueryParameter("question", editTextMessage.getText().toString());
+                String url = urlBuilder.build().toString();
+                Log.d("API", url);
+                OkHttpClient client = new OkHttpClient();
+
+                Request request = new Request.Builder().url(url).build();
+                Call call = client.newCall(request);
+
+                call.enqueue(new Callback() {
+                    @Override
+                    public void onFailure(@NotNull Call call, @NotNull IOException e) {
+
+                    }
+
+                    @Override
+                    public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+                        if (response.isSuccessful()) {
+                            answer = response.body().string();
+                            getActivity().runOnUiThread(() -&gt; {
+                                text_dashboard.setText(answer);
+                            });
+                            Log.i("TAG", "Async: " + answer);
+                        }
+                    }
+                });
+            }
+        });		
+		
+		</pre></div></div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
+			window.changyan.api.config({
+			appid: 'cyvwjQUG3',
+			conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
+			});
+</script><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="../camera/index.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 9 章 网络 </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 10 章 相机与相册</td></tr></table></div><script xmlns="">
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+			ga('create', 'UA-11694057-1', 'auto');
+			ga('send', 'pageview');
+
+		</script><script xmlns="" async="async">
+			var _hmt = _hmt || [];
+			(function() {
+			var hm = document.createElement("script");
+			hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(hm, s);
+			})();
+</script><script xmlns="" async="async">
+			(function(){
+			var bp = document.createElement('script');
+			var curProtocol = window.location.protocol.split(':')[0];
+			if (curProtocol === 'https') {
+			bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+			}
+			else {
+			bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+			}
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(bp, s);
+			})();
+</script></body></html>
