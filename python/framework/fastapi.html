@@ -4,7 +4,7 @@
 	
 	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="app.post"></a>5.4.1. Post Request</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm152713708512"></a>5.4.1.1. From 数据</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm302528973824"></a>5.4.1.1. From 数据</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -224,7 +224,7 @@ async def startup():
     FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")		
 		
 		</pre>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm152711054736"></a>5.4.5.1. 缓存 Json 数据结构</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm302528957712"></a>5.4.5.1. 缓存 Json 数据结构</h4></div></div></div>
 			
 			<pre class="programlisting">
 			
@@ -235,7 +235,7 @@ async def index():
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm152711053456"></a>5.4.5.2. 自定义 key</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm302528955520"></a>5.4.5.2. 自定义 key</h4></div></div></div>
 			
 			<pre class="programlisting">
 			
@@ -380,7 +380,86 @@ if __name__ == "__main__":
 		</pre>
 		
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm152787739456"></a>5.4.8. Fief 认证框架</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="jsonable_encoder"></a>5.4.8. 解决 Sqlalchemy 返回模型无法打印的问题</h3></div></div></div>
+		
+		<p>直接打印返回结果</p>
+		<pre class="screen">
+		
+&lt;models.model.Picture object at 0x1063e9910&gt;		
+		
+		</pre>
+		<p>倒入依赖，然后使用 jsonable_encoder 编码</p>
+		<pre class="programlisting">
+		
+from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder		
+		
+		</pre>
+		<pre class="programlisting">
+		
+@router.get(
+    "/{android_id}/open/{id}",
+    summary="打开绘本",
+    description="开始阅读绘本作品",
+)
+async def open(id: int):
+    session = database.session()
+    book = {}
+    try:
+        from sqlalchemy.orm import load_only
+
+        book["book"] = session.query(PictureBook).filter(PictureBook.id == id).first()
+        book["story"] = (
+            session.query(Picture)
+            .join(PictureBookHasPicture, Picture.id == PictureBookHasPicture.picture_id)
+            .filter(PictureBookHasPicture.picture_book_id == id)
+            .options(load_only(Picture.image, Picture.story))
+            .all()
+        )
+        if book["book"]:
+            response = Response(True, "打开绘本", jsonable_encoder(book))
+        else:
+            response = Response(False, "打开绘本没有数据", None)
+    except Exception as e:
+        response = Response(False, e, None)
+        logger.error(response)
+    finally:
+        session.close()
+    logger.info(response)
+    return JSONResponse(content=response)		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="media_type"></a>5.4.9. 返回图片</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+import qrcode, logging, io
+		
+@router.get("/{android_id}/qrcode")
+async def device_bind_qrcode(android_id: str):
+    try:
+        data = f"{android_id}"
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=20,
+            border=2,
+        )
+        qr.add_data(data)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color="black", back_color="white")
+        out = io.BytesIO()
+        img.save(out, "PNG")
+        logger.info(f"QR Code: {data}")
+        return Response(content=out.getvalue(), media_type="image/png")
+    except Exception as e:
+        logger.error(e)
+        return None		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm302528939392"></a>5.4.10. Fief 认证框架</h3></div></div></div>
 		
 		<a class="ulink" href="https://docs.fief.dev/integrate/python/fastapi/" target="_top">https://docs.fief.dev/integrate/python/fastapi/</a>
 	</div>
