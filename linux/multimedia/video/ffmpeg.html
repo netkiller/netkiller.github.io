@@ -6,7 +6,7 @@
 		<a class="ulink" href="http://ffmpeg.org/" target="_top">http://ffmpeg.org/</a>
 	</p>
 	<p>Converting video and audio has never been so easy.</p>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm230258359856"></a>151.3.1. 安装</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm247455455760"></a>151.3.1. 安装</h3></div></div></div>
 		
 		<p>MacOS</p>
 		<pre class="screen">
@@ -14,15 +14,21 @@
 brew install ffmpeg		
 		
 		</pre>
+		<p></p>
+		<div class="section"><div class="titlepage"></div>
+		
+sudo apt-get install ffmpeg		
+		
+		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm230258357200"></a>151.3.2. 视频格式转换</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm247455452416"></a>151.3.2. 视频格式转换</h3></div></div></div>
 		
 		<pre class="screen">
 		
 $ ffmpeg -i input.mp4 output.avi	
 		
 		</pre>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm230258356016"></a>151.3.2.1. m4v to mov</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm247455451200"></a>151.3.2.1. m4v to mov</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -31,7 +37,7 @@ for i in *.m4v; do ffmpeg -y -i "$i" "${i%.*}.mov"; done
 			</pre>
 		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm230258354448"></a>151.3.3. 提取视频中的音频</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm247455449648"></a>151.3.3. 提取视频中的音频</h3></div></div></div>
 		
 		<pre class="screen">
 		
@@ -39,7 +45,7 @@ ffmpeg -i input.mp4 -f mp3 output.mp3
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm230258353232"></a>151.3.4. 添加字幕</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm247455448432"></a>151.3.4. 添加字幕</h3></div></div></div>
 		
 		<pre class="screen">
 		
@@ -47,6 +53,82 @@ ffmpeg -i input.mp4 -vf subtitles=caption.srt -y output.mp4
 		
 		</pre>
 	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm247455447120"></a>151.3.5. 音频格式转换</h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm247455446320"></a>151.3.5.1. mp3 转 wav</h4></div></div></div>
+			
+			<p>mp3 转 wav</p>
+			<pre class="screen">
+			
+ffmpeg -i input.mp3 -f wav output.wav
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm247455444512"></a>151.3.5.2. wav 转 mp3</h4></div></div></div>
+			
+			<p>wav 转 mp3</p>
+			<pre class="screen">
+			
+ffmpeg -i input.wav -f mp2 output.mp3
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm247455442832"></a>151.3.5.3. wav to pcm</h4></div></div></div>
+			
+			<pre class="screen">
+			
+ffmpeg -i input.wav -f s16be -ar 8000 -ac 1 -acodec pcm_s16be output.pcm		
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm247455441600"></a>151.3.5.4. pcm to wav</h4></div></div></div>
+			
+			<pre class="screen">
+			
+ffmpeg -i input.pcm -f s16be -ar 8000 -ac 2 -acodec pcm_s16be  output.wav
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm247455440272"></a>151.3.5.5. 批量把wav转mp3</h4></div></div></div>
+			
+			<pre class="screen">
+			
+#!/bin/bash
+
+folder=/home/XXX
+
+for file in $(find "$folder" -type f -iname "*.mp3")
+do
+    name=$(basename "$file" .mp3)
+    dir=$(dirname "$file")
+    echo ffmpeg -i "$file" -acodec pcm_s16le -ac 1 -ar 16000 "$dir"/"$name".wav
+    ffmpeg -i "$file" -acodec pcm_s16le -ac 1 -ar 16000 "$dir"/"$name".wav
+
+done		
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm247455438512"></a>151.3.5.6. 批量把pcm转wav</h4></div></div></div>
+			
+			<pre class="screen">
+			
+#!/bin/bash
+
+folder=/home/XXX
+mkdir "$folder"/out
+
+for file in $(find "$folder" -type f -iname "*.pcm")
+do
+    name=$(basename "$file" .pcm)
+    dir=$(dirname "$file")
+    echo ffmpeg -f s16le -ar 16000 -ac 1 -acodec pcm_s16le -i "$file" "$dir"/out/"$name".wav
+    ffmpeg -f s16le -ar 16000 -ac 1 -acodec pcm_s16le -i "$file" "$dir"/out/"$name".wav
+done
+			
+			</pre>
+		</div>
+	</div>
+
 </div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
 			window.changyan.api.config({
 			appid: 'cyvwjQUG3',
