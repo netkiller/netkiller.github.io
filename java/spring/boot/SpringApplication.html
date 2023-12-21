@@ -25,7 +25,7 @@ public class Application {
 	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="spring.run"></a>5.3.1. 运行 Spring boot 项目</h3></div></div></div>
 		
 
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm330697215952"></a>5.3.1.1. Linux systemd</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm519764685536"></a>5.3.1.1. Linux systemd</h4></div></div></div>
 			
 			<p>/etc/systemd/system/spring.service</p>
 			<pre class="screen">
@@ -54,7 +54,7 @@ WantedBy=multi-user.target
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm330697213696"></a>5.3.1.2. 传统 init.d 脚本</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm519632902224"></a>5.3.1.2. 传统 init.d 脚本</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -186,7 +186,7 @@ public class Application extends SpringBootServletInitializer {
 @SpringBootApplication
 			
 		</pre>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm330697208944"></a>5.3.2.1. 排除 @EnableAutoConfiguration 加载项</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm519632892752"></a>5.3.2.1. 排除 @EnableAutoConfiguration 加载项</h4></div></div></div>
 			
 			<pre class="programlisting">
 				
@@ -195,7 +195,7 @@ public class Application extends SpringBootServletInitializer {
 			</pre>
 		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm330697207504"></a>5.3.3. 获取 Resources 目录中的静态文件</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="获取Resources中的文件"></a>5.3.3. 获取 Resources 目录中的静态文件</h3></div></div></div>
 		
 		<pre class="programlisting">
 			
@@ -276,7 +276,95 @@ public class Application extends SpringBootServletInitializer {
 			
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="CharacterEncodingFilter"></a>5.3.8. CharacterEncodingFilter</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="启动和销毁"></a>5.3.8. 启动和销毁</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+package cn.netkiller;
+
+
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.scheduling.annotation.EnableAsync;
+
+@SpringBootApplication
+@EnableJpaRepositories
+@EnableAutoConfiguration
+@EnableAsync
+public class Application {
+    private static final Logger logger = LoggerFactory.getLogger(Application.class);
+
+    @Value("${spring.application.name}")
+    public String name;
+
+    public static void main(String[] args) {
+        System.out.println("Watch interface start...");
+        SpringApplication.run(Application.class, args);
+    }
+
+    @PostConstruct
+    public void init() {
+        logger.info(String.format("==================== %s 系统启动 ====================", name));
+    }
+
+    @PreDestroy
+    public void destroy() {
+        logger.info(String.format("==================== %s 系统销毁 ====================", name));
+    }
+}		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="打印环境变量"></a>5.3.9. 打印环境变量</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+package cn.netkiller;
+
+
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.scheduling.annotation.EnableAsync;
+
+@SpringBootApplication
+@EnableJpaRepositories
+@EnableAutoConfiguration
+@EnableAsync
+public class Application {
+    private static final Logger logger = LoggerFactory.getLogger(Application.class);
+
+    public static void main(String[] args) {
+        System.out.println("Watch interface start...");
+        SpringApplication.run(Application.class, args);
+    }
+
+    @Bean
+    ApplicationRunner applicationRunner(Environment environment) {
+        return args -&gt; {
+            // log.info("our database URL connection will be " +
+            // environment.getProperty("spring.datasource.url"));
+            System.out.println(environment.getProperty("spring.application.name"));
+        };
+    }
+}		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="CharacterEncodingFilter"></a>5.3.10. CharacterEncodingFilter</h3></div></div></div>
 		
 		<pre class="programlisting">
 			
@@ -289,7 +377,7 @@ public class Application extends SpringBootServletInitializer {
 			
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="banner"></a>5.3.9. 隐藏 Banner</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="banner"></a>5.3.11. 隐藏 Banner</h3></div></div></div>
 		
 		<p>隐藏 Spring Boot Banner</p>
 		<pre class="screen">
@@ -314,7 +402,7 @@ public static void main(String[] args) {
 		</pre>
 	</div>
 
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="scan"></a>5.3.10. 实体与仓库扫描</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="scan"></a>5.3.12. 实体与仓库扫描</h3></div></div></div>
 		
 		<pre class="programlisting">
 			
@@ -323,7 +411,7 @@ public static void main(String[] args) {
 			
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="beans"></a>5.3.11. 列出 Beans</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="beans"></a>5.3.13. 列出 Beans</h3></div></div></div>
 		
 		<pre class="programlisting">
 			
@@ -366,7 +454,7 @@ public class Application {
 			
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="spring.boot.ports"></a>5.3.12. Tomcat 端口</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="spring.boot.ports"></a>5.3.14. Tomcat 端口</h3></div></div></div>
 		
 		<pre class="programlisting">
 		
@@ -398,7 +486,7 @@ public class TomcatConfiguration implements EmbeddedServletContainerCustomizer {
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm330697189456"></a>5.3.13. 配置项设定</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="启动配置项"></a>5.3.15. 配置项设定</h3></div></div></div>
 		
 		<pre class="programlisting">
 			
@@ -411,7 +499,7 @@ public static void main(String[] args) {
 			
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm330697187120"></a>5.3.14. spring.profiles.active</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="spring.profiles.active"></a>5.3.16. spring.profiles.active</h3></div></div></div>
 		
 		<pre class="programlisting">
 			
@@ -431,7 +519,7 @@ ctx.refresh();
 
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm330697185392"></a>5.3.15. @Profile("dev") / @ActiveProfiles("dev")</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm519630372880"></a>5.3.17. @Profile("dev") / @ActiveProfiles("dev")</h3></div></div></div>
 		
 		<p>不同环境运行不同的逻辑</p>
 		<pre class="programlisting">
@@ -473,7 +561,7 @@ public class DataSourceConfig {
 		</pre>
 	</div>
 	
-<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="spring.boot.timezone"></a>5.3.16. 设置默认时区</h3></div></div></div>
+<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="spring.boot.timezone"></a>5.3.18. 设置默认时区</h3></div></div></div>
     
     <pre class="programlisting">
      
