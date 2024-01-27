@@ -1,0 +1,472 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>6.4. Log4j2 + Gelf + Logstash</title><link rel="stylesheet" type="text/css" href="../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config" /><link rel="home" href="../index.html" title="Netkiller Spring Cloud 手札" /><link rel="up" href="spring.boot.logging.html" title="第 6 章 Spring boot with Logging" /><link rel="prev" href="springboot.logback.html" title="6.3. logback 配置详解" /><link rel="next" href="logging.dingtalk.html" title="6.5. 日志报警" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
+		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://edu.51cto.com/lecturer/1703915.html">51CTO学院</a> | <a xmlns="" href="https://edu.csdn.net/lecturer/6423">CSDN程序员研修院</a> | <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> | <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">腾讯云社区</a> | <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">阿里云栖社区</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">6.4. Log4j2 + Gelf + Logstash</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="springboot.logback.html">上一页</a> </td><th width="60%" align="center">第 6 章 Spring boot with Logging</th><td width="20%" align="right"> <a accesskey="n" href="logging.dingtalk.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="log4j2-gelf-logstash"></a>6.4. Log4j2 + Gelf + Logstash</h3></div></div></div>
+		
+		<p>https://logging.paluch.biz/examples/log4j-2.x.html</p>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm529178025472"></a>6.4.1. Maven 配置</h4></div></div></div>
+			
+			<pre class="screen">
+			
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-web&lt;/artifactId&gt;
+			&lt;!-- Exclude the Tomcat dependency --&gt;
+			&lt;exclusions&gt;
+				&lt;exclusion&gt;
+					&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+					&lt;artifactId&gt;spring-boot-starter-tomcat&lt;/artifactId&gt;
+				&lt;/exclusion&gt;
+				&lt;!-- 禁用 logback --&gt;
+				&lt;exclusion&gt;
+					&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+					&lt;artifactId&gt;spring-boot-starter-logging&lt;/artifactId&gt;
+				&lt;/exclusion&gt;
+			&lt;/exclusions&gt;
+		&lt;/dependency&gt;
+		&lt;!-- 添加Log4j2 依赖 --&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-log4j2&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;biz.paluch.logging&lt;/groupId&gt;
+			&lt;artifactId&gt;logstash-gelf&lt;/artifactId&gt;
+			&lt;version&gt;1.15.0&lt;/version&gt;
+		&lt;/dependency&gt;		
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm529178024320"></a>6.4.2. log4j2.xml 配置</h4></div></div></div>
+			
+			<pre class="screen">
+			
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;Configuration&gt;
+	&lt;properties&gt;
+		&lt;property name="log.pattern"&gt;[%d{yyyy-MM-dd HH:mm:ss}] [${hostName}] [%p] [%t] %l - %m%n&lt;/property&gt;
+		&lt;property name="log.dir"&gt;/tmp/logs&lt;/property&gt;
+		&lt;property name="log.level"&gt;info&lt;/property&gt;
+	&lt;/properties&gt;
+	&lt;Appenders&gt;
+		&lt;!-- 控制台 --&gt;
+		&lt;Console name="Console" target="SYSTEM_OUT"&gt;
+			&lt;PatternLayout pattern="${log.pattern}" /&gt;
+		&lt;/Console&gt;
+
+		&lt;!-- INFO级别日志 --&gt;
+		&lt;RollingFile name="RollingFileInfo" fileName="${log.dir}/info.log" filePattern="${log.dir}/info.%d{yyyy-MM-dd}.log"&gt;
+			&lt;Filters&gt;
+				&lt;ThresholdFilter level="INFO" /&gt;
+				&lt;ThresholdFilter level="WARN" onMatch="DENY" onMismatch="NEUTRAL" /&gt;
+			&lt;/Filters&gt;
+			&lt;PatternLayout pattern="${log.pattern}" /&gt;
+			&lt;Policies&gt;
+				&lt;TimeBasedTriggeringPolicy interval="1" modulate="false" /&gt;
+			&lt;/Policies&gt;
+		&lt;/RollingFile&gt;
+
+		&lt;!-- WARN级别日志 --&gt;
+		&lt;RollingFile name="RollingFileWarn" fileName="${log.dir}/warn.log" filePattern="${log.dir}/warn.%d{yyyy-MM-dd}.log"&gt;
+			&lt;Filters&gt;
+				&lt;ThresholdFilter level="WARN" /&gt;
+				&lt;ThresholdFilter level="ERROR" onMatch="DENY" onMismatch="NEUTRAL" /&gt;
+			&lt;/Filters&gt;
+			&lt;PatternLayout pattern="${log.pattern}" /&gt;
+			&lt;Policies&gt;
+				&lt;TimeBasedTriggeringPolicy interval="1" modulate="false" /&gt;
+			&lt;/Policies&gt;
+		&lt;/RollingFile&gt;
+
+		&lt;!-- ERROR级别日志 --&gt;
+		&lt;RollingFile name="RollingFileError" fileName="${log.dir}/error.log" filePattern="${log.dir}/error.%d{yyyy-MM-dd}.log"&gt;
+			&lt;Filters&gt;
+				&lt;ThresholdFilter level="ERROR" /&gt;
+			&lt;/Filters&gt;
+			&lt;PatternLayout pattern="${log.pattern}" /&gt;
+			&lt;Policies&gt;
+				&lt;TimeBasedTriggeringPolicy interval="1" modulate="false" /&gt;
+			&lt;/Policies&gt;
+		&lt;/RollingFile&gt;
+
+		&lt;Gelf name="Gelf" host="udp:172.18.200.10" port="12201" version="1.1" extractStackTrace="true" filterStackTrace="true" mdcProfiling="true" includeFullMdc="true" maximumMessageSize="8192" originHost="%host{fqdn}"&gt;
+			&lt;Field name="timestamp" pattern="%d{yyyy-MM-dd HH:mm:ss.SSS}" /&gt;
+			&lt;Field name="logger" pattern="%logger" /&gt;
+			&lt;Field name="level" pattern="%level" /&gt;
+			&lt;Field name="class" pattern="%C{1}" /&gt;
+			&lt;Field name="method" pattern="%M" /&gt;
+			&lt;Field name="line" pattern="%L" /&gt;
+			&lt;Field name="marker" pattern="%marker" /&gt;
+			&lt;Filters&gt;
+				&lt;MarkerFilter marker="finance" onMatch="ACCEPT" onMismatch="NEUTRAL" /&gt;
+				&lt;MarkerFilter marker="market" onMatch="ACCEPT" onMismatch="DENY" /&gt;
+			&lt;/Filters&gt;
+		&lt;/Gelf&gt;
+	&lt;/Appenders&gt;
+	&lt;Loggers&gt;
+		&lt;Root level="${sys:log.level}"&gt;
+			&lt;AppenderRef ref="Console" /&gt;
+			&lt;AppenderRef ref="Gelf" /&gt;
+			&lt;!-- &lt;AppenderRef ref="RollingFileInfo" /&gt; &lt;AppenderRef ref="RollingFileWarn" /&gt; &lt;AppenderRef ref="RollingFileError" /&gt; --&gt;
+		&lt;/Root&gt;
+	&lt;/Loggers&gt;
+&lt;/Configuration&gt;			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm529178022256"></a>6.4.3. Java 测试代码</h4></div></div></div>
+			
+			<pre class="screen">
+			
+	@GetMapping("/log")
+	public String log() {
+		Marker finance = MarkerFactory.getMarker(LogMarker.finance.toString());
+		Marker customer = MarkerFactory.getMarker(LogMarker.customer.toString());
+		Marker market = MarkerFactory.getMarker(LogMarker.market.toString());
+		logger.info("常规日志");
+		logger.info(finance, "test");
+		logger.info(finance, "finance");
+		logger.info(customer, "customer");
+		logger.info(market, "market");
+		return "OK!!!\r\n";
+	}
+
+	@GetMapping("/log/marker")
+	public String marker(@RequestParam("marker") String marker, @RequestParam("msg") String msg) {
+		logger.info(MarkerFactory.getMarker(marker), msg);
+		msg += "\r\n";
+		return msg;
+	}			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm529178021104"></a>6.4.4. Logstash 配置</h4></div></div></div>
+			
+			<pre class="screen">
+			
+[root@netkiller log]# cat /etc/logstash/conf.d/file.conf 
+input {
+  tcp {
+	port =&gt; 4567 
+	codec =&gt; json_lines
+  }
+  gelf {
+    port =&gt; 12201
+    use_udp =&gt; true
+    #use_tcp =&gt; true
+  }
+}
+
+filter {
+	ruby {
+	    code =&gt; "event.set('datetime', event.get('@timestamp').time.localtime.strftime('%Y-%m-%d %H:%M:%S'))"
+	}
+}
+
+output {
+
+    file {
+    	path =&gt; "/opt/log/%{marker}.%{+yyyy}-%{+MM}-%{+dd}.log"
+    	codec =&gt; line { format =&gt; "[%{datetime}] %{level} %{message}"}
+    }
+   
+    file {
+        path =&gt; "/opt/log/origin.%{+yyyy}-%{+MM}-%{+dd}.log.gz"
+		codec =&gt; json_lines
+        gzip =&gt; true
+    }
+
+}			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm529178019200"></a>6.4.5. 测试结果</h4></div></div></div>
+			
+			<pre class="screen">
+			
+[root@netkiller log]# ls
+finance.2022-11-16.log  market.2022-11-16.log  origin.2022-11-16.log.gz
+
+[root@netkiller log]# cat finance.2022-11-16.log 
+[2022-11-16 15:02:36] INFO test
+[2022-11-16 15:02:36] INFO finance
+[2022-11-16 15:21:34] INFO test
+[2022-11-16 15:21:34] INFO finance
+
+[root@netkiller log]# cat market.2022-11-16.log 
+[2022-11-16 15:02:36] INFO market
+[2022-11-16 15:21:34] INFO market
+
+[root@netkiller log]# zcat origin.2022-11-16.log.gz |jq
+{
+  "datetime": "2022-11-16 15:21:34",
+  "timestamp": "2022-11-16 15:21:34.185",
+  "message": "market",
+  "host": "macbook-pro-neo.local",
+  "level": "INFO",
+  "line": 53,
+  "@version": "1",
+  "@timestamp": "2022-11-16T07:21:34.185Z",
+  "marker": "market",
+  "logger": "cn.netkiller.controller.HomeController",
+  "version": "1.1",
+  "method": "log",
+  "class": "HomeController",
+  "source_host": "172.18.5.142",
+  "facility": "logstash-gelf"
+}
+{
+  "datetime": "2022-11-16 15:21:34",
+  "timestamp": "2022-11-16 15:21:34.143",
+  "message": "test",
+  "host": "macbook-pro-neo.local",
+  "level": "INFO",
+  "line": 49,
+  "@version": "1",
+  "@timestamp": "2022-11-16T07:21:34.143Z",
+  "marker": "finance",
+  "logger": "cn.netkiller.controller.HomeController",
+  "version": "1.1",
+  "method": "log",
+  "class": "HomeController",
+  "source_host": "172.18.5.142",
+  "facility": "logstash-gelf"
+}
+{
+  "datetime": "2022-11-16 15:21:34",
+  "timestamp": "2022-11-16 15:21:34.184",
+  "message": "finance",
+  "host": "macbook-pro-neo.local",
+  "level": "INFO",
+  "line": 51,
+  "@version": "1",
+  "@timestamp": "2022-11-16T07:21:34.184Z",
+  "marker": "finance",
+  "logger": "cn.netkiller.controller.HomeController",
+  "version": "1.1",
+  "method": "log",
+  "class": "HomeController",
+  "source_host": "172.18.5.142",
+  "facility": "logstash-gelf"
+}
+			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm529178017328"></a>6.4.6. Log4j2 更多技巧</h4></div></div></div>
+			
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm529178016528"></a>多环境配置</h5></div></div></div>
+				
+				<p>方案一</p>
+				<pre class="screen">
+			
+logging:
+  config: classpath:log4j2-${spring.profiles.active}.xml
+			
+				</pre>
+				<p>方案二</p>
+				<pre class="screen">
+				
+@SpringBootApplication
+public class Application implements CommandLineRunner {
+
+    @Autowired
+    private Environment env;
+
+    public static void main(String[] args) {
+        SpringApplication.run(Application.class, args);
+    }
+
+    @Override
+    public void run(String... param) {
+        if (Arrays.asList(env.getActiveProfiles()).contains("dev")) {
+            Configurator.initialize(null, "/path/to/log4j2-dev.xml");
+        } else {
+            Configurator.initialize(null, "/path/to/log4j2.xml");
+        }
+    }
+}				
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm529178014192"></a>控制 class 日志输出级别</h5></div></div></div>
+				
+				<pre class="screen">
+				
+#日志配置 无特殊需求无需更改
+logging:
+  config:  classpath:log4j2.xml
+  level:
+    root: INFO
+    javax.activation: info
+    org.apache.catalina: INFO
+    org.apache.commons.beanutils.converters: INFO
+    org.apache.coyote.http11.Http11Processor: INFO
+    org.apache.http: INFO
+    org.apache.tomcat: INFO
+    org.springframework: INFO
+    com.chinamobile.cmss.bdpaas.resource.monitor: DEBUG				
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm529178011936"></a>日志输出级别</h5></div></div></div>
+				
+				<pre class="programlisting">
+			
+    &lt;Loggers&gt;
+        &lt;Logger name="com.ensd.service.sharding.MonthShardingAlgorithm" level="ERROR" /&gt;
+        &lt;Root level="${sys:log.level}"&gt;
+            &lt;AppenderRef ref="Console"/&gt;
+            &lt;AppenderRef ref="File"/&gt;
+            &lt;AppenderRef ref="Logstash"/&gt;
+        &lt;/Root&gt;
+    &lt;/Loggers&gt;			
+			
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm529178010464"></a>读取系统变量/环境变量</h5></div></div></div>
+				
+				<pre class="screen">
+				
+${sys:catalina.home}/logs
+${env:log.home}/logs
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm529178009312"></a>读取 spring 配置</h5></div></div></div>
+				
+				<p>引入依赖</p>
+				<pre class="screen">
+				
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.apache.logging.log4j&lt;/groupId&gt;
+			&lt;artifactId&gt;log4j-spring-boot&lt;/artifactId&gt;
+		&lt;/dependency&gt;				
+				
+				</pre>
+				<p>例子</p>
+				<pre class="screen">
+				 
+&lt;Configuration name="ConfigTest" status="ERROR" monitorInterval="5"&gt;
+	&lt;properties&gt;
+		&lt;property name="applicationName"&gt;${spring:spring.application.name}&lt;/property&gt;
+	&lt;/properties&gt;
+	&lt;Appenders&gt;
+	
+	&lt;SpringProfile name="dev | staging"&gt;
+		&lt;Console name="Out"&gt;
+			&lt;PatternLayout pattern="%m%n"/&gt;
+		&lt;/Console&gt;
+	&lt;/SpringProfile&gt;
+	&lt;SpringProfile name="prod"&gt;
+		&lt;List name="Out"&gt;
+		&lt;/List&gt;
+	&lt;/SpringProfile&gt;
+	
+	&lt;/Appenders&gt;
+	&lt;Loggers&gt;
+		&lt;Logger name="org.apache.test" level="trace" additivity="false"&gt;
+		&lt;AppenderRef ref="Out"/&gt;
+		&lt;/Logger&gt;
+		&lt;Root level="error"&gt;
+		&lt;AppenderRef ref="Out"/&gt;
+		&lt;/Root&gt;
+	&lt;/Loggers&gt;
+&lt;/Configuration&gt;								  
+				
+				</pre>
+				<p>读取方法 ${spring:spring.profiles.active}</p>
+				<pre class="screen">
+				
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;Configuration&gt;
+	&lt;properties&gt;
+		&lt;property name="log.pattern"&gt;[%d{yyyy-MM-dd HH:mm:ss}] [${hostName}] [%p] [%t] %l - %m%n&lt;/property&gt;
+		&lt;property name="log.home"&gt;/tmp/logs&lt;/property&gt;
+		&lt;property name="log.level"&gt;info&lt;/property&gt;
+	&lt;/properties&gt;
+	&lt;Appenders&gt;
+		&lt;Console name="Console" target="SYSTEM_OUT"&gt;
+			&lt;PatternLayout pattern="${log.pattern}" /&gt;
+		&lt;/Console&gt;
+		&lt;Gelf name="dev" host="udp:172.18.200.10" port="12201" version="1.1" extractStackTrace="true" filterStackTrace="true" mdcProfiling="true" includeFullMdc="true" maximumMessageSize="8192" originHost="%host{fqdn}"&gt;
+			&lt;Field name="timestamp" pattern="%d{yyyy-MM-dd HH:mm:ss.SSS}" /&gt;
+			&lt;Field name="logger" pattern="%logger" /&gt;
+			&lt;Field name="level" pattern="%level" /&gt;
+			&lt;Field name="class" pattern="%C{1}" /&gt;
+			&lt;Field name="method" pattern="%M" /&gt;
+			&lt;Field name="line" pattern="%L" /&gt;
+			&lt;Field name="marker" pattern="%marker" /&gt;
+			&lt;Filters&gt;
+				&lt;MarkerFilter marker="finance" onMatch="ACCEPT" onMismatch="NEUTRAL" /&gt;
+				&lt;MarkerFilter marker="market" onMatch="ACCEPT" onMismatch="DENY" /&gt;
+			&lt;/Filters&gt;
+		&lt;/Gelf&gt;
+	&lt;/Appenders&gt;
+	&lt;Loggers&gt;
+		&lt;Root level="${sys:log.level}"&gt;
+			&lt;AppenderRef ref="Console" /&gt;
+			&lt;AppenderRef ref="${spring:spring.profiles.active:-dev}" /&gt;
+		&lt;/Root&gt;
+	&lt;/Loggers&gt;
+&lt;/Configuration&gt;				
+				
+				</pre>
+				<p>Spring 2.1.4 无法获取配置，解决方法使用 sys，同时启动的时候增加系统配置项 java
+					-Dspring.application.name=netkiller -Dspring.profiles.active=dev
+					-jar netkiller.jar
+				</p>
+				<pre class="screen">
+				 
+&lt;property name="service"&gt;${sys:spring.application.name}&lt;/property&gt;
+&lt;property name="environment"&gt;${sys:spring.profiles.active}&lt;/property&gt;				
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm529178004160"></a>变量默认值</h5></div></div></div>
+				
+				<p>格式是 ${变量名:-默认值}</p>
+				<div class="section"><div class="titlepage"></div>
+				
+&lt;property name="service"&gt;${sys:spring.application.name:-dev}&lt;/property&gt;
+&lt;property name="environment"&gt;${sys:spring.profiles.active:-dev}&lt;/property&gt;						
+				
+				</div>
+			</div>
+		</div>
+
+	</div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
+			window.changyan.api.config({
+			appid: 'cyvwjQUG3',
+			conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
+			});
+</script><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="springboot.logback.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="spring.boot.logging.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="logging.dingtalk.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">6.3. logback 配置详解 </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 6.5. 日志报警</td></tr></table></div><script xmlns="">
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+			ga('create', 'UA-11694057-1', 'auto');
+			ga('send', 'pageview');
+
+		</script><script xmlns="" async="async">
+			var _hmt = _hmt || [];
+			(function() {
+			var hm = document.createElement("script");
+			hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(hm, s);
+			})();
+</script><script xmlns="" async="async">
+			(function(){
+			var bp = document.createElement('script');
+			var curProtocol = window.location.protocol.split(':')[0];
+			if (curProtocol === 'https') {
+			bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+			}
+			else {
+			bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+			}
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(bp, s);
+			})();
+</script></body></html>

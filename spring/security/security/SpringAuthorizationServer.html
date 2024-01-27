@@ -1,0 +1,2378 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>54.5. Spring Authorization Server</title><link rel="stylesheet" type="text/css" href="../../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config" /><link rel="home" href="../../index.html" title="Netkiller Spring Cloud 手札" /><link rel="up" href="index.html" title="第 54 章 Spring Security" /><link rel="prev" href="HttpSecurity.html" title="54.4. 访问控制列表（Access Control List，ACL）" /><link rel="next" href="../../cloud/index.html" title="部分 V. Spring Cloud" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
+		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://edu.51cto.com/lecturer/1703915.html">51CTO学院</a> | <a xmlns="" href="https://edu.csdn.net/lecturer/6423">CSDN程序员研修院</a> | <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> | <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">腾讯云社区</a> | <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">阿里云栖社区</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">54.5. Spring Authorization Server</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="HttpSecurity.html">上一页</a> </td><th width="60%" align="center">第 54 章 Spring Security</th><td width="20%" align="right"> <a accesskey="n" href="../../cloud/index.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="SpringAuthorizationServer"></a>54.5. Spring Authorization Server</h2></div></div></div>
+	
+	<p>Spring Authorization Server 是 Spring Security OAuth 替代品。</p>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="oauth2.doc"></a>54.5.1. Oauth2 协议</h3></div></div></div>
+		
+		<p></p>
+		<pre class="screen">
+		
+授权模式
+oauth2.0提供了四种授权模式，开发者可以根据自己的业务情况自由选择。
+
+授权码授权模式（Authorization Code Grant）
+隐式授权模式（Implicit Grant）
+密码授权模式（Resource Owner Password Credentials Grant）
+客户端凭证授权模式（Client Credentials Grant）		
+		
+		</pre>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="oauth.token"></a>54.5.1.1. token</h4></div></div></div>
+			
+			<div class="literallayout"><p><br />
+				access_token：访问令牌，必选项。<br />
+				token_type：令牌类型，该值大小写不敏感，必选项。<br />
+				expires_in：过期时间，单位为秒。如果省略该参数，必须其他方式设置过期时间。<br />
+				refresh_token：更新令牌，用来获取下一次的访问令牌，可选项。<br />
+				scope：权限范围，如果与客户端申请的范围一致，此项可省略。<br />
+			</p></div>
+		</div>
+
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="grant_type"></a>54.5.1.2. grant_type</h4></div></div></div>
+			
+			<p>client_credentials</p>
+			<pre class="screen">
+				grant_type = 'client_credentials' 模式不需要用户去资源服务器登录并授权, 因为客户端(client)已经有了访问资源服务器的凭证(credentials).
+				所以当用户访问时,由client直接向资源服务器获取access_token并访问资源即可.
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm529176753200"></a>54.5.1.3. 授权码授权模式（Authorization Code Grant）</h4></div></div></div>
+			
+			<pre class="screen">
+			
+（A）用户访问客户端，客户端将用户引导向认证服务器。
+（B）用户选择是否给予客户端授权。
+（C）如用户给予授权，认证服务器将用户引导向客户端指定的redirection uri，同时加上授权码code。
+（D）客户端收到code后，通过后台的服务器向认证服务器发送code和redirection uri。
+（E）认证服务器验证code和redirection uri，确认无误后，响应客户端访问令牌（access token）和刷新令牌（refresh token）。
+请求示例
+（A）步骤：客户端申请认证的URI
+
+https://www.example.com/oauth/authorize?response_type=code&amp;client_id=CLIENT_ID&amp;redirect_uri=CALLBACK_URL&amp;scope=read&amp;state=xxx
+
+参数说明：
+response_type：授权类型，必选项，此处的值固定为"code"　　
+client_id：客户端的ID，必选项　　
+redirect_uri：重定向URI，必选项　　
+scope：申请的权限范围，可选项　　
+state：任意值，认证服务器会原样返回,用于抵制CSRF(跨站请求伪造)攻击。
+
+（C）步骤：服务器回应客户端的URI
+https://client.example.com/cb?code=SplxlOBeZQQYbYS6WxSbIA&amp;state=xxx
+
+参数说明：
+code：授权码，必选项。授权码有效期通常设为10分钟，一次性使用。该码与客户端ID、重定向URI以及用户，是一一对应关系。　　
+state：原样返回客户端传的该参数的值。
+
+（D）步骤：客户端向认证服务器申请令牌
+https://www.example.com/oauth/token?client_id=CLIENT_ID&amp;grant_type=authorization_code&amp;code=AUTHORIZATION_CODE&amp;redirect_uri=CALLBACK_URL
+
+参数说明：
+client_id：表示客户端ID，必选项。　　
+grant_type：表示使用的授权模式，必选项，此处的值固定为"authorization_code"。　　
+code：表示上一步获得的授权码，必选项。　　
+redirect_uri：表示重定向URI，必选项，且必须与A步骤中的该参数值保持一致。
+
+注意：协议里没有提及client_secret参数，建议可以使用此参数进行客户端的二次验证。
+（E）步骤：响应（D）步骤的数据
+{ "access_token":"2YotnFZFEjr1zCsicMWpAA", "token_type":"example", "expires_in":3600, "refresh_token":"tGzv3JOkF0XG5Qx2TlKWIA", "example_parameter":"example_value" }
+
+参数说明：
+access_token：访问令牌，必选项。　　
+token_type：令牌类型，该值大小写不敏感，必选项。　　
+expires_in：过期时间，单位为秒。如果省略该参数，必须其他方式设置过期时间。　　
+refresh_token：更新令牌，用来获取下一次的访问令牌，可选项。　　
+scope：权限范围，如果与客户端申请的范围一致，此项可省略。
+
+使用场景
+
+授权码模式是最常见的一种授权模式，在oauth2.0内是最安全和最完善的。
+适用于所有有Server端的应用，如Web站点、有Server端的手机客户端。
+可以得到较长期限授权。
+			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm529176751808"></a>54.5.1.4. 密码模式（Resource Owner Password Credentials Grant）</h4></div></div></div>
+			
+			<pre class="screen">
+			
+密码模式（Resource Owner Password Credentials Grant）
+流程介绍
+
+
+
+
+
+
+
+
+（A）用户向客户端提供用户名和密码。
+（B）客户端将用户名和密码发给认证服务器，向后者请求令牌。
+（C）认证服务器确认无误后，向客户端提供访问令牌。
+请求示例
+（B）步骤：客户端发出https请求
+
+https://www.example.com/token?grant_type=password&amp;username=USERNAME&amp;password=PASSWORD&amp;client_id=CLIENT_ID
+
+参数说明
+grant_type：授权类型，此处的值固定为"password"，必选项。　　
+username：用户名，必选项。　　
+password：用户的密码，必选项。　　
+scope：权限范围，可选项。
+
+（C）步骤：向客户端响应（B）步骤的数据
+{ "access_token":"2YotnFZFEjr1zCsicMWpAA", "token_type":"example", "expires_in":3600, "refresh_token":"tGzv3JOkF0XG5Qx2TlKWIA" }
+
+参数说明
+access_token：访问令牌，必选项。　　
+token_type：令牌类型，该值大小写不敏感，必选项。　　
+expires_in：过期时间，单位为秒。如果省略该参数，必须其他方式设置过期时间。　　
+refresh_token：更新令牌，用来获取下一次的访问令牌，可选项。
+
+使用场景
+
+这种模式适用于用户对应用程序高度信任的情况。比如是用户操作系统的一部分。
+认证服务器只有在其他授权模式无法执行的情况下，才能考虑使用这种模式。
+			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm529176750512"></a>54.5.1.5. 客户端凭证模式（Client Credentials Grant）</h4></div></div></div>
+			
+			<pre class="screen">
+			
+客户端凭证模式（Client Credentials Grant）
+流程介绍
+
+
+（A）客户端向认证服务器进行身份认证，并要求一个访问令牌。
+（B）认证服务器确认无误后，向客户端提供访问令牌。
+请求示例
+（A）步骤：客户端发送https请求
+
+https://www.example.com/token?grant_type=client_credentials&amp;client_id=CLIENT_ID
+
+参数说明
+granttype：表示授权类型，此处的值固定为"client_credentials"，必选项。　　scope：表示权限范围，可选项。
+
+（B）步骤：向客户端响应（A）步骤的数据
+{ "access_token":"2YotnFZFEjr1zCsicMWpAA", "token_type":"example", "expires_in":3600, "example_parameter":"example_value" }
+
+参数说明：
+access_token：访问令牌，必选项。　　
+token_type：令牌类型，该值大小写不敏感，必选项。　　
+expires_in：过期时间，单位为秒。如果省略该参数，必须其他方式设置过期时间。　　
+example_parameter：其它参数，可选项。 
+
+使用场景
+
+客户端模式应用于应用程序想要以自己的名义与授权服务器以及资源服务器进行互动。
+例如使用了第三方的静态文件服务
+		
+			
+			</pre>
+		</div>
+
+
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm529176749216"></a>54.5.1.6. 刷新 TOKEN 方式</h4></div></div></div>
+			
+			<pre class="screen">
+		
+刷新TOKEN
+从上面的四种授权流程可以看出，最终的目的是要获取用户的授权令牌（access_token）。而且授权令牌（access_token）的权限也非常之大，
+所以在协议中明确表示要设置授权令牌（access_token）的有效期。那么当授权令牌（access_token）过期要怎么办呢，协议里提出了一个刷新token的流程。
+流程介绍
+
+
+
+
+
+
+
+
+（A）--（D）通过授权流程获取access_token，并调用业务api接口。
+（F）当调用业务api接口时响应“Invalid Token Error”时。
+（G）调用刷新access_token接口，使用参数refresh_token（如果平台方提供，否则需要用户重新进行授权流程）。
+（H）响应最新的access_token及refresh_token。
+请求示例
+（G）步骤：客户端调用刷新token接口
+
+https://www.example.com/v1/oauth/token?grant_type=refresh_token&amp;client_id=CLIENT_ID&amp;client_secret=CLIENT_SECRET&amp;refresh_token=REFRESH_TOKEN
+
+参数说明
+client_id：客户端的ID，必选项。　　
+client_secret：客户端的密钥，必选项。　　
+grant_type：表示使用的授权模式，此处的值固定为"refreshtoken"，必选项。　　refresh_token：表示早前收到的更新令牌，必选项。
+
+（H）步骤：响应客户端数据
+{ "access_token":"2YotnFZFEjr1zCsicMWpAA", "token_type":"example", "expires_in":3600, "refresh_token":"tGzv3JOkF0XG5Qx2TlKWIA", "example_parameter":"example_value" }
+
+参数说明
+access_token：访问令牌，必选项。　　
+token_type：令牌类型，该值大小写不敏感，必选项。　　
+expires_in：过期时间，单位为秒。如果省略该参数，必须其他方式设置过期时间。　　
+refresh_token：更新令牌，用来获取下一次的访问令牌，可选项。　　
+scope：权限范围，如果与客户端申请的范围一致，此项可省略。
+
+
+说明：建议将access_token和refresh_token的过期时间保存下来，每次调用平台方的业务api前先对access_token和refresh_token进行一下时间判断，如果过期则执行刷新access_token或重新授权操作。refersh_token如果过期就只能让用户重新授权。
+
+好，到此oauth2.0的四种授权流程及令牌的刷新流程已经介绍完了，下面来从oauth2.0的安全性上来介绍一下。
+
+		
+			</pre>
+		</div>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="spring-security-oauth2-authorization-server"></a>54.5.2. Maven 依赖</h3></div></div></div>
+		
+		<pre class="screen">
+		
+ &lt;dependency&gt;
+     &lt;groupId&gt;org.springframework.security.experimental&lt;/groupId&gt;
+     &lt;artifactId&gt;spring-security-oauth2-authorization-server&lt;/artifactId&gt;
+     &lt;version&gt;0.0.1&lt;/version&gt;
+ &lt;/dependency&gt;		
+		
+		</pre>
+	</div>
+
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="spring-cloud-starter-oauth2"></a>54.5.3. Spring cloud with Oauth2</h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="oauth2.authorization_code"></a>54.5.3.1. authorization_code</h4></div></div></div>
+			
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm529176744816"></a>验证服务器器</h5></div></div></div>
+				
+
+				<pre class="screen">
+			
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-web&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.cloud&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-cloud-starter-oauth2&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.cloud&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-cloud-starter-security&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-thymeleaf&lt;/artifactId&gt;
+		&lt;/dependency&gt;		
+			
+				</pre>
+				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm529176742080"></a></h6></div></div></div>
+					
+					<pre class="screen">
+				
+		
+				
+					</pre>
+				</div>
+				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm529176740976"></a></h6></div></div></div>
+					
+					<pre class="screen">
+			
+					</pre>
+				</div>
+				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm529176739872"></a></h6></div></div></div>
+					
+					<pre class="programlisting">
+			
+			
+			
+					</pre>
+				</div>
+				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm529176738768"></a></h6></div></div></div>
+					
+					<pre class="programlisting">
+			
+			
+			
+					</pre>
+				</div>
+				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm529176737632"></a>测试</h6></div></div></div>
+					
+					<pre class="programlisting">
+				
+http://localhost:8080/oauth/authorize?response_type=code&amp;client_id=sso&amp;redirect_uri=http://localhost:8082/callback&amp;scope=read
+http://localhost:8080/oauth/token?client_id=sso&amp;grant_type=authorization_code&amp;redirect_uri=http://localhost:8082/callback&amp;code=ZzLi3w
+
+localhost:8082/admin&amp;code=ZzLi3w
+
+localhost:8080/oauth/authorize?response_type=code&amp;client_id=client&amp;redirect_uri=http://www.netkiller.cn&amp;state=123
+
+localhost:8080/oauth/authorize?response_type=code&amp;client_id=sso&amp;redirect_uri=http://localhost:8082/test&amp;scope=app
+
+
+
+
+http://localhost:8080/oauth/token?client_id=sso&amp;grant_type=authorization_code&amp;redirect_uri=http://localhost:8082&amp;code=8z5J9L
+
+http://localhost:8080/oauth/authorize?response_type=code&amp;client_id=sso&amp;redirect_uri=http://localhost:8080&amp;scope=app
+
+http://www.netkiller.cn/?code=eX6IMV&amp;state=123		
+http://localhost:18084/oauth/token?client_id=client&amp;grant_type=authorization_code&amp;redirect_uri=http://api.netkiller.cn&amp;code=bzxoHn			
+				
+					</pre>
+				</div>
+			</div>
+		</div>
+
+
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="oauth2.password"></a>54.5.3.2. Spring boot with Oauth2 - Password</h4></div></div></div>
+			
+			<p>下面例子由三个项目组成，分别是 tools, server, client。</p>
+			<p>其中 tools 是密码生成工具</p>
+			<p>
+				<a class="ulink" href="https://tools.ietf.org/html/rfc6749" target="_top">https://tools.ietf.org/html/rfc6749</a>
+			</p>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm529176732208"></a>Maven</h5></div></div></div>
+				
+				<pre class="programlisting">
+			
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"&gt;
+	&lt;modelVersion&gt;4.0.0&lt;/modelVersion&gt;
+
+	&lt;groupId&gt;cn.netkiller&lt;/groupId&gt;
+	&lt;artifactId&gt;oauth&lt;/artifactId&gt;
+	&lt;version&gt;0.0.1-SNAPSHOT&lt;/version&gt;
+	&lt;packaging&gt;pom&lt;/packaging&gt;
+
+	&lt;name&gt;oauth&lt;/name&gt;
+	&lt;url&gt;http://maven.apache.org&lt;/url&gt;
+
+	&lt;properties&gt;
+		&lt;project.build.sourceEncoding&gt;UTF-8&lt;/project.build.sourceEncoding&gt;
+	&lt;/properties&gt;
+	&lt;parent&gt;
+		&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+		&lt;artifactId&gt;spring-boot-starter-parent&lt;/artifactId&gt;
+		&lt;version&gt;2.0.2.RELEASE&lt;/version&gt;
+		&lt;relativePath /&gt; &lt;!-- lookup parent from repository --&gt;
+	&lt;/parent&gt;
+	&lt;dependencies&gt;
+
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-actuator&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-data-jpa&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-jdbc&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;mysql&lt;/groupId&gt;
+			&lt;artifactId&gt;mysql-connector-java&lt;/artifactId&gt;
+			&lt;scope&gt;runtime&lt;/scope&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-web&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-test&lt;/artifactId&gt;
+			&lt;scope&gt;test&lt;/scope&gt;
+		&lt;/dependency&gt;
+
+		&lt;!-- Security --&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-security&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.security.oauth&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-security-oauth2&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+
+	&lt;/dependencies&gt;
+	&lt;modules&gt;
+		&lt;module&gt;server&lt;/module&gt;
+		&lt;module&gt;client&lt;/module&gt;
+	&lt;/modules&gt;
+	&lt;build&gt;
+		&lt;plugins&gt;
+			&lt;plugin&gt;
+				&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+				&lt;artifactId&gt;spring-boot-maven-plugin&lt;/artifactId&gt;
+			&lt;/plugin&gt;
+		&lt;/plugins&gt;
+	&lt;/build&gt;
+&lt;/project&gt;			
+			
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm529176731264"></a>Password tools</h5></div></div></div>
+				
+				<p>Maven</p>
+				<pre class="screen">
+			
+&lt;?xml version="1.0"?&gt;
+&lt;project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"&gt;
+  &lt;modelVersion&gt;4.0.0&lt;/modelVersion&gt;
+  &lt;parent&gt;
+    &lt;groupId&gt;cn.netkiller&lt;/groupId&gt;
+    &lt;artifactId&gt;oauth&lt;/artifactId&gt;
+    &lt;version&gt;0.0.1-SNAPSHOT&lt;/version&gt;
+  &lt;/parent&gt;
+  &lt;artifactId&gt;tools&lt;/artifactId&gt;
+  &lt;version&gt;0.0.1-SNAPSHOT&lt;/version&gt;
+  &lt;name&gt;tools&lt;/name&gt;
+  &lt;url&gt;http://maven.apache.org&lt;/url&gt;
+  &lt;properties&gt;
+    &lt;project.build.sourceEncoding&gt;UTF-8&lt;/project.build.sourceEncoding&gt;
+  &lt;/properties&gt;
+  &lt;dependencies&gt;
+    &lt;dependency&gt;
+      &lt;groupId&gt;junit&lt;/groupId&gt;
+      &lt;artifactId&gt;junit&lt;/artifactId&gt;
+      &lt;version&gt;3.8.1&lt;/version&gt;
+      &lt;scope&gt;test&lt;/scope&gt;
+    &lt;/dependency&gt;
+  &lt;/dependencies&gt;
+&lt;/project&gt;
+			
+			
+				</pre>
+				<p>下面的代码用于生成 Spring security 所用的密码</p>
+				<pre class="programlisting">
+			
+package cn.netkiller.oauth.tools;
+
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
+/**
+ * Hello world!
+ *
+ */
+public class App {
+	public static void main(String[] args) {
+		int i = 0;
+		while (i &lt; 10) {
+			String password = "123456";
+			BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+			String hashedPassword = passwordEncoder.encode(password);
+
+			System.out.println(hashedPassword);
+			i++;
+		}
+	}
+}			
+			
+				</pre>
+				<p>运行后生成类似的密码</p>
+				<pre class="programlisting">
+			
+$2a$10$IrDG5Yr3CGorEg9gKG8smeRLnNUieCVyBCJHA80U6h20HDFCxd43W
+$2a$10$wseh5xFv1L3a3uHQId0MAOqAN0rKKcuX.RDaBPQ.pV/hsr80TqwxO
+$2a$10$xP3Gc/5/PN03BdkDfhUjAemTRVaiwr0lsaqPqD18UI.ho9nRC/ebW
+$2a$10$S.wLZ6e5YvmQA6mkX8yXWOdJbvahtDOesRu0ZwPOzAPCwpo7eDAsi
+$2a$10$Jo/yuWyiAZ2Lj8.ywoPl7OeOJYuP7RVq8l.qc/zOwtW8MTFp3NYGO
+$2a$10$eEvvjPok0fRK.DU6yF0qI.aucuiWr3y5G93SLq9/76ovcOwIuQAuS
+$2a$10$BWEkANxbgwATNQCEI9/uNevNEUNlomGY7cZ2CQVm.qCRcnyukT.Si
+$2a$10$69wSpyJQvjzJY7ou5PFWlOlEIecQukHV9WEq0nebsz5V6IZKfOVv2
+$2a$10$Cyj3hM39V34r5pMeQ.Y9peuUqYMBSvsJ7GTBgp4.stWaTtWMboYGS
+$2a$10$0/o4cRN2.tmnc58sH.N4WOsreVI6sWlPl4CCBrmUfJ332TMfRzA42
+			
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm529176725808"></a>Server</h5></div></div></div>
+				
+				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm529176724848"></a>Maven</h6></div></div></div>
+					
+					<pre class="programlisting">
+				
+&lt;?xml version="1.0"?&gt;
+&lt;project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"&gt;
+	&lt;modelVersion&gt;4.0.0&lt;/modelVersion&gt;
+	&lt;parent&gt;
+		&lt;groupId&gt;cn.netkiller&lt;/groupId&gt;
+		&lt;artifactId&gt;oauth&lt;/artifactId&gt;
+		&lt;version&gt;0.0.1-SNAPSHOT&lt;/version&gt;
+	&lt;/parent&gt;
+	&lt;groupId&gt;cn.netkiller&lt;/groupId&gt;
+	&lt;artifactId&gt;server&lt;/artifactId&gt;
+	&lt;name&gt;server&lt;/name&gt;
+	&lt;description&gt;Example Spring Boot REST project&lt;/description&gt;
+
+	&lt;url&gt;http://maven.apache.org&lt;/url&gt;
+	&lt;properties&gt;
+		&lt;project.build.sourceEncoding&gt;UTF-8&lt;/project.build.sourceEncoding&gt;
+		&lt;project.reporting.outputEncoding&gt;UTF-8&lt;/project.reporting.outputEncoding&gt;
+		&lt;java.version&gt;1.8&lt;/java.version&gt;
+	&lt;/properties&gt;
+
+	&lt;dependencies&gt;
+
+	&lt;/dependencies&gt;
+
+&lt;/project&gt;
+				
+				
+					</pre>
+				</div>
+				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm529176723536"></a>application.properties</h6></div></div></div>
+					
+					<pre class="programlisting">
+				
+server.port=8000
+server.contextPath=/api
+
+logging.level.com.gigy=DEBUG
+
+# Data source properties
+spring.datasource.driver-class-name=com.mysql.jdbc.Driver
+spring.datasource.url=jdbc:mysql://127.0.0.1:3306/netkiller?useSSL=false
+spring.datasource.username=netkiller
+spring.datasource.password=123123
+spring.datasource.max-idle=10
+spring.datasource.max-wait=10000
+spring.datasource.min-idle=5
+spring.datasource.initial-size=5
+spring.datasource.validation-query=SELECT 1
+spring.datasource.test-on-borrow=false
+spring.datasource.test-while-idle=true
+spring.datasource.time-between-eviction-runs-millis=18800
+spring.datasource.jdbc-interceptors=ConnectionState;SlowQueryReport(threshold=0)
+
+spring.jpa.database=MYSQL
+spring.jpa.show-sql=true
+#spring.jpa.hibernate.ddl-auto=update
+spring.jpa.hibernate.ddl-auto=create-drop
+#spring.jpa.hibernate.ddl-auto=validate
+#spring.jpa.show-sql=true				
+				
+					</pre>
+				</div>
+				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm529176720512"></a>EnableAuthorizationServer</h6></div></div></div>
+					
+					<pre class="programlisting">
+				
+package cn.netkiller.oauth.server.config;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
+import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
+import org.springframework.security.oauth2.config.annotation.web.configuration.EnableAuthorizationServer;
+import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerEndpointsConfigurer;
+
+@Configuration
+@EnableAuthorizationServer
+public class AuthorizationServerConfigurer extends AuthorizationServerConfigurerAdapter {
+
+	@Autowired
+	@Qualifier("userDetailsService")
+	private UserDetailsService userDetailsService;
+
+	@Autowired
+	private AuthenticationManager authenticationManager;
+
+	@Value("${oauth.tokenTimeout:3600}")
+	private int expiration;
+
+	@Bean
+	public PasswordEncoder passwordEncoder() {
+		return new BCryptPasswordEncoder();
+	}
+
+	@Override
+	public void configure(AuthorizationServerEndpointsConfigurer configurer) throws Exception {
+		configurer.authenticationManager(authenticationManager);
+		configurer.userDetailsService(userDetailsService);
+	}
+
+	@Override
+	public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
+		clients.inMemory().withClient("api").secret("secret").accessTokenValiditySeconds(expiration).scopes("read", "write").authorizedGrantTypes("password", "refresh_token").resourceIds("resource");
+	}
+
+}
+				
+				
+					</pre>
+					<p>Spring boot 2.0</p>
+					<pre class="programlisting">
+			
+	@Override
+	public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
+		clients.inMemory().withClient("api").secret(passwordEncoder().encode("secret")).accessTokenValiditySeconds(expiration).scopes("read", "write").authorizedGrantTypes("password", "refresh_token").resourceIds("resource");
+	}			
+			
+					</pre>
+				</div>
+				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm529176718144"></a>EnableResourceServer</h6></div></div></div>
+					
+					<pre class="programlisting">
+				
+package cn.netkiller.oauth.server.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.builders.WebSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.oauth2.config.annotation.web.configuration.EnableResourceServer;
+
+@Configuration
+@EnableWebSecurity
+@EnableResourceServer
+@EnableGlobalMethodSecurity(prePostEnabled = true)
+public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
+
+	/**
+	 * Constructor disables the default security settings
+	 */
+	public WebSecurityConfiguration() {
+		super(true);
+	}
+
+	@Override
+	public void configure(WebSecurity web) throws Exception {
+		web.ignoring().antMatchers("/login");
+	}
+
+	@Override
+	public void configure(HttpSecurity http) throws Exception {
+		http.antMatcher("/api/**").authorizeRequests().anyRequest().authenticated();
+	}
+
+	@Bean
+	@Override
+	public AuthenticationManager authenticationManagerBean() throws Exception {
+		return super.authenticationManagerBean();
+	}
+}
+				
+					</pre>
+				</div>
+				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm529176716912"></a>Entity Table</h6></div></div></div>
+					
+					<pre class="programlisting">
+				
+package cn.netkiller.oauth.server.model;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+@Entity
+@Table(name = "users")
+public class User implements UserDetails {
+	
+	static final long serialVersionUID = 1L;
+	
+	@Id
+	@GeneratedValue(strategy = GenerationType.AUTO)
+	@Column(name = "user_id", nullable = false, updatable = false)
+	private Long id;
+	
+	@Column(name = "username", nullable = false, unique = true)
+	private String username;
+	
+	@Column(name = "password", nullable = false)
+	private String password;
+	
+	@Column(name = "enabled", nullable = false)
+	private boolean enabled;
+
+	public Collection&lt;? extends GrantedAuthority&gt; getAuthorities() {
+		List&lt;GrantedAuthority&gt; authorities = new ArrayList&lt;GrantedAuthority&gt;();
+		
+		return authorities;
+	}
+
+	public boolean isAccountNonExpired() {
+		return true;
+	}
+
+	public boolean isAccountNonLocked() {
+		// we never lock accounts
+		return true;
+	}
+
+	public boolean isCredentialsNonExpired() {
+		// credentials never expire
+		return true;
+	}
+
+	public boolean isEnabled() {
+		return enabled;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public String getUsername() {
+		return username;
+	}
+
+}
+				
+					</pre>
+				</div>
+				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm529176715680"></a>UserRepository</h6></div></div></div>
+					
+					<pre class="programlisting">
+				
+package cn.netkiller.oauth.server.repository;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import cn.netkiller.oauth.server.model.User;
+
+public interface UserRepository extends JpaRepository&lt;User, Long&gt; {
+
+	/**
+	 * Find a user by username
+	 *
+	 * @param username
+	 *            the user's username
+	 * @return user which contains the user with the given username or null.
+	 */
+	User findOneByUsername(String username);
+
+}
+				
+					</pre>
+				</div>
+				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm529176713936"></a>UserService</h6></div></div></div>
+					
+					<pre class="programlisting">
+				
+package cn.netkiller.oauth.server.service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+
+import cn.netkiller.oauth.server.repository.UserRepository;
+
+@Service("userDetailsService")
+public class UserService implements UserDetailsService {
+
+	@Autowired
+	private UserRepository userRepository;
+
+	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+
+		return userRepository.findOneByUsername(username);
+	}
+}				
+				
+					</pre>
+				</div>
+				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm529176711904"></a>TestRestController</h6></div></div></div>
+					
+					<pre class="programlisting">
+				
+package cn.netkiller.oauth.server.controller;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/test")
+public class TestRestController {
+
+	@RequestMapping(value = "hello", method = RequestMethod.GET)
+	public ResponseEntity&lt;String&gt; hello() {
+		return new ResponseEntity&lt;String&gt;("Hello world !", HttpStatus.OK);
+	}
+
+	@PreAuthorize("#oauth2.hasScope('write')")
+	@RequestMapping(value = "set/{string}", method = RequestMethod.GET)
+	public ResponseEntity&lt;String&gt; set(String string) {
+		return new ResponseEntity&lt;String&gt;(string, HttpStatus.OK);
+	}
+}
+				
+					</pre>
+				</div>
+				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm529176709232"></a>数据库初始化</h6></div></div></div>
+					
+					<p>在 src/main/resources 目录创建 data.sql 文件</p>
+					<pre class="programlisting">
+				
+INSERT INTO users (user_id, username, password, enabled) VALUES 
+	('1', 'netkiller@msn.com', '$2a$10$Cyj3hM39V34r5pMeQ.Y9peuUqYMBSvsJ7GTBgp4.stWaTtWMboYGS', true);
+				
+					</pre>
+					<p>此处密码 $2a$10$Cyj3hM39V34r5pMeQ.Y9peuUqYMBSvsJ7GTBgp4.stWaTtWMboYGS 请使用上面提供的工具生成。</p>
+				</div>
+				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm529176707376"></a>Test</h6></div></div></div>
+					
+					<p>启动 Spring boot Server 项目</p>
+					<pre class="screen">
+				
+mvn spring-boot:run
+				
+					</pre>
+					<p>启动后 Spring boot 会导入 data.sql 文件</p>
+					<pre class="screen">
+				
+mysql&gt; select * from users where username="netkiller@msn.com";
++---------+---------+--------------------------------------------------------------+-------------------+
+| user_id | enabled | password                                                     | username          |
++---------+---------+--------------------------------------------------------------+-------------------+
+|       4 |        | $2a$10$Cyj3hM39V34r5pMeQ.Y9peuUqYMBSvsJ7GTBgp4.stWaTtWMboYGS | netkiller@msn.com |
++---------+---------+--------------------------------------------------------------+-------------------+
+1 row in set (0.00 sec)
+				
+					</pre>
+					<pre class="programlisting">
+				
+MacBook-Pro:Application neo$ curl -X POST --user 'api:secret' -d 'grant_type=password&amp;username=netkiller@msn.com&amp;password=123456' http://localhost:8000/api/oauth/token
+{"access_token":"5bc0ee89-cd6d-47be-b31f-89c9e028159b","token_type":"bearer","refresh_token":"5107c09b-de85-4faf-8396-941572cf30d2","expires_in":3599,"scope":"read write"}MacBook-Pro:Application neo$ 
+
+MacBook-Pro:Application neo$ curl -H "Accept: application/json" -H "Content-Type: application/json" -H "Authorization: Bearer 5bc0ee89-cd6d-47be-b31f-89c9e028159b" -X GET http://localhost:8000/api/test/hello
+Hello world !
+				
+					</pre>
+				</div>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="oauth.client"></a>Spring boot with Oauth2 RestTemplate</h5></div></div></div>
+				
+				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="oauth.client.maven"></a>Maven</h6></div></div></div>
+					
+					<pre class="programlisting">
+				
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.security.oauth&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-security-oauth2&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+				
+					</pre>
+				</div>
+				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="oauth2.client.configure"></a>OAuth2ClientConfiguration.java</h6></div></div></div>
+					
+					<pre class="programlisting">
+				
+package cn.netkiller.config;
+
+import static java.util.Arrays.asList;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.oauth2.client.DefaultOAuth2ClientContext;
+import org.springframework.security.oauth2.client.OAuth2RestOperations;
+import org.springframework.security.oauth2.client.OAuth2RestTemplate;
+import org.springframework.security.oauth2.client.resource.OAuth2ProtectedResourceDetails;
+import org.springframework.security.oauth2.client.token.AccessTokenRequest;
+import org.springframework.security.oauth2.client.token.DefaultAccessTokenRequest;
+import org.springframework.security.oauth2.client.token.grant.password.ResourceOwnerPasswordResourceDetails;
+import org.springframework.security.oauth2.config.annotation.web.configuration.EnableOAuth2Client;
+
+@EnableOAuth2Client
+@Configuration
+public class OAuth2ClientConfiguration {
+
+	@Value("${oauth.resource:http://localhost:8080}")
+	private String baseUrl;
+	@Value("${oauth.authorize:http://localhost:8080/oauth/authorize}")
+	private String authorizeUrl;
+	@Value("${oauth.token:http://localhost:8080/oauth/token}")
+	private String tokenUrl;
+
+	@Bean
+	protected OAuth2ProtectedResourceDetails resource() {
+
+		ResourceOwnerPasswordResourceDetails resource = new ResourceOwnerPasswordResourceDetails();
+
+		resource.setAccessTokenUri(tokenUrl);
+		resource.setClientId("api");
+		resource.setClientSecret("secret");
+		resource.setGrantType("password");
+		resource.setScope(asList("read", "write"));
+
+		resource.setUsername("netkiller@msn.com");
+		resource.setPassword("123456");
+
+		return resource;
+	}
+
+	@Bean
+	public OAuth2RestOperations restTemplate() {
+		AccessTokenRequest accessTokenRequest = new DefaultAccessTokenRequest();
+		return new OAuth2RestTemplate(resource(), new DefaultOAuth2ClientContext(accessTokenRequest));
+	}
+
+}
+				
+					</pre>
+				</div>
+				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="oauth2.client.app"></a>Application.java</h6></div></div></div>
+					
+					<pre class="programlisting">
+				
+package cn.netkiller;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class Application {
+
+	public static void main(String[] args) {
+
+		System.out.println("Spring boot with Oauth2RestTemplate!");
+		SpringApplication.run(Application.class, args);
+	}
+}				
+				
+
+					</pre>
+				</div>
+				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="oauth2.client.application.properties"></a>application.properties</h6></div></div></div>
+					
+					<pre class="programlisting">
+				
+security.basic.enabled=false
+				
+					</pre>
+				</div>
+				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="oauth2.client.controller"></a>Controller</h6></div></div></div>
+					
+					<pre class="programlisting">
+				
+package cn.netkiller.controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.oauth2.client.OAuth2RestOperations;
+import org.springframework.security.oauth2.common.OAuth2AccessToken;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+@Controller
+public class TestController {
+	@Autowired
+	private OAuth2RestOperations restTemplate;
+
+	@GetMapping("/")
+	@ResponseBody
+	public String index() {
+		OAuth2AccessToken token = restTemplate.getAccessToken();
+		System.out.println(token.getValue());
+		String tmp = restTemplate.getForObject("http://api.netkiller.cn/test.json", String.class);
+		System.out.println(tmp);
+		return tmp;
+	}
+}
+				
+				
+					</pre>
+				</div>
+				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="oauth2.client.test"></a>Test</h6></div></div></div>
+					
+					<pre class="screen">
+				
+neo@MacBook-Pro ~/deployment % curl http://localhost:8080
+
+OK
+				
+					</pre>
+				</div>
+			</div>
+
+		</div>
+
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="oauth2.jwt"></a>54.5.3.3. Spring boot with Oauth2 jwt</h4></div></div></div>
+			
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm529176690656"></a>Maven</h5></div></div></div>
+				
+				<pre class="screen">
+		
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-security&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.security.oauth&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-security-oauth2&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.security&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-security-jwt&lt;/artifactId&gt;
+		&lt;/dependency&gt;	
+		
+				</pre>
+				<p>如果是 Springboot 2.0.4 需要制定版本号</p>
+				<pre class="screen">
+		
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.security.oauth&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-security-oauth2&lt;/artifactId&gt;
+			&lt;version&gt;2.3.3.RELEASE&lt;/version&gt;
+		&lt;/dependency&gt;
+
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.security&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-security-jwt&lt;/artifactId&gt;
+			&lt;version&gt;1.0.9.RELEASE&lt;/version&gt;
+		&lt;/dependency&gt;
+		
+		&lt;dependency&gt;
+			&lt;groupId&gt;javax.xml.bind&lt;/groupId&gt;
+			&lt;artifactId&gt;jaxb-api&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;com.sun.xml.bind&lt;/groupId&gt;
+			&lt;artifactId&gt;jaxb-impl&lt;/artifactId&gt;
+			&lt;version&gt;2.3.0&lt;/version&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;com.sun.xml.bind&lt;/groupId&gt;
+			&lt;artifactId&gt;jaxb-core&lt;/artifactId&gt;
+			&lt;version&gt;2.3.0&lt;/version&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;com.sun.activation&lt;/groupId&gt;
+			&lt;artifactId&gt;javax.activation&lt;/artifactId&gt;
+			&lt;version&gt;1.2.0&lt;/version&gt;
+		&lt;/dependency&gt;
+		
+		
+				</pre>
+			</div>
+
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm529176688272"></a>Authorization Server</h5></div></div></div>
+				
+				<pre class="programlisting">
+		
+package api.config;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
+import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
+import org.springframework.security.oauth2.config.annotation.web.configuration.EnableAuthorizationServer;
+import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerEndpointsConfigurer;
+import org.springframework.security.oauth2.provider.token.DefaultTokenServices;
+import org.springframework.security.oauth2.provider.token.TokenStore;
+import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
+import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
+
+@Configuration
+@EnableAuthorizationServer
+public class AuthorizationServerConfigurer extends AuthorizationServerConfigurerAdapter {
+
+	@Autowired
+	@Qualifier("userDetailsService")
+	private UserDetailsService userDetailsService;
+
+	@Autowired
+	private AuthenticationManager authenticationManager;
+
+	@Value("${oauth.tokenTimeout:3600}")
+	private int expiration;
+
+	@Bean
+	public PasswordEncoder passwordEncoder() {
+		return new BCryptPasswordEncoder();
+	}
+
+	// @Override
+	// public void configure(AuthorizationServerSecurityConfigurer oauthServer) throws Exception {
+	// oauthServer.tokenKeyAccess("isAnonymous() || hasAuthority('ROLE_TRUSTED_CLIENT')");
+	// oauthServer.checkTokenAccess("hasAuthority('ROLE_TRUSTED_CLIENT')");
+	// }
+
+	@Override
+	public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
+		clients.inMemory().withClient("api").secret(passwordEncoder().encode("secret")).accessTokenValiditySeconds(expiration).refreshTokenValiditySeconds(expiration).scopes("read", "write").authorizedGrantTypes("password", "refresh_token").authorities("USER").resourceIds("blockchain");
+	}
+
+	@Override
+	public void configure(AuthorizationServerEndpointsConfigurer configurer) throws Exception {
+		configurer.tokenStore(tokenStore()).accessTokenConverter(accessTokenConverter());
+		configurer.authenticationManager(authenticationManager);
+		configurer.userDetailsService(userDetailsService);
+	}
+
+	@Bean
+	public TokenStore tokenStore() {
+		return new JwtTokenStore(accessTokenConverter());
+	}
+
+	@Bean
+	public JwtAccessTokenConverter accessTokenConverter() {
+		JwtAccessTokenConverter converter = new JwtAccessTokenConverter();
+		converter.setSigningKey("123");
+		return converter;
+	}
+
+	@Bean
+	@Primary
+	public DefaultTokenServices tokenServices() {
+		DefaultTokenServices defaultTokenServices = new DefaultTokenServices();
+		defaultTokenServices.setTokenStore(tokenStore());
+		defaultTokenServices.setSupportRefreshToken(true);
+		return defaultTokenServices;
+	}
+
+}		
+		
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm529176686032"></a>Resource Server</h5></div></div></div>
+				
+				<pre class="programlisting">
+		
+package api.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.security.oauth2.config.annotation.web.configuration.EnableResourceServer;
+import org.springframework.security.oauth2.config.annotation.web.configuration.ResourceServerConfigurerAdapter;
+import org.springframework.security.oauth2.config.annotation.web.configurers.ResourceServerSecurityConfigurer;
+import org.springframework.security.oauth2.provider.token.DefaultTokenServices;
+import org.springframework.security.oauth2.provider.token.TokenStore;
+import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
+import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
+
+@Configuration
+@EnableResourceServer
+public class ResourceServerConfigurer extends ResourceServerConfigurerAdapter {
+	public ResourceServerConfigurer() {
+		// TODO Auto-generated constructor stub
+	}
+
+	@Override
+	public void configure(ResourceServerSecurityConfigurer resources) {
+		resources.resourceId("blockchain");
+		resources.tokenServices(tokenServices());
+		
+	}
+
+	@Bean
+	public TokenStore tokenStore() {
+		return new JwtTokenStore(accessTokenConverter());
+	}
+
+	@Bean
+	public JwtAccessTokenConverter accessTokenConverter() {
+		JwtAccessTokenConverter converter = new JwtAccessTokenConverter();
+		converter.setSigningKey("123");
+		return converter;
+	}
+
+	@Bean
+	@Primary
+	public DefaultTokenServices tokenServices() {
+		DefaultTokenServices defaultTokenServices = new DefaultTokenServices();
+		defaultTokenServices.setTokenStore(tokenStore());
+		return defaultTokenServices;
+	}
+
+}		
+		
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm529176684800"></a>Web Security</h5></div></div></div>
+				
+				<pre class="programlisting">
+		
+package api.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.builders.WebSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+
+@Configuration
+@EnableWebSecurity
+@EnableGlobalMethodSecurity(prePostEnabled = true)
+public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
+
+	@Override
+	public void configure(WebSecurity web) throws Exception {
+		web.ignoring().antMatchers("/login");
+	}
+
+	@Override
+	public void configure(HttpSecurity http) throws Exception {
+		// http.antMatcher("/**").authorizeRequests().anyRequest().authenticated();
+		http.authorizeRequests().antMatchers(HttpMethod.OPTIONS).permitAll().anyRequest().authenticated().and().httpBasic().and().csrf().disable();
+	}
+
+	@Bean
+	@Override
+	public AuthenticationManager authenticationManagerBean() throws Exception {
+		return super.authenticationManagerBean();
+	}
+
+}		
+		
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm529176683568"></a>插入数据</h5></div></div></div>
+				
+				<p></p>
+				<pre class="screen">
+		
+INSERT INTO `user` (username, password, enabled) VALUES ('netkiller@msn.com', '$2a$10$Cyj3hM39V34r5pMeQ.Y9peuUqYMBSvsJ7GTBgp4.stWaTtWMboYGS', true);		
+		
+				</pre>
+
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm529176681824"></a>使用 CURL 测试 JWT</h5></div></div></div>
+				
+				<pre class="screen">
+		
+neo@MacBook-Pro ~ % curl -X POST --user 'api:secret' -d 'grant_type=password&amp;username=netkiller@msn.com&amp;password=123456' http://localhost:8080/oauth/token
+{"access_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsicmVzb3VyY2UiXSwiZXhwIjoxNTM1MTE4MzYxLCJ1c2VyX25hbWUiOiJuZXRraWxsZXJAbXNuLmNvbSIsImp0aSI6ImM5YzA4ODczLWZlMTctNGM2My05MDA1LTIzZGJlNTE1NTQ0YiIsImNsaWVudF9pZCI6ImFwaSIsInNjb3BlIjpbInJlYWQiLCJ3cml0ZSJdfQ.ydxJQKtdBNWHELL8_aXVoZETNMygXs8T1HQ5XWDBELA","token_type":"bearer","refresh_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsicmVzb3VyY2UiXSwidXNlcl9uYW1lIjoibmV0a2lsbGVyQG1zbi5jb20iLCJzY29wZSI6WyJyZWFkIiwid3JpdGUiXSwiYXRpIjoiYzljMDg4NzMtZmUxNy00YzYzLTkwMDUtMjNkYmU1MTU1NDRiIiwiZXhwIjoxNTM1MTE4MzYxLCJqdGkiOiI3ODJiNmY2NC0xYzdiLTQ0YWYtOThlZC1iZDk3Y2QzYzE1NjEiLCJjbGllbnRfaWQiOiJhcGkifQ.16QUHOrVPUBF97E_972AcLA83zEK7UzaI424PeAmX6E","expires_in":3599,"scope":"read write","jti":"c9c08873-fe17-4c63-9005-23dbe515544b"}
+		
+				</pre>
+				<p>复制 access_token 粘贴到 Authorization: Bearer 后面</p>
+				<pre class="screen">
+		
+neo@MacBook-Pro ~ % curl -H "Accept: application/json" -H "Content-Type: application/json" -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsiYmxvY2tjaGFpbiJdLCJleHAiOjE1MzUxMTkyMTUsInVzZXJfbmFtZSI6Im5ldGtpbGxlckBtc24uY29tIiwianRpIjoiZTNjYmIxNTItYmFkZS00MGM1LTkxOGItZjJjMzZiYTBiMTE2IiwiY2xpZW50X2lkIjoiYXBpIiwic2NvcGUiOlsicmVhZCIsIndyaXRlIl19.ophWAvIT1ZmWCIQyAgyuzmQ98TJsN49OeR3CBSJ_X54" -X GET http://localhost:8080/test/mongo
+{"id":"5b800709e18a211e83c7f355","name":"Netkiller"}		
+		
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm529176678176"></a>测试 Shell</h5></div></div></div>
+				
+				<pre class="screen">
+		
+URL=http://localhost:8080
+TOKEN=$(curl -s  -X POST --user 'api:secret' -d 'grant_type=password&amp;username=netkiller@msn.com&amp;password=123456' ${URL}/oauth/token | sed 's/.*"access_token":"\([^"]*\)".*/\1/g')
+
+curl -s -k -H "Accept: application/json" -H "Content-Type: application/json" -H "Authorization: Bearer ${TOKEN}" -X GET ${URL}/test/hello.json
+		
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="refresh_token"></a>refresh_token</h5></div></div></div>
+				
+				<pre class="screen">
+		
+curl -s  -X POST --user 'api:secret' -d 'grant_type=refresh_token&amp;client_id=api&amp;client_secret=secret&amp;refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsiYmxvY2tjaGFpbiJdLCJ1c2VyX25hbWUiOiJibG9ja2NoYWluIiwic2NvcGUiOlsicmVhZCIsIndyaXRlIl0sImF0aSI6ImU2OGE4ODUzLWJlODUtNGUwNy1hYzE0LTM0MDI1ZDBiZGY0ZiIsImV4cCI6MTU0MDM4MzA5NCwianRpIjoiY2JjNTk2ZWMtOTkyZi00NmQ2LWFiZGYtMTcyYWFiZmEwNDFiIiwiY2xpZW50X2lkIjoiYXBpIn0.PqsGl5Dm8WBqwbhHf-LqmUP1toCpsFS4gLeOP2bMwR4' ${URL}/oauth/token		
+		
+				</pre>
+			</div>
+
+		</div>
+
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="oauth2.jwt.keypair"></a>54.5.3.4. Spring boot with Oauth2 jwt 非对称证书</h4></div></div></div>
+			
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm529176673632"></a>创建证书</h5></div></div></div>
+				
+				<p>创建证书 keytool -genkeypair -alias jwt -keyalg RSA -keypass passw0rd -keystore jwt.jks -storepass passw0rd	</p>
+				<pre class="programlisting">
+		
+neo@MacBook-Pro /tmp/oauth % keytool -genkeypair -alias jwt -keyalg RSA -keypass passw0rd -keystore jwt.jks -storepass passw0rd
+What is your first and last name?
+  [Unknown]:  Neo Chen
+What is the name of your organizational unit?
+  [Unknown]:  netkiller.cn
+What is the name of your organization?
+  [Unknown]:  netkiller.cn
+What is the name of your City or Locality?
+  [Unknown]:  Shenzhen
+What is the name of your State or Province?
+  [Unknown]:  Guangdong
+What is the two-letter country code for this unit?
+  [Unknown]:  CN
+Is CN=Neo Chen, OU=netkiller.cn, O=netkiller.cn, L=Shenzhen, ST=Guangdong, C=CN correct?
+  [no]:  yes	
+		
+				</pre>
+				<p>该命令将生成一个名为jwt.jks的文件，其中包含我们的密钥 - 公钥和私钥。 还要牢记keypass和storepass密码。</p>
+				<p>导出公钥，接下来，我们需要从刚刚生成的JKS中导出我们的公钥，我们可以使用下面的命令来实现：</p>
+				<pre class="screen">
+		
+neo@MacBook-Pro /tmp/oauth % keytool -list -rfc --keystore jwt.jks | openssl x509 -inform pem -pubkey -out certificate.crt &gt; public.crt
+
+Enter keystore password:  passw0rd
+		
+				</pre>
+				<p>公钥内容</p>
+				<pre class="screen">
+		
+-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAj6ePdDwBrHKX3kNFnbve
+T1rTTbyA9GjaiZNwj2X4Y0In7RCFl8auXXBn2DxztQMGqHY2Ydc3/26Gu9Vri441
+r8/RInA6UpzzDRl5SeYYTobcgfIVpfQ0hTX0xzuMDVLVoLibGfcvGy7ZkrJjQFX8
+lIaO84K8KP/yzma5622XJ+f5hkXmTX5e0tXGDCPjVO1dSrouPWqhcbM0Kf6y3RdE
+JkNRTHLky6afx8MNobakz1Ab9K7cjD8De6LwScwMQMFU46traN/3Fw0lZFxKkpay
++sEUHvHDUYWTuVovUmfiKMX8fj5QCm4imPdA3pF/jjM+xeeVcTID3qffDGOKrGTF
+HQIDAQAB
+-----END PUBLIC KEY-----		
+		
+				</pre>
+				<p>复制 jwt.jks 和 public.crt 到 src/main/resources 目录下</p>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm529176667824"></a>Authorization Server</h5></div></div></div>
+				
+				<pre class="programlisting">
+		
+	@Bean
+	public JwtAccessTokenConverter accessTokenConverter() {
+		JwtAccessTokenConverter converter = new JwtAccessTokenConverter();
+		KeyStoreKeyFactory keyStoreKeyFactory = new KeyStoreKeyFactory(new ClassPathResource("jwt.jks"), "passw0rd".toCharArray());
+		converter.setKeyPair(keyStoreKeyFactory.getKeyPair("passw0rd"));
+		return converter;
+	}		
+		
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm529176666032"></a>Resource Server</h5></div></div></div>
+				
+				<pre class="programlisting">
+		
+	@Bean
+	public JwtAccessTokenConverter accessTokenConverter() {
+		JwtAccessTokenConverter converter = new JwtAccessTokenConverter();
+
+		String publicKey = "-----BEGIN PUBLIC KEY-----\n" + 
+				"MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAj6ePdDwBrHKX3kNFnbve\n" + 
+				"T1rTTbyA9GjaiZNwj2X4Y0In7RCFl8auXXBn2DxztQMGqHY2Ydc3/26Gu9Vri441\n" + 
+				"r8/RInA6UpzzDRl5SeYYTobcgfIVpfQ0hTX0xzuMDVLVoLibGfcvGy7ZkrJjQFX8\n" + 
+				"lIaO84K8KP/yzma5622XJ+f5hkXmTX5e0tXGDCPjVO1dSrouPWqhcbM0Kf6y3RdE\n" + 
+				"JkNRTHLky6afx8MNobakz1Ab9K7cjD8De6LwScwMQMFU46traN/3Fw0lZFxKkpay\n" + 
+				"+sEUHvHDUYWTuVovUmfiKMX8fj5QCm4imPdA3pF/jjM+xeeVcTID3qffDGOKrGTF\n" + 
+				"HQIDAQAB\n" + 
+				"-----END PUBLIC KEY-----";
+
+		converter.setVerifierKey(publicKey);
+		return converter;
+	}		
+		
+				</pre>
+			</div>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="oauth2.ios"></a>54.5.3.5. Apple iOS 访问 Oauth2</h4></div></div></div>
+			
+			<pre class="programlisting">
+	
+//
+//  AppDelegate.m
+//
+//  Created by Apple on 2018/9/8.
+//  Copyright © 2018年 Apple. All rights reserved.
+//
+
+#import "AppDelegate.h"
+#import "YTKNetworkConfig.h"
+#import "AFOAuth2Manager.h"
+#import &lt;AFNetworking.h&gt;
+#import "NSAppConfig.h"
+
+
+@interface AppDelegate ()
+@property (nonatomic, strong) AFOAuthCredential *credential;
+@property (nonatomic, strong) AFOAuth2Manager *OAuth2Manager;
+@end
+
+@implementation AppDelegate
+
+
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+   
+    //授权
+    NSURL *url = [NSURL URLWithString:BASE_URL];
+    
+    AFOAuth2Manager *OAuth2Manager = [[AFOAuth2Manager alloc]initWithBaseURL:url clientID:CLIENTID secret:SECRET];
+   self.OAuth2Manager = OAuth2Manager;
+    [OAuth2Manager authenticateUsingOAuthWithURLString:OAUTH_TOKEN
+                                              username:OAUTH_USERNAME
+                                           password:OAUTH_PASSWORD
+                                                 scope:@""
+    success:^(AFOAuthCredential *credential) {
+      // NSLog(@"********请求OauthToek成功***********");
+        self.credential = credential;
+        [self testPost];
+        [self testGet];
+        }
+    failure:^(NSError *error) {
+     //  NSLog(@"********请求OauthToekn失败begin***********\r\n%@\r\n*********请求OauthToekn失败end************",error);
+        
+    }];
+    
+    
+//    YTKNetworkConfig *config = [YTKNetworkConfig sharedConfig]; config.baseUrl = @"http://yuantiku.com";
+//
+    // Override point for customization after application launch.
+    return YES;
+}
+
+- (void)testGet{
+    NSURL *baseURL = [NSURL URLWithString:@"http://192.168.0.185:8080"];
+    AFHTTPSessionManager *manager =
+    [[AFHTTPSessionManager alloc] initWithBaseURL:baseURL];
+    
+    [manager.requestSerializer setAuthorizationHeaderFieldWithCredential:self.credential];
+    
+    [manager GET:@"/test/hello"
+      parameters:nil
+        progress:nil
+         success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
+             NSLog(@"Success: %@", responseObject);
+         }
+         failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
+             NSLog(@"Failure: %@", error);
+         }];
+    
+}
+
+- (void)testPost{
+    NSURL *baseURL = [NSURL URLWithString:@"http://192.168.0.185:8080"];
+    AFHTTPSessionManager *manager =
+    [[AFHTTPSessionManager alloc] initWithBaseURL:baseURL];
+    manager.responseSerializer = [AFJSONResponseSerializer serializer];
+    manager.requestSerializer = [AFJSONRequestSerializer serializer];
+    [manager.requestSerializer setAuthorizationHeaderFieldWithCredential:self.credential];
+
+    NSDictionary *dic = @{@"mobile":@"13113676543",
+                          @"password":@"123456",
+                          @"role":@"Organization"
+                          };
+   
+    [manager POST:@"/member/create"
+      parameters:dic
+        progress:nil
+         success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
+             NSLog(@"Success: %@", responseObject);
+         }
+         failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
+             NSLog(@"Failure: %@ %@", error,task);
+         }];
+    
+}
+
+- (void)applicationWillResignActive:(UIApplication *)application {
+    // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
+    // Use this method to pause ongoing tasks, disable timers, and invalidate graphics rendering callbacks. Games should use this method to pause the game.
+}
+
+
+- (void)applicationDidEnterBackground:(UIApplication *)application {
+    // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
+    // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
+}
+
+
+- (void)applicationWillEnterForeground:(UIApplication *)application {
+    // Called as part of the transition from the background to the active state; here you can undo many of the changes made on entering the background.
+}
+
+
+- (void)applicationDidBecomeActive:(UIApplication *)application {
+    // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
+}
+
+
+- (void)applicationWillTerminate:(UIApplication *)application {
+    // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
+}
+
+
+@end
+
+	
+			</pre>
+			<p>Post 出去的数据是 Raw 格式。</p>
+			<pre class="programlisting">
+	
+AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+//申明返回的结果是json类型
+manager.responseSerializer = [AFJSONResponseSerializer serializer];
+//申明请求的数据是json类型
+manager.requestSerializer=[AFJSONRequestSerializer serializer];
+//如果报接受类型不一致请替换一致text/html或别的
+manager.responseSerializer.acceptableContentTypes = [NSSet setWithObject:@"text/html"];
+//传入的参数
+NSDictionary *parameters = @{@"1":@"XXXX",@"2":@"XXXX",@"3":@"XXXXX"};
+//你的接口地址
+NSString *url=@"http://xxxxx";
+//发送请求
+[manager POST:url parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
+    NSLog(@"JSON: %@", responseObject);
+} failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+    NSLog(@"Error: %@", error);
+}];		
+	
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm529176661744"></a>54.5.3.6. Oauth2 客户端</h4></div></div></div>
+			
+			<p>环境：Java11 + Springboot 2.1.3</p>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm529176659632"></a></h5></div></div></div>
+				
+				<pre class="programlisting">
+			
+&lt;?xml version="1.0"?&gt;
+&lt;project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"&gt;
+	&lt;modelVersion&gt;4.0.0&lt;/modelVersion&gt;
+	&lt;parent&gt;
+		&lt;groupId&gt;cn.netkiller&lt;/groupId&gt;
+		&lt;artifactId&gt;parent&lt;/artifactId&gt;
+		&lt;version&gt;0.0.1-SNAPSHOT&lt;/version&gt;
+	&lt;/parent&gt;
+	&lt;groupId&gt;cn.netkiller&lt;/groupId&gt;
+	&lt;artifactId&gt;oauth2-client&lt;/artifactId&gt;
+	&lt;version&gt;0.0.1-SNAPSHOT&lt;/version&gt;
+	&lt;name&gt;oauth2-client&lt;/name&gt;
+	&lt;url&gt;http://maven.apache.org&lt;/url&gt;
+	&lt;properties&gt;
+		&lt;project.build.sourceEncoding&gt;UTF-8&lt;/project.build.sourceEncoding&gt;
+	&lt;/properties&gt;
+	&lt;dependencies&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-oauth2-client&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-web&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;junit&lt;/groupId&gt;
+			&lt;artifactId&gt;junit&lt;/artifactId&gt;
+			&lt;scope&gt;test&lt;/scope&gt;
+		&lt;/dependency&gt;
+	&lt;/dependencies&gt;
+&lt;/project&gt;
+
+			
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm529176658512"></a>application.yml</h5></div></div></div>
+				
+				<pre class="programlisting">
+			
+server:
+  port: 8080
+
+APP-CLIENT-ID: 180579ba67875ffc18e3
+APP-CLIENT-SECRET: 8175af8f5691e2f3b6007b9597d8c1e3499e15a0
+
+spring:
+#  redis:
+#    host: localhost
+  security:
+    oauth2:
+      client:
+        provider:
+          netkiller:
+            authorization-uri: http://localhost:8080/oauth/authorize
+            token-uri: http://localhost:8080/oauth/token
+            user-info-uri: http://localhost:8080/user
+            user-name-attribute: name
+#            token-endpoint-url: http://localhost:8080/oauth/check_token
+          yahoo-oidc:
+            issuer-uri: https://api.login.yahoo.com
+        registration:
+          netkiller:
+            client-id: sso
+            client-secret: secret
+            client-name: Neo
+            provider: netkiller
+            scope: read
+            authorization-grant-type: authorization_code
+            redirect-uri: http://localhost:${server.port}/login/oauth2/code/netkiller
+          github-client-1:
+            client-id: ${APP-CLIENT-ID}
+            client-secret: ${APP-CLIENT-SECRET}
+            client-name: Github user
+            provider: github
+            scope: user
+            redirect-uri: http://localhost:${server.port}/login/oauth2/code/github
+          github-client-2:
+            client-id: ${APP-CLIENT-ID}
+            client-secret: ${APP-CLIENT-SECRET}
+            client-name: Github email
+            provider: github
+            scope: user:email
+            redirect-uri: http://localhost:${server.port}/login/oauth2/code/github
+          yahoo-oidc:
+            client-id: ${YAHOO-CLIENT-ID}
+            client-secret: ${YAHOO-CLIENT-SECRET}
+          github-repos:
+            client-id: ${APP-CLIENT-ID}
+            client-secret: ${APP-CLIENT-SECRET}
+            scope: public_repo
+            redirect-uri: "{baseUrl}/github-repos"
+            provider: github
+            client-name: GitHub Repositories
+            
+            
+logging:
+  level:
+#    org.springframework.web: DEBUG
+    org.springframework.security: DEBUG             
+          
+			
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm529176657280"></a>SpringApplication</h5></div></div></div>
+				
+				<pre class="programlisting">
+			
+package cn.netkiller.oauth2.client;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+@EnableAutoConfiguration
+public class Application {
+	public static void main(String[] args) {
+		System.out.println("Oauth2 Client!");
+		SpringApplication.run(Application.class, args);
+	}
+}
+
+			
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm529176655520"></a>WebSecurityConfigurer</h5></div></div></div>
+				
+				<pre class="programlisting">
+			
+package cn.netkiller.oauth2.client;
+
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+
+@Configuration
+@EnableWebSecurity
+public class WebSecurityConfigurer extends WebSecurityConfigurerAdapter {
+	@Override
+	protected void configure(HttpSecurity http) throws Exception {
+		http.authorizeRequests().anyRequest().authenticated().and().oauth2Login();
+	}
+}
+
+			
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm529176653616"></a>TestController</h5></div></div></div>
+				
+				<pre class="programlisting">
+			
+package cn.netkiller.oauth2.client;
+
+import java.security.Principal;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.oauth2.client.registration.ClientRegistration;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class TestController {
+	@Autowired
+	private ClientRegistrationRepository clientRegistrationRepository;
+
+	@RequestMapping("/")
+	public Principal email(Principal principal) {
+		System.out.println("Hello " + principal.getName());
+
+		return principal;
+	}
+
+	@RequestMapping("/index")
+	public ClientRegistration index() {
+		ClientRegistration clientRegistration = this.clientRegistrationRepository.findByRegistrationId("netkiller");
+
+		return clientRegistration;
+	}
+}
+
+			
+				</pre>
+			</div>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="oauth2.android"></a>54.5.3.7. Android Oauth2 + Jwt example</h4></div></div></div>
+			
+			<p></p>
+			<pre class="programlisting">
+	
+package cn.netkiller.okhttp.pojo;
+
+public class Oauth {
+    private String access_token;
+    private String token_type;
+    private String refresh_token;
+    private String expires_in;
+    private String scope;
+    private String jti;
+
+    public String getAccess_token() {
+        return access_token;
+    }
+
+    public void setAccess_token(String access_token) {
+        this.access_token = access_token;
+    }
+
+    public String getToken_type() {
+        return token_type;
+    }
+
+    public void setToken_type(String token_type) {
+        this.token_type = token_type;
+    }
+
+    public String getRefresh_token() {
+        return refresh_token;
+    }
+
+    public void setRefresh_token(String refresh_token) {
+        this.refresh_token = refresh_token;
+    }
+
+    public String getExpires_in() {
+        return expires_in;
+    }
+
+    public void setExpires_in(String expires_in) {
+        this.expires_in = expires_in;
+    }
+
+    public String getScope() {
+        return scope;
+    }
+
+    public void setScope(String scope) {
+        this.scope = scope;
+    }
+
+    public String getJti() {
+        return jti;
+    }
+
+    public void setJti(String jti) {
+        this.jti = jti;
+    }
+
+    @Override
+    public String toString() {
+        return "Oauth{" +
+                "access_token='" + access_token + '\'' +
+                ", token_type='" + token_type + '\'' +
+                ", refresh_token='" + refresh_token + '\'' +
+                ", expires_in='" + expires_in + '\'' +
+                ", scope='" + scope + '\'' +
+                ", jti='" + jti + '\'' +
+                '}';
+    }
+}	
+	
+			</pre>
+			<p>Activity 文件</p>
+			<pre class="programlisting">
+	
+package cn.netkiller.okhttp;
+
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+import android.util.Log;
+import android.widget.TextView;
+
+import com.google.gson.Gson;
+
+import java.io.IOException;
+
+import cn.netkiller.okhttp.pojo.Oauth;
+import okhttp3.Authenticator;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Credentials;
+import okhttp3.FormBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okhttp3.Route;
+
+public class Oauth2jwtActivity extends AppCompatActivity {
+
+    private TextView token;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_oauth2jwt);
+
+        token = (TextView) findViewById(R.id.token);
+
+        try {
+            get();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+
+    public static Oauth accessToken() throws IOException {
+
+
+        OkHttpClient client = new OkHttpClient.Builder().authenticator(
+                new Authenticator() {
+                    public Request authenticate(Route route, Response response) {
+                        String credential = Credentials.basic("api", "secret");
+                        return response.request().newBuilder().header("Authorization", credential).build();
+                    }
+                }
+        ).build();
+
+        String url = "https://api.netkiller.cn/oauth/token";
+
+        RequestBody formBody = new FormBody.Builder()
+                .add("grant_type", "password")
+                .add("username", "blockchain")
+                .add("password", "123456")
+                .build();
+
+        Request request = new Request.Builder()
+                .url(url)
+                .post(formBody)
+                .build();
+
+        Response response = client.newCall(request).execute();
+        if (!response.isSuccessful()) {
+            throw new IOException("服务器端错误: " + response);
+        }
+
+        Gson gson = new Gson();
+        Oauth oauth = gson.fromJson(response.body().string(), Oauth.class);
+        Log.i("oauth", oauth.toString());
+        return oauth;
+    }
+
+    public void get() throws IOException {
+
+
+        OkHttpClient client = new OkHttpClient.Builder().authenticator(
+                new Authenticator() {
+                    public Request authenticate(Route route, Response response) throws IOException {
+                        return response.request().newBuilder().header("Authorization", "Bearer " + accessToken().getAccess_token()).build();
+                    }
+                }
+        ).build();
+
+        String url = "https://api.netkiller.cn/misc/compatibility";
+
+        Request request = new Request.Builder()
+                .url(url)
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                call.cancel();
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+
+                final String myResponse = response.body().string();
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Log.i("oauth", myResponse);
+                        token.setText(myResponse);
+                    }
+                });
+
+            }
+        });
+    }
+
+}
+	
+			</pre>
+		</div>
+
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="oauth2.RestTemplate"></a>54.5.3.8. RestTemplate 使用 HttpClient</h4></div></div></div>
+			
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm529176647680"></a>Maven</h5></div></div></div>
+				
+				<pre class="programlisting">
+				
+&lt;?xml version="1.0"?&gt;
+&lt;project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"&gt;
+	&lt;modelVersion&gt;4.0.0&lt;/modelVersion&gt;
+	&lt;parent&gt;
+		&lt;groupId&gt;cn.netkiller&lt;/groupId&gt;
+		&lt;artifactId&gt;oauth&lt;/artifactId&gt;
+		&lt;version&gt;0.0.1-SNAPSHOT&lt;/version&gt;
+	&lt;/parent&gt;
+	&lt;groupId&gt;cn.netkiller&lt;/groupId&gt;
+	&lt;artifactId&gt;client&lt;/artifactId&gt;
+	&lt;version&gt;0.0.1-SNAPSHOT&lt;/version&gt;
+	&lt;name&gt;client&lt;/name&gt;
+	&lt;url&gt;http://maven.apache.org&lt;/url&gt;
+	&lt;properties&gt;
+		&lt;project.build.sourceEncoding&gt;UTF-8&lt;/project.build.sourceEncoding&gt;
+	&lt;/properties&gt;
+	&lt;dependencies&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.apache.httpcomponents&lt;/groupId&gt;
+			&lt;artifactId&gt;httpclient&lt;/artifactId&gt;
+			&lt;version&gt;4.5.3&lt;/version&gt;
+		&lt;/dependency&gt;
+	&lt;/dependencies&gt;
+&lt;/project&gt;
+
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm529176646576"></a>SpringBootApplication</h5></div></div></div>
+				
+				<pre class="programlisting">
+				
+package cn.netkiller.oauth.client;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+/**
+ * Hello world!
+ *
+ */
+@SpringBootApplication
+public class Application {
+	public static void main(String[] args) {
+		System.out.println("Hello World!");
+		SpringApplication.run(Application.class, args);
+	}
+}
+
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm529176643968"></a>ClientRestController</h5></div></div></div>
+				
+				<pre class="programlisting">
+				
+package cn.netkiller.oauth.client.controller;
+
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.oauth2.client.OAuth2RestOperations;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
+
+import com.fasterxml.jackson.databind.JsonNode;
+
+@RestController
+public class ClientRestController {
+	
+	@RequestMapping("/token")
+	public String token() {
+	    HttpHeaders headers = new HttpHeaders();
+	    headers.setContentType(MediaType.APPLICATION_JSON);
+	    headers.set("Authorization","Bearer "+"6296057a-ed06-4899-9adc-1993ba7a4946");
+	    HttpEntity&lt;String&gt; entity = new HttpEntity&lt;String&gt;(headers);
+	    ResponseEntity&lt;String&gt; response = restTemplate.exchange("http://localhost:8000/api/test/hello.json",HttpMethod.GET,entity,String.class);
+	    System.out.println(response.getBody());
+		return response.getStatusCode().toString() + " " + response.getBody();
+	}
+}
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm529176642816"></a>Test</h5></div></div></div>
+				
+				<p>首先获取 Token</p>
+				<pre class="screen">
+				
+MacBook-Pro:Application neo$ curl -X POST --user 'api:secret' -d 'grant_type=password&amp;username=netkiller@msn.com&amp;password=123456' http://localhost:8000/api/oauth/token
+{"access_token":"6296057a-ed06-4899-9adc-1993ba7a4946","token_type":"bearer","refresh_token":"b22d70db-3253-4f5f-9b6a-8714da23e14d","expires_in":2642,"scope":"read write"}
+				
+				</pre>
+				<p>将Token写入到 http 头</p>
+				<pre class="screen">
+					headers.set("Authorization","Bearer "+"6296057a-ed06-4899-9adc-1993ba7a4946");
+				</pre>
+				<p>启动 client 项目</p>
+				<pre class="screen">
+					mvn spring-boot:run
+				</pre>
+				<p>curl 测试</p>
+				<pre class="screen">
+					MacBook-Pro:Application neo$ curl http://localhost:8080/client/token.json
+					200 Hello world !
+				</pre>
+			</div>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="oauth.self-sign"></a>54.5.3.9. 自签名证书信任问题</h4></div><div><h5 class="subtitle">unable to find valid certification path to requested target</h5></div></div></div>
+			
+			
+			<pre class="programlisting">
+			
+package example.controller;
+
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+
+import javax.net.ssl.SSLContext;
+
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.ssl.SSLContexts;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.security.oauth2.client.OAuth2RestOperations;
+import org.springframework.security.oauth2.common.OAuth2AccessToken;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.client.RestTemplate;
+
+@Controller
+public class TestController {
+	@Autowired
+	private OAuth2RestOperations restTemplate;
+
+	@GetMapping("/ssl")
+	@ResponseBody
+	public String ssl() throws KeyManagementException, NoSuchAlgorithmException, KeyStoreException {
+		String url = "https://api.netkiller.cn/news/list.json";
+
+		SSLContext sslcontext = SSLContexts.custom().loadTrustMaterial(null, (chain, authType) -&gt; true).build();
+		SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslcontext, new String[] { "TLSv1" }, null, new NoopHostnameVerifier());
+		CloseableHttpClient httpClient = HttpClients.custom().setSSLSocketFactory(sslsf).build();
+		HttpComponentsClientHttpRequestFactory httpComponentsClientHttpRequestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
+		httpComponentsClientHttpRequestFactory.setConnectTimeout(60000);
+		httpComponentsClientHttpRequestFactory.setReadTimeout(180000);
+
+		final RestTemplate restTemplate = new RestTemplate(httpComponentsClientHttpRequestFactory);
+
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_JSON);
+		headers.set("Authorization", "Bearer " + this.restTemplate.getAccessToken().getValue());
+		HttpEntity&lt;String&gt; entity = new HttpEntity&lt;String&gt;(headers);
+
+		ResponseEntity&lt;String&gt; response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+		return response.getBody();
+	}
+}
+		
+			</pre>
+		</div>
+
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="oauth2"></a>54.5.3.10. Principal</h4></div></div></div>
+			
+			<pre class="programlisting">
+		
+@RestController
+public class ResourceController {
+    @GetMapping("/getResource")
+    public String getResource(Principal principal) {
+        return "SUCCESS, 当前用户：" + principal.getName();
+    }
+    @RequestMapping("/user")
+  	public Principal user(Principal principal) {
+    	return principal;
+	}
+}		
+		
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm529176634256"></a>54.5.3.11. SecurityContextHolder 对象</h4></div></div></div>
+			
+			<pre class="screen">
+		
+	@RequestMapping(value = "principal", method = RequestMethod.GET)
+    public Object getPrincipal() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return principal;
+    }
+
+    // 查询用户角色
+    @RequestMapping(value = "roles", method = RequestMethod.GET)
+    public Object getRoles() {
+        return SecurityContextHolder.getContext().getAuthentication().getAuthorities();
+    }		
+		
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm529176632640"></a>54.5.3.12. 资源服务器配置</h4></div></div></div>
+			
+			<p>ResourceServerConfigurerAdapter</p>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm529176631456"></a>access()</h5></div></div></div>
+				
+				<pre class="programlisting">
+			
+ 	@Override
+    public void configure(HttpSecurity http) throws Exception {
+        http
+                .httpBasic()
+            .and()
+                .authorizeRequests()
+                .antMatchers("/home")
+                .permitAll()
+            .and()
+                .authorizeRequests()
+                .antMatchers("/user")
+                .access("#oauth2.hasScope('read')")
+            .and()
+                .authorizeRequests()
+                .anyRequest()
+                .authenticated()
+        ;
+    }			
+			
+				</pre>
+				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm529176629696"></a></h6></div></div></div>
+					
+					<pre class="programlisting">
+				
+	@Override
+    public void configure(HttpSecurity http) throws Exception {
+        super.configure(http);
+        http
+                .authorizeRequests()
+                .antMatchers("/login").permitAll()
+                .antMatchers("/info","/news")
+                .access("#oauth2.hasScope('read') and hasRole('USER')");
+    }				
+				
+					</pre>
+				</div>
+				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm529176628160"></a></h6></div></div></div>
+					
+					<pre class="programlisting">
+				
+			@Override
+            public void configure(ResourceServerSecurityConfigurer resources) throws Exception {
+                TokenStore tokenStore = new JdbcTokenStore(dataSource);
+                resources.resourceId("user-services").tokenStore(tokenStore).stateless(true);
+            }
+
+            @Override
+            public void configure(HttpSecurity http) throws Exception {
+                http
+                        .sessionManagement()
+                        .sessionCreationPolicy(SessionCreationPolicy.NEVER)
+                        .and()
+                        .requestMatchers().antMatchers("/user/**")
+                        .and()
+                        .authorizeRequests()
+                        .antMatchers(HttpMethod.GET, "/user/**").access("#oauth2.hasScope('read')")
+                        .antMatchers(HttpMethod.POST, "/user/**").access("#oauth2.hasScope('write')")
+                        .antMatchers(HttpMethod.PATCH, "/user/**").access("#oauth2.hasScope('write')")
+                        .antMatchers(HttpMethod.PUT, "/user/**").access("#oauth2.hasScope('write')")
+                        .antMatchers(HttpMethod.DELETE, "/user/**").access("#oauth2.hasScope('write')")
+                        .and()
+                        .headers().addHeaderWriter(new HeaderWriter() {
+                    @Override
+                    public void writeHeaders(HttpServletRequest request, HttpServletResponse response) {
+                        response.addHeader("Access-Control-Allow-Origin", "*");
+                        if (request.getMethod().equals("OPTIONS")) {
+                            response.setHeader("Access-Control-Allow-Methods", request.getHeader("Access-Control-Request-Method"));
+                            response.setHeader("Access-Control-Allow-Headers", request.getHeader("Access-Control-Request-Headers"));
+                        }
+                    }
+                });
+            }				
+				
+					</pre>
+				</div>
+			</div>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm529176626880"></a>54.5.3.13. Client</h4></div></div></div>
+			
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm529176626240"></a>Overriding Spring Boot 2.0 Auto-configuration</h5></div></div></div>
+				
+				<pre class="programlisting">
+			
+@Configuration
+public class OAuth2LoginConfig {
+
+	@Bean
+	public ClientRegistrationRepository clientRegistrationRepository() {
+		return new InMemoryClientRegistrationRepository(this.googleClientRegistration());
+	}
+
+	private ClientRegistration googleClientRegistration() {
+		return ClientRegistration.withRegistrationId("google")
+			.clientId("google-client-id")
+			.clientSecret("google-client-secret")
+			.clientAuthenticationMethod(ClientAuthenticationMethod.BASIC)
+			.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+			.redirectUriTemplate("{baseUrl}/login/oauth2/code/{registrationId}")
+			.scope("openid", "profile", "email", "address", "phone")
+			.authorizationUri("https://accounts.google.com/o/oauth2/v2/auth")
+			.tokenUri("https://www.googleapis.com/oauth2/v4/token")
+			.userInfoUri("https://www.googleapis.com/oauth2/v3/userinfo")
+			.userNameAttributeName(IdTokenClaimNames.SUB)
+			.jwkSetUri("https://www.googleapis.com/oauth2/v3/certs")
+			.clientName("Google")
+			.build();
+	}
+}		
+			
+				</pre>
+			</div>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="oauth2.faq"></a>54.5.3.14. Oauth2 常见问题</h4></div></div></div>
+			
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm529176623856"></a>修改 /oauth/token 路径</h5></div></div></div>
+				
+				<pre class="programlisting">
+			
+	@Override
+	public void configure(AuthorizationServerEndpointsConfigurer configurer) throws Exception {
+		configurer.authenticationManager(authenticationManager);
+		configurer.userDetailsService(userDetailsService);
+		configurer.pathMapping("/oauth/token","/oauth/token3");	//可以修改默认/oauth/token路径为 /oauth/token3
+	}
+			
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm529176622144"></a>password 认证方式静态配置用户列表</h5></div></div></div>
+				
+				<pre class="programlisting">
+			
+	@Override
+	public void configure(AuthorizationServerEndpointsConfigurer configurer) throws Exception {
+		configurer.authenticationManager(authenticationManager);
+		configurer.userDetailsService(userDetailsService());
+	}
+
+	@Bean
+	public UserDetailsService userDetailsService() {
+		Map&lt;String, String[]&gt; users = new HashMap&lt;String, String[]&gt;() {
+			{
+				put("user", new String[] { "ROLE_USER" });
+				put("admin", new String[] { "ROLE_USER", "ROLE_ADMIN" });
+				put("client", new String[] { "ROLE_CLIENT" });
+				put("trust", new String[] { "ROLE_TRUSTED_CLIENT" });
+			}
+		};
+		String password = passwordEncoder().encode("123456");	// 设置默认密码
+		// TODO 这里需要自行定义访问数据库的扩展
+		return new UserDetailsService() {
+			@Override
+			public UserDetails loadUserByUsername(String name) throws UsernameNotFoundException {
+				String[] authList = users.containsKey(name) ? users.get(name) : new String[] { "ROLE_USER" };
+				User user = new User(name, password, AuthorityUtils.createAuthorityList(authList));
+				return user;
+			}
+		};
+
+	}
+			
+				</pre>
+			</div>
+		</div>
+	</div>
+</div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
+			window.changyan.api.config({
+			appid: 'cyvwjQUG3',
+			conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
+			});
+</script><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="HttpSecurity.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="../../cloud/index.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">54.4. 访问控制列表（Access Control List，ACL） </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 部分 V. Spring Cloud</td></tr></table></div><script xmlns="">
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+			ga('create', 'UA-11694057-1', 'auto');
+			ga('send', 'pageview');
+
+		</script><script xmlns="" async="async">
+			var _hmt = _hmt || [];
+			(function() {
+			var hm = document.createElement("script");
+			hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(hm, s);
+			})();
+</script><script xmlns="" async="async">
+			(function(){
+			var bp = document.createElement('script');
+			var curProtocol = window.location.protocol.split(':')[0];
+			if (curProtocol === 'https') {
+			bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+			}
+			else {
+			bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+			}
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(bp, s);
+			})();
+</script></body></html>

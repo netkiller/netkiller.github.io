@@ -1,0 +1,534 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>50.5. mongoTemplate</title><link rel="stylesheet" type="text/css" href="../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config" /><link rel="home" href="../index.html" title="Netkiller Spring Cloud 手札" /><link rel="up" href="spring-data-mongodb.html" title="第 50 章 Spring Data with MongoDB" /><link rel="prev" href="MongoRepository.html" title="50.4. MongoRepository" /><link rel="next" href="GeoJsonDeserializer.html" title="50.6. GeoJson 反序列化" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
+		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://edu.51cto.com/lecturer/1703915.html">51CTO学院</a> | <a xmlns="" href="https://edu.csdn.net/lecturer/6423">CSDN程序员研修院</a> | <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> | <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">腾讯云社区</a> | <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">阿里云栖社区</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">50.5. mongoTemplate</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="MongoRepository.html">上一页</a> </td><th width="60%" align="center">第 50 章 Spring Data with MongoDB</th><td width="20%" align="right"> <a accesskey="n" href="GeoJsonDeserializer.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="mongoTemplate"></a>50.5. mongoTemplate</h2></div></div></div>
+		
+		<p>导入与模板相关的包</p>
+		<pre class="programlisting">
+		
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;		
+		
+		</pre>
+		<p>注入 MongoTemplate 对象</p>
+		<pre class="programlisting">
+		
+	@Autowired
+	private MongoTemplate mongoTemplate;		
+		
+		</pre>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="mongoTemplate.save"></a>50.5.1. Save 保存</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+User user = new User();
+user.setName("Netkiller"); 
+mongoTemplate.save(user, "user");			
+			
+			</pre>
+			<p>更新数据</p>
+			<pre class="programlisting">
+			
+user = mongoTemplate.findOne(Query.query(Criteria.where("name").is("Jam")), User.class);
+user.setName("Neo");
+mongoTemplate.save(user, "user");	
+			
+			</pre>
+		</div>
+
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="mongoTemplate.insert"></a>50.5.2. Insert</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+User user = new User();
+user.setName("Neo");
+mongoTemplate.insert(user, "user");			
+			
+			</pre>
+			<pre class="programlisting">
+			
+BSONObject personBsonObj = BasicDBObjectBuilder.start()
+                .add("name","Neo Chen")
+                .add("age",27)
+                .add("address",null).get();
+
+mongoTemplate.insert(personBsonObj,"personCollection");
+			
+			</pre>
+			<p>document in the db:</p>
+			<pre class="screen">
+			
+db.personCollection.findOne().pretty();
+{"age":21,"name":"John Doe";"address":null}*			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="mongoTemplate.updateFirst"></a>50.5.3. updateFirst 修改符合条件第一条记录</h3></div></div></div>
+			
+			<p>updateFirst 修改符合条件第一条记录</p>
+			<pre class="programlisting">
+			
+Query query = new Query();
+query.addCriteria(Criteria.where("name").is("Neo"));
+Update update = new Update();
+update.set("name", "Netkiller");
+mongoTemplate.updateFirst(query, update, User.class);			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="mongoTemplate.updateMulti"></a>50.5.4. updateMulti 修改符合条件的所有</h3></div></div></div>
+			
+			<p>更新所有数据</p>
+			<pre class="programlisting">
+			
+Query query = new Query();
+query.addCriteria(Criteria.where("name").is("Neo"));
+Update update = new Update();
+update.set("name", "Jerry");
+mongoTemplate.updateMulti(query, update, User.class);			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="mongoTemplate.findAndModify"></a>50.5.5. 查找并保存</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+Query query = new Query();
+query.addCriteria(Criteria.where("name").is("Luck"));
+Update update = new Update();
+update.set("name", "Lisa");
+User user = mongoTemplate.findAndModify(query, update, User.class);			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="mongoTemplate.upsert"></a>50.5.6. upsert - 修改符合条件时如果不存在则添加</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+Query query = new Query();
+query.addCriteria(Criteria.where("name").is("Green"));
+Update update = new Update();
+update.set("name", "Tom");
+mongoTemplate.upsert(query, update, User.class);			
+			
+			</pre>
+			<pre class="programlisting">
+			
+mongoTemplate.upsert(new Query(Criteria.where("age").is("18")), new Update().set("name", "neo"), collectionName);			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="mongoTemplate.remove"></a>50.5.7. 删除</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+User user = new User();
+user.setId("5bbf091efd9557069c4a25c5")			
+mongoTemplate.remove(user, "user");			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="mongoTemplate.findOne"></a>50.5.8. 查找一条数据</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+
+public Person findOneByName(String name) {
+   Query query = new Query();
+   query.addCriteria(Criteria.where("name").is(name));
+   return mongoTemplate.findOne(query, Person.class);
+}		
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="mongoTemplate.find"></a>50.5.9. 查找所有数据</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+public List&lt;Person&gt; findByName(String name) {
+   Query query = new Query();
+   query.addCriteria(Criteria.where("name").is(name));
+   return mongoTemplate.find(query, Person.class);
+}				
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="mongoTemplate.query"></a>50.5.10. Query</h3></div></div></div>
+			
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="query.skip.limit"></a>50.5.10.1. 翻页</h4></div></div></div>
+				
+				<pre class="programlisting">
+				
+public List&lt;Person&gt; getAllPersonPaginated(int pageNumber, int pageSize) {
+   Query query = new Query();
+   query.skip(pageNumber * pageSize);
+   query.limit(pageSize);
+   return mongoTemplate.find(query, Person.class);
+}			
+				
+				</pre>
+			</div>
+
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="between"></a>50.5.10.2. between</h4></div></div></div>
+				
+				<p>实现一个区间条件 new Criteria("createdDate").gte(beginDate).lte(endDate)</p>
+				<pre class="programlisting">
+			
+	public boolean AccountDeposit(Date beginDate, Date endDate) {
+
+		MatchOperation matchOperation = match(new Criteria("createdDate").gte(beginDate).lte(endDate));
+		GroupOperation groupOperation = group("loginname").sum("amount").as("amount");
+		SortOperation sortOperation = sort(new Sort(Direction.ASC, "loginname"));
+
+		Aggregation aggregation = newAggregation(matchOperation, groupOperation, sortOperation);
+		AggregationResults&lt;AccountSettlementDetails&gt; results = mongoTemplate.aggregate(aggregation, AccountSettlementDetails.class, AccountSettlementDetails.class);
+
+		if (results.getMappedResults() != null) {
+			log.info(results.getRawResults().get("result").toString());
+			for (AccountSettlementDetails settlementDetails : results.getMappedResults()) {
+							
+				log.info("{}", settlementDetails.toString());
+				
+			}
+		}
+		return true;
+	}
+			
+				</pre>
+			</div>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="Criteria"></a>50.5.11. Criteria</h3></div></div></div>
+			
+
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="Criteria.is"></a>50.5.11.1. is</h4></div></div></div>
+				
+				<pre class="programlisting">
+			
+Query query = new Query();
+query.addCriteria(Criteria.where("name").is("Neo"));
+List&lt;User&gt; users = mongoTemplate.find(query, User.class);		
+			
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="Criteria.regex"></a>50.5.11.2. Regex 正则表达式搜索</h4></div></div></div>
+				
+				<p>查询以N开头的名字</p>
+				<pre class="programlisting">
+			
+Query query = new Query();
+query.addCriteria(Criteria.where("name").regex("^N"));
+List&lt;User&gt; users = mongoTemplate.find(query,User.class);	
+			
+				</pre>
+				<p>查询以o结尾的名字</p>
+				<pre class="programlisting">
+			
+Query query = new Query();
+query.addCriteria(Criteria.where("name").regex("o$"));
+List&lt;User&gt; users = mongoTemplate.find(query, User.class);
+			
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="Criteria.ltgt"></a>50.5.11.3. lt 和 gt</h4></div></div></div>
+				
+				<p>查询年龄小于 &lt; 30 并 &gt; 20 的用户</p>
+				<pre class="programlisting">
+			
+Query query = new Query();
+query.addCriteria(Criteria.where("age").lt(30).gt(20));
+List&lt;User&gt; users = mongoTemplate.find(query,User.class);
+			
+				</pre>
+				<p>查找日期范围</p>
+				<pre class="programlisting">
+			
+Date start = DateUtil.convertStringToDateTime("2014-02-10 20:38:44");
+Date end = DateUtil.convertStringToDateTime("2014-02-10 20:38:50");
+					
+Query query = new Query();
+Criteria criteria = Criteria.where("delflag").is(false);
+criteria.and("modifyDate").gte(start).lte(end);
+query.addCriteria(criteria);
+query.limit(10);
+			
+			
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="Criteria.exists"></a>50.5.11.4. exists()</h4></div></div></div>
+				
+				<pre class="programlisting">
+				
+Query query = new Query();
+query.addCriteria(
+    new Criteria().andOperator(
+        Criteria.where("field1").exists(true),
+        Criteria.where("field1").ne(false)
+    )
+);
+
+List&lt;Foo&gt; result = mongoTemplate.find(query, Foo.class);
+System.out.println("query - " + query.toString());
+
+for (Foo foo : result) {
+    System.out.println("result - " + foo);
+}			
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="Criteria.in"></a>50.5.11.5. 包含</h4></div></div></div>
+				
+				<pre class="programlisting">
+				
+public List&lt;Person&gt; findByFavoriteBooks(String favoriteBook) {
+   Query query = new Query();
+   query.addCriteria(Criteria.where("favoriteBooks").in(favoriteBook));
+   return mongoTemplate.find(query, Person.class);
+}				
+				
+				</pre>
+			</div>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="Update"></a>50.5.12. Update</h3></div></div></div>
+			
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="Update.set"></a>50.5.12.1. set</h4></div></div></div>
+				
+				<pre class="programlisting">
+				
+Update update = new Update();
+update.set("name", "Netkiller");				
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="Update.push"></a>50.5.12.2. 追加数据</h4></div></div></div>
+				
+				<pre class="programlisting">
+				
+	Query query = Query.query(Criteria.where("id").is("5bbf091efd9557069c4a25c5"));
+	Update update = new Update().push("author", new Author("neo", "chen"));
+	mongoTemplate.updateFirst(query, update, Article.class);				
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="Update.update"></a>50.5.12.3. 更新数据</h4></div></div></div>
+				
+				<pre class="programlisting">
+				
+	Query query = Query.query(Criteria.where("classId").is("1").and("Students.studentId").is("1"));
+    Update update = Update.update("Students.$.name", "lisa");
+    mongoTemplate.upsert(query, update, "class");
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="Update.unset"></a>50.5.12.4. 删除数据</h4></div></div></div>
+				
+				<pre class="programlisting">
+				
+	Query query = Query.query(Criteria.where("classId").is("1").and("Students.studentId").is("3"));
+	Update update = new Update();
+	update.unset("Students.$");
+	mongoTemplate.updateFirst(query, update, "class");				
+				
+				</pre>
+			</div>
+
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="Update.inc"></a>50.5.12.5. inc</h4></div></div></div>
+				
+				<pre class="programlisting">
+				
+public void updateMultiplePersonAge() {
+   Query query = new Query();
+   Update update = new Update().inc("age", 1);
+   mongoTemplate.findAndModify(query, update, Person.class);;
+}
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="Update.addToSet"></a>50.5.12.6. update.addToSet</h4></div></div></div>
+				
+				<pre class="programlisting">
+				
+Query query = Query.query(Criteria.where("classId").is("1"));
+Student student = new Student("1", "lisa", 3, "girl");
+Update update = new Update();
+update.addToSet("Students", student);
+mongoTemplate.upsert(query, update, "class");				
+				
+				</pre>
+			</div>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="BasicUpdate"></a>50.5.13. BasicUpdate</h3></div></div></div>
+			
+			<p>BasicUpdate 是底层更新可操作，需要手动实现$set等语句</p>
+			<pre class="programlisting">
+			
+BasicDBObject basicDBObject = new BasicDBObject();  
+basicDBObject.put("$set", new BasicDBObject("date","2018-09-09"));  
+Update update = new BasicUpdate(basicDBObject);  
+mongoTemplate.updateFirst(new Query(Criteria.where("nickname").is("netkiller")), update,collectionName);  			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="sort"></a>50.5.14. Sort</h3></div></div></div>
+			
+			<p>按照年龄排序</p>
+			<pre class="programlisting">
+			
+Query query = new Query();
+query.with(new Sort(Sort.Direction.ASC, "age"));
+List&lt;User&gt; users = mongoTemplate.find(query,User.class);
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="PageRequest"></a>50.5.15. Query + PageRequest</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+final Pageable pageableRequest = new PageRequest(0, 2);
+Query query = new Query();
+query.with(pageableRequest);
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="newAggregation"></a>50.5.16. newAggregation</h3></div></div></div>
+			
+
+			<pre class="programlisting">
+			
+		MultilevelDirectSellingAccountRewardsSettlementDetails multilevelDirectSellingAccountRewardsSettlementDetails = new MultilevelDirectSellingAccountRewardsSettlementDetails();
+		multilevelDirectSellingAccountRewardsSettlementDetails.setLoginname("111");
+		multilevelDirectSellingAccountRewardsSettlementDetails.setPhone("111");
+		multilevelDirectSellingAccountRewardsSettlementDetails.setRecommenderLoginname("111");
+		multilevelDirectSellingAccountRewardsSettlementDetails.setRecommenderPhone("111");
+		multilevelDirectSellingAccountRewardsSettlementDetails.setRecommenderName("Neo");
+		multilevelDirectSellingAccountRewardsSettlementDetails.setRecommenderType("客户");
+		multilevelDirectSellingAccountRewardsSettlementDetails.setAmount(5.02);
+		multilevelDirectSellingAccountRewardsSettlementDetails.setCreatedDate(new Date());
+		multilevelDirectSellingAccountRewardsSettlementDetailsRepository.save(multilevelDirectSellingAccountRewardsSettlementDetails);
+		
+		Date beginDate = this.getToday("00:00:00");
+		Date endDate = this.getToday("23:59:59");
+		log.info(beginDate.toString() + " ~ " + endDate.toString());
+		
+		GroupOperation groupOperation = group("loginname").sum("amount").as("amount");
+		MatchOperation matchOperation = match(new Criteria("createdDate").gte(beginDate).lte(endDate));
+		SortOperation sortOperation = sort(new Sort(Direction.ASC, "loginname"));
+
+		Aggregation aggregation = newAggregation(matchOperation, groupOperation, sortOperation);
+		AggregationResults&lt;MultilevelDirectSellingAccountRewardsSettlementDetails&gt; results = mongoTemplate.aggregate(aggregation, MultilevelDirectSellingAccountRewardsSettlementDetails.class, MultilevelDirectSellingAccountRewardsSettlementDetails.class);		
+		System.out.println(results.getRawResults().get("result").toString());
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="indexOps"></a>50.5.17. 创建索引</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+mongoOps.indexOps(User.class).ensureIndex(new Index().on("name", Direction.ASC));			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="mongoTemplate.subobject"></a>50.5.18. 子对象操作</h3></div></div></div>
+			
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm529176868880"></a>50.5.18.1. List 类型</h4></div></div></div>
+				
+				<pre class="programlisting">
+				
+package cn.netkiller.api.domain;
+
+import java.util.List;
+
+import javax.persistence.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+@Document
+public class Article {
+
+	@Id
+	private String id;
+	private String title;
+	private String description;
+
+	List&lt;Author&gt; author;
+	public static class Author {
+		private String id;
+		private String firstname;
+		private String lastname;
+
+		public Author(String firstname, String lastname) {
+			this.firstname = firstname;
+			this.lastname = lastname;
+		}
+	}
+}
+				
+				</pre>
+				<p>更新</p>
+				<pre class="screen">
+				
+db.getCollection('foo').update({"author.firstname":"neo"},{"$set":{"author.$.firstname":"netkiller"}})					
+				
+				</pre>
+				<p>更新数据</p>
+				<pre class="programlisting">
+				
+	Query query = Query.query(Criteria.where("author.firstname").is("neo"));
+	Update update = new Update().set("author.$.firstname", "netkiller");
+	mongoTemplate.updateFirst(query, update, Article.class);
+				
+				</pre>
+				<p>追加数据</p>
+				<pre class="programlisting">
+				
+	Query query = Query.query(Criteria.where("id").is("5bbf091efd9557069c4a25c5"));
+	Update update = new Update().push("author", new Author("neo", "chen"));
+	mongoTemplate.updateFirst(query, update, Article.class);				
+				
+				</pre>
+				<p>删除数据</p>
+				<pre class="programlisting">
+				
+		Query query = Query.query(Criteria.where("id").is("5bbf091efd9557069c4a25c5"));
+		Update update = new Update().pull("author", new Author("jerry", "lee"));
+		mongoTemplate.updateFirst(query, update, Article.class);				
+				
+				</pre>
+			</div>
+
+		</div>
+	</div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
+			window.changyan.api.config({
+			appid: 'cyvwjQUG3',
+			conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
+			});
+</script><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="MongoRepository.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="spring-data-mongodb.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="GeoJsonDeserializer.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">50.4. MongoRepository </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 50.6. GeoJson 反序列化</td></tr></table></div><script xmlns="">
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+			ga('create', 'UA-11694057-1', 'auto');
+			ga('send', 'pageview');
+
+		</script><script xmlns="" async="async">
+			var _hmt = _hmt || [];
+			(function() {
+			var hm = document.createElement("script");
+			hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(hm, s);
+			})();
+</script><script xmlns="" async="async">
+			(function(){
+			var bp = document.createElement('script');
+			var curProtocol = window.location.protocol.split(':')[0];
+			if (curProtocol === 'https') {
+			bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+			}
+			else {
+			bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+			}
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(bp, s);
+			})();
+</script></body></html>

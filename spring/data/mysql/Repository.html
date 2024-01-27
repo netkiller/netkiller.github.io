@@ -1,0 +1,587 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>48.3. Repository</title><link rel="stylesheet" type="text/css" href="../../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config" /><link rel="home" href="../../index.html" title="Netkiller Spring Cloud 手札" /><link rel="up" href="index.html" title="第 48 章 Spring Data with MySQL" /><link rel="prev" href="@Entity.html" title="48.2. 声明实体" /><link rel="next" href="TransactionTemplate.html" title="48.4. TransactionTemplate" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
+		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://edu.51cto.com/lecturer/1703915.html">51CTO学院</a> | <a xmlns="" href="https://edu.csdn.net/lecturer/6423">CSDN程序员研修院</a> | <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> | <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">腾讯云社区</a> | <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">阿里云栖社区</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">48.3. Repository</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="@Entity.html">上一页</a> </td><th width="60%" align="center">第 48 章 Spring Data with MySQL</th><td width="20%" align="right"> <a accesskey="n" href="TransactionTemplate.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="Repository"></a>48.3. Repository</h2></div></div></div>
+		
+		<pre class="screen">
+		
+Repository： 仅仅是一个标识，没有任何方法，方便Spring自动扫描识别
+CrudRepository： 继承Repository，实现了一组CRUD相关的方法
+PagingAndSortingRepository： 继承CrudRepository，实现了一组分页排序相关的方法
+JpaRepository： 继承PagingAndSortingRepository，实现一组JPA规范相关的方法		
+		
+		</pre>
+		<p>Spring Data JPA 为此提供了一些表达条件查询的关键字：</p>
+		<pre class="screen">
+		
+Keyword	Sample	JPQL snippet
+And			findByLastnameAndFirstname	… where x.lastname = ?1 and x.firstname = ?2
+Or			findByLastnameOrFirstname	… where x.lastname = ?1 or x.firstname = ?2
+Is,Equals	findByFirstnameIs,findByFirstnameEquals	… where x.firstname = ?1
+Between		findByStartDateBetween	… where x.startDate between ?1 and ?2
+LessThan	findByAgeLessThan	… where x.age &lt; ?1
+LessThanEqual	findByAgeLessThanEqual	… where x.age ⇐ ?1
+GreaterThan	findByAgeGreaterThan	… where x.age &gt; ?1
+GreaterThanEqual	findByAgeGreaterThanEqual	… where x.age &gt;= ?1
+After		findByStartDateAfter	… where x.startDate &gt; ?1
+Before		findByStartDateBefore	… where x.startDate &lt; ?1
+IsNull		findByAgeIsNull	… where x.age is null
+IsNotNull,NotNull	findByAge(Is)NotNull	… where x.age not null
+Like		findByFirstnameLike	… where x.firstname like ?1
+NotLike		findByFirstnameNotLike	… where x.firstname not like ?1
+StartingWith	findByFirstnameStartingWith	… where x.firstname like ?1 (parameter bound with appended %)
+EndingWith	findByFirstnameEndingWith	… where x.firstname like ?1 (parameter bound with prepended %)
+Containing	findByFirstnameContaining	… where x.firstname like ?1 (parameter bound wrapped in %)
+OrderBy		findByAgeOrderByLastnameDesc	… where x.age = ?1 order by x.lastname desc
+Not			findByLastnameNot	… where x.lastname &lt;&gt; ?1
+In			findByAgeIn(Collection ages)	… where x.age in ?1
+NotIn		findByAgeNotIn(Collection age)	… where x.age not in ?1
+TRUE		findByActiveTrue()	… where x.active = true
+FALSE		findByActiveFalse()	… where x.active = false
+IgnoreCase	findByFirstnameIgnoreCase	… where UPPER(x.firstame) = UPPER(?1)		
+
+常用如下：
+And --- 等价于 SQL 中的 and 关键字，比如 findByUsernameAndPassword(String user, Striang pwd)
+Or --- 等价于 SQL 中的 or 关键字，比如 findByUsernameOrAddress(String user, String addr)
+Between --- 等价于 SQL 中的 between 关键字，比如 findBySalaryBetween(int max, int min)
+LessThan --- 等价于 SQL 中的 "&lt;"，比如 findBySalaryLessThan(int max)
+GreaterThan --- 等价于 SQL 中的"&gt;"，比如 findBySalaryGreaterThan(int min)
+IsNull --- 等价于 SQL 中的 "is null"，比如 findByUsernameIsNull()
+IsNotNull --- 等价于 SQL 中的 "is not null"，比如 findByUsernameIsNotNull()
+NotNull --- 与 IsNotNull 等价
+Like --- 等价于 SQL 中的 "like"，比如 findByUsernameLike(String user)
+NotLike --- 等价于 SQL 中的 "not like"，比如 findByUsernameNotLike(String user)
+OrderBy ---等价于 SQL 中的 "order by"，比如 findByUsernameOrderBySalaryAsc(String user)
+Not --- 等价于 SQL 中的 "！ ="，比如 findByUsernameNot(String user)
+In --- 等价于 SQL 中的 "in"，比如 findByUsernameIn(Collection&lt;String&gt; userList) ，方法的参数可以是 Collection 类型，也可以是数组或者不定长参数
+NotIn --- 等价于 SQL 中的 "not in"，比如 findByUsernameNotIn(Collection&lt;String&gt; userList) ，方法的参数可以是 Collection 类型，也可以是数组或者不定长
+		
+		</pre>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="CrudRepository"></a>48.3.1. CrudRepository</h3></div></div></div>
+			
+			<p>CrudRepository 接口提供了最基本的对实体类的添删改查操作</p>
+			<pre class="screen">
+			
+T save(T entity);								//保存单个实体 
+Iterable&lt;T&gt; save(Iterable&lt;? extends T&gt; entities);//保存集合        
+T findOne(ID id);								//根据id查找实体         
+boolean exists(ID id);							//根据id判断实体是否存在         
+Iterable&lt;T&gt; findAll();							//查询所有实体,不用或慎用!         
+long count();									//查询实体数量         
+void delete(ID id);								//根据Id删除实体         
+void delete(T entity);							//删除一个实体 
+void delete(Iterable&lt;? extends T&gt; entities);		//删除一个实体的集合         
+void deleteAll();								//删除所有实体,不用或慎用! 		
+			
+			</pre>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm529182515360"></a>48.3.1.1. 批量保存</h4></div></div></div>
+				
+				<pre class="programlisting">
+				
+        List&lt;Book&gt; books = new ArrayList&lt;&gt;();
+        books.add(new Book("Book A", new BookDetail(1)));
+        books.add(new Book("Book B", new BookDetail(2)));
+        books.add(new Book("Book C", new BookDetail(3)));
+        bookRepository.save(books);				
+				
+				</pre>
+			</div>
+		</div>
+
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="JpaRepository"></a>48.3.2. JpaRepository</h3></div></div></div>
+			
+			<p>
+				<a class="ulink" href="https://docs.spring.io/spring-data/jpa/docs/current/api/org/springframework/data/jpa/repository/JpaRepository.html" target="_top">https://docs.spring.io/spring-data/jpa/docs/current/api/org/springframework/data/jpa/repository/JpaRepository.html</a>
+			</p>
+			<pre class="screen">
+			
+Modifier and Type	Method and Description
+void	deleteAllInBatch()
+Deletes all entities in a batch call.
+void	deleteInBatch(Iterable&lt;T&gt; entities)
+Deletes the given entities in a batch which means it will create a single Query.
+List&lt;T&gt;	findAll() 
+&lt;S extends T&gt;
+List&lt;S&gt;	findAll(Example&lt;S&gt; example) 
+&lt;S extends T&gt;
+List&lt;S&gt;	findAll(Example&lt;S&gt; example, Sort sort) 
+List&lt;T&gt;	findAll(Sort sort) 
+List&lt;T&gt;	findAllById(Iterable&lt;ID&gt; ids) 
+void	flush()
+Flushes all pending changes to the database.
+T	getOne(ID id)
+Returns a reference to the entity with the given identifier.
+&lt;S extends T&gt;
+List&lt;S&gt;	saveAll(Iterable&lt;S&gt; entities) 
+&lt;S extends T&gt;
+S	saveAndFlush(S entity)
+Saves an entity and flushes changes instantly.		
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="PagingAndSortingRepository"></a>48.3.3. PagingAndSortingRepository</h3></div></div></div>
+			
+
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm529182508784"></a>48.3.3.1. Pageable</h4></div></div></div>
+				
+				<p>接口实现 PagingAndSortingRepository</p>
+				<pre class="programlisting">
+				
+package api.repository.h5;
+
+import org.springframework.data.repository.PagingAndSortingRepository;
+
+import api.domain.User;
+
+public interface GatherRepository extends PagingAndSortingRepository&lt;User, Integer&gt; {
+
+}
+				
+				
+				</pre>
+				<p>控制器添加 Pageable pageable 参数</p>
+				<pre class="programlisting">
+				
+	@RequestMapping("/browse")
+	public ModelAndView browse(Pageable pageable) {
+		Page&lt;User&gt; users = userRepository.findAll(pageable);
+		
+		System.out.println(users.toString());
+		ModelAndView mv = new ModelAndView();
+		mv.addObject("users", users.getContent());
+		mv.addObject("number", users.getNumber());
+		mv.addObject("size", users.getSize());
+		mv.addObject("totalPages", users.getTotalPages());
+		mv.setViewName("table");
+
+		return mv;
+	}				
+				
+				</pre>
+
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm529182505696"></a>48.3.3.2. 解决 PagingAndSortingRepository 没有 save 等方法的问题</h4></div></div></div>
+				
+				<p>如果 Repository 继承了 PagingAndSortingRepository 你会发
+					CrudRepository 中的 save 等方法不能使用了，我的解决方法是写两个 Repository
+				</p>
+				<p>一个 CURD 的 ChatRepository 放在 cn.netkiller.repository</p>
+				<pre class="programlisting">
+				
+package cn.netkiller.repository;
+
+
+import cn.netkiller.domain.Chat;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface ChatRepository extends CrudRepository&lt;Chat, String&gt; {
+    List&lt;Chat&gt; findAllBySession(String session);
+
+    Chat findOneBySession(String session);
+
+}				
+				
+				</pre>
+				<p>另一个分页的 PagingAndSortingRepository 放在
+					cn.netkiller.repository.pageable
+				</p>
+				<pre class="programlisting">
+				
+package cn.netkiller.repository.pageable;
+
+
+import cn.netkiller.domain.Chat;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface ChatPageableRepository extends PagingAndSortingRepository&lt;Chat, String&gt; {
+    Page&lt;Chat&gt; findAllByDevice(String device, Pageable pageable);
+}
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="PageableDefault"></a>48.3.3.3. @PageableDefault 分页</h4></div></div></div>
+				
+				<pre class="programlisting">
+		
+@RequestMapping(value = "/list", method=RequestMethod.GET)
+public Page&lt;Blog&gt; getEntryByPageable1(@PageableDefault( sort = { "id" }, direction = Sort.Direction.DESC) 
+    Pageable pageable) {
+    return blogRepository.findAll(pageable);
+}
+
+@RequestMapping(value = "/blog", method=RequestMethod.GET)
+public Page&lt;Blog&gt; getEntryByPageable(@PageableDefault(value = 15, sort = { "id" }, direction = Sort.Direction.DESC) 
+    Pageable pageable) {
+    return blogRepository.findAll(pageable);
+}
+
+@RequestMapping(value = "/list", method=RequestMethod.GET)
+public Page&lt;Blog&gt; getEntryByPageable2(@PageableDefault Pageable pageable) {
+    return blogRepository.findAll(pageable);
+}
+
+@ModelAttribute("users")
+public Page&lt;User&gt; users(@PageableDefault(size = 5) Pageable pageable) {
+	return userManagement.findAll(pageable);
+}
+		
+				</pre>
+				<pre class="screen">
+		
+我们只需要在方法的参数中直接定义一个pageable类型的参数，当Spring发现这个参数时，Spring会自动的根据request的参数来组装该pageable对象，Spring支持的request参数如下：
+
+page，第几页，从0开始，默认为第0页
+size，每一页的大小，默认为20
+sort，排序相关的信息，以property,property(,ASC|DESC)的方式组织，例如sort=firstname&amp;sort=lastname,desc表示在按firstname正序排列基础上按lastname倒序排列
+这样，我们就可以通过url的参数来进行多样化、个性化的查询，而不需要为每一种情况来写不同的方法了。
+
+通过url来定制pageable很方便，但唯一的缺点是不太美观，因此我们需要为pageable设置一个默认配置，这样很多情况下我们都能够通过一个简洁的url来获取信息了。
+
+Spring提供了@PageableDefault帮助我们个性化的设置pageable的默认配置。例如@PageableDefault(value = 15, sort = { "id" }, direction = Sort.Direction.DESC)表示默认情况下我们按照id倒序排列，每一页的大小为15。		
+		
+
+				</pre>
+			</div>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="jpa.find"></a>48.3.4. findByXXX</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+	@Autowired
+	private ArticleRepository articleRepository;
+
+	@RequestMapping("/mysql")
+	@ResponseBody
+	public String mysql() {
+		articleRepository.save(new Article("Neo", "Chen"));
+		for (Article article : articleRepository.findAll()) {
+			System.out.println(article);
+		}
+		Article tmp = articleRepository.findByTitle("Neo");
+		return tmp.getTitle();
+	}
+
+	@RequestMapping("/search")
+	@ResponseBody
+	public String search() {
+
+		
+		for (Article article : articleRepository.findBySearch(1)) { System.out.println(article); }
+		 
+		List&lt;Article&gt; tmp = articleRepository.findBySearch(1L);
+
+		tmp.forEach((temp) -&gt; {
+			System.out.println(temp.toString());
+		});
+
+		return tmp.get(0).getTitle();
+	}
+		
+			</pre>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm529182497264"></a>48.3.4.1. 传 Boolean 参数</h4></div></div></div>
+				
+				<pre class="programlisting">
+			
+package cn.netkiller.wallet.repository.fcoin;
+
+import java.util.List;
+
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.repository.CrudRepository;
+
+import cn.netkiller.wallet.domain.fcoin.Fcoin;;
+
+public interface FcoinRepository extends CrudRepository&lt;Fcoin, String&gt; {
+
+	Fcoin findOneByAddress(String address);
+
+	int countByAirdropFalse();
+
+	List&lt;Fcoin&gt; findByAirdrop(boolean airdrop, Pageable pageable);
+
+}
+			
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="eunm"></a>48.3.4.2. Eunm 传递枚举参数</h4></div></div></div>
+				
+				<pre class="programlisting">
+			
+package cn.netkiller.api.repository;
+
+import org.springframework.data.repository.CrudRepository;
+
+import cn.netkiller.api.domain.StatisticsHistory;
+
+public interface StatisticsHistoryRepostitory extends CrudRepository&lt;StatisticsHistory, Long&gt; {
+
+	public StatisticsHistory findByMemberIdAndStatisticsIdAndType(long member_id, long statistics_id,
+			StatisticsHistory.StatisticsType type);
+
+}
+			
+				</pre>
+				<p></p>
+				<pre class="programlisting">
+			
+	@Autowired
+	private StatisticsHistoryRepostitory statisticsHistoryRepostitory;			
+			
+	statisticsHistoryRepostitory.findByMemberIdAndStatisticsIdAndType(uid, id, type);
+			
+				</pre>
+			</div>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="jpa.count"></a>48.3.5. count 操作</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+public interface UserRepository extends CrudRepository&lt;User, Long&gt; {
+
+    Long countByFirstName(String firstName);
+
+}
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="jpa.delete"></a>48.3.6. delete 删除操作</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+    @Transactional
+    Long deleteByFirstName(String firstName);
+    
+    @Transactional
+    List&lt;User&gt; removeByFirstName(String firstName);    			
+			
+			</pre>
+		</div>
+
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="OrderBy"></a>48.3.7. OrderBy</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+public List&lt;StudentEntity&gt; findAllByOrderByIdAsc();
+public List&lt;StudentEntity&gt; findAllByOrderByIdDesc();
+List&lt;RecentRead&gt; findByMemberIdOrderByIdDesc(int memberId, Pageable pageable);
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="GreaterThan"></a>48.3.8. GreaterThan</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+package schedule.repository;
+
+import java.util.Date;
+
+import org.springframework.data.repository.CrudRepository;
+
+import common.domain.CmsTrash;
+
+public interface CmsTrashRepository extends CrudRepository&lt;CmsTrash, Integer&gt; {
+
+	Iterable&lt;CmsTrash&gt; findBySiteIdAndTypeOrderByCtimeASC(int siteId, String string);
+
+	Iterable&lt;CmsTrash&gt; findBySiteIdAndTypeAndCtimeGreaterThanOrderByCtimeASC(int siteId, String string, Date date);
+
+}
+			
+			
+			</pre>
+		</div>
+
+
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="sort"></a>48.3.9. Sort 排序操作操作</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+List&lt;UserModel&gt; findByName(String name, Sort sort);
+			
+			</pre>
+			<p></p>
+			<pre class="programlisting">
+			
+Sort sort = new Sort(Direction.DESC, "id"); 
+repostitory.findByName("Neo", sort);
+			
+			</pre>
+			<pre class="programlisting">
+			
+userRepository.findAll(Sort.by(Sort.Direction.ASC, "name"));
+userRepository.findAll(Sort.by("LENGTH(name)"));
+
+			
+			</pre>
+		</div>
+
+
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="pageable"></a>48.3.10. Pageable 翻页操作</h3></div></div></div>
+			
+			<p>Page 返回数据和页码等数据</p>
+
+			<pre class="screen">
+			
+PageRequest(int page, int size, Sort sort)  Deprecated. 
+use PageRequest.of(int, int, Sort) instead.			
+			
+			</pre>
+			<pre class="programlisting">
+				
+package cn.netkiller.repository;
+
+
+import cn.netkiller.domain.Picture;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+
+@Repository
+public interface PictureRepository extends JpaRepository&lt;Picture, Long&gt; {
+    Picture findAllBySession(String session);
+
+    Optional&lt;Picture&gt; findOneBySession(String session);
+
+    Page&lt;Picture&gt; findAll(Pageable pageable);
+}				
+				
+			</pre>
+			<pre class="programlisting">
+				
+    public Page&lt;Picture&gt; page(Pageable pageable) {
+        return pictureRepository.findAll(pageable);
+    }				
+				
+			</pre>
+			<pre class="programlisting">
+				
+    @GetMapping("/{device}/page")
+    public Mono&lt;Page&lt;Picture&gt;&gt; page(@PathVariable String device, Pageable pageable) {
+
+        return Mono.just(pictureService.page(pageable));
+    }				
+				
+			</pre>
+			<pre class="screen">
+				
+排序 /picture/test/page?sort=id,desc
+每页返回数量 /picture/test/page?size=10
+返回第二页5条数据 /picture/test/page?size=5&amp;page=1
+返回第二页5条数据，ID倒序排序 /picture/test/page?size=5&amp;page=1&amp;sort=id,desc
+				
+			</pre>
+			<pre class="screen">
+				
+curl -X 'GET' \
+  'http://localhost:8080/picture/test/page?page=0&amp;size=1&amp;sort=id' \
+  -H 'accept: */*'
+				
+			</pre>
+
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm529182476992"></a>48.3.10.1. PageRequest.of</h4></div></div></div>
+				
+				<pre class="programlisting">
+				
+package cn.netkiller.api.repository;
+
+import java.util.List;
+
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.repository.CrudRepository;
+
+import cn.netkiller.api.domain.RecentRead;
+
+public interface RecentReadRepostitory extends CrudRepository&lt;RecentRead, Long&gt; {
+
+	List&lt;RecentRead&gt; findByMemberId(long id, Pageable pageable);
+
+}
+				
+				</pre>
+				<p>Top 10 实例</p>
+				<pre class="programlisting">
+				
+	@RequestMapping("/recent/read/list/{id}")
+	public List&lt;RecentRead&gt; recentList(@PathVariable long id) {
+		int page = 0;
+		int limit = 10;
+		List&lt;RecentRead&gt; recentRead = recentReadRepostitory.findByMemberId(id, new PageRequest(page, limit));
+		return recentRead;
+	}
+				
+				</pre>
+				<p>翻页返回数据可以选择 Iterable/List 或者 Page。 </p>
+				<p>Iterable/List 只返回数据，不含页码等数据</p>
+				<p>注意 PageRequest(int page, int size) 在新版 Spring boot 2.x
+					中已经废弃请使用 PageRequest.of(page, size) 替代
+				</p>
+				<pre class="programlisting">
+				
+List&lt;Fcoin&gt; fcoins = fcoinRepository.findByAirdrop(false, PageRequest.of(0, size));
+				
+				</pre>
+
+			</div>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="@DynamicInsert"></a>48.3.11. @DynamicInsert 与 @DynamicUpdate</h3></div></div></div>
+			
+			<p>@DynamicUpdate 只更新修改的字段</p>
+
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm529182470720"></a>48.3.12. 继承已存在的 Repository</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+public interface MemberRepository extends JpaRepository&lt;User, Integer&gt;, UserRepository {
+    ...
+}			
+			
+			</pre>
+		</div>
+		
+	</div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
+			window.changyan.api.config({
+			appid: 'cyvwjQUG3',
+			conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
+			});
+</script><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="@Entity.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="TransactionTemplate.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">48.2. 声明实体 </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 48.4. TransactionTemplate</td></tr></table></div><script xmlns="">
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+			ga('create', 'UA-11694057-1', 'auto');
+			ga('send', 'pageview');
+
+		</script><script xmlns="" async="async">
+			var _hmt = _hmt || [];
+			(function() {
+			var hm = document.createElement("script");
+			hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(hm, s);
+			})();
+</script><script xmlns="" async="async">
+			(function(){
+			var bp = document.createElement('script');
+			var curProtocol = window.location.protocol.split(':')[0];
+			if (curProtocol === 'https') {
+			bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+			}
+			else {
+			bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+			}
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(bp, s);
+			})();
+</script></body></html>
