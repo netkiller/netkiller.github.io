@@ -1,0 +1,1198 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>49.3. WebFlux Router</title><link rel="stylesheet" type="text/css" href="../../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><link rel="home" href="../../index.html" title="Netkiller Java 手札（版）" /><link rel="up" href="webflux.html" title="第 49 章 WebFlux framework" /><link rel="prev" href="ch49s02.html" title="49.2. WebFlux 与 SprintMVC 有什么不同？" /><link rel="next" href="ch49s04.html" title="49.4. Webflux 安全" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
+		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://edu.51cto.com/lecturer/1703915.html">51CTO学院</a> | <a xmlns="" href="https://edu.csdn.net/lecturer/6423">CSDN程序员研修院</a> | <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> | <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">腾讯云社区</a> | <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">阿里云栖社区</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">49.3. WebFlux Router</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ch49s02.html">上一页</a> </td><th width="60%" align="center">第 49 章 WebFlux framework</th><td width="20%" align="right"> <a accesskey="n" href="ch49s04.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="webflux.router"></a>49.3. WebFlux Router</h2></div></div></div>
+	
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="router.component"></a>49.3.1. Component 原件</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+package cn.netkiller.webflux.component;
+
+import org.springframework.http.MediaType;
+import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.server.ServerRequest;
+import org.springframework.web.reactive.function.server.ServerResponse;
+
+import reactor.core.publisher.Mono;
+
+@Component
+public class HelloWorldHandler {
+
+	public HelloWorldHandler() {
+	}
+
+	public Mono&lt;ServerResponse&gt; helloWorld(ServerRequest request) {
+		return ServerResponse.ok().contentType(MediaType.TEXT_PLAIN).body(BodyInserters.fromObject("Hello World!!!"));
+	}
+}
+
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="router.config"></a>49.3.2. 路由配置</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+package cn.netkiller.webflux.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.MediaType;
+import org.springframework.web.reactive.function.server.RequestPredicates;
+import org.springframework.web.reactive.function.server.RouterFunction;
+import org.springframework.web.reactive.function.server.RouterFunctions;
+import org.springframework.web.reactive.function.server.ServerResponse;
+
+import cn.netkiller.webflux.component.HelloWorldHandler;
+
+@Configuration
+public class WebFluxRouter {
+
+	public WebFluxRouter() {
+	}
+
+	@Bean
+	public RouterFunction&lt;ServerResponse&gt; routeHelloWorld(HelloWorldHandler helloWorldHandler) {
+
+		return RouterFunctions.route(RequestPredicates.GET("/hello").and(RequestPredicates.accept(MediaType.TEXT_PLAIN)), helloWorldHandler::helloWorld);
+	}
+}
+		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="webflux.Thymeleaf"></a>49.3.3. Thymeleaf</h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm542976313216"></a>49.3.3.1. 模板引擎 Thymeleaf 依赖</h4></div></div></div>
+			
+			<pre class="screen">
+			
+    &lt;dependency&gt;
+      &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+      &lt;artifactId&gt;spring-boot-starter-thymeleaf&lt;/artifactId&gt;
+    &lt;/dependency&gt;			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm542968955360"></a>49.3.3.2. application.properties 相关的配置</h4></div></div></div>
+			
+			<pre class="screen">
+			
+spring.thymeleaf.cache=true # Enable template caching.
+spring.thymeleaf.check-template=true # Check that the template exists before rendering it.
+spring.thymeleaf.check-template-location=true # Check that the templates location exists.
+spring.thymeleaf.enabled=true # Enable Thymeleaf view resolution for Web frameworks.
+spring.thymeleaf.encoding=UTF-8 # Template files encoding.
+spring.thymeleaf.excluded-view-names= # Comma-separated list of view names that should be excluded from resolution.
+spring.thymeleaf.mode=HTML5 # Template mode to be applied to templates. See also StandardTemplateModeHandlers.
+spring.thymeleaf.prefix=classpath:/templates/ # Prefix that gets prepended to view names when building a URL.
+spring.thymeleaf.reactive.max-chunk-size= # Maximum size of data buffers used for writing to the response, in bytes.
+spring.thymeleaf.reactive.media-types= # Media types supported by the view technology.
+spring.thymeleaf.servlet.content-type=text/html # Content-Type value written to HTTP responses.
+spring.thymeleaf.suffix=.html # Suffix that gets appended to view names when building a URL.
+spring.thymeleaf.template-resolver-order= # Order of the template resolver in the chain.
+spring.thymeleaf.view-names= # Comma-separated list of view names that can be resolved.
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm542968954128"></a>49.3.3.3. Webflux 控制器</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+	@GetMapping("/welcome")
+    public Mono&lt;String&gt; hello(final Model model) {
+        model.addAttribute("name", "Neo");
+        model.addAttribute("city", "深圳");
+
+        String path = "hello";
+        return Mono.create(monoSink -&gt; monoSink.success(path));
+    }
+
+    @GetMapping("/list")
+    public String listPage(final Model model) {
+        final Flux&lt;City&gt; citys = cityService.findAllCity();
+        model.addAttribute("cityLists", citys);
+        return "cityList";
+    }			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm542968952288"></a>49.3.3.4. Tymeleaf 视图</h4></div></div></div>
+			
+			<p>welcome.html</p>
+			<pre class="programlisting">
+			
+&lt;!DOCTYPE html&gt;
+&lt;html lang="zh-CN"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"/&gt;
+    &lt;title&gt;欢迎页面&lt;/title&gt;
+&lt;/head&gt;
+
+&lt;body&gt;
+
+&lt;h1 &gt;你好，欢迎来自&lt;p th:text="${city}"&gt;&lt;/p&gt;的&lt;p th:text="${name}"&gt;&lt;/p&gt;&lt;/h1&gt;
+
+&lt;/body&gt;
+&lt;/html&gt;			
+			
+			</pre>
+			<p>cityList.html</p>
+			<pre class="programlisting">
+			
+&lt;!DOCTYPE html&gt;
+&lt;html lang="zh-CN"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"/&gt;
+    &lt;title&gt;城市列表&lt;/title&gt;
+&lt;/head&gt;
+
+&lt;body&gt;
+
+&lt;div&gt;
+
+
+    &lt;table&gt;
+        &lt;legend&gt;
+            &lt;strong&gt;城市列表&lt;/strong&gt;
+        &lt;/legend&gt;
+        &lt;thead&gt;
+        &lt;tr&gt;
+            &lt;th&gt;城市编号&lt;/th&gt;
+            &lt;th&gt;省份编号&lt;/th&gt;
+            &lt;th&gt;名称&lt;/th&gt;
+            &lt;th&gt;描述&lt;/th&gt;
+        &lt;/tr&gt;
+        &lt;/thead&gt;
+        &lt;tbody&gt;
+        &lt;tr th:each="city : ${cityLists}"&gt;
+            &lt;td th:text="${city.id}"&gt;&lt;/td&gt;
+            &lt;td th:text="${city.provinceId}"&gt;&lt;/td&gt;
+            &lt;td th:text="${city.name}"&gt;&lt;/td&gt;
+            &lt;td th:text="${city.description}"&gt;&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;/tbody&gt;
+    &lt;/table&gt;
+
+&lt;/div&gt;
+
+&lt;/body&gt;
+&lt;/html&gt;			
+			
+			</pre>
+		</div>
+
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="redis-reactive"></a>49.3.4. Webflux Redis</h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm542968949584"></a>49.3.4.1. Maven Redis 依赖</h4></div></div></div>
+			
+			<pre class="screen">
+			
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-data-redis-reactive&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm542968946384"></a>49.3.4.2. Redis 配置</h4></div></div></div>
+			
+			<pre class="screen">
+			
+server:
+  port: 8080
+spring:
+  application:
+    name: webflux
+  redis:
+    host: 127.0.0.1
+    port: 6379
+    password: pwd2020
+    timeout: 5000
+    lettuce:
+      pool:
+        max-active: 200 
+        max-idle: 20 
+        min-idle: 5 
+        max-wait: 1000 			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm542968944864"></a>49.3.4.3. Config</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+	@Bean
+	public ReactiveRedisTemplate&lt;String, String&gt; reactiveRedisTemplate(ReactiveRedisConnectionFactory factory) {
+		ReactiveRedisTemplate&lt;String, String&gt; reactiveRedisTemplate = new ReactiveRedisTemplate&lt;&gt;(factory,RedisSerializationContext.string());
+		return reactiveRedisTemplate;
+	}			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm542968943296"></a>49.3.4.4. Service</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+@Service
+public class RedisServiceImpl implements RedisService {
+
+	@Autowired
+	private ReactiveRedisTemplate&lt;String, String&gt; redisTemplate;
+	
+	@Override
+	public Mono&lt;String&gt; get(String key) {
+		
+		ReactiveValueOperations&lt;String, String&gt; operations = redisTemplate.opsForValue();
+		return operations.get(key);
+	}
+
+	@Override
+	public Mono&lt;String&gt; set(String key,User user) {
+		
+		ReactiveValueOperations&lt;String, String&gt; operations = redisTemplate.opsForValue();
+		return operations.getAndSet(key, JSON.toJSONString(user));
+	}
+
+	@Override
+	public Mono&lt;Boolean&gt; delete(String key) {
+		
+		ReactiveValueOperations&lt;String, String&gt; operations = redisTemplate.opsForValue();
+		return operations.delete(key);
+	}
+
+	@Override
+	public Mono&lt;String&gt; update(String key,User user) {
+		
+		ReactiveValueOperations&lt;String, String&gt; operations = redisTemplate.opsForValue();
+		return operations.getAndSet(key, JSON.toJSONString(user));
+	}
+
+	@Override
+	public Flux&lt;String&gt; all(String key) {
+		ReactiveListOperations&lt;String, String&gt; operations = redisTemplate.opsForList();
+		return operations.range(key, 0, -1);
+	}
+
+
+	@Override
+	public Mono&lt;Long&gt; push(String key,List&lt;String&gt; list) {
+		
+		ReactiveListOperations&lt;String, String&gt; operations = redisTemplate.opsForList();
+		return operations.leftPushAll(key, list);
+	}
+	
+	@Override
+	public Flux&lt;String&gt; find(String key) {
+		ReactiveValueOperations&lt;String, String&gt; operations = redisTemplate.opsForValue();
+		return redisTemplate.keys(key).flatMap(keyId -&gt;operations.get(keyId));
+	}
+}			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm542968942144"></a>49.3.4.5. </h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+@RestController
+@RequestMapping("/user")
+public class UserController {
+	
+	public final static String USER_KEY="user";
+	
+	@Autowired
+	private RedisService redisService;
+	
+	@GetMapping("/get/{key}")
+	public Mono&lt;String&gt; getUserByKey(@PathVariable("id")String key){
+		return redisService.get(key);
+	}
+	
+	@GetMapping("/add")
+	public Mono&lt;String&gt; add(User user){
+		user = new User();
+		user.setAccount("neo");
+		user.setPassword("123456");
+		user.setNickname("netkiller");
+		user.setEmail("netkiller@msn.com");
+		user.setPhone("");
+		user.setGender(true);
+		user.setBirthday("1980-01-30");
+		user.setProvince("广东省");
+		user.setCity("深圳市");
+		user.setCounty("南山区");
+		user.setAddress("");
+		user.setState("Enabled");
+
+		System.out.println(JSON.toJSONString(user));
+		return redisService.set("neo",user);		
+	}
+	
+	@GetMapping("/addlist")
+	public Mono&lt;Long&gt; addlist(){
+		List&lt;String&gt; list=new ArrayList&lt;String&gt;();
+		User user = new User();
+		user.setAccount("neo");
+		user.setPassword("123456");
+		user.setNickname("netkiller");
+		user.setEmail("netkiller@msn.com");
+		user.setPhone("");
+		user.setGender(true);
+		user.setBirthday("1980-01-30");
+		user.setProvince("广东省");
+		user.setCity("深圳市");
+		user.setCounty("南山区");
+		user.setAddress("");
+		user.setState("Enabled");
+		
+		//添加第一条数据
+		list.add(JSON.toJSONString(user));
+		//添加第二条数据
+		list.add(JSON.toJSONString(user));
+		//添加第三条数据
+		list.add(JSON.toJSONString(user));
+		
+		return redisService.addlist("list", list);
+	}
+
+	@GetMapping(value="/findAll",produces = MediaType.APPLICATION_STREAM_JSON_VALUE)
+	public Flux&lt;String&gt; findAll(){
+		return redisService.all("list").delayElements(Duration.ofSeconds(2));
+	}
+	
+	@GetMapping("/getUsers")
+	public Flux&lt;String&gt; findUsers() {
+		return redisService.find("*").delayElements(Duration.ofSeconds(2));
+	}
+}			
+			
+			</pre>
+		</div>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="mongodb-reactive"></a>49.3.5. Webflux Mongdb</h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm542968939856"></a>49.3.5.1. Maven 依赖</h4></div></div></div>
+			
+			<pre class="screen">
+			
+	&lt;dependency&gt;
+		&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+		&lt;artifactId&gt;spring-boot-starter-data-mongodb-reactive&lt;/artifactId&gt;
+	&lt;/dependency&gt;			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm542968938512"></a>49.3.5.2. Repository</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
+
+import cn.netkiller.entity.User;
+
+public interface UserRepository extends ReactiveMongoRepository&lt;User, Long&gt;{
+
+}
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm542968937072"></a>49.3.5.3. Service</h4></div></div></div>
+			
+			<pre class="screen">
+			
+@Service
+public class MongoServiceImpl implements MongoService {
+	
+	@Autowired
+	private UserRepository userRepository;
+	
+	@Override
+	public Mono&lt;User&gt; getById(Long id) {
+		return userRepository.findById(id);
+	}
+
+	@Override
+	public Mono&lt;User&gt; addUser(User user) {
+		return userRepository.save(user);
+	}
+
+	@Override
+	public Mono&lt;Boolean&gt; deleteById(Long id) {
+		 userRepository.deleteById(id);
+		 return Mono.create(userMonoSink -&gt; userMonoSink.success());
+	}
+
+	@Override
+	public Mono&lt;User&gt; updateById(User user) {
+		return userRepository.save(user);
+	}
+
+	@Override
+	public Flux&lt;User&gt; findAllUser() {
+		return userRepository.findAll();
+	}
+}			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm542968935136"></a>49.3.5.4. 控制器</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+@RestController
+@RequestMapping("/usermg")
+public class UserMongoController {
+	
+	@Autowired
+	private MongoService mongoService;
+
+	@GetMapping("/add")
+	public Mono&lt;User&gt; add(User user) {
+		user = new User();
+		User user = new User();
+		user.setAccount("neo");
+		user.setPassword("123456");
+		user.setNickname("netkiller");
+		user.setEmail("netkiller@msn.com");
+		user.setPhone("");
+		user.setGender(true);
+		user.setBirthday("1980-01-30");
+		user.setProvince("广东省");
+		user.setCity("深圳市");
+		user.setCounty("南山区");
+		user.setAddress("");
+		user.setState("Enabled");
+		
+	
+		System.out.println(JSON.toJSONString(user));
+		return mongoService.addUser(user);
+
+	}
+	
+	/**
+	 *	注意这里 produces = MediaType.APPLICATION_STREAM_JSON_VALUE 必须这样设置
+	 */
+	@GetMapping(value="/findAll",produces = MediaType.APPLICATION_STREAM_JSON_VALUE)
+	public Flux&lt;User&gt; findAll(){
+		return mongoService.findAllUser().delayElements(Duration.ofSeconds(1));
+	}
+}
+			
+			</pre>
+			<p>produces
+				如果不是application/stream+json则调用端无法滚动得到结果，将一直阻塞等待数据流结束或超时。
+			</p>
+		</div>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="webflux.mono"></a>49.3.6. Mono</h3></div></div></div>
+		
+		<p>Mono(返回0或1个元素)/Flux(返回0-n个元素)</p>
+		<pre class="programlisting">
+		
+    @GetMapping("mono")
+    public Mono&lt;Object&gt; mono() {
+        return Mono.create(monoSink -&gt; {
+                    log.info("创建 Mono");
+                    monoSink.success("hello webflux");
+                })
+                .doOnSubscribe(subscription -&gt; { //当订阅者去订阅发布者的时候，该方法会调用
+                    log.info("doOnSubscribe={}", subscription);
+                }).doOnNext(next -&gt; { //当订阅者收到数据时，改方法会调用
+                    log.info("doOnNext={}", next);
+                });
+    }
+		
+		</pre>
+		<p>从 Supplier 创建 Mono</p>
+		<pre class="programlisting">
+		
+    @GetMapping("/get")
+    private Mono&lt;String&gt; get() {
+        log.info("start");
+        Mono&lt;String&gt; result = Mono.fromSupplier(() -&gt; {
+            try {
+                TimeUnit.SECONDS.sleep(5);
+            } catch (InterruptedException e) {
+            }
+            return "netkiller";
+        });
+        log.info("end");
+        return result;
+    }		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="webflux.flux"></a>49.3.7. Flux 返回多条数据</h3></div></div></div>
+		
+		<p>返回 List</p>
+		<pre class="programlisting">
+		
+    @GetMapping("flux")
+    public Flux&lt;Picture&gt; flux() {
+        List&lt;Picture&gt; list = new ArrayList&lt;Picture&gt;();
+        IntStream.range(1, 10).forEach(i -&gt; {
+            Picture picture = new Picture();
+            picture.setId(Long.valueOf(i));
+            picture.setImage("https://www.netkiller.cn/images/" + i + ".png");
+            list.add(picture);
+        });
+        return Flux.fromIterable(list);
+    }
+		
+		</pre>
+		<p>返回 Map</p>
+		<pre class="programlisting">
+		
+    @GetMapping("map")
+    public Flux&lt;Map.Entry&lt;String, String&gt;&gt; map() {
+        Map&lt;String, String&gt; map = new HashMap&lt;&gt;();
+        IntStream.range(1, 10).forEach(i -&gt; {
+            map.put("key" + i, "value" + i);
+        });
+
+        return Flux.fromIterable(map.entrySet());
+    }
+		
+		</pre>
+		<p>从 Stream 返回 Flux</p>
+		<pre class="programlisting">
+		
+    @GetMapping(path = "/sse", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    private Flux&lt;String&gt; getWords() {
+        Stream&lt;String&gt; items = Arrays.asList("alpha", "bravo", "charlie").stream();
+        return Flux.fromStream(items);
+    }		
+		
+		</pre>
+	</div>
+
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="webflux.sse"></a>49.3.8. SSE</h3></div></div></div>
+		
+
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm542968924064"></a>49.3.8.1. 一次性事件</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+    @GetMapping(path = "/sse", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux&lt;String&gt; createConnectionAndSendEvents() {
+        return Flux.just("Alpha", "Omega");
+    }			
+			
+			</pre>
+			<p>curl 访问 SSE 需要设置HTTP头 -H "Accept: text/event-stream" </p>
+			<pre class="screen">
+			
+neo@MacBook-Pro-M2 ~ % curl -H "Accept: text/event-stream" -X 'GET' 'http://localhost:8080/mock/sse'
+data:Alpha
+
+data:Omega			
+			
+			</pre>
+			<div class="tip" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Tip"><tr><td rowspan="2" align="center" valign="top" width="25"><img alt="[提示]" src="/graphics/tip.png" /></td><th align="left">提示</th></tr><tr><td align="left" valign="top">Safari 浏览器不支持 SSE推送，微软的 Egde 支持。</td></tr></table></div>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm542968920224"></a>49.3.8.2. 周期性事件</h4></div></div></div>
+			
+			<p>每间隔一秒发送一次数据</p>
+			<pre class="programlisting">
+			
+    @GetMapping(path = "/sse", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    private Flux&lt;String&gt; getWords() {
+        String[] WORDS = "The quick brown fox jumps over the lazy dog.".split(" ");
+        return Flux
+                .zip(Flux.just(WORDS), Flux.interval(Duration.ofSeconds(1)))
+                .map(Tuple2::getT1);
+    }
+    
+	@GetMapping("/random")
+	public Flux&lt;ServerSentEvent&lt;Integer&gt;&gt; randomNumbers() {
+		return Flux.interval(Duration.ofSeconds(1)).map(seq -&gt; Tuples.of(seq, ThreadLocalRandom.current().nextInt())).map(data -&gt; ServerSentEvent.&lt;Integer&gt;builder().event("random").id(Long.toString(data.getT1())).data(data.getT2()).build());
+	}    
+	
+	@GetMapping(path = "/stream-flux", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+	public Flux&lt;String&gt; streamFlux() {
+	    return Flux.interval(Duration.ofSeconds(1))
+	      .map(sequence -&gt; "Flux - " + LocalTime.now().toString());
+	}	
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm542968918528"></a>49.3.8.3. SSE 完整的例子</h4></div></div></div>
+			
+			<pre class="programlisting">
+		
+package cn.netkiller.webflux.controller;
+
+import java.time.Duration;
+import java.util.concurrent.ThreadLocalRandom;
+
+import org.springframework.http.MediaType;
+import org.springframework.http.codec.ServerSentEvent;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import reactor.core.publisher.Flux;
+import reactor.util.function.Tuples;
+
+@RestController
+@RequestMapping("/sse")
+public class SseController {
+	private int count_down = 10;
+
+	public SseController() {
+
+	}
+
+	@GetMapping(value = "/launch", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+	public Flux&lt;ServerSentEvent&lt;Object&gt;&gt; countDown() {
+
+		return Flux.interval(Duration.ofSeconds(1)).map(seq -&gt; Tuples.of(seq, getCountDownSec())).map(data -&gt; ServerSentEvent.&lt;Object&gt;builder().event("launch").id(Long.toString(data.getT1())).data(data.getT2().toString()).build());
+	}
+
+	private String getCountDownSec() {
+		if (count_down &gt; 0) {
+			count_down--;
+			return "倒计时：" + count_down;
+		}
+		return "发射";
+	}
+
+
+
+	@GetMapping("/range")
+	public Flux&lt;Object&gt; range() {
+		return Flux.range(10, 1).map(seq -&gt; Tuples.of(seq, getCountDownSec())).map(data -&gt; ServerSentEvent.&lt;Object&gt;builder().event("launch").id(Long.toString(data.getT1())).data(data.getT2().toString()).build());
+	}
+	
+	// WebFlux 服务器推送(SSE - &gt;Server Send Event)
+	@GetMapping(value = "/sse", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+	private Flux&lt;String&gt; flux() {
+		Flux&lt;String&gt; result = Flux.fromStream(IntStream.range(1, 10).mapToObj(i -&gt; {
+			try {
+				TimeUnit.SECONDS.sleep(1);
+			} catch (InterruptedException e) {
+			}
+			logger.info("sse " + i);
+			return "flux data -- " + i;
+		}));
+		return result;
+	}
+}
+		
+		
+			</pre>
+			<p>运行结果</p>
+			<pre class="screen">
+		
+id:0
+event:launch
+data:倒计时：9
+
+id:1
+event:launch
+data:倒计时：8
+
+id:2
+event:launch
+data:倒计时：7
+
+id:3
+event:launch
+data:倒计时：6
+
+id:4
+event:launch
+data:倒计时：5
+
+id:5
+event:launch
+data:倒计时：4
+
+id:6
+event:launch
+data:倒计时：3
+
+id:7
+event:launch
+data:倒计时：2
+
+id:8
+event:launch
+data:倒计时：1
+
+id:9
+event:launch
+data:倒计时：0
+
+id:10
+event:launch
+data:发射
+		
+		
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm542968915008"></a>49.3.8.4. SSE Client 订阅实例</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+ 	@GetMapping("/server")
+    public Flux&lt;ServerSentEvent&lt;String&gt;&gt; streamEvents() {
+        return Flux.interval(Duration.ofSeconds(1))
+                .map(sequence -&gt; ServerSentEvent.&lt;String&gt;builder()
+                        .id(String.valueOf(sequence))
+                        .event("test-event")
+                        .data("LocalTime: " + LocalTime.now())
+                        .build());
+    }
+
+    @GetMapping("/client")
+    public void consumeServerSentEvent() {
+        WebClient client = WebClient.create("http://localhost:8080");
+        ParameterizedTypeReference&lt;ServerSentEvent&lt;String&gt;&gt; type
+                = new ParameterizedTypeReference&lt;ServerSentEvent&lt;String&gt;&gt;() {
+        };
+
+        Flux&lt;ServerSentEvent&lt;String&gt;&gt; eventStream = client.get()
+                .uri("mock/server")
+                .retrieve()
+                .bodyToFlux(type);
+
+        eventStream.subscribe(
+                content -&gt; log.info("Time: {} - event: name[{}], id [{}], content[{}] ",
+                        LocalTime.now(), content.event(), content.id(), content.data()),
+                error -&gt; log.error("Error receiving SSE: {}", error),
+                () -&gt; log.info("Completed!!!"));
+    }
+			
+			</pre>
+		</div>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="webflux.webclient"></a>49.3.9. WebClient</h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm542968912512"></a>49.3.9.1. 配置 WebClient</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+@Configuration
+public class WebConfig {
+
+  @Bean
+  public WebClient webClient() {
+
+    WebClient webClient = WebClient.builder()
+      .baseUrl("http://localhost:8080")
+      .defaultCookie("cookie-name", "cookie-value")
+      .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+      .build();
+  }
+}			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm542968910976"></a>49.3.9.2. @Controller/@RestController 实例</h4></div></div></div>
+			
+
+			<pre class="programlisting">
+		
+    @GetMapping("webclient")
+    public Mono&lt;String&gt; webclient() {
+        WebClient webClient = WebClient.create("http://localhost:8080");
+        Mono&lt;String&gt; response = webClient
+                .get().uri("/mock/mono")
+                .retrieve()
+                .bodyToMono(String.class);
+        response.subscribe(System.out::println);
+        return response;
+    }
+		
+			</pre>
+			<p>会返结果</p>
+			<pre class="programlisting">
+			
+public Mono&lt;ResponseEntity&lt;Employee&gt;&gt; createEmployee(Employee newEmployee) {
+
+  return webClient.post()
+    .uri("/employees")
+    .contentType(MediaType.APPLICATION_JSON)
+    .bodyValue(newEmployee)
+    .retrieve()
+    .toEntity(Employee.class);
+}
+
+
+
+@PostMapping("/create")
+public Mono&lt;ResponseEntity&lt;?&gt;&gt; createEmployee(@RequestBody Employee newEmployee) {
+
+  return employeeService.createEmployee(newEmployee)
+    .map(responseEntity -&gt; {
+      if (responseEntity.getStatusCode().is2xxSuccessful()) {
+        return ResponseEntity.ok(responseEntity.getBody());
+      } else {
+        return ResponseEntity.status(responseEntity.getStatusCode())
+          .body("Failed to create employee");
+      }
+    })
+    .onErrorResume(exception -&gt; {
+      return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .body("Internal Server Error: " + exception.getMessage()));
+    });
+}			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="webclient.get"></a>49.3.9.3. Get 请求实例</h4></div></div></div>
+			
+			<pre class="programlisting">
+		
+WebClient.create("http://localhost:8080")
+    .get()
+    .uri("/students")
+    .retrieve()
+    .bodyToFlux(Student.class);		
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="webclient.uri"></a>49.3.9.4. URI 参数</h4></div></div></div>
+			
+			<p>字符串拼接方式</p>
+			<pre class="programlisting">
+			
+WebClient.create("http://localhost:8080")
+    .get()
+    .uri("/students/" + studentId)
+    .retrieve()
+    .bodyToMono(Student.class);
+			
+			</pre>
+			<p>通过 uriBuilder 组装 Uri 参数</p>
+			<pre class="programlisting">
+			
+String endpoint = "/employees";
+        
+UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromPath(endpoint)
+    .queryParam("param1", "value1")
+    .queryParam("param2", "value2");
+
+webClient.post()
+        .uri(uriBuilder.build().toUri())
+        .bodyValue(new Employee(...))
+        .retrieve()
+        .bodyToMono(Employee.class);
+			
+			</pre>
+			<pre class="programlisting">
+			
+WebClient.create("http://localhost:8080")
+    .get()
+    .uri(uriBuilder -&gt; uriBuilder
+        .path("/student/{studentId}")
+        .build(studentId))
+    .retrieve()
+    .bodyToMono(Student.class);		
+    
+WebClient.create("http://localhost:8080")
+    .get()
+    .uri(uriBuilder -&gt; uriBuilder
+        .path("/student/{studentId}/assignments/{assignmentId}")
+        .build(studentId, assignmentId))
+    .retrieve()
+    .bodyToMono(Student.class);
+			
+			</pre>
+			<p>uriTemplate 组装 Uri 参数</p>
+			<pre class="programlisting">
+			
+UriTemplate uriTemplate = new UriTemplate(
+    "/student/{studentId}/assignments/{assignmentId}");
+
+WebClient.create("http://localhost:8080")
+    .get()
+    .uri(uriTemplate.expand(studentId, assignmentId))
+    .retrieve()
+    .bodyToMono(Student.class);			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="webclient.query"></a>49.3.9.5. 查询参数</h4></div></div></div>
+			
+			<p>http://localhost:8080/students?firstName=Jon&amp;year=1996
+			</p>
+			<pre class="programlisting">
+			
+String firstName = "Jon";
+String year = "1996";
+
+WebClient.create("http://localhost:8080")
+    .get()
+    .uri(uriBuilder -&gt; uriBuilder.path("/students")
+        .queryParam("firstName", firstName)
+        .queryParam("year", year)
+        .build())
+    .retrieve()
+    .bodyToMono(Student.class);			
+			
+			</pre>
+			<p>http://localhost:8080/students?year=1995,1996,1997</p>
+			<pre class="programlisting">
+			
+WebClient.create("http://localhost:8080")
+    .get()
+    .uri(uriBuilder -&gt; uriBuilder.path("/students")
+        .queryParam("year", String.join(",", "1995", "1996", "1997"))
+        .build())
+    .retrieve()
+    .bodyToMono(Student.class);			
+			
+			</pre>
+			<p>"/products/?category=Phones&amp;category=Tablets"</p>
+			<pre class="programlisting">
+			
+webClient.get()
+  .uri(uriBuilder - &gt; uriBuilder
+    .path("/products/")
+    .queryParam("category", "Phones", "Tablets")
+    .build())
+  .retrieve()
+  .bodyToMono(String.class)
+  .onErrorResume(e -&gt; Mono.empty())
+  .block();			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="webclient.post"></a>49.3.9.6. Post 操作演示</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+Employee newEmployee = ...;  //Create a new employee object
+			
+webClient.post()
+  .uri("/employees")
+  .bodyValue(BodyInserters.fromValue(newEmployee))
+  .retrieve()
+  .toEntity(Employee.class)   //Change here
+  .subscribe(
+    responseEntity -&gt; {
+      // Handle success response here
+      HttpStatusCode status = responseEntity.getStatusCode();
+      URI location = responseEntity.getHeaders().getLocation();
+      Employee createdEmployee = responseEntity.getBody();    // Response body
+      // handle response as necessary
+    },
+    error -&gt; {
+      // Handle the error here
+      if (error instanceof WebClientResponseException) {
+        WebClientResponseException ex = (WebClientResponseException) error;
+        HttpStatusCode status = ex.getStatusCode();
+        System.out.println("Error Status Code: " + status.value());
+        //...
+      } else {
+        // Handle other types of errors
+        System.err.println("An unexpected error occurred: " + error.getMessage());
+      }
+    }
+  );			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="webclient.post.form"></a>49.3.9.7. Post 表单数据</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+@Service
+public class EmployeeService {
+
+  private final WebClient webClient;
+
+  @Autowired
+  public EmployeeService(WebClient webClient) {
+      this.webClient = webClient;
+  }
+
+  public Mono&lt;Employee&gt; createEmployee(Map&lt;String, String&gt; formParams) {
+    return webClient.post()
+      .uri("/employees")
+      .body(BodyInserters.fromFormData("id", formParams.get("id"))
+        .with("name", formParams.get("name"))
+        .with("status", formParams.get("status")))
+      .retrieve()
+      .onStatus(HttpStatus::is4xxClientError, clientResponse -&gt; {
+          // Handle 4xx client errors here
+      })
+      .onStatus(HttpStatus::is5xxServerError, clientResponse -&gt; {
+          // Handle 5xx server errors here
+      })
+      .toEntity(Employee.class)
+      .flatMap(responseEntity -&gt; Mono.justOrEmpty(responseEntity.getBody()));
+  }
+}			
+			
+			</pre>
+			<pre class="programlisting">
+			
+        WebClient client = WebClient.create("https://www.netkiller.cn");
+        FormInserter formInserter = fromMultipartData("name","neo")
+                .with("age",19)
+                .with("map",ImmutableMap.of("sex","F"))
+                .with("file",new File("/tmp/netkiler.doc"));
+        Mono&lt;String&gt; result = client.post()
+                .uri("/article/index/{id}.html", 256)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(formInserter)
+                //.bodyValue(ImmutableMap.of("name","neo"))
+                .retrieve()
+                .bodyToMono(String.class);
+        result.subscribe(System.err::println);			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="webclient.post.multipart"></a>49.3.9.8. 上传文件</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+MultipartBodyBuilder builder = new MultipartBodyBuilder();
+
+builder.part("file", new FileSystemResource("/tmp/file.txt"));
+builder.part("id", "190001", MediaType.TEXT_PLAIN);
+builder.part("name", "Lokesh", MediaType.TEXT_PLAIN);
+builder.part("status", "active", MediaType.TEXT_PLAIN);
+
+Then we can submit the multipart form data by using the method BodyInserters.fromMultipartData(builder.build()) and send a normal request as in the previous examples.
+
+webClient.post()
+    .uri("/employees")
+    .contentType(MediaType.MULTIPART_FORM_DATA)
+    .body(BodyInserters.fromMultipartData(builder.build()))
+    .retrieve()
+    .toEntity(Employee.class)
+    .doOnError(WriteTimeoutException.class, ex -&gt; {
+      System.err.println("WriteTimeout");
+    })
+    .subscribe(responseEntity -&gt; {
+      System.out.println("Status: " + responseEntity.getStatusCode().value());
+      System.out.println("Location URI: " + responseEntity.getHeaders().getLocation().toString());
+      System.out.println("Created New Employee : " + responseEntity.getBody());
+    });			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="webclient.header"></a>49.3.9.9. 设置 HTTP 头</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+webClient.get()
+    .uri("/employees")
+    .bodyValue(new Employee(...))
+    .header("Authorization", "Bearer auth-token")
+    .header("User-Agent", "Mobile App 1.0")
+    .retrieve()			
+			
+			</pre>
+			<pre class="programlisting">
+			
+	WebClient.builder()
+        .defaultCookie("session","f1d83210-0fc9-4689-82ab-05df70da3367")
+        .defaultUriVariables(ImmutableMap.of("name","kl"))
+        .defaultHeader("header","neo")
+        .defaultHeaders(httpHeaders -&gt; {
+            httpHeaders.add("header1","neo");
+            httpHeaders.add("header2","chen");
+        })
+        .defaultCookies(cookie -&gt;{
+            cookie.add("cookie1","neo");
+            cookie.add("cookie2","netkiller");
+        })
+        .baseUrl("https://www.netkiller.cn")
+        .build();			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm542968887680"></a>49.3.9.10. websocket</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+WebSocketClient client = new ReactorNettyWebSocketClient();
+URI url = new URI("ws://localhost:8080/path");
+client.execute(url, session -&gt;
+        session.receive()
+                .doOnNext(System.out::println)
+                .then());			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm542968885520"></a>49.3.9.11. 同步阻塞等待结果</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+ WebClient client =  WebClient.create("http://www.kailing.pub");
+      String result = client .get()
+                .uri("/article/index/arcid/{id}.html", 256)
+                .retrieve()
+                .bodyToMono(String.class)
+                .block();
+        System.err.println(result);			
+			
+			</pre>
+			<p>避免单独阻塞每个同步响应</p>
+			<pre class="programlisting">
+			
+      WebClient client =  WebClient.create("http://www.kailing.pub");
+        Mono&lt;String&gt; result1Mono = client .get()
+                .uri("/article/index/arcid/{id}.html", 255)
+                .retrieve()
+                .bodyToMono(String.class);
+        Mono&lt;String&gt; result2Mono = client .get()
+                .uri("/article/index/arcid/{id}.html", 254)
+                .retrieve()
+                .bodyToMono(String.class);
+        Map&lt;String,String&gt;  map = Mono.zip(result1Mono, result2Mono, (result1, result2) -&gt; {
+            Map&lt;String, String&gt; arrayList = new HashMap&lt;&gt;();
+            arrayList.put("result1", result1);
+            arrayList.put("result2", result2);
+            return arrayList;
+        }).block();
+        System.err.println(map.toString());			
+			
+			</pre>
+		</div>
+	</div>
+	
+</div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
+			window.changyan.api.config({
+			appid: 'cyvwjQUG3',
+			conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
+			});
+</script><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ch49s02.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="webflux.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ch49s04.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">49.2. WebFlux 与 SprintMVC 有什么不同？ </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 49.4. Webflux 安全</td></tr></table></div><script xmlns="">
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+			ga('create', 'UA-11694057-1', 'auto');
+			ga('send', 'pageview');
+
+		</script><script xmlns="" async="async">
+			var _hmt = _hmt || [];
+			(function() {
+			var hm = document.createElement("script");
+			hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(hm, s);
+			})();
+</script><script xmlns="" async="async">
+			(function(){
+			var bp = document.createElement('script');
+			var curProtocol = window.location.protocol.split(':')[0];
+			if (curProtocol === 'https') {
+			bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+			}
+			else {
+			bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+			}
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(bp, s);
+			})();
+</script></body></html>

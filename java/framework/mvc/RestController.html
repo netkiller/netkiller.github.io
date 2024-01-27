@@ -1,0 +1,933 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>48.3. @RestController</title><link rel="stylesheet" type="text/css" href="../../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><link rel="home" href="../../index.html" title="Netkiller Java 手札（版）" /><link rel="up" href="index.html" title="第 48 章 Spring MVC" /><link rel="prev" href="Controller.html" title="48.2. @Controller" /><link rel="next" href="view.html" title="48.4. View" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
+		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://edu.51cto.com/lecturer/1703915.html">51CTO学院</a> | <a xmlns="" href="https://edu.csdn.net/lecturer/6423">CSDN程序员研修院</a> | <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> | <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">腾讯云社区</a> | <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">阿里云栖社区</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">48.3. @RestController</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="Controller.html">上一页</a> </td><th width="60%" align="center">第 48 章 Spring MVC</th><td width="20%" align="right"> <a accesskey="n" href="view.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="RestController"></a>48.3. @RestController</h2></div></div></div>
+	
+	<p></p>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm542969557232"></a>48.3.1. 上传文件</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+    @PostMapping("/{device}/question/voice")
+    public String questionVoice(@PathVariable String device, @RequestParam("file") MultipartFile file, @RequestParam("session") String session) {
+
+        if (file.isEmpty()) {
+            logger.error("上传失败，请选择文件");
+        }
+
+        String fileName = file.getOriginalFilename();
+        String filePath = "/tmp/".concat(session.concat(".mp3"));
+        File saveAs = new File(filePath);
+        try {
+            file.transferTo(saveAs);
+            logger.info("上传成功 " + fileName);
+        } catch (IOException e) {
+            logger.error(e.toString(), e);
+            return "上传失败";
+        }
+        return "上传成功";
+    }		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm542969555248"></a>48.3.2. 返回实体</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+	@RequestMapping("/get/{id}")
+	public Member getStatistics(@PathVariable long id) {
+		Member statistics = memberRepostitory.findOne(id);
+		if (statistics == null) {
+			statistics = new Member();
+		}
+		return statistics;
+	}
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm542969553776"></a>48.3.3. JSON</h3></div></div></div>
+		
+		<p>MediaType.APPLICATION_JSON_VALUE 执行结果反馈json数据</p>
+		<pre class="programlisting">
+		
+@RestController
+@RequestMapping("/api/persons")
+public class MainController {
+
+    @RequestMapping(
+            value = "/detail/{id}", 
+            method = RequestMethod.GET, 
+            produces = MediaType.APPLICATION_JSON_VALUE
+            )
+    public ResponseEntity&lt;Persons&gt; getUserDetail(@PathVariable Long id) {
+
+        Persons user = personsRepository.findById(id);
+
+        return new ResponseEntity&lt;&gt;(user, HttpStatus.OK);
+    }
+
+}
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="restfull.raw.json"></a>48.3.4. 处理原始 RAW JSON 数据</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+	@RequestMapping(value = "/create", method = RequestMethod.POST, produces = { "application/xml", "application/json" })
+	public ResponseEntity&lt;Member&gt; create(@RequestBody Member member) {
+		memberRepository.save(member);
+		return new ResponseEntity&lt;Member&gt;(member, HttpStatus.OK);
+	}		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="json.null"></a>48.3.5. 返回 JSON 对象 NULL 专为 "" 字符串</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+package api.config;
+
+import java.io.IOException;
+
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
+
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializerProvider;
+
+@Configuration
+public class JacksonConfig {
+    @Bean
+    @Primary
+    @ConditionalOnMissingBean(ObjectMapper.class)
+    public ObjectMapper jacksonObjectMapper(Jackson2ObjectMapperBuilder builder) {
+        ObjectMapper objectMapper = builder.createXmlMapper(false).build();
+        objectMapper.getSerializerProvider().setNullValueSerializer(new JsonSerializer&lt;Object&gt;() {
+            @Override
+            public void serialize(Object o, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException, JsonProcessingException {
+                jsonGenerator.writeString("");
+            }
+        });
+        return objectMapper;
+    }
+}
+
+		
+		</pre>
+
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="restful.xml"></a>48.3.6. XML</h3></div></div></div>
+		
+		<p>restful 将同时支持 json 和 xml 数据传递</p>
+		<pre class="programlisting">
+		
+package com.example.api.restful;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.api.domain.RecentRead;
+import com.example.api.repository.RecentReadRepostitory;
+
+@RestController
+@RequestMapping("/restful/article")
+public class ArticleRestController {
+
+	@Autowired
+	private RecentReadRepostitory recentReadRepostitory;
+
+	@RequestMapping(value = "/recent/read/add/{memberId}/{articleId}", method = RequestMethod.GET, produces = { "application/xml", "application/json" })
+	public ResponseEntity&lt;RecentRead&gt; recentAdd(@PathVariable long memberId, @PathVariable long articleId) {
+		RecentRead recentRead = new RecentRead();
+		recentRead.setMemberId(memberId);
+		recentRead.setArticleId(articleId);
+		recentReadRepostitory.save(recentRead);
+		return new ResponseEntity&lt;RecentRead&gt;(recentRead, HttpStatus.OK);
+	}
+
+	@RequestMapping(value="/recent/read/list/{id}", produces = { "application/xml", "application/json" })
+	public List&lt;RecentRead&gt; recentList(@PathVariable long id) {
+		int page = 0;
+		int limit = 20;
+		List&lt;RecentRead&gt; recentRead = recentReadRepostitory.findByMemberId(id, new PageRequest(page, limit));
+		return recentRead;
+	}
+}
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="restful.json"></a>48.3.7. 兼容传统 json 接口</h3></div></div></div>
+		
+		<p>开发中发现很多人不适应新的接口方式，有时候只能妥协，这些顽固不化的人需要这样的数据库格式</p>
+		<pre class="programlisting">
+		
+{  
+   "status":true,
+   "reason":"登录成功",
+   "code":1,
+   "data":{
+      "id":2,
+      "name":null,
+      "sex":null,
+      "age":0,
+      "wechat":null,
+      "mobile":"13113668890",
+      "picture":null,
+      "ipAddress":"0:0:0:0:0:0:0:1"
+   }
+}
+		
+		</pre>
+		<p>返回数据必须放在 data 字典中, 而我通常是采用 http status code
+			来返回状态，返回结果是对象。实现上面的需求我们需要加入一个data成员变量，因为我们不清楚最终要返回什么对象。所以声明为
+			java.lang.Object
+		</p>
+		<pre class="programlisting">
+		
+package com.example.api.pojo;
+
+import java.io.Serializable;
+
+public class RestfulResponse implements Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -4045645995352698349L;
+
+	private boolean status;
+	private String reason;
+	private int code;
+	private Object data;
+
+	public RestfulResponse(boolean status, int code, String reason, Object data) {
+		this.status = status;
+		this.code = code;
+		this.reason = reason;
+		this.data = data;
+
+	}
+
+	public boolean isStatus() {
+		return status;
+	}
+
+	public void setStatus(boolean status) {
+		this.status = status;
+	}
+
+	public String getReason() {
+		return reason;
+	}
+
+	public void setReason(String reason) {
+		this.reason = reason;
+	}
+
+	public int getCode() {
+		return code;
+	}
+
+	public void setCode(int code) {
+		this.code = code;
+	}
+
+	public Object getData() {
+		return data;
+	}
+
+	public void setData(Object data) {
+		this.data = data;
+	}
+
+	@Override
+	public String toString() {
+		return "RestfulResponse [status=" + status + ", reason=" + reason + ", code=" + code + ", data=" + data + "]";
+	}
+
+}
+		
+		</pre>
+		<p>Service</p>
+		<pre class="programlisting">
+		
+	public RestfulResponse bindWechat(String mobile, String wechat) {
+		Member member = memberRepository.findByMobile(mobile);
+		member.setWechat(wechat);
+		memberRepository.save(member);
+		return new RestfulResponse(true, 1, "微信绑定成功", member);
+	}
+		
+		</pre>
+		<p>Controller</p>
+		<pre class="programlisting">
+		
+	@RequestMapping("/login/sms/{mobile}/{code}")
+	public RestfulResponse sms(@PathVariable String mobile, @PathVariable String wechat) {
+		return memberService.bindWechat(mobile, wechat);
+	}
+		
+		</pre>
+	</div>
+
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="restful.upload"></a>48.3.8. 上传文件</h3></div></div></div>
+		
+		<p></p>
+		<pre class="screen">
+		
+spring.servlet.multipart.max-file-size=128KB
+spring.servlet.multipart.max-request-size=128KB
+spring.http.multipart.enabled=false
+		
+		</pre>
+		<p>RestController</p>
+		<pre class="programlisting">
+		
+package api.restful;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import api.pojo.RestfulResponse;
+
+@RestController
+@RequestMapping("/upload")
+public class UploadRestController {
+
+	private final static String FOLDER = "/tmp";
+
+	public UploadRestController() {
+		
+	}
+
+	@PostMapping("/single")
+	public RestfulResponse upload(@RequestParam("file") MultipartFile file, RedirectAttributes redirectAttributes) {
+
+		if (file.isEmpty()) {
+			return new RestfulResponse(false, 0, "Please select a file to upload", "");
+		}
+		try {
+			byte[] bytes = file.getBytes();
+			Path path = Paths.get(FOLDER + "/" + file.getOriginalFilename());
+			Files.write(path, bytes);
+
+			return new RestfulResponse(true, 0, "", path.toString());
+		} catch (Exception e) {
+			return new RestfulResponse(false, 0, e.getMessage(), null);
+		}
+	}
+
+	@PostMapping(value = "/group")
+	public RestfulResponse group(@RequestParam("files") MultipartFile[] files) {
+		List&lt;String&gt; filelist = new ArrayList&lt;String&gt;();
+		try {
+
+			for (MultipartFile file : files) {
+				File tmpfile = new File(FOLDER + "/" + file.getOriginalFilename());
+				file.transferTo(tmpfile);
+				filelist.add(tmpfile.getPath());
+			}
+			return new RestfulResponse(true, 0, null, filelist);
+		} catch (Exception e) {
+			return new RestfulResponse(false, 0, e.getMessage(), null);
+		}
+	}
+}
+		
+		</pre>
+		<p>由于上传文件名可能存在空格等特殊字符，这里使用UUID替代文件名</p>
+		<pre class="programlisting">
+		
+	@PostMapping(value = "/file")
+	public RestfulResponse file(@RequestParam("file") MultipartFile[] files) {
+		List&lt;Object&gt; filelist = new ArrayList&lt;Object&gt;();
+		try {
+
+			for (MultipartFile file : files) {
+			
+				UUID uuid = UUID.randomUUID();
+				String filename = String.format("%s/%s.%s", folder, uuid.toString(), this.getExtensionName(filename));
+
+				File tmpfile = new File(filename);
+				String filepath = tmpfile.getPath();
+				System.out.println(filepath);
+				file.transferTo(tmpfile);
+				filelist.add(tmpfile.toString());
+			}
+			return new RestfulResponse(true, 0, null, filelist);
+		} catch (Exception e) {
+			return new RestfulResponse(false, 0, e.getMessage(), null);
+		}
+	}
+
+	private String getExtensionName(String filename) {
+		if ((filename != null) &amp;&amp; (filename.length() &gt; 0)) {
+			int dot = filename.lastIndexOf('.');
+			if ((dot &gt; -1) &amp;&amp; (dot &lt; (filename.length() - 1))) {
+				return filename.substring(dot + 1);
+			}
+		}
+		return filename;
+	}
+		
+		</pre>
+		<pre class="programlisting">
+		
+获取文件名及后缀信息
+
+MultipartFile file = new MultipartFile();
+String file = file.getOriginalFilename()
+
+获取文件名
+
+MultipartFile file = new MultipartFile();
+String fileName = file.getOriginalFilename().substring(0,file.getOriginalFilename().lastIndexOf("."))
+
+
+获取文件后缀
+
+MultipartFile file = new MultipartFile();
+String fileSuffix = file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf("."))
+
+
+获取文件类型
+
+MultipartFile file = new MultipartFile();
+String fileType = file.getContentType()
+
+
+获取文件大小
+
+MultipartFile file = new MultipartFile();
+String fileSize = file.getSize()
+		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="export.csv"></a>48.3.9. Spring boot with csv</h3></div></div></div>
+		
+		<p>下面是一个导出 CSV 文件的例子</p>
+		<pre class="programlisting">
+		
+	@GetMapping("/export")
+	public void export(HttpServletResponse response) throws IOException {
+		response.setContentType("application/csv");
+		// response.setContentType("application/csv;charset=gb18030");
+		response.setHeader("Content-Disposition", "attachment; filename=\"file.csv\"");
+
+		BufferedWriter writer = new BufferedWriter(response.getWriter());
+
+		// 需要写入 utf8bom 头否则会出现中文乱码
+		// byte[] uft8bom = { (byte) 0xef, (byte) 0xbb, (byte) 0xbf };
+		String bom = new String(new byte[] { (byte) 0xEF, (byte) 0xBB, (byte) 0xBF });
+		writer.write(bom);
+		writer.write("A,B,C");
+		writer.newLine();
+		tableRepository.findAll().forEach(table -&gt; {
+			try {
+				String tmp = String.format("%s,%s,%s", table.getId(), table.getMethod(), table.getMoney());
+				writer.write(tmp);
+				writer.newLine();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+		});
+
+		writer.flush();
+		writer.close();
+	}		
+		
+		</pre>
+	</div>
+	
+<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="Problem Details"></a>48.3.10. Problem Details [RFC 7807]</h3></div></div></div>
+	
+	<p>HTTP RFC 7807
+		规范：https://www.rfc-editor.org/rfc/rfc7807。这个规范里定义了HTTP
+		API的“问题细节”（Problem Details）内容。用它来携带HTTP错误返回信息，避免自定义新的错误返回格式。</p>
+	<pre class="programlisting">
+	
+HTTP/1.1 403 Forbidden
+Content-Type: application/problem+json
+Content-Language: en
+
+{
+	"status": 403,
+	"type": "https://bankname.com/common-problems/low-balance",
+	"title": "You not have enough balance",
+	"detail": "Your current balance is 30 and you are transterring 50",
+	"instance": "/account-transfer-service"
+}		
+	
+	</pre>
+	<pre class="programlisting">
+	
+type：		问题的类型；
+title：		问题类型描述；
+status：	HTTP状态码；
+detail：	问题实例描述；
+instance：	URI的内容应该用来描述问题实例，但不是必须的。
+	
+	</pre>
+	<pre class="programlisting">
+	
+    @GetMapping("/ProblemDetail/v1/{id}")
+    public ResponseEntity config(@PathVariable("id") Long id) {
+        if (id &lt; 100) {
+            return ResponseEntity.ok(new Member(id, "netkiller"));
+        } else {
+            ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, "Member id '" + id + "' does no exist");
+            pd.setType(URI.create("https://www.netkiller.cn/errors/not-found"));
+            pd.setTitle("Record Not Found");
+            pd.setProperty("hostname", "www.netkiller.cn");
+            return ResponseEntity.status(404).body(pd);
+        }
+    }
+	
+	</pre>
+	<pre class="programlisting">
+	
+    @GetMapping(path = "/ProblemDetail/v2/{id}")
+    public ResponseEntity getEmployeeById_V3(@PathVariable("id") Long id) {
+
+        try {
+            //somthing threw this exception
+            throw new NullPointerException("Something was expected but it was null");
+        } catch (NullPointerException npe) {
+            ProblemDetail pd = ProblemDetail
+                    .forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR,
+                            "Null Pointer Exception");
+            pd.setType(URI.create("https://www.netkiller.cn/errors/npe"));
+            pd.setTitle("Null Pointer Exception");
+            pd.setProperty("hostname", "www.netkiller.cn");
+            throw new ErrorResponseException(HttpStatus.NOT_FOUND, pd, npe);
+        }
+    }
+	
+	</pre>
+
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="ResponseEntity"></a>48.3.10.1. ResponseEntity</h4></div></div></div>
+		
+		<pre class="programlisting">
+			
+@PostMapping(path = "/foo", params = {"id", "name=John"})
+public ResponseEntity&lt;String&gt; handlePostRequest() {
+    // 处理请求
+    return ResponseEntity.ok("Success");
+}
+			
+		</pre>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm542976494608"></a>status</h5></div></div></div>
+			
+			<pre class="programlisting">
+			
+return ResponseEntity
+                  .status(HttpStatus.CREATED)
+                  .header("Location", locationUri)
+                  .body("Employee created successfully. Location: " + locationUri);		
+			
+			</pre>
+		</div>
+	</div>
+</div>
+<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="Jackson"></a>48.3.11. Jackson</h3></div></div></div>
+	
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm542976491776"></a>48.3.11.1. Jackson 相关配置</h4></div></div></div>
+		
+		<pre class="screen">
+		
+#序列化时间格式
+spring.jackson.date-format=yyyy-MM-dd HH:mm:ss
+spring.mvc.date-format=yyyy-MM-dd HH:mm:ss
+#mvc序列化时候时区选择
+spring.jackson.time-zone=GMT+8		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="@JsonIgnore"></a>48.3.11.2. @JsonIgnore 返回json是不含有该字段</h4></div></div></div>
+		
+		<pre class="programlisting">
+			
+	@JsonIgnore
+	private String entityName = this.getClass().getSimpleName();	
+			
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="@JsonFormat 日期格式化"></a>48.3.11.3. @JsonFormat 格式化 json 时间格式</h4></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm542976487744"></a>日期格式化</h5></div></div></div>
+			
+
+			<p>默认 json 中的时间格式是这样的</p>
+			<pre class="screen">
+			
+"createDate":"2018-09-11T07:34:20.106+0000","updateDate":"2018-09-11T07:34:20.106+0000"			
+			
+			</pre>
+			<p>@JsonFormat 可以格式化 json 返回的时间格式。</p>
+			<pre class="programlisting">
+			
+@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")			
+			
+			</pre>
+			<p>格式化后</p>
+			<pre class="programlisting">
+			
+"createDate":"2018-09-11 07:42:44","updateDate":"2018-09-11 07:42:44"			
+			
+			</pre>
+			<p>解决时区问题，MongoDb 默认使用UTC,显示时间相差8小时</p>
+			<pre class="programlisting">
+			
+@JsonFormat(timezone = "GMT+8", pattern = "yyyy-MM-dd HH:mm:ss")	
+private Date createdDate = new Date();			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm542976483232"></a>时区</h5></div></div></div>
+			
+			<pre class="programlisting">
+			
+public class Test {
+   @JsonFormat(shape=JsonFormat.Shape.STRING, pattern="yyyy-MMM-dd HH:mm:ss z", timezone="EST")
+   @JsonProperty("pubDate")
+   private Date recentBookPubDate;	
+} 			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm542976481680"></a>枚举</h5></div></div></div>
+			
+			<pre class="programlisting">
+			
+public class Test {
+   @JsonFormat(shape=JsonFormat.Shape.NUMBER)
+   @JsonProperty("birthDate")
+   private Date birthDate;
+} 
+			
+			</pre>
+			<pre class="screen">
+			
+{
+  "birthDate" : 1528702883858
+} 			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm542976479856"></a>枚举</h5></div></div></div>
+			
+			<pre class="programlisting">
+			
+package cn.netkiller;
+import com.fasterxml.jackson.annotation.JsonFormat;
+
+@JsonFormat(shape=JsonFormat.Shape.NUMBER)
+enum Code {
+    BLOCKING,
+    CRITICAL,
+    MEDIUM,
+    LOW;
+} 
+
+@JsonFormat(shape=JsonFormat.Shape.STRING)
+enum Lang {
+	Java,
+	PHP,
+	Python
+} 
+			
+			</pre>
+		</div>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="@JsonComponent"></a>48.3.11.4. @JsonComponent</h4></div></div></div>
+		
+		<pre class="programlisting">
+		
+package cn.netkiller.json;
+
+public class Member {
+	private String name;
+
+	public Member() {
+		// TODO Auto-generated constructor stub
+	}
+
+	public Member(String name) {
+		// TODO Auto-generated constructor stub
+		this.name = name;
+
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	@Override
+	public String toString() {
+		return "Member [name=" + name + "]";
+	}
+
+}
+		
+		
+		</pre>
+		<pre class="programlisting">
+		
+package cn.netkiller.json;
+
+import java.io.IOException;
+
+import org.springframework.boot.jackson.JsonComponent;
+
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.TreeNode;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.node.TextNode;
+
+@JsonComponent
+public class Json {
+
+	public Json() {
+		// TODO Auto-generated constructor stub
+	}
+
+	public static class MemberJsonSerializer extends JsonSerializer&lt;Member&gt; {
+
+		@Override
+		public void serialize(Member value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+			// TODO Auto-generated method stub
+			gen.writeStartObject();
+			gen.writeStringField("member", value.toString());
+			gen.writeEndObject();
+
+		}
+	}
+
+	public static class MemberJsonDeserializer extends JsonDeserializer&lt;Member&gt; {
+
+		@Override
+		public Member deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
+			// TODO Auto-generated method stub
+			TreeNode treeNode = p.getCodec().readTree(p);
+			TextNode member = (TextNode) treeNode.get("member");
+			return new Member(member.asText());
+		}
+	}
+}		
+		
+		</pre>
+		<pre class="programlisting">
+		
+package cn.netkiller.json.controller;
+
+import cn.netkiller.json.Member;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+/**
+ *
+ * @author neo
+ */
+@RestController
+public class SimpleController {
+
+	@Autowired
+	public ObjectMapper objectMapper;
+
+	@GetMapping("/")
+	public String home() throws JsonMappingException, JsonProcessingException {
+		String json = "{\"name\":\"netkiller\"}";
+		Member member = objectMapper.readValue(json, Member.class);
+		System.out.println(member.getName());
+		return member.getName();
+	}
+
+}
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="ObjectToJson"></a>48.3.11.5. Object to Json</h4></div></div></div>
+		
+		<pre class="programlisting">
+		
+ObjectMapper mapper = new ObjectMapper();
+User user = new User();
+
+//Object to JSON in file
+mapper.writeValue(new File("c:\\user.json"), user);
+
+//Object to JSON in String
+String jsonInString = mapper.writeValueAsString(user);
+
+//Convert object to JSON string and pretty print
+String jsonInString = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(user);
+		
+		</pre>
+		<pre class="programlisting">
+		
+	Notification notification = new Notification(status, time, summary + info);
+	ObjectMapper objectMapper = new ObjectMapper();
+	String json = objectMapper.writeValueAsString(notification);		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="JsonToObject"></a>48.3.11.6. Json To Object</h4></div></div></div>
+		
+		<pre class="programlisting">
+		
+ObjectMapper mapper = new ObjectMapper();
+String jsonInString = "{'name' : 'mkyong'}";
+
+//JSON from file to Object
+User user = mapper.readValue(new File("c:\\user.json"), User.class);
+
+//JSON from String to Object
+User user = mapper.readValue(jsonInString, User.class);
+		
+		</pre>
+	</div>
+</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="rest.synchronized"></a>48.3.12. synchronized</h3></div></div></div>
+		
+		<p>避免接口无序执行，被同时多次执行，同一时间只能有一个请求，请求完毕之后才能进行下一次请求。</p>
+		<pre class="programlisting">
+		
+   @GetMapping("/lock/{id}")
+    public String lock1(@PathVariable("id") String id) throws InterruptedException {
+        synchronized (id.intern()) {
+            log.info(Thread.currentThread().getName() + " 上锁");
+            Thread.sleep(10000);
+            log.info(Thread.currentThread().getName() + " 解锁");
+        }
+        return Thread.currentThread().getName();
+    }		
+		
+		</pre>
+		<p>使用 ConcurrentHashMap 数据共享</p>
+		<pre class="programlisting">
+		
+	private final Map&lt;String, Object&gt; share = new ConcurrentHashMap&lt;&gt;();
+
+    @GetMapping("/share/{id}")
+    public Map&lt;String, Object&gt; shareTest(@PathVariable("id") String id) throws InterruptedException {
+
+//        share.computeIfAbsent(id, k -&gt; new Object());
+        share.computeIfAbsent(id, key -&gt; {
+            return new Date();
+        });
+
+        synchronized (share) {
+            log.info(Thread.currentThread().getName() + " 上锁");
+            Thread.sleep(1000);
+            log.info(Thread.currentThread().getName() + " 解锁");
+        }
+        return share;
+    }
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm542976470016"></a>48.3.13. SSE</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+@GetMapping("/mvc/sse")
+public SseEmitter streamSseMvc() {
+    SseEmitter emitter = new SseEmitter();
+    ExecutorService sseMvcExecutor = Executors.newSingleThreadExecutor();
+    sseMvcExecutor.execute(() -&gt; {
+        try {
+            for (int i = 0; true; i++) {
+                SseEventBuilder event = SseEmitter.event()
+                  .data("SSE MVC - " + LocalTime.now().toString())
+                  .id(String.valueOf(i))
+                  .name("sse event - mvc");
+                emitter.send(event);
+                Thread.sleep(1000);
+            }
+        } catch (Exception ex) {
+            emitter.completeWithError(ex);
+        }
+    });
+    return emitter;
+}		
+		
+		</pre>
+	</div>
+</div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
+			window.changyan.api.config({
+			appid: 'cyvwjQUG3',
+			conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
+			});
+</script><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="Controller.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="view.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">48.2. @Controller </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 48.4. View</td></tr></table></div><script xmlns="">
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+			ga('create', 'UA-11694057-1', 'auto');
+			ga('send', 'pageview');
+
+		</script><script xmlns="" async="async">
+			var _hmt = _hmt || [];
+			(function() {
+			var hm = document.createElement("script");
+			hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(hm, s);
+			})();
+</script><script xmlns="" async="async">
+			(function(){
+			var bp = document.createElement('script');
+			var curProtocol = window.location.protocol.split(':')[0];
+			if (curProtocol === 'https') {
+			bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+			}
+			else {
+			bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+			}
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(bp, s);
+			})();
+</script></body></html>

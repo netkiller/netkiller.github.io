@@ -1,0 +1,836 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>9.3. logback 配置详解</title><link rel="stylesheet" type="text/css" href="../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><link rel="home" href="../index.html" title="Netkiller Java 手札（版）" /><link rel="up" href="spring.boot.logging.html" title="第 9 章 Spring boot with Logging" /><link rel="prev" href="lombok.logging.html" title="9.2. 打印日志" /><link rel="next" href="log4j2-gelf-logstash.html" title="9.4. Log4j2 + Gelf + Logstash" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
+		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://edu.51cto.com/lecturer/1703915.html">51CTO学院</a> | <a xmlns="" href="https://edu.csdn.net/lecturer/6423">CSDN程序员研修院</a> | <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> | <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">腾讯云社区</a> | <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">阿里云栖社区</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">9.3. logback 配置详解</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="lombok.logging.html">上一页</a> </td><th width="60%" align="center">第 9 章 Spring boot with Logging</th><td width="20%" align="right"> <a accesskey="n" href="log4j2-gelf-logstash.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="springboot.logback"></a>9.3. logback 配置详解</h3></div></div></div>
+		
+		<p>配置文件名默认是：logback-spring.xml，使用其他文件名通过下面配置项指定即可。</p>
+		<pre class="screen">
+		
+logging.config=classpath:logback.xml		
+		
+		</pre>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="logback.stdout"></a>9.3.1. 标准输出</h4></div></div></div>
+			
+			<p>基本配置</p>
+
+			<pre class="screen">
+		
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;configuration&gt;
+    &lt;appender name="stdout" class="ch.qos.logback.core.ConsoleAppender"&gt;
+        &lt;encoder&gt;
+            &lt;pattern&gt;%d{yy-MMMM-dd HH:mm:ss:SSS} %5p %t %c{2}:%L - %m%n&lt;/pattern&gt;
+        &lt;/encoder&gt;
+    &lt;/appender&gt;
+    &lt;root level="INFO"&gt;
+        &lt;appender-ref ref="stdout"/&gt;
+    &lt;/root&gt;
+&lt;/configuration&gt;		
+		
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm542969895344"></a>9.3.2. 禁止 logback 日志输出</h4></div></div></div>
+			
+			<pre class="screen">
+			
+	&lt;statusListener class="ch.qos.logback.core.status.NopStatusListener" /&gt;			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="logback.level"></a>9.3.3. 指定Class过滤日志</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+    &lt;logger name="cn.netkiller.controller"/&gt;
+    
+    &lt;logger name="cn.netkiller.controller.HomeController" level="WARN" additivity="false"&gt;
+        &lt;appender-ref ref="console"/&gt;
+    &lt;/logger&gt;
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="logback.attr"></a>9.3.4. configuration 属性配置</h4></div></div></div>
+			
+			<pre class="screen">
+			
+scan:当此属性设置为true时，配置文件如果发生改变，将会被重新加载，默认值为true。
+scanPeriod:设置监测配置文件是否有修改的时间间隔，如果没有给出时间单位，默认单位是毫秒。当scan为true时，此属性生效。默认的时间间隔为1分钟。
+debug:当此属性设置为true时，将打印出logback内部日志信息，实时查看logback运行状态。默认值为false。			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="logback.contextName"></a>9.3.5. contextName 设置上下文名称</h4></div></div></div>
+			
+			<pre class="screen">
+			
+
+每个logger都关联到logger上下文，默认上下文名称为“default”。但可以使用设置成其他名字，用于区分不同应用程序的记录。设置后可以通过%contextName来打印日志上下文名称。
+&lt;contextName&gt;logback&lt;/contextName&gt;			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="logback.property"></a>9.3.6. property 设置变量</h4></div></div></div>
+			
+			<pre class="screen">
+			
+用来定义变量值的标签， 有两个属性，name和value；其中name的值是变量的名称，value的值时变量定义的值。通过定义的值会被插入到logger上下文中。定义变量后，可以使“${}”来使用变量。
+
+&lt;property name="log.path" value="/tmp" /&gt;
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="logback.encoder"></a>9.3.7. encoder 日志格式设置</h4></div></div></div>
+			
+			<pre class="screen">
+			
+&lt;encoder&gt;表示对日志进行编码：
+
+%d{HH: mm:ss.SSS}——日志输出时间
+%thread——输出日志的进程名字，这在Web应用以及异步任务处理中很有用
+%-5level——日志级别，并且使用5个字符靠左对齐
+%logger{36}——日志输出者的名字
+%msg——日志消息
+%n——平台的换行符			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="RollingFileAppender"></a>9.3.8. RollingFileAppender</h4></div></div></div>
+			
+			<pre class="screen">
+			
+上例中&lt;fileNamePattern&gt;${log.path}/logback.%d{yyyy-MM-dd}.log&lt;/fileNamePattern&gt;定义了日志的切分方式——把每一天的日志归档到一个文件中，同理，可以使用%d{yyyy-MM-dd_HH-mm}来定义精确到分的日志切分方式。
+&lt;maxHistory&gt;30&lt;/maxHistory&gt;表示只保留最近30天的日志，以防止日志填满整个磁盘空间。
+&lt;totalSizeCap&gt;1GB&lt;/totalSizeCap&gt;用来指定日志文件的上限大小，例如设置为1GB的话，那么到了这个值，就会删除旧的日志。	
+			
+			</pre>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm542969884976"></a>按日期分割日志</h5></div></div></div>
+				
+				<pre class="screen">
+			
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;configuration  scan="true" scanPeriod="60 seconds" debug="false"&gt;
+    &lt;contextName&gt;logback&lt;/contextName&gt;
+    &lt;property name="log.path" value="target" /&gt;
+    &lt;!--输出到控制台--&gt;
+    &lt;appender name="console" class="ch.qos.logback.core.ConsoleAppender"&gt;
+        &lt;encoder&gt;
+            &lt;pattern&gt;%d{HH:mm:ss.SSS} %contextName [%thread] %-5level %logger{36} - %msg%n&lt;/pattern&gt;
+        &lt;/encoder&gt;
+    &lt;/appender&gt;
+
+    &lt;!--输出到文件--&gt;
+    &lt;appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender"&gt;
+        &lt;rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy"&gt;
+            &lt;fileNamePattern&gt;${log.path}/spring.%d{yyyy-MM-dd}.log&lt;/fileNamePattern&gt;
+        &lt;/rollingPolicy&gt;
+        &lt;encoder&gt;
+            &lt;pattern&gt;%d{HH:mm:ss.SSS} %contextName [%thread] %-5level %logger{36} - %msg%n&lt;/pattern&gt;
+        &lt;/encoder&gt;
+    &lt;/appender&gt;
+
+    &lt;root level="info"&gt;
+        &lt;appender-ref ref="console" /&gt;
+        &lt;appender-ref ref="file" /&gt;
+    &lt;/root&gt;
+&lt;/configuration&gt;
+			
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm542969883600"></a>按照文件尺寸分割日志</h5></div></div></div>
+				
+				<p>按日期分割文件</p>
+				<pre class="screen">
+			
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;configuration&gt;
+  &lt;include resource="org/springframework/boot/logging/logback/defaults.xml" /&gt;
+  &lt;include resource="org/springframework/boot/logging/logback/file-appender.xml" /&gt;
+
+&lt;appender name="dailyRollingFileAppender" class="ch.qos.logback.core.rolling.RollingFileAppender"&gt;
+  &lt;File&gt;logs/spring.log&lt;/File&gt;
+  &lt;rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy"&gt;
+    &lt;!-- daily rollover --&gt;
+    &lt;FileNamePattern&gt;spring.%d{yyyy-MM-dd}.log&lt;/FileNamePattern&gt;
+    &lt;!-- keep 30 days' worth of history --&gt;
+    &lt;maxHistory&gt;60&lt;/maxHistory&gt;         
+  &lt;/rollingPolicy&gt;
+  &lt;encoder&gt;
+    &lt;Pattern&gt;%d{HH:mm:ss.SSS} [%thread] %-5level %logger{35} - %msg %n&lt;/Pattern&gt;
+  &lt;/encoder&gt;        
+&lt;/appender&gt;
+
+  &lt;root level="INFO"&gt;
+    &lt;appender-ref ref="FILE" /&gt;
+	&lt;appender-ref ref="dailyRollingFileAppender" /&gt;	
+  &lt;/root&gt;
+&lt;/configuration&gt;
+			
+			
+				</pre>
+				<p>通过级别分割日志将 info, error, debug 分割到指定文件中。</p>
+				<pre class="screen">
+			
+&lt;configuration scan="true" scanPeriod="10 seconds"&gt;
+     &lt;!-- 控制台日志输出--&gt;
+    &lt;appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender"&gt;
+        &lt;encoder&gt;
+            &lt;pattern&gt;%d %p (%file:%line\)- %m%n&lt;/pattern&gt;
+            &lt;charset&gt;UTF-8&lt;/charset&gt;
+        &lt;/encoder&gt;
+    &lt;/appender&gt;
+    &lt;!-- info日志输出--&gt;
+    &lt;appender name="INFO_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender"&gt;
+        &lt;encoder&gt;
+            &lt;pattern&gt;%d %p (%file:%line\)- %m%n&lt;/pattern&gt;
+            &lt;charset&gt;UTF-8&lt;/charset&gt;
+        &lt;/encoder&gt;
+        &lt;filter class="ch.qos.logback.classic.filter.ThresholdFilter"&gt;
+            &lt;level&gt;INFO&lt;/level&gt;
+        &lt;/filter&gt;
+        &lt;File&gt;${LOG_PATH}/www.netkiller.cn.info.log&lt;/File&gt;
+        &lt;rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy"&gt;
+            &lt;fileNamePattern&gt;${LOG_PATH}/www.netkiller.cn.info-%d{yyyyMMdd}.log.%i
+            &lt;/fileNamePattern&gt;
+            &lt;timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP"&gt;
+                &lt;maxFileSize&gt;10MB&lt;/maxFileSize&gt;
+            &lt;/timeBasedFileNamingAndTriggeringPolicy&gt;
+            &lt;maxHistory&gt;30&lt;/maxHistory&gt;
+        &lt;/rollingPolicy&gt;
+        &lt;layout class="ch.qos.logback.classic.PatternLayout"&gt;
+            &lt;Pattern&gt;%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} -%msg%n
+            &lt;/Pattern&gt;
+        &lt;/layout&gt;
+    &lt;/appender&gt;
+    &lt;!-- debug 日志输出--&gt;
+    &lt;appender name="DEBUG_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender"&gt;
+        &lt;encoder&gt;
+            &lt;pattern&gt;%d %p (%file:%line\)- %m%n&lt;/pattern&gt;
+            &lt;charset&gt;UTF-8&lt;/charset&gt;
+        &lt;/encoder&gt;
+        &lt;filter class="ch.qos.logback.classic.filter.ThresholdFilter"&gt;
+            &lt;level&gt;DEBUG&lt;/level&gt;
+        &lt;/filter&gt;
+        &lt;File&gt;${LOG_PATH}/www.netkiller.cn.debug.log&lt;/File&gt;
+        &lt;rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy"&gt;
+            &lt;fileNamePattern&gt;${LOG_PATH}/www.netkiller.cn.debug-%d{yyyyMMdd}.log.%i
+            &lt;/fileNamePattern&gt;
+            &lt;timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP"&gt;
+                &lt;maxFileSize&gt;10MB&lt;/maxFileSize&gt;
+            &lt;/timeBasedFileNamingAndTriggeringPolicy&gt;
+            &lt;maxHistory&gt;30&lt;/maxHistory&gt;
+        &lt;/rollingPolicy&gt;
+        &lt;layout class="ch.qos.logback.classic.PatternLayout"&gt;
+            &lt;Pattern&gt;%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} -%msg%n
+            &lt;/Pattern&gt;
+        &lt;/layout&gt;
+    &lt;/appender&gt;
+
+      &lt;!--error 日志输出配置 --&gt;
+    &lt;appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender"&gt;
+        &lt;encoder&gt;
+            &lt;pattern&gt;%d %p (%file:%line\)- %m%n&lt;/pattern&gt;
+            &lt;charset&gt;UTF-8&lt;/charset&gt;
+        &lt;/encoder&gt;
+        &lt;filter class="ch.qos.logback.classic.filter.ThresholdFilter"&gt;
+            &lt;level&gt;ERROR&lt;/level&gt;
+        &lt;/filter&gt;
+        &lt;File&gt;${LOG_PATH}/www.netkiller.cn.error.log&lt;/File&gt;
+        &lt;rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy"&gt;
+            &lt;fileNamePattern&gt;${LOG_PATH}/www.netkiller.cn.error-%d{yyyyMMdd}.log.%i&lt;/fileNamePattern&gt;
+            &lt;timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP"&gt;
+                &lt;maxFileSize&gt;10MB&lt;/maxFileSize&gt;
+            &lt;/timeBasedFileNamingAndTriggeringPolicy&gt;
+            &lt;maxHistory&gt;30&lt;/maxHistory&gt;
+        &lt;/rollingPolicy&gt;
+        &lt;layout class="ch.qos.logback.classic.PatternLayout"&gt;
+            &lt;Pattern&gt;%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} -%msg%n&lt;/Pattern&gt;
+        &lt;/layout&gt;
+    &lt;/appender&gt;
+
+    &lt;root level="DEBUG"&gt;
+        &lt;!--
+        &lt;appender-ref ref="STDOUT" /&gt;
+        &lt;appender-ref ref="INFO_FILE" /&gt;
+        &lt;appender-ref ref="ERROR_FILE" /&gt;
+        &lt;appender-ref ref="DEBUG_FILE" /&gt;
+        --&gt;
+        &lt;appender-ref ref="ERROR_FILE" /&gt;
+        &lt;appender-ref ref="INFO_FILE" /&gt;
+        &lt;appender-ref ref="DEBUG_FILE" /&gt;
+    &lt;/root&gt;
+
+&lt;/configuration&gt;			
+			
+				</pre>
+			</div>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm542969881568"></a>9.3.9. 日志过滤</h4></div></div></div>
+			
+			<p>将特定日志输出保存到指定位置</p>
+			<pre class="programlisting">
+			
+package cn.netkiller;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
+
+public class Application {
+	public static void main(String[] args) {
+		final Logger logger = LoggerFactory.getLogger(Application.class);
+		Marker notifyAdmin = MarkerFactory.getMarker("netkiller");
+		logger.info("AAAAAAAAA");
+		logger.info(notifyAdmin, "BBBBBBBBB");
+		logger.error(notifyAdmin, "This is a serious an error requiring the admin's attention", new Exception("Just testing"));
+	}
+}
+			
+			</pre>
+			<p>匹配到 marker 的日志才输出，通过 RollingFileAppender 可以保存到指定文件。</p>
+			<pre class="programlisting">
+			
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;configuration&gt;
+	&lt;include resource="org/springframework/boot/logging/logback/defaults.xml" /&gt;
+	&lt;include resource="org/springframework/boot/logging/logback/file-appender.xml" /&gt;
+	&lt;appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender"&gt;
+		&lt;filter class="ch.qos.logback.core.filter.EvaluatorFilter"&gt;
+			&lt;evaluator class="ch.qos.logback.classic.boolex.OnMarkerEvaluator"&gt;
+				&lt;marker&gt;netkiller&lt;/marker&gt;
+			&lt;/evaluator&gt;
+			&lt;onMatch&gt;ACCEPT&lt;/onMatch&gt;
+			&lt;onMismatch&gt;DENY&lt;/onMismatch&gt;
+		&lt;/filter&gt;
+		&lt;encoder&gt;
+			&lt;pattern&gt;%date{yyyy-MM-dd HH:mm:ss} %-4relative [%thread] %-5level %logger{35} : %msg %n&lt;/pattern&gt;
+		&lt;/encoder&gt;
+	&lt;/appender&gt;
+	&lt;root level="INFO"&gt;
+		&lt;appender-ref ref="STDOUT" /&gt;
+		&lt;appender-ref ref="FILE" /&gt;
+	&lt;/root&gt;
+&lt;/configuration&gt;			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="logback.file"></a>9.3.10. 标准输出</h4></div></div></div>
+			
+			<pre class="screen">
+			
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;configuration&gt;
+	&lt;include resource="org/springframework/boot/logging/logback/defaults.xml" /&gt;
+	&lt;include resource="org/springframework/boot/logging/logback/file-appender.xml" /&gt;
+	&lt;appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender"&gt;
+		&lt;encoder&gt;
+			&lt;pattern&gt;%date{yyyy-MM-dd HH:mm:ss} %-4relative [%thread] %-5level %logger{35} : %msg %n&lt;/pattern&gt;
+		&lt;/encoder&gt;
+	&lt;/appender&gt;
+	&lt;root level="INFO"&gt;
+		&lt;appender-ref ref="STDOUT" /&gt;
+		&lt;appender-ref ref="FILE" /&gt;
+	&lt;/root&gt;
+&lt;/configuration&gt;
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm542969874080"></a>9.3.11. MDC</h4></div></div></div>
+			
+			<p>每个 userId 生成一个日志文件</p>
+			<pre class="programlisting">
+			
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;configuration&gt;
+	&lt;include resource="org/springframework/boot/logging/logback/defaults.xml" /&gt;
+	&lt;include resource="org/springframework/boot/logging/logback/file-appender.xml" /&gt;
+
+	&lt;property name="log.pattern" value="%d{yyyy-MM-dd HH:mm:ss} - [%25.25(%thread)] - [%-5level] - %-30.30(%logger{30}) : %msg%n" /&gt;
+
+	&lt;appender name="siftingAppender" class="ch.qos.logback.classic.sift.SiftingAppender"&gt;
+		&lt;discriminator&gt;
+			&lt;key&gt;userId&lt;/key&gt;
+			&lt;defaultValue&gt;unknown&lt;/defaultValue&gt;
+		&lt;/discriminator&gt;
+		&lt;sift&gt;
+			&lt;appender name="${userId}" class="ch.qos.logback.core.rolling.RollingFileAppender"&gt;
+				&lt;rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy"&gt;
+					&lt;fileNamePattern&gt;${log.path}/${userId}.%d{yyyy-MM-dd}.log&lt;/fileNamePattern&gt;
+				&lt;/rollingPolicy&gt;
+				&lt;encoder&gt;
+					&lt;pattern&gt;${log.pattern}&lt;/pattern&gt;
+				&lt;/encoder&gt;
+			&lt;/appender&gt;
+		&lt;/sift&gt;
+	&lt;/appender&gt;
+
+	&lt;root level="INFO"&gt;
+		&lt;appender-ref ref="siftingAppender" /&gt;
+	&lt;/root&gt;
+&lt;/configuration&gt;			
+			
+			</pre>
+			<pre class="programlisting">
+			
+package cn.netkiller.log;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
+
+public class LogTest {
+
+	private static final Logger logger = LoggerFactory.getLogger(LogTest.class);
+
+	public LogTest() {
+		// TODO Auto-generated constructor stub
+	}
+
+	public static void main(String[] args) {
+	
+		MDC.put("userId","0001");
+		logger.info("0001用户");
+        MDC.clear(); 
+
+        MDC.put("userId","0002");
+        logger.info("0002用户");
+        MDC.clear();
+
+	}
+
+}
+			
+			
+			</pre>
+		</div>
+
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="logback.mongodb"></a>9.3.12. 日志写入 MongoDB</h4></div></div></div>
+			
+			<pre class="screen">
+			
+
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="logback.logstash"></a>9.3.13. 日志发送给 logstash</h4></div></div></div>
+			
+			<p>https://github.com/logfellow/logstash-logback-encoder/</p>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm542969868384"></a>logstash 配置</h5></div></div></div>
+				
+				<p>配置 logstash 增加 tcp 接收输入端。</p>
+				<pre class="screen">
+				
+input {
+    tcp {
+	    mode =&gt; "server"
+	    host =&gt; "127.0.0.1"
+	    port =&gt; 4567
+	    codec =&gt; json_lines
+	}
+}				
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm542969866496"></a>Java 项目</h5></div></div></div>
+				
+				<p>Maven 配置文件 pom.xml 中添加</p>
+				<pre class="screen">
+				
+&lt;dependency&gt;
+    &lt;groupId&gt;net.logstash.logback&lt;/groupId&gt;
+    &lt;artifactId&gt;logstash-logback-encoder&lt;/artifactId&gt;
+    &lt;version&gt;7.2&lt;/version&gt;
+&lt;/dependency&gt;
+				
+				</pre>
+				<p>然后再resources添加logback.xml文件</p>
+				<pre class="screen">
+				
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;configuration scan="true" scanPeriod="60 seconds" debug="true"&gt;
+	&lt;include resource="org/springframework/boot/logging/logback/defaults.xml" /&gt;
+	&lt;include resource="org/springframework/boot/logging/logback/console-appender.xml" /&gt;
+	&lt;include resource="org/springframework/boot/logging/logback/file-appender.xml" /&gt;
+
+	&lt;appender name="logstash" class="net.logstash.logback.appender.LogstashTcpSocketAppender"&gt;
+		&lt;destination&gt;127.0.0.1:4567&lt;/destination&gt;
+		&lt;encoder class="net.logstash.logback.encoder.LogstashEncoder"&gt;
+			&lt;providers&gt;
+				&lt;timestamp /&gt;
+				&lt;logLevel /&gt;
+				&lt;threadName /&gt;
+				&lt;loggerName /&gt;
+				&lt;message /&gt;
+			&lt;/providers&gt;
+		&lt;/encoder&gt;
+	&lt;/appender&gt;
+	&lt;root level="info"&gt;
+		&lt;appender-ref ref="CONSOLE" /&gt;
+		&lt;appender-ref ref="logstash" /&gt;
+	&lt;/root&gt;
+&lt;/configuration&gt;				
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm542969862448"></a>通过 tags 区分日志文件</h5></div></div></div>
+				
+				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm542969863648"></a>logstash pipeline 配置</h6></div></div></div>
+					
+					<p></p>
+					<pre class="screen">
+				
+[root@netkiller ~]# cat /etc/logstash/conf.d/file.conf 
+input {
+  tcp {
+    port =&gt; 4567 
+    codec =&gt; json_lines
+  }
+}
+
+filter {
+    ruby {
+	code =&gt; "event.set('datetime', event.get('@timestamp').time.localtime.strftime('%Y-%m-%d %H:%M:%S'))"
+    }
+}
+
+output {
+	if "finance" in [tags] { 
+	    file {
+	        path =&gt; "/opt/log/%{app}.finance.%{+yyyy}-%{+MM}-%{+dd}.log"
+			codec =&gt; line { format =&gt; "[%{datetime}] %{level} %{message} %{tags}"}
+		}
+	} else if "market" in [tags] {
+		file {
+			path =&gt; "/opt/log/%{app}.market.%{+yyyy}-%{+MM}-%{+dd}.log"
+			codec =&gt; line { format =&gt; "[%{datetime}] %{level} %{message} %{tags}"}
+		}
+	} else {
+	    file {
+			path =&gt; "/opt/log/%{app}.unknow.%{+yyyy}-%{+MM}-%{+dd}.log"
+			codec =&gt; line { format =&gt; "[%{datetime}] %{level} %{message} %{tags}"}
+		}
+	}
+}				
+				
+					</pre>
+				</div>
+				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm542969859296"></a>logback-spring.xml 配置</h6></div></div></div>
+					
+					<pre class="screen">
+				
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;configuration scan="false" scanPeriod="60 seconds" debug="false"&gt;
+	&lt;include resource="org/springframework/boot/logging/logback/defaults.xml" /&gt;
+	&lt;include resource="org/springframework/boot/logging/logback/console-appender.xml" /&gt;
+	&lt;include resource="org/springframework/boot/logging/logback/file-appender.xml" /&gt;
+
+	&lt;logger name="org.springframework.web" level="INFO" /&gt;
+	&lt;logger name="org.springboot.sample" level="TRACE" /&gt;
+	&lt;property name="log.pattern" value="%date{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{35}.%method: %msg%n" /&gt;
+	&lt;springProperty scope="context" name="app" source="spring.application.name" defaultValue="spring-boot-fusion" /&gt;
+	&lt;property name="log.path" value="/tmp" /&gt;
+
+	&lt;appender name="siftingAppender" class="ch.qos.logback.classic.sift.SiftingAppender"&gt;
+		&lt;discriminator&gt;
+			&lt;key&gt;userId&lt;/key&gt;
+			&lt;defaultValue&gt;unknown&lt;/defaultValue&gt;
+		&lt;/discriminator&gt;
+		&lt;sift&gt;
+			&lt;appender name="${userId}" class="ch.qos.logback.core.rolling.RollingFileAppender"&gt;
+				&lt;rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy"&gt;
+					&lt;fileNamePattern&gt;${log.path}/${userId}.%d{yyyy-MM-dd}.log&lt;/fileNamePattern&gt;
+				&lt;/rollingPolicy&gt;
+				&lt;encoder&gt;
+					&lt;pattern&gt;${log.pattern}&lt;/pattern&gt;
+				&lt;/encoder&gt;
+			&lt;/appender&gt;
+		&lt;/sift&gt;
+	&lt;/appender&gt;
+	&lt;springProfile name="prod"&gt;
+		&lt;appender name="logstash" class="net.logstash.logback.appender.LogstashTcpSocketAppender"&gt;
+			&lt;destination&gt;172.18.200.10:4567&lt;/destination&gt;
+			&lt;keepAliveDuration&gt;5 minutes&lt;/keepAliveDuration&gt;
+			&lt;reconnectionDelay&gt;3 second&lt;/reconnectionDelay&gt;
+			&lt;writeBufferSize&gt;8192&lt;/writeBufferSize&gt;
+			&lt;includeCallerData&gt;true&lt;/includeCallerData&gt;
+			&lt;encoder class="net.logstash.logback.encoder.LogstashEncoder"&gt;
+				&lt;shortenedLoggerNameLength&gt;36&lt;/shortenedLoggerNameLength&gt;
+				&lt;timestampPattern&gt;yyyy-MM-dd HH:mm:ss.Asia/Shanghai&lt;/timestampPattern&gt;
+				&lt;timeZone&gt;Asia/Shanghai&lt;/timeZone&gt;
+
+				&lt;fieldNames&gt;
+					&lt;timestamp&gt;@timestamp&lt;/timestamp&gt;
+					&lt;version&gt;@version&lt;/version&gt;
+					&lt;message&gt;message&lt;/message&gt;
+					&lt;logger&gt;logger_name&lt;/logger&gt;
+					&lt;!-- &lt;thread&gt;thread_name&lt;/thread&gt; --&gt;
+					&lt;level&gt;level&lt;/level&gt;
+					&lt;thread&gt;[ignore]&lt;/thread&gt;
+					&lt;levelValue&gt;[ignore]&lt;/levelValue&gt;
+				&lt;/fieldNames&gt;
+			&lt;/encoder&gt;
+
+			&lt;filter class="ch.qos.logback.core.filter.EvaluatorFilter"&gt;
+				&lt;evaluator class="ch.qos.logback.classic.boolex.OnMarkerEvaluator"&gt;
+					&lt;marker&gt;finance&lt;/marker&gt;
+					&lt;marker&gt;market&lt;/marker&gt;
+					&lt;marker&gt;customer&lt;/marker&gt;
+				&lt;/evaluator&gt;
+				&lt;onMatch&gt;ACCEPT&lt;/onMatch&gt;
+				&lt;onMismatch&gt;DENY&lt;/onMismatch&gt;
+			&lt;/filter&gt;
+		&lt;/appender&gt;
+
+	&lt;/springProfile&gt;
+
+	&lt;root level="info"&gt;
+		&lt;springProfile name="dev"&gt;
+			&lt;appender-ref ref="CONSOLE" /&gt;
+		&lt;/springProfile&gt;
+		&lt;springProfile name="test"&gt;
+			&lt;appender-ref ref="CONSOLE" /&gt;
+			&lt;appender-ref ref="FILE" /&gt;
+		&lt;/springProfile&gt;
+		&lt;springProfile name="prod"&gt;
+			&lt;appender-ref ref="CONSOLE" /&gt;
+			&lt;appender-ref ref="logstash" /&gt;
+		&lt;/springProfile&gt;
+	&lt;/root&gt;
+&lt;/configuration&gt;
+				
+					</pre>
+				</div>
+				<div class="section"><div class="titlepage"><div><div><h6 class="title"><a id="idm542969860400"></a>打印日志</h6></div></div></div>
+					
+					<pre class="programlisting">
+				
+package cn.netkiller.controller;
+
+import java.util.concurrent.TimeUnit;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import cn.netkiller.LogMarker;
+import lombok.extern.slf4j.Slf4j;
+
+@RestController
+@Slf4j
+public class HomeController {
+	private static final Logger logger = LoggerFactory.getLogger(HomeController.class);
+
+	public HomeController() {
+		// TODO Auto-generated constructor stub
+	}
+
+	@GetMapping("/")
+	public String index() {
+
+		Marker finance = MarkerFactory.getMarker(LogMarker.finance.toString());
+		Marker customer = MarkerFactory.getMarker(LogMarker.customer.toString());
+		Marker market = MarkerFactory.getMarker(LogMarker.market.toString());
+		logger.info("AAAAAAAAA");
+		logger.info(finance, "test");
+		logger.info(finance, "finance");
+		logger.info(customer, "customer");
+		logger.info(market, "market");
+
+		MDC.put("userId", "0001");
+		logger.info("0001用户");
+		MDC.clear();
+
+		MDC.put("userId", "0002");
+		logger.info("0002用户");
+		MDC.clear();
+		return "Hello world!!!";
+	}
+}
+				
+				
+					</pre>
+				</div>
+			</div>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="springboot.fluentd"></a>9.3.14. fluentd</h4></div></div></div>
+			
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm542969856080"></a>Maven 依赖</h5></div></div></div>
+				
+				<pre class="screen">
+			
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.fluentd&lt;/groupId&gt;
+			&lt;artifactId&gt;fluent-logger&lt;/artifactId&gt;
+			&lt;version&gt;0.3.4&lt;/version&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;com.sndyuk&lt;/groupId&gt;
+			&lt;artifactId&gt;logback-more-appenders&lt;/artifactId&gt;
+			&lt;version&gt;1.8.7&lt;/version&gt;
+		&lt;/dependency&gt;			
+			
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm542969854512"></a>安装 fluent-bit</h5></div></div></div>
+				
+				<pre class="screen">
+			
+dnf install -y fluent-bit			
+			
+				</pre>
+				<p>启动 fluent-bit</p>
+				<pre class="screen">
+			
+[root@netkiller ~]# fluent-bit -i forward -o stdout
+Fluent Bit v1.9.7
+* Copyright (C) 2015-2022 The Fluent Bit Authors
+* Fluent Bit is a CNCF sub-project under the umbrella of Fluentd
+* https://fluentbit.io
+
+[2022/09/24 23:25:25] [ info] [fluent bit] version=1.9.7, commit=, pid=1191240
+[2022/09/24 23:25:25] [ info] [storage] version=1.2.0, type=memory-only, sync=normal, checksum=disabled, max_chunks_up=128
+[2022/09/24 23:25:25] [ info] [cmetrics] version=0.3.5
+[2022/09/24 23:25:25] [ info] [input:forward:forward.0] listening on 0.0.0.0:24224
+[2022/09/24 23:25:25] [ info] [sp] stream processor started
+[2022/09/24 23:25:25] [ info] [output:stdout:stdout.0] worker #0 started
+			
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm542969852512"></a>配置 logback-spring.xml</h5></div></div></div>
+				
+				<pre class="programlisting">
+		
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;configuration debug="true"&gt;
+
+    &lt;appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender"&gt;
+        &lt;encoder&gt;
+            &lt;pattern&gt;%date - %level - [%thread] - %logger - [%file:%line] - %msg%n&lt;/pattern&gt;
+        &lt;/encoder&gt;
+    &lt;/appender&gt;
+
+    &lt;appender name="FLUENT" class="ch.qos.logback.more.appenders.DataFluentAppender"&gt;
+        &lt;tag&gt;development&lt;/tag&gt;
+        &lt;label&gt;normal&lt;/label&gt;
+        &lt;remoteHost&gt;localhost&lt;/remoteHost&gt;
+        &lt;port&gt;24224&lt;/port&gt;
+        &lt;maxQueueSize&gt;20&lt;/maxQueueSize&gt;
+    &lt;/appender&gt;
+
+    &lt;logger name="cn.netkiller.log" level="DEBUG"/&gt;
+
+
+    &lt;root level="DEBUG"&gt;
+        &lt;appender-ref ref="STDOUT" /&gt;
+        &lt;appender-ref ref="FLUENT" /&gt;
+    &lt;/root&gt;
+
+&lt;/configuration&gt;
+		
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm542969850592"></a>查看 fluent 输出</h5></div></div></div>
+				
+				<pre class="screen">
+			
+[0] development.normal: [1664033186.000000000, {"level"=&gt;"INFO", "logger"=&gt;"cn.netkiller.Application", "thread"=&gt;"main", "message"=&gt;"Starting Application using Java 18 on MacBook-Pro-Neo.local with PID 85696 (/Users/neo/workspace/bottleneck/target/classes started by neo in /Users/neo/workspace/bottleneck)"}]
+[1] development.normal: [1664033186.000000000, {"level"=&gt;"INFO", "logger"=&gt;"cn.netkiller.Application", "thread"=&gt;"main", "message"=&gt;"The following 1 profile is active: "prod""}]
+[0] development.normal: [1664033187.000000000, {"level"=&gt;"INFO", "logger"=&gt;"org.springframework.data.repository.config.RepositoryConfigurationDelegate", "thread"=&gt;"main", "message"=&gt;"Multiple Spring Data modules found, entering strict repository configuration mode"}]
+[1] development.normal: [1664033187.000000000, {"level"=&gt;"INFO", "logger"=&gt;"org.springframework.data.repository.config.RepositoryConfigurationDelegate", "thread"=&gt;"main", "message"=&gt;"Bootstrapping Spring Data Redis repositories in DEFAULT mode."}]
+[2] development.normal: [1664033187.000000000, {"level"=&gt;"INFO", "logger"=&gt;"org.springframework.data.repository.config.RepositoryConfigurationDelegate", "thread"=&gt;"main", "message"=&gt;"Finished Spring Data repository scanning in 6 ms. Found 0 Redis repository interfaces."}]
+[0] development.normal: [1664033188.000000000, {"level"=&gt;"INFO", "logger"=&gt;"org.springframework.boot.web.embedded.tomcat.TomcatWebServer", "thread"=&gt;"main", "message"=&gt;"Tomcat initialized with port(s): 8080 (http)"}]
+[1] development.normal: [1664033188.000000000, {"level"=&gt;"INFO", "logger"=&gt;"org.apache.catalina.core.StandardService", "thread"=&gt;"main", "message"=&gt;"Starting service [Tomcat]"}]
+[2] development.normal: [1664033188.000000000, {"level"=&gt;"INFO", "logger"=&gt;"org.apache.catalina.core.StandardEngine", "thread"=&gt;"main", "message"=&gt;"Starting Servlet engine: [Apache Tomcat/9.0.65]"}]
+[3] development.normal: [1664033188.000000000, {"level"=&gt;"INFO", "logger"=&gt;"org.apache.catalina.core.ContainerBase.[Tomcat].[localhost].[/]", "thread"=&gt;"main", "message"=&gt;"Initializing Spring embedded WebApplicationContext"}]
+[4] development.normal: [1664033188.000000000, {"level"=&gt;"INFO", "logger"=&gt;"org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext", "thread"=&gt;"main", "message"=&gt;"Root WebApplicationContext: initialization completed in 2133 ms"}]
+[0] development.normal: [1664033189.000000000, {"level"=&gt;"INFO", "logger"=&gt;"org.springframework.boot.actuate.endpoint.web.EndpointLinksResolver", "thread"=&gt;"main", "message"=&gt;"Exposing 14 endpoint(s) beneath base path '/actuator'"}]
+[0] development.normal: [1664033189.000000000, {"level"=&gt;"INFO", "logger"=&gt;"org.springframework.boot.web.embedded.tomcat.TomcatWebServer", "thread"=&gt;"main", "message"=&gt;"Tomcat started on port(s): 8080 (http) with context path ''"}]
+[1] development.normal: [1664033189.000000000, {"level"=&gt;"INFO", "logger"=&gt;"cn.netkiller.Application", "thread"=&gt;"main", "message"=&gt;"Started Application in 4.224 seconds (JVM running for 4.918)"}]			
+			
+				</pre>
+			</div>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="Loki4j"></a>9.3.15. Loki4j Logback</h4></div></div></div>
+			
+			<p>https://loki4j.github.io/loki-logback-appender/</p>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm542969847200"></a>Maven</h5></div></div></div>
+				
+				<pre class="screen">
+			
+&lt;dependency&gt;
+    &lt;groupId&gt;com.github.loki4j&lt;/groupId&gt;
+    &lt;artifactId&gt;loki-logback-appender&lt;/artifactId&gt;
+    &lt;version&gt;1.3.2&lt;/version&gt;
+&lt;/dependency&gt;			
+			
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="idm542969845696"></a>logback.xml</h5></div></div></div>
+				
+				<pre class="screen">
+			
+&lt;appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender"&gt;
+    &lt;http&gt;
+        &lt;url&gt;http://localhost:3100/loki/api/v1/push&lt;/url&gt;
+    &lt;/http&gt;
+    &lt;format&gt;
+        &lt;label&gt;
+            &lt;pattern&gt;app=my-app,host=${HOSTNAME},level=%level&lt;/pattern&gt;
+        &lt;/label&gt;
+        &lt;message&gt;
+            &lt;pattern&gt;l=%level h=${HOSTNAME} c=%logger{20} t=%thread | %msg %ex&lt;/pattern&gt;
+        &lt;/message&gt;
+        &lt;sortByTime&gt;true&lt;/sortByTime&gt;
+    &lt;/format&gt;
+&lt;/appender&gt;
+
+&lt;root level="DEBUG"&gt;
+    &lt;appender-ref ref="LOKI" /&gt;
+&lt;/root&gt;
+			
+				</pre>
+			</div>
+		</div>
+	</div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
+			window.changyan.api.config({
+			appid: 'cyvwjQUG3',
+			conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
+			});
+</script><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="lombok.logging.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="spring.boot.logging.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="log4j2-gelf-logstash.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">9.2. 打印日志 </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 9.4. Log4j2 + Gelf + Logstash</td></tr></table></div><script xmlns="">
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+			ga('create', 'UA-11694057-1', 'auto');
+			ga('send', 'pageview');
+
+		</script><script xmlns="" async="async">
+			var _hmt = _hmt || [];
+			(function() {
+			var hm = document.createElement("script");
+			hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(hm, s);
+			})();
+</script><script xmlns="" async="async">
+			(function(){
+			var bp = document.createElement('script');
+			var curProtocol = window.location.protocol.split(':')[0];
+			if (curProtocol === 'https') {
+			bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+			}
+			else {
+			bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+			}
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(bp, s);
+			})();
+</script></body></html>
