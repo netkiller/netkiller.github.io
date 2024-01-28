@@ -1,0 +1,346 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>73.2. Kubernetes 部署微服务</title><link rel="stylesheet" type="text/css" href="../../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><link rel="home" href="../../index.html" title="Netkiller Java 手札（版）" /><link rel="up" href="SpringCloudAlibaba.html" title="第 73 章 Spring Cloud Alibaba" /><link rel="prev" href="SpringCloudAlibaba.html" title="第 73 章 Spring Cloud Alibaba" /><link rel="next" href="ch73s03.html" title="73.3. Nacos 配置中心/注册中心代码实例" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
+		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://edu.51cto.com/lecturer/1703915.html">51CTO学院</a> | <a xmlns="" href="https://edu.csdn.net/lecturer/6423">CSDN程序员研修院</a> | <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> | <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">腾讯云社区</a> | <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">阿里云栖社区</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">73.2. Kubernetes 部署微服务</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="SpringCloudAlibaba.html">上一页</a> </td><th width="60%" align="center">第 73 章 Spring Cloud Alibaba</th><td width="20%" align="right"> <a accesskey="n" href="ch73s03.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm49382487472"></a>73.2. Kubernetes 部署微服务</h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm49382486576"></a>73.2.1. pom.xml 中加入 docker 插件</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"&gt;
+	&lt;modelVersion&gt;4.0.0&lt;/modelVersion&gt;
+
+	&lt;groupId&gt;com.example&lt;/groupId&gt;
+	&lt;artifactId&gt;demo&lt;/artifactId&gt;
+	&lt;version&gt;0.0.1-SNAPSHOT&lt;/version&gt;
+	&lt;packaging&gt;jar&lt;/packaging&gt;
+
+	&lt;name&gt;demo&lt;/name&gt;
+	&lt;description&gt;Demo project for Spring Boot&lt;/description&gt;
+
+	&lt;parent&gt;
+		&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+		&lt;artifactId&gt;spring-boot-starter-parent&lt;/artifactId&gt;
+		&lt;version&gt;2.6.3&lt;/version&gt;
+		&lt;relativePath /&gt; &lt;!-- lookup parent from repository --&gt;
+	&lt;/parent&gt;
+
+	&lt;properties&gt;
+		&lt;project.build.sourceEncoding&gt;UTF-8&lt;/project.build.sourceEncoding&gt;
+		&lt;project.reporting.outputEncoding&gt;UTF-8&lt;/project.reporting.outputEncoding&gt;
+		&lt;java.version&gt;1.8&lt;/java.version&gt;
+
+		&lt;sonar.projectKey&gt;netkiller.cn_java_AX0HsoVkT19KeT2iVgUT&lt;/sonar.projectKey&gt;
+		&lt;sonar.qualitygate.wait&gt;true&lt;/sonar.qualitygate.wait&gt;
+
+		&lt;docker.registry&gt;registry.netkiller.cn/netkiller.cn&lt;/docker.registry&gt;
+
+	&lt;/properties&gt;
+
+	&lt;repositories&gt;
+		&lt;repository&gt;
+			&lt;id&gt;gitlab-maven&lt;/id&gt;
+			&lt;url&gt;${env.CI_API_V4_URL}/projects/${env.CI_PROJECT_ID}/packages/maven&lt;/url&gt;
+		&lt;/repository&gt;
+	&lt;/repositories&gt;
+	&lt;distributionManagement&gt;
+		&lt;repository&gt;
+			&lt;id&gt;gitlab-maven&lt;/id&gt;
+			&lt;url&gt;${CI_API_V4_URL}/projects/${env.CI_PROJECT_ID}/packages/maven&lt;/url&gt;
+		&lt;/repository&gt;
+		&lt;snapshotRepository&gt;
+			&lt;id&gt;gitlab-maven&lt;/id&gt;
+			&lt;url&gt;${CI_API_V4_URL}/projects/${env.CI_PROJECT_ID}/packages/maven&lt;/url&gt;
+		&lt;/snapshotRepository&gt;
+	&lt;/distributionManagement&gt;
+
+	&lt;dependencies&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-web&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-test&lt;/artifactId&gt;
+			&lt;scope&gt;test&lt;/scope&gt;
+		&lt;/dependency&gt;
+
+		&lt;dependency&gt;
+			&lt;groupId&gt;junit&lt;/groupId&gt;
+			&lt;artifactId&gt;junit&lt;/artifactId&gt;
+			&lt;!-- &lt;version&gt;4.13.2&lt;/version&gt; --&gt;
+			&lt;scope&gt;test&lt;/scope&gt;
+		&lt;/dependency&gt;
+
+	&lt;/dependencies&gt;
+
+	&lt;build&gt;
+		&lt;plugins&gt;
+			&lt;plugin&gt;
+				&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+				&lt;artifactId&gt;spring-boot-maven-plugin&lt;/artifactId&gt;
+			&lt;/plugin&gt;
+			&lt;plugin&gt;
+				&lt;groupId&gt;com.spotify&lt;/groupId&gt;
+				&lt;artifactId&gt;docker-maven-plugin&lt;/artifactId&gt;
+				&lt;version&gt;1.2.2&lt;/version&gt;
+				&lt;configuration&gt;
+					&lt;imageName&gt;${docker.registry}/${project.artifactId}&lt;/imageName&gt;
+					&lt;baseImage&gt;openjdk:8-alpine&lt;/baseImage&gt;
+					&lt;maintainer&gt;netkiller@msn.com&lt;/maintainer&gt;
+					&lt;volumes&gt;/srv&lt;/volumes&gt;
+					&lt;workdir&gt;/srv&lt;/workdir&gt;
+					&lt;env&gt;
+						&lt;JAVA_OPTS&gt;-server -Xms512m -Xmx4096m -Djava.security.egd=file:/dev/./urandom&lt;/JAVA_OPTS&gt;
+					&lt;/env&gt;
+					&lt;exposes&gt;8080&lt;/exposes&gt;
+					&lt;entryPoint&gt;["sh", "-c", "/srv/docker-entrypoint.sh"]&lt;/entryPoint&gt;
+					&lt;resources&gt;
+						&lt;resource&gt;
+							&lt;targetPath&gt;/srv&lt;/targetPath&gt;
+							&lt;directory&gt;${project.build.directory}&lt;/directory&gt;
+							&lt;include&gt;${project.build.finalName}.jar&lt;/include&gt;
+						&lt;/resource&gt;
+						&lt;resource&gt;
+							&lt;targetPath&gt;/srv&lt;/targetPath&gt;
+							&lt;directory&gt;.&lt;/directory&gt;
+							&lt;include&gt;docker-entrypoint.sh&lt;/include&gt;
+						&lt;/resource&gt;
+					&lt;/resources&gt;
+					&lt;registryUrl&gt;http://${docker.registry}/v2/&lt;/registryUrl&gt;
+					&lt;imageTags&gt;
+						&lt;imageTag&gt;${project.version}&lt;/imageTag&gt;
+						&lt;imageTag&gt;latest&lt;/imageTag&gt;
+					&lt;/imageTags&gt;
+				&lt;/configuration&gt;
+			&lt;/plugin&gt;
+		&lt;/plugins&gt;
+	&lt;/build&gt;
+&lt;/project&gt;			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm49382485184"></a>73.2.2. 容器启动脚本</h4></div></div></div>
+			
+			<p>在项目目录创建 docker-entrypoint.sh 文件</p>
+			<pre class="programlisting">
+			
+#!/bin/sh
+
+if [ ! -z $1 ]; then
+    MODULE=$1
+    shift
+fi
+
+if [ -z $JAVA_OPTS ]; then
+    JAVA_OPTS='-Xms1024m -Xmx4096m -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=512m -Djava.security.egd=file:/dev/./urandom -Duser.timezone=GMT+8 -Dfile.encoding=utf-8'
+fi
+
+if [ -z $MODULE ]; then
+    echo "MODULE environment is not set"
+    exit 127
+else
+    PACKAGE=/srv/$MODULE.jar
+fi
+
+DEBUG='-Xdebug -Xrunjdwp:transport=dt_socket,suspend=n,server=y,address=5555'
+SKYWALKING="-javaagent:/srv/skywalking/agent/skywalking-agent.jar -Dskywalking.collector.backend_service=oap.netkiller.cn:11800 -Dskywalking.agent.service_name=${MODULE}"
+
+exec java ${JAVA_OPTS}  -jar ${PACKAGE} $@			
+			
+			</pre>
+			<p>暂时 DEBUG，SKYWALKING 没有使用，放在一遍不碍事。脚本的用法</p>
+			<pre class="screen">
+			
+./docker-entrypoint.sh your_module --server.port=8080
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm49382481920"></a>73.2.3. 构建 docker 镜像</h4></div></div></div>
+			
+			<p>运行 mvn 命令构建 docker 镜像</p>
+			<pre class="screen">
+			
+neo@Netkiller-iMac ~/w/java.netkiller.cn (master)&gt; mvn package docker:build docker:push			
+			
+			</pre>
+			<p>不出预料，你会看到下面输出</p>
+			<pre class="screen">
+			
+[INFO] Building image registry.netkiller.cn/netkiller.cn/demo
+Step 1/9 : FROM openjdk:8-alpine
+
+ ---&gt; a3562aa0b991
+Step 2/9 : MAINTAINER netkiller@msn.com
+
+ ---&gt; Using cache
+ ---&gt; b4a79be602ae
+Step 3/9 : ENV JAVA_OPTS -server -Xms512m -Xmx4096m -Djava.security.egd=file:/dev/./urandom
+
+ ---&gt; Using cache
+ ---&gt; 9d685ea4a0d3
+Step 4/9 : WORKDIR /srv
+
+ ---&gt; Using cache
+ ---&gt; e2feea451bb1
+Step 5/9 : ADD /srv/demo-0.0.1-SNAPSHOT.jar /srv/
+
+ ---&gt; 7ad53fb991b8
+Step 6/9 : ADD /srv/docker-entrypoint.sh /srv/
+
+ ---&gt; 39def6507064
+Step 7/9 : EXPOSE 8080
+
+ ---&gt; Running in 338a99e6ec36
+Removing intermediate container 338a99e6ec36
+ ---&gt; f192b73ab3b9
+Step 8/9 : ENTRYPOINT ["sh", "-c", "/srv/docker-entrypoint.sh"]
+
+ ---&gt; Running in 5bda82acd305
+Removing intermediate container 5bda82acd305
+ ---&gt; 85c1b2615a97
+Step 9/9 : VOLUME /srv
+
+ ---&gt; Running in 27d71c55bf7e
+Removing intermediate container 27d71c55bf7e
+ ---&gt; 64e0d8992fdd
+ProgressMessage{id=null, status=null, stream=null, error=null, progress=null, progressDetail=null}
+Successfully built 64e0d8992fdd
+Successfully tagged registry.netkiller.cn/netkiller.cn/demo:latest
+[INFO] Built registry.netkiller.cn/netkiller.cn/demo
+[INFO] Tagging registry.netkiller.cn/netkiller.cn/demo with 0.0.1-SNAPSHOT
+[INFO] Tagging registry.netkiller.cn/netkiller.cn/demo with latest
+			
+			</pre>
+			<p>查看镜像</p>
+			<pre class="screen">
+			
+neo@Netkiller-iMac ~/w/java.netkiller.cn (master)&gt; docker image ls | grep netkiller
+registry.netkiller.cn/netkiller.cn/demo                       0.0.1-SNAPSHOT   64e0d8992fdd   3 minutes ago    122MB
+registry.netkiller.cn/netkiller.cn/demo                       latest           64e0d8992fdd   3 minutes ago    122MB			
+			
+			</pre>
+		</div>
+
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm49382478080"></a>73.2.4. 编排 kubernetes 容器</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+from netkiller.kubernetes import *
+namespace = 'default'
+
+compose = Compose('development')
+
+module = 'demo'
+# version = '0.0.1-SNAPSHOT'
+version = 'latest'
+
+deployment = Deployment()
+deployment.apiVersion('apps/v1')
+
+deployment.metadata().name(module).labels({'app': module}).namespace(namespace)
+deployment.spec().replicas(1)
+deployment.spec().selector({'matchLabels': {'app': module}})
+deployment.spec().template().metadata().labels({'app': module})
+deployment.spec().template().spec().containers().name(module).image(
+    'registry.netkiller.cn/netkiller.cn/cloud.netkiller.cn:%s' % version).ports([{
+        'containerPort': 8080
+    }]).env([
+        {'name': 'TZ', 'value': 'Asia/Shanghai'},
+        {'name': 'LANG', 'value': 'en_US.UTF-8'},
+    ]).args([module,'--server.port=8080'])
+
+# deployment.debug()
+# deployment.json()
+
+service = Service()
+service.metadata().name(module)
+service.metadata().namespace(namespace)
+service.spec().selector({'app': module})
+service.spec().type('NodePort')
+service.spec().ports([{
+    'name': 'http',
+    'protocol': 'TCP',
+    'port': 8080,
+    'targetPort': 8080
+}])
+
+compose.add(deployment)
+compose.add(service)
+
+print("=" * 40, "Compose", "=" * 40)
+compose.debug()
+compose.delete()
+compose.create()⏎  			
+			
+			</pre>
+			<p>查看容器运行状态</p>
+			<pre class="screen">
+			
+neo@Netkiller-iMac ~/w/java.netkiller.cn (master)&gt; kubectl get pods
+NAME                       READY   STATUS             RESTARTS   AGE
+nginx-88c84c4d8-8pmzp      1/1     Running            1          3d20h
+demo-76b7598b76-5hstp      1/1     Running            0          5h43m
+busybox                    0/1     CrashLoopBackOff   52         4h44m			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm49382475600"></a>73.2.5. 启动指定 nacos</h4></div></div></div>
+			
+			<p>容器中不方便修改配置文件，我们可以使用环境变量覆盖配置</p>
+			<pre class="screen">
+			 
+JAVA_OPTS=-Dspring.cloud.nacos.username=nacos \
+-Dspring.cloud.nacos.password=nacos \
+-Dspring.cloud.nacos.config.server-addr=mse-032dbef0-nacos-ans.mse.aliyuncs.com:8848 \
+-Dspring.cloud.nacos.discovery.server-addr=mse-032dbef0-nacos-ans.mse.aliyuncs.com:8848 \
+			
+			</pre>
+			<p>相当于</p>
+			<pre class="screen">
+			 
+java -Dspring.cloud.nacos.username=nacos \
+-Dspring.cloud.nacos.password=nacos \
+-Dspring.cloud.nacos.config.server-addr=mse-032dbef0-nacos-ans.mse.aliyuncs.com:8848 \
+-Dspring.cloud.nacos.discovery.server-addr=mse-032dbef0-nacos-ans.mse.aliyuncs.com:8848 \
+-jar netkiller.jar
+			
+			</pre>
+		</div>
+	</div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
+			window.changyan.api.config({
+			appid: 'cyvwjQUG3',
+			conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
+			});
+</script><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="SpringCloudAlibaba.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="SpringCloudAlibaba.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ch73s03.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 73 章 Spring Cloud Alibaba </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 73.3. Nacos 配置中心/注册中心代码实例</td></tr></table></div><script xmlns="">
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+			ga('create', 'UA-11694057-1', 'auto');
+			ga('send', 'pageview');
+
+		</script><script xmlns="" async="async">
+			var _hmt = _hmt || [];
+			(function() {
+			var hm = document.createElement("script");
+			hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(hm, s);
+			})();
+</script><script xmlns="" async="async">
+			(function(){
+			var bp = document.createElement('script');
+			var curProtocol = window.location.protocol.split(':')[0];
+			if (curProtocol === 'https') {
+			bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+			}
+			else {
+			bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+			}
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(bp, s);
+			})();
+</script></body></html>
