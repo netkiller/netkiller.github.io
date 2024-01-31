@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>55.7. Springboot 3 Security + OncePerRequestFilter</title><link rel="stylesheet" type="text/css" href="../../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config" /><link rel="home" href="../../index.html" title="Netkiller Spring Cloud 手札" /><link rel="up" href="index.html" title="第 55 章 Spring Security" /><link rel="prev" href="ch55s06.html" title="55.6. @PreAuthorize" /><link rel="next" href="SpringAuthorizationServer.html" title="第 56 章 Spring Authorization Server" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
+		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://edu.51cto.com/lecturer/1703915.html">51CTO学院</a> | <a xmlns="" href="https://edu.csdn.net/lecturer/6423">CSDN程序员研修院</a> | <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> | <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">腾讯云社区</a> | <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">阿里云栖社区</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">55.7. Springboot 3 Security + OncePerRequestFilter</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ch55s06.html">上一页</a> </td><th width="60%" align="center">第 55 章 Spring Security</th><td width="20%" align="right"> <a accesskey="n" href="SpringAuthorizationServer.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idm550358483088"></a>55.7. Springboot 3 Security + OncePerRequestFilter</h2></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm550358482288"></a>55.7.1. OncePerRequestFilter</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+package cn.netkiller.config;
+
+import cn.netkiller.annotation.TokenPass;
+import cn.netkiller.component.JwtTokeComponent;
+import cn.netkiller.utils.ResponseJson;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.method.HandlerMethod;
+import org.springframework.web.servlet.HandlerExceptionResolver;
+import org.springframework.web.servlet.HandlerExecutionChain;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
+
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
+
+
+@Component
+@Slf4j
+public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter {
+    @Autowired
+    private ApplicationContext applicationContext;
+    @Autowired
+    private JwtTokeComponent jwtTokeComponent;
+
+    @Autowired
+//    @Qualifier("handlerExceptionResolver")
+    private HandlerExceptionResolver handlerExceptionResolver;
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        String url = request.getRequestURL().toString();
+        log.info(request.getRequestURL().toString());
+//        return super.shouldNotFilter(request);
+        return url.contains("/exclude");
+    }
+
+    /**
+     * token过滤器配置
+     *
+     * @param request
+     * @param response
+     * @param filterChain
+     * @throws ServletException
+     * @throws IOException
+     */
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        final String token = request.getHeader("token");
+        if (token == null || token.isEmpty()) {
+            // 没有携带 token 则 放行
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+
+        log.info("doFilterInternal: " + request.getRequestURI());
+        log.info("doFilterInternal: " + request.getHttpServletMapping().getPattern());
+
+        try {
+//            if (token == null) {
+//                throw new RuntimeException("无 token");
+//            }
+            
+            RequestMappingHandlerMapping requestMappingHandlerMapping = (RequestMappingHandlerMapping) applicationContext.getBean("requestMappingHandlerMapping");
+            // Map&lt;RequestMappingInfo, HandlerMethod&gt; handlerMethods = req2HandlerMapping.getHandlerMethods();
+            HandlerExecutionChain handlerExecutionChain = requestMappingHandlerMapping.getHandler(request);
+            if (Objects.nonNull(handlerExecutionChain)) {
+                HandlerMethod handlerMethod = (HandlerMethod) handlerExecutionChain.getHandler();
+//                if (handlerMethod.getBeanType().getName().startsWith(MY_CONTROLLER_PACKAGE_NAME)) {
+//                    log.info(handlerMethod.getBeanType().getSimpleName());
+//                }
+
+                Method method = handlerMethod.getMethod();
+
+                //检查方法是否有TokenPass注解，有则跳过认证，直接通过
+                if (method.isAnnotationPresent(TokenPass.class)) {
+                    TokenPass tokenPass = method.getAnnotation(TokenPass.class);
+                    if (tokenPass.required()) {
+                        filterChain.doFilter(request, response);
+                        return;
+                    }
+                }
+                //检查 TokenVerification 需要用户权限的注解
+//        if (method.isAnnotationPresent(TokenVerification.class)) {
+//            TokenVerification tokenVerification = method.getAnnotation(TokenVerification.class);
+//            if (tokenVerification.required()) {
+//                //
+//            }
+//        }
+                // token 校验逻辑写在这里
+//        log.info("token: " + token);
+                ResponseJson jwt = jwtTokeComponent.verifier(token);
+//        log.info("jwt: " + jwt.isStatus());
+                if (!jwt.isStatus()) {
+                    throw new RuntimeException(jwt.getReason());
+                }
+
+                // 执行认证
+                Set&lt;GrantedAuthority&gt; authorities = new HashSet&lt;&gt;();
+                authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+                authorities.add(new SimpleGrantedAuthority("ROLE_WATCH"));
+                authorities.add(new SimpleGrantedAuthority("ROLE_PICTURE"));
+
+                UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken("netkiller", null, authorities);
+                authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+
+                log.info(authenticationToken.toString());
+            }
+        } catch (Exception e) {
+            log.info(e.getMessage());
+            handlerExceptionResolver.resolveException(request, response, null, e);
+            return;
+        }
+
+        /**
+         * 将请求转发给过滤器链下一个filter
+         */
+        filterChain.doFilter(request, response);
+    }
+
+}
+			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm550358480976"></a>55.7.2. SecurityConfiguration</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+package cn.netkiller.config;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+/**
+ * @author Neo
+ * @description Security 配置类
+ * @date 2023-01-26 21:18
+ */
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity
+public class SecurityConfiguration {
+
+    @Autowired
+    private SecurityTokenAuthenticationFilter securityTokenAuthenticationFilter;
+
+//    @Value("${spring.profiles.active}")
+//    private String env;
+
+    @Bean
+    public WebSecurityCustomizer ignoringCustomizer() {
+        return (web) -&gt; web.ignoring().requestMatchers("/token", "/version");
+    }
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+//        http.authorizeRequests().anyRequest().permitAll();
+        http.csrf(csrf -&gt; csrf.disable())
+                .authorizeHttpRequests(authorize -&gt; {
+                            authorize
+                                    .requestMatchers("/", "/ping", "/exclude", "/mock/**", "/test/**").permitAll()
+                                    .requestMatchers("/token").permitAll()
+                                    .requestMatchers("/picture/**", "/chat/**", "/badges/**", "/album/**", "/book/**").permitAll()
+                                    .requestMatchers("/static/**", "/resources/**").permitAll()
+                                    .anyRequest().authenticated();
+                        }
+                )
+                .addFilterBefore(securityTokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
+    }
+
+
+}
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm550358479792"></a>55.7.3. </h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm550358478688"></a>55.7.4. </h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+			
+			
+			</pre>
+		</div>
+	</div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
+			window.changyan.api.config({
+			appid: 'cyvwjQUG3',
+			conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
+			});
+</script><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ch55s06.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="SpringAuthorizationServer.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">55.6. @PreAuthorize </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 56 章 Spring Authorization Server</td></tr></table></div><script xmlns="">
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+			ga('create', 'UA-11694057-1', 'auto');
+			ga('send', 'pageview');
+
+		</script><script xmlns="" async="async">
+			var _hmt = _hmt || [];
+			(function() {
+			var hm = document.createElement("script");
+			hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(hm, s);
+			})();
+</script><script xmlns="" async="async">
+			(function(){
+			var bp = document.createElement('script');
+			var curProtocol = window.location.protocol.split(':')[0];
+			if (curProtocol === 'https') {
+			bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+			}
+			else {
+			bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+			}
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(bp, s);
+			})();
+</script></body></html>
