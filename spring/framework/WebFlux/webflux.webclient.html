@@ -1,0 +1,648 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>45.10. WebClient</title><link rel="stylesheet" type="text/css" href="../../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config" /><link rel="home" href="../../index.html" title="Netkiller Spring Cloud 手札" /><link rel="up" href="webflux.html" title="第 45 章 WebFlux framework" /><link rel="prev" href="webflux.sse.html" title="45.9. SSE" /><link rel="next" href="ch45s11.html" title="45.11. Webflux 安全" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
+		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://edu.51cto.com/lecturer/1703915.html">51CTO学院</a> | <a xmlns="" href="https://edu.csdn.net/lecturer/6423">CSDN程序员研修院</a> | <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> | <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">腾讯云社区</a> | <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">阿里云栖社区</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">45.10. WebClient</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="webflux.sse.html">上一页</a> </td><th width="60%" align="center">第 45 章 WebFlux framework</th><td width="20%" align="right"> <a accesskey="n" href="ch45s11.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="webflux.webclient"></a>45.10. WebClient</h2></div></div></div>
+	
+	<pre class="screen">
+	
+&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-boot-starter-webflux&lt;/artifactId&gt;
+&lt;/dependency&gt;	
+	
+	</pre>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm358992450560"></a>45.10.1. 配置 WebClient</h3></div></div></div>
+		
+		<pre class="programlisting">
+			
+@Configuration
+public class WebConfig {
+
+  @Bean
+  public WebClient webClient() {
+
+    WebClient webClient = WebClient.builder()
+      .baseUrl("http://localhost:8080")
+      .defaultCookie("cookie-name", "cookie-value")
+      .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+      .build();
+  }
+}			
+			
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm358992448880"></a>45.10.2. @Controller/@RestController 实例</h3></div></div></div>
+		
+
+		<pre class="programlisting">
+		
+    @GetMapping("webclient")
+    public Mono&lt;String&gt; webclient() {
+        WebClient webClient = WebClient.create("http://localhost:8080");
+        Mono&lt;String&gt; response = webClient
+                .get().uri("/mock/mono")
+                .retrieve()
+                .bodyToMono(String.class);
+        response.subscribe(System.out::println);
+        return response;
+    }
+		
+		</pre>
+		<p>会返结果</p>
+		<pre class="programlisting">
+			
+public Mono&lt;ResponseEntity&lt;Employee&gt;&gt; createEmployee(Employee newEmployee) {
+
+  return webClient.post()
+    .uri("/employees")
+    .contentType(MediaType.APPLICATION_JSON)
+    .bodyValue(newEmployee)
+    .retrieve()
+    .toEntity(Employee.class);
+}
+
+
+
+@PostMapping("/create")
+public Mono&lt;ResponseEntity&lt;?&gt;&gt; createEmployee(@RequestBody Employee newEmployee) {
+
+  return employeeService.createEmployee(newEmployee)
+    .map(responseEntity -&gt; {
+      if (responseEntity.getStatusCode().is2xxSuccessful()) {
+        return ResponseEntity.ok(responseEntity.getBody());
+      } else {
+        return ResponseEntity.status(responseEntity.getStatusCode())
+          .body("Failed to create employee");
+      }
+    })
+    .onErrorResume(exception -&gt; {
+      return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .body("Internal Server Error: " + exception.getMessage()));
+    });
+}			
+			
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="webclient.get"></a>45.10.3. Get 请求实例</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+WebClient.create("http://localhost:8080")
+    .get()
+    .uri("/students")
+    .retrieve()
+    .bodyToFlux(Student.class);		
+			
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="webclient.uri"></a>45.10.4. URI 参数</h3></div></div></div>
+		
+		<p>字符串拼接方式</p>
+		<pre class="programlisting">
+			
+WebClient.create("http://localhost:8080")
+    .get()
+    .uri("/students/" + studentId)
+    .retrieve()
+    .bodyToMono(Student.class);
+			
+		</pre>
+		<p>通过 uriBuilder 组装 Uri 参数</p>
+		<pre class="programlisting">
+			
+String endpoint = "/employees";
+        
+UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromPath(endpoint)
+    .queryParam("param1", "value1")
+    .queryParam("param2", "value2");
+
+webClient.post()
+        .uri(uriBuilder.build().toUri())
+        .bodyValue(new Employee(...))
+        .retrieve()
+        .bodyToMono(Employee.class);
+			
+		</pre>
+		<pre class="programlisting">
+			
+WebClient.create("http://localhost:8080")
+    .get()
+    .uri(uriBuilder -&gt; uriBuilder
+        .path("/student/{studentId}")
+        .build(studentId))
+    .retrieve()
+    .bodyToMono(Student.class);		
+    
+WebClient.create("http://localhost:8080")
+    .get()
+    .uri(uriBuilder -&gt; uriBuilder
+        .path("/student/{studentId}/assignments/{assignmentId}")
+        .build(studentId, assignmentId))
+    .retrieve()
+    .bodyToMono(Student.class);
+			
+		</pre>
+		<p>uriTemplate 组装 Uri 参数</p>
+		<pre class="programlisting">
+			
+UriTemplate uriTemplate = new UriTemplate(
+    "/student/{studentId}/assignments/{assignmentId}");
+
+WebClient.create("http://localhost:8080")
+    .get()
+    .uri(uriTemplate.expand(studentId, assignmentId))
+    .retrieve()
+    .bodyToMono(Student.class);			
+			
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="webclient.query"></a>45.10.5. 查询参数</h3></div></div></div>
+		
+		<p>http://localhost:8080/students?firstName=Jon&amp;year=1996
+		</p>
+		<pre class="programlisting">
+			
+String firstName = "Jon";
+String year = "1996";
+
+WebClient.create("http://localhost:8080")
+    .get()
+    .uri(uriBuilder -&gt; uriBuilder.path("/students")
+        .queryParam("firstName", firstName)
+        .queryParam("year", year)
+        .build())
+    .retrieve()
+    .bodyToMono(Student.class);			
+			
+		</pre>
+		<p>http://localhost:8080/students?year=1995,1996,1997</p>
+		<pre class="programlisting">
+			
+WebClient.create("http://localhost:8080")
+    .get()
+    .uri(uriBuilder -&gt; uriBuilder.path("/students")
+        .queryParam("year", String.join(",", "1995", "1996", "1997"))
+        .build())
+    .retrieve()
+    .bodyToMono(Student.class);			
+			
+		</pre>
+		<p>"/products/?category=Phones&amp;category=Tablets"</p>
+		<pre class="programlisting">
+			
+webClient.get()
+  .uri(uriBuilder - &gt; uriBuilder
+    .path("/products/")
+    .queryParam("category", "Phones", "Tablets")
+    .build())
+  .retrieve()
+  .bodyToMono(String.class)
+  .onErrorResume(e -&gt; Mono.empty())
+  .block();			
+			
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="webclient.post"></a>45.10.6. Post 操作演示</h3></div></div></div>
+		
+		<pre class="programlisting">
+			
+Employee newEmployee = ...;  //Create a new employee object
+			
+webClient.post()
+  .uri("/employees")
+  .bodyValue(BodyInserters.fromValue(newEmployee))
+  .retrieve()
+  .toEntity(Employee.class)   //Change here
+  .subscribe(
+    responseEntity -&gt; {
+      // Handle success response here
+      HttpStatusCode status = responseEntity.getStatusCode();
+      URI location = responseEntity.getHeaders().getLocation();
+      Employee createdEmployee = responseEntity.getBody();    // Response body
+      // handle response as necessary
+    },
+    error -&gt; {
+      // Handle the error here
+      if (error instanceof WebClientResponseException) {
+        WebClientResponseException ex = (WebClientResponseException) error;
+        HttpStatusCode status = ex.getStatusCode();
+        System.out.println("Error Status Code: " + status.value());
+        //...
+      } else {
+        // Handle other types of errors
+        System.err.println("An unexpected error occurred: " + error.getMessage());
+      }
+    }
+  );			
+			
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="webclient.post.form"></a>45.10.7. Post 表单数据</h3></div></div></div>
+		
+		<pre class="programlisting">
+			
+@Service
+public class EmployeeService {
+
+  private final WebClient webClient;
+
+  @Autowired
+  public EmployeeService(WebClient webClient) {
+      this.webClient = webClient;
+  }
+
+  public Mono&lt;Employee&gt; createEmployee(Map&lt;String, String&gt; formParams) {
+    return webClient.post()
+      .uri("/employees")
+      .body(BodyInserters.fromFormData("id", formParams.get("id"))
+        .with("name", formParams.get("name"))
+        .with("status", formParams.get("status")))
+      .retrieve()
+      .onStatus(HttpStatus::is4xxClientError, clientResponse -&gt; {
+          // Handle 4xx client errors here
+      })
+      .onStatus(HttpStatus::is5xxServerError, clientResponse -&gt; {
+          // Handle 5xx server errors here
+      })
+      .toEntity(Employee.class)
+      .flatMap(responseEntity -&gt; Mono.justOrEmpty(responseEntity.getBody()));
+  }
+}			
+			
+		</pre>
+		<pre class="programlisting">
+			
+        WebClient client = WebClient.create("https://www.netkiller.cn");
+        FormInserter formInserter = fromMultipartData("name","neo")
+                .with("age",19)
+                .with("map",ImmutableMap.of("sex","F"))
+                .with("file",new File("/tmp/netkiler.doc"));
+        Mono&lt;String&gt; result = client.post()
+                .uri("/article/index/{id}.html", 256)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(formInserter)
+                //.bodyValue(ImmutableMap.of("name","neo"))
+                .retrieve()
+                .bodyToMono(String.class);
+        result.subscribe(System.err::println);			
+			
+		</pre>
+		<pre class="programlisting">
+		
+@RestController
+public class HelloController {
+ 
+    // 创建 WebClient 对象
+    private WebClient webClient = WebClient.builder()
+            .baseUrl("https://www.netkiller.cn/article")
+            .build();
+ 
+    @GetMapping("/test")
+    public void test() {
+        //提交参数设置
+        MultiValueMap&lt;String, String&gt; map = new LinkedMultiValueMap&lt;&gt;();
+        map.add("title", "linux 手札");
+        map.add("body", "测试");
+ 
+        // 发送请求
+        Mono&lt;String&gt; mono = webClient
+                .post() // POST 请求
+                .uri("/posts")  // 请求路径
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .body(BodyInserters.fromFormData(map))
+                .retrieve() // 获取响应体
+                .bodyToMono(String.class); //响应数据类型转换
+ 
+        // 输出结果
+        System.out.println(mono.block());
+        return;
+    }
+}
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="webclient.post.multipart"></a>45.10.8. 上传文件</h3></div></div></div>
+		
+		<pre class="programlisting">
+			
+MultipartBodyBuilder builder = new MultipartBodyBuilder();
+
+builder.part("file", new FileSystemResource("/tmp/file.txt"));
+builder.part("id", "190001", MediaType.TEXT_PLAIN);
+builder.part("name", "Lokesh", MediaType.TEXT_PLAIN);
+builder.part("status", "active", MediaType.TEXT_PLAIN);
+
+Then we can submit the multipart form data by using the method BodyInserters.fromMultipartData(builder.build()) and send a normal request as in the previous examples.
+
+webClient.post()
+    .uri("/employees")
+    .contentType(MediaType.MULTIPART_FORM_DATA)
+    .body(BodyInserters.fromMultipartData(builder.build()))
+    .retrieve()
+    .toEntity(Employee.class)
+    .doOnError(WriteTimeoutException.class, ex -&gt; {
+      System.err.println("WriteTimeout");
+    })
+    .subscribe(responseEntity -&gt; {
+      System.out.println("Status: " + responseEntity.getStatusCode().value());
+      System.out.println("Location URI: " + responseEntity.getHeaders().getLocation().toString());
+      System.out.println("Created New Employee : " + responseEntity.getBody());
+    });			
+			
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="webclient.header"></a>45.10.9. 设置 HTTP 头</h3></div></div></div>
+		
+		<pre class="programlisting">
+			
+webClient.get()
+    .uri("/employees")
+    .bodyValue(new Employee(...))
+    .header("Authorization", "Bearer auth-token")
+    .header("User-Agent", "Mobile App 1.0")
+    .retrieve()			
+			
+		</pre>
+		<pre class="programlisting">
+			
+	WebClient.builder()
+        .defaultCookie("session","f1d83210-0fc9-4689-82ab-05df70da3367")
+        .defaultUriVariables(ImmutableMap.of("name","kl"))
+        .defaultHeader("header","neo")
+        .defaultHeaders(httpHeaders -&gt; {
+            httpHeaders.add("header1","neo");
+            httpHeaders.add("header2","chen");
+        })
+        .defaultCookies(cookie -&gt;{
+            cookie.add("cookie1","neo");
+            cookie.add("cookie2","netkiller");
+        })
+        .baseUrl("https://www.netkiller.cn")
+        .build();			
+			
+		</pre>
+		<p>If-None-Match、If-Modified-Since</p>
+		<pre class="programlisting">
+		
+            Mono&lt;String&gt; mono = webClient
+                    .get() // GET 请求
+                    .uri("/")  // 请求路径
+                    .header("Authorization", "Basic ".concat(authorization))
+                    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .accept(MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML)
+                    .acceptCharset(StandardCharsets.UTF_8)
+                    .ifNoneMatch("*")
+                    .ifModifiedSince(ZonedDateTime.now())
+                    .retrieve() // 获取响应体
+                    .bodyToMono(String.class); //响应数据类型转换		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm358992422992"></a>45.10.10. 同步阻塞等待返回结果</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+        WebClient webClient = WebClient.create("https://www.netkiller.cn");
+
+        Mono&lt;String&gt; mono = webClient
+                .get() // GET 请求
+                .uri("/spring/index.html")  // 请求路径
+                .retrieve() // 获取响应体
+                .bodyToMono(String.class); //响应数据类型转换
+
+        System.out.println(mono.block());		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm358992420544"></a>45.10.11. websocket</h3></div></div></div>
+		
+		<pre class="programlisting">
+			
+WebSocketClient client = new ReactorNettyWebSocketClient();
+URI url = new URI("ws://localhost:8080/path");
+client.execute(url, session -&gt;
+        session.receive()
+                .doOnNext(System.out::println)
+                .then());			
+			
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm358992419136"></a>45.10.12. 同步阻塞等待结果</h3></div></div></div>
+		
+		<p>在同步模式下使用WebClient</p>
+		<pre class="programlisting">
+			
+ WebClient client =  WebClient.create("http://www.netkiller.cn");
+      String result = client .get()
+                .uri("/article/index/arcid/{id}.html", 256)
+                .retrieve()
+                .bodyToMono(String.class)
+                .block();
+        System.err.println(result);			
+			
+		</pre>
+		
+		<pre class="programlisting">
+		
+
+Person person = client.get().uri("/person/{id}", i).retrieve()
+    .bodyToMono(Person.class)
+    .block();
+
+List&lt;Person&gt; persons = client.get().uri("/persons").retrieve()
+    .bodyToFlux(Person.class)
+    .collectList()
+    .block();
+		
+		
+		</pre>
+		<p>避免单独阻塞每个同步响应</p>
+		<pre class="programlisting">
+			
+      WebClient client =  WebClient.create("http://www.netkiller.cn");
+        Mono&lt;String&gt; result1Mono = client .get()
+                .uri("/article/index/arcid/{id}.html", 255)
+                .retrieve()
+                .bodyToMono(String.class);
+        Mono&lt;String&gt; result2Mono = client .get()
+                .uri("/article/index/arcid/{id}.html", 254)
+                .retrieve()
+                .bodyToMono(String.class);
+        Map&lt;String,String&gt;  map = Mono.zip(result1Mono, result2Mono, (result1, result2) -&gt; {
+            Map&lt;String, String&gt; map = new HashMap&lt;&gt;();
+            arrayList.put("result1", result1);
+            arrayList.put("result2", result2);
+            return map;
+        }).block();
+        System.err.println(map.toString());		
+        
+		Mono&lt;Person&gt; personMono = client.get().uri("/person/{id}", personId)
+		        .retrieve().bodyToMono(Person.class);
+		
+		Mono&lt;List&lt;Hobby&gt;&gt; hobbiesMono = client.get().uri("/person/{id}/hobbies", personId)
+		        .retrieve().bodyToFlux(Hobby.class).collectList();
+		
+		Map&lt;String, Object&gt; data = Mono.zip(personMono, hobbiesMono, (person, hobbies) -&gt; {
+		            Map&lt;String, String&gt; map = new LinkedHashMap&lt;&gt;();
+		            map.put("person", person);
+		            map.put("hobbies", hobbies);
+		            return map;
+		        })
+		        .block();
+
+			
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm358987863056"></a>45.10.13. 获取 HTTP 链接状态</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+			WebClient webClient = WebClient.create("https://www.netkiller.cn");
+            Mono&lt;ClientResponse&gt; mono = webClient
+                    .get() 
+                    .uri("/spring/index.html")
+                    .acceptCharset(StandardCharsets.UTF_8)
+                    .exchange();
+
+            // 获取完整的响应对象
+            ClientResponse response = mono.block();
+            
+            HttpStatus statusCode = (HttpStatus) response.statusCode(); // 获取响应码
+            MultiValueMap&lt;String, ResponseCookie&gt; cookies = response.cookies();
+            ClientResponse.Headers headers = response.headers(); // 获取响应头
+
+            // 获取响应体
+            Mono&lt;String&gt; resultMono = response.bodyToMono(String.class);
+            String body = resultMono.block();
+
+            // 输出结果
+            System.out.println("HttpStatus：" + statusCode);
+            System.out.println("Cookie：" + cookies.toString());
+            System.out.println("Headers：" + headers.asHttpHeaders());
+            System.out.println("body：" + body);		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm358987861872"></a>45.10.14. Http Base Authentication - 401 Unauthorized</h3></div></div></div>
+		
+		<p></p>
+		<pre class="programlisting">
+		
+			WebClient client = WebClient.builder()
+                    .baseUrl("https://www.netkiller.cn")
+                    .defaultHeaders(httpHeaders -&gt; httpHeaders.setBasicAuth("admin", "uPQKFe98bIwZCzgVGjbIQRyRyyecW2Ha"))
+//                    .defaultHeaders(httpHeaders -&gt; httpHeaders.setBearerAuth("&lt;bearer token&gt;"))
+                    .build();
+
+            Mono&lt;String&gt; response = client.get().uri("/")
+                    .retrieve().bodyToMono(String.class);
+
+            log.info(response.block());		
+		
+		</pre>
+		<p></p>
+		<pre class="programlisting">
+		
+            WebClient webClient = WebClient.create("https://www.netkiller.cn");
+            final String flux = webClient.get()
+                    .uri("/")
+                    .headers(httpHeaders -&gt; httpHeaders.setBasicAuth("admin", "uPQKFyRyyecbIwZCzgVGjbW2e98IQRHa"))
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .block();
+            System.out.println(flux);		
+		
+		</pre>
+		
+		<p>ExchangeFilterFunctions 方案</p>
+		<pre class="programlisting">
+		
+ 		WebClient client = WebClient.builder()
+                    .baseUrl("https://www.netkiller.cn")
+                    .filter(ExchangeFilterFunctions.basicAuthentication("admin", "uPQcbIwZKFe98IGjbW2QRyRyyeCzgVHa"))
+                    .build();
+
+            Mono&lt;String&gt; response = client.get().uri("/")
+                    .retrieve().bodyToMono(String.class);
+            log.info(response.block());		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm358987857440"></a>45.10.15. 订阅 SSE</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+public void consumeServerSentEvent() {
+    WebClient client = WebClient.create("https://www.netkiller.cn:8080/sse/server");
+    ParameterizedTypeReference&lt;ServerSentEvent&lt;String&gt;&gt; type
+     = new ParameterizedTypeReference&lt;ServerSentEvent&lt;String&gt;&gt;() {};
+
+    Flux&lt;ServerSentEvent&lt;String&gt;&gt; eventStream = client.get()
+      .uri("/stream")
+      .retrieve()
+      .bodyToFlux(type);
+
+    eventStream.subscribe(
+      content -&gt; logger.info("Time: {} - event: name[{}], id [{}], content[{}] ",
+        LocalTime.now(), content.event(), content.id(), content.data()),
+      error -&gt; logger.error("Error receiving SSE: {}", error),
+      () -&gt; logger.info("Completed!!!"));
+}		
+		
+		</pre>
+		<p>同步阻塞等待 SSE 执行完成</p>
+		<pre class="programlisting">
+		
+        List&lt;String&gt; posts = eventStream.collectList().block();
+        log.info("结果数：{}, {}" , posts.size(),posts.toString());		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm358987854464"></a>45.10.16. 打印调试日志</h3></div></div></div>
+		
+		<p>.log() 会打印运行期间的所有信息</p>
+		<pre class="programlisting">
+		
+        Flux&lt;String&gt; flux = client.get()
+                .uri("/chatgpt/stream?content={content}", prompt)
+                .headers(httpHeaders -&gt; httpHeaders.setBasicAuth(username, password))
+                .retrieve()
+                .bodyToFlux(String.class).log();
+		
+		</pre>
+	</div>
+</div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
+			window.changyan.api.config({
+			appid: 'cyvwjQUG3',
+			conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
+			});
+</script><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="webflux.sse.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="webflux.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ch45s11.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">45.9. SSE </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 45.11. Webflux 安全</td></tr></table></div><script xmlns="">
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+			ga('create', 'UA-11694057-1', 'auto');
+			ga('send', 'pageview');
+
+		</script><script xmlns="" async="async">
+			var _hmt = _hmt || [];
+			(function() {
+			var hm = document.createElement("script");
+			hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(hm, s);
+			})();
+</script><script xmlns="" async="async">
+			(function(){
+			var bp = document.createElement('script');
+			var curProtocol = window.location.protocol.split(':')[0];
+			if (curProtocol === 'https') {
+			bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+			}
+			else {
+			bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+			}
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(bp, s);
+			})();
+</script></body></html>

@@ -1,0 +1,385 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>55.4. Webflux 安全</title><link rel="stylesheet" type="text/css" href="../../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><link rel="home" href="../../index.html" title="Netkiller Java 手札（版）" /><link rel="up" href="webflux.html" title="第 55 章 WebFlux framework" /><link rel="prev" href="webflux.router.html" title="55.3. WebFlux Router" /><link rel="next" href="ch55s05.html" title="55.5. 常见问题" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
+		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://edu.51cto.com/lecturer/1703915.html">51CTO学院</a> | <a xmlns="" href="https://edu.csdn.net/lecturer/6423">CSDN程序员研修院</a> | <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> | <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">腾讯云社区</a> | <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">阿里云栖社区</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">55.4. Webflux 安全</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="webflux.router.html">上一页</a> </td><th width="60%" align="center">第 55 章 WebFlux framework</th><td width="20%" align="right"> <a accesskey="n" href="ch55s05.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idm411569059536"></a>55.4. Webflux 安全</h2></div></div></div>
+	
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm411569058896"></a>55.4.1. Token 拦截器</h3></div></div></div>
+		
+		<pre class="programlisting">
+			
+package cn.netkiller.config;
+
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.server.reactive.ServerHttpResponse;
+import org.springframework.stereotype.Component;
+import org.springframework.web.server.ServerWebExchange;
+import org.springframework.web.server.WebFilter;
+import org.springframework.web.server.WebFilterChain;
+import reactor.core.publisher.Mono;
+
+
+@Component
+@Order
+@Slf4j
+public class TokenWebFilter implements WebFilter {
+    @Override
+    public Mono&lt;Void&gt; filter(ServerWebExchange exchange, WebFilterChain chain) {
+        log.info(exchange.getRequest().getURI().toString());
+        if (!exchange.getRequest().getHeaders().containsKey("token")) {
+            ServerHttpResponse response = exchange.getResponse();
+            response.setStatusCode(HttpStatus.FORBIDDEN);
+            response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+            return response.writeWith(Mono.just(response.bufferFactory().wrap("{\"msg\":\"no token\"}".getBytes())));
+        } else {
+            exchange.getAttributes().put("auth", "true");
+            return chain.filter(exchange).doFinally(s -&gt; {
+                log.info("request after, url:{}, statusCode:{}", exchange.getRequest().getURI(), exchange.getResponse().getStatusCode());
+            });
+        }
+    }
+}
+			
+			
+		</pre>
+		
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm411569057584"></a>55.4.2. JWT</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+iss (issuer)：签发人
+exp (expiration time)：过期时间
+sub (subject)：主题
+aud (audience)：受众
+nbf (Not Before)：生效时间
+iat (Issued At)：签发时间
+jti (JWT ID)：编号
+		
+		</pre>
+		<pre class="programlisting">
+		
+package cn.netkiller.config;
+
+
+import cn.netkiller.component.JwtTokeComponent;
+import cn.netkiller.utils.ResponseJson;
+import com.google.gson.Gson;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.annotation.Order;
+import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.server.reactive.ServerHttpResponse;
+import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
+import org.springframework.web.server.ServerWebExchange;
+import org.springframework.web.server.WebFilter;
+import org.springframework.web.server.WebFilterChain;
+import reactor.core.publisher.Mono;
+
+@Component
+@Order
+@Slf4j
+public class TokenWebFilter implements WebFilter {
+
+    private static final String[] patterns = {"/token", "/verifier", "/mock/*", "/swagger/*", "/badges/**"};
+    private final AntPathMatcher pathMatcher = new AntPathMatcher();
+    @Autowired
+    private JwtTokeComponent jwtTokeComponent;
+
+    public TokenWebFilter() {
+
+    }
+
+    @Override
+    public Mono&lt;Void&gt; filter(ServerWebExchange exchange, WebFilterChain chain) {
+
+        exchange.getFormData().subscribe(System.out::println);
+        exchange.getFormData().doOnNext(n -&gt; {
+            n.forEach((k, v) -&gt; {
+                log.info("K: {}, V: {}", k, v);
+            });
+        });
+        log.info("No Token");
+
+        String path = exchange.getRequest().getPath().toString();
+        for (String pattern : patterns) {
+            if (pathMatcher.match(pattern, path)) {
+                log.info("Permit Pattern '" + pattern + "' matches path '" + path + "'");
+                return chain.filter(exchange);
+            }
+        }
+
+
+        if (!exchange.getRequest().getHeaders().containsKey("token")) {
+            ServerHttpResponse response = exchange.getResponse();
+            response.setStatusCode(HttpStatus.FORBIDDEN);
+            response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+            Mono&lt;DataBuffer&gt; message = Mono.just(response.bufferFactory().wrap(new ResponseJson(false, ResponseJson.Code.TokenException, "请提供 Token", null).toString().getBytes()));
+            return response.writeWith(message);
+        } else {
+            String token = exchange.getRequest().getHeaders().getFirst("token");
+            log.info("token: " + token);
+            ResponseJson jwt = jwtTokeComponent.verifier(token);
+            log.info("jwt: " + jwt.isStatus());
+            if (jwt.isStatus()) {
+                return chain.filter(exchange);
+            } else {
+                ServerHttpResponse response = exchange.getResponse();
+                response.setStatusCode(HttpStatus.FORBIDDEN);
+                response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+                Gson gson = new Gson();
+                String jsonString = gson.toJson(jwt);
+                Mono&lt;DataBuffer&gt; message = Mono.just(response.bufferFactory().wrap(jsonString.getBytes()));
+                return response.writeWith(message);
+            }
+        }
+    }
+}
+		
+		
+		</pre>
+		<pre class="programlisting">
+		
+package cn.netkiller.component;
+
+import cn.netkiller.utils.ResponseJson;
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.*;
+import com.auth0.jwt.interfaces.DecodedJWT;
+import com.auth0.jwt.interfaces.JWTVerifier;
+import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import reactor.core.publisher.Mono;
+
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+
+@Slf4j
+@Component
+@NoArgsConstructor
+public class JwtTokeComponent {
+    @Value("${app.expires}")
+    private int expires;
+    @Value("${app.audience}")
+    private String audience;
+    @Value("${app.id}")
+    private String appId;
+    @Value("${app.key}")
+    private String appKey;
+    @Value("${app.secret}")
+    private String secret;
+    @Value("${app.subject}")
+    private String subject;
+    @Value("#{'${app.role}'.split(',')}")
+    private List role;
+
+    public ResponseJson verifier(String token) {
+        ResponseJson response;
+        try {
+            DecodedJWT jwt = this.verify(token);
+            response = new ResponseJson(true, ResponseJson.Code.SUCCESS, "Token 校验成功", jwt);
+        } catch (SignatureVerificationException e) {
+            response = new ResponseJson(false, ResponseJson.Code.TokenException, e.getMessage(), "Token 签名失败");
+        } catch (TokenExpiredException e) {
+            response = new ResponseJson(false, ResponseJson.Code.TokenExpiredException, e.getMessage(), "Token 过期");
+        } catch (AlgorithmMismatchException e) {
+            response = new ResponseJson(false, ResponseJson.Code.AlgorithmMismatchException, e.getMessage(), "Token 签名算法异常");
+        } catch (JWTVerificationException e) {
+            response = new ResponseJson(false, ResponseJson.Code.TokenException, e.getMessage(), "Token 校验失败");
+        } catch (Exception e) {
+            response = new ResponseJson(false, ResponseJson.Code.Exception, e.getMessage(), "Token 异常");
+        }
+        log.error(response.toString());
+        return response;
+    }
+
+    public Mono&lt;String&gt; getToken(String appId, String appKey) {
+
+
+        Calendar instance = Calendar.getInstance();
+        instance.add(Calendar.DATE, expires);
+//        instance.add(Calendar.SECOND, 30);
+        try {
+//            Algorithm algorithm = Algorithm.RSA256(rsaPublicKey, rsaPrivateKey);
+            Algorithm algorithm = Algorithm.HMAC256(secret);
+
+            String token = JWT.create()
+                    .withJWTId(appKey)
+                    .withIssuer(appId)
+                    .withIssuedAt(new Date())
+                    .withSubject(subject)
+                    .withKeyId(appKey)
+                    .withAudience(audience)
+                    .withClaim("role", role)
+                    .withExpiresAt(instance.getTime())
+                    .sign(algorithm);
+            return Mono.just(token);
+        } catch (JWTCreationException exception) {
+            log.error(exception.getMessage());
+        }
+        return Mono.empty();
+    }
+
+    public DecodedJWT verify(String token) {
+        Algorithm algorithm = Algorithm.HMAC256(secret);
+        JWTVerifier verifier = JWT.require(algorithm)
+                // specify an specific claim validations
+                .withIssuer(appId)
+                .withJWTId(appKey)
+                .withSubject(subject)
+                .withAudience(audience)
+                // reusable verifier instance
+                .build();
+
+        DecodedJWT decodedJWT = verifier.verify(token);
+        log.info(decodedJWT.getClaims().toString());
+
+        return decodedJWT;
+    }
+
+}
+		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm411569055376"></a>55.4.3. spring-boot-starter-security</h3></div></div></div>
+		
+
+		<pre class="programlisting">
+		
+        &lt;dependency&gt;
+            &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+            &lt;artifactId&gt;spring-boot-starter-security&lt;/artifactId&gt;
+        &lt;/dependency&gt;		
+		
+		</pre>
+		<p>默认用户名是 user，密码会打印到终端</p>
+		<pre class="screen">
+		
+2024-01-03T18:52:01.027+08:00  WARN 33537 --- [watch-development] [           main] .s.s.UserDetailsServiceAutoConfiguration : 
+
+Using generated security password: 823fcdcc-e2dd-4967-84b4-546db9175357
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2024-01-03T18:52:01.081+08:00  INFO 33537 --- [watch-development] [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 13 endpoint(s) beneath base path '/actuator'		
+		
+		</pre>
+		<p>访问方式</p>
+		<pre class="screen">
+		
+neo@MacBook-Pro-M2 ~&gt; curl -X 'GET' 'http://user:823fcdcc-e2dd-4967-84b4-546db9175357@localhost:8080/mock/mono'
+hello webflux⏎ 
+		
+		</pre>
+		<p>修改密码，在配置文件中增加</p>
+		<pre class="screen">
+		
+#
+spring.security.user.name=user
+spring.security.user.password=123456
+#		
+		
+		</pre>
+		<pre class="programlisting">
+		
+package cn.netkiller.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
+import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
+import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
+import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.core.userdetails.MapReactiveUserDetailsService;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.web.server.SecurityWebFilterChain;
+
+@Configuration
+@EnableWebFluxSecurity
+@EnableReactiveMethodSecurity
+public class SecurityConfig {
+//    @Autowired
+//    private TokenWebFilter tokenWebFilter;
+
+    @Bean
+    public MapReactiveUserDetailsService userDetailsService() {
+        UserDetails user = User.withDefaultPasswordEncoder()
+                .username("user")
+                .password("user")
+                .roles("USER")
+                .build();
+        return new MapReactiveUserDetailsService(user);
+    }
+
+    @Order(Ordered.HIGHEST_PRECEDENCE)
+    @Bean
+    SecurityWebFilterChain filterChain(ServerHttpSecurity httpSecurity) throws Exception {
+        httpSecurity.csrf().disable()
+                .authorizeExchange(exchanges -&gt; exchanges
+                        .pathMatchers("/").permitAll()
+                        .pathMatchers("/token", "/verifier").permitAll()
+                        .pathMatchers("/mock/*").permitAll()
+                        .pathMatchers("/ping", "/version").permitAll()
+                        .pathMatchers("/badges/**", "/chat/**", "/status/**", "/picture/**").permitAll()
+                        .anyExchange().authenticated()
+                );
+//                .addFilterBefore(tokenWebFilter, SecurityWebFiltersOrder.FIRST);
+//                .httpBasic(withDefaults())
+//                .formLogin(withDefaults());
+        return httpSecurity.build();
+    }
+
+}
+		
+		
+		</pre>
+	</div>
+	
+</div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
+			window.changyan.api.config({
+			appid: 'cyvwjQUG3',
+			conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
+			});
+</script><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="webflux.router.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="webflux.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ch55s05.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">55.3. WebFlux Router </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 55.5. 常见问题</td></tr></table></div><script xmlns="">
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+			ga('create', 'UA-11694057-1', 'auto');
+			ga('send', 'pageview');
+
+		</script><script xmlns="" async="async">
+			var _hmt = _hmt || [];
+			(function() {
+			var hm = document.createElement("script");
+			hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(hm, s);
+			})();
+</script><script xmlns="" async="async">
+			(function(){
+			var bp = document.createElement('script');
+			var curProtocol = window.location.protocol.split(':')[0];
+			if (curProtocol === 'https') {
+			bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+			}
+			else {
+			bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+			}
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(bp, s);
+			})();
+</script></body></html>
