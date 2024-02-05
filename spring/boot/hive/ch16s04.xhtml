@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><title>CURD 操作实例</title><link rel="stylesheet" type="text/css" href="../../docbook.css"/><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot"/><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config"/><link rel="prev" href="ch16s03.xhtml" title="Configuration"/><link rel="next" href="../phoenix/ch17.xhtml" title="第 17 章 Spring boot with Phoenix"/></head><body><header><div class="navheader"><table style="width: 100%; "><tr><th style="text-align: center; " colspan="3">CURD 操作实例</th></tr><tr><td style="width: 20%; text-align: left; "><a accesskey="p" href="ch16s03.xhtml">上一页</a> </td><th style="width: 60%; text-align: center; ">第 16 章 Spring boot with Apache Hive</th><td style="width: 20%; text-align: right; "> <a accesskey="n" href="../phoenix/ch17.xhtml">下一页</a></td></tr></table><hr/></div></header><section class="section" id="id1535"><div class="titlepage"><div><div><h3 class="title">CURD 操作实例</h3></div></div></div><p>Hive 数据库的增删插改操作与其他数据库没有什么不同。</p><pre class="programlisting">
+			
+package cn.netkiller.web;
+
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.ModelAndView;
+
+@Controller
+@RequestMapping("/hive")
+public class HiveController {
+	private static final Logger logger = LoggerFactory.getLogger(HiveController.class);
+
+	@Autowired
+	@Qualifier("hiveJdbcTemplate")
+	private JdbcTemplate hiveJdbcTemplate;
+
+	@RequestMapping("/create")
+	public ModelAndView create() {
+
+		StringBuffer sql = new StringBuffer("create table IF NOT EXISTS ");
+		sql.append("HIVE_TEST");
+		sql.append("(KEY INT, VALUE STRING)");
+		sql.append("PARTITIONED BY (CTIME DATE)"); // 分区存储
+		sql.append("ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t' LINES TERMINATED BY '\n' "); // 定义分隔符
+		sql.append("STORED AS TEXTFILE"); // 作为文本存储
+
+		logger.info(sql.toString());
+		hiveJdbcTemplate.execute(sql.toString());
+
+		return new ModelAndView("index");
+
+	}
+
+	@RequestMapping("/insert")
+	public String insert() {
+		hiveJdbcTemplate.execute("insert into hive_test(key, value) values('Neo','Chen')");
+		return "Done";
+	}
+
+	@RequestMapping("/select")
+	public String select() {
+		String sql = "select * from HIVE_TEST";
+		List&lt;Map&lt;String, Object&gt;&gt; rows = hiveJdbcTemplate.queryForList(sql);
+		Iterator&lt;Map&lt;String, Object&gt;&gt; it = rows.iterator();
+		while (it.hasNext()) {
+			Map&lt;String, Object&gt; row = it.next();
+			System.out.println(String.format("%s\t%s", row.get("key"), row.get("value")));
+		}
+		return "Done";
+	}
+
+	@RequestMapping("/delete")
+	public String delete() {
+		StringBuffer sql = new StringBuffer("DROP TABLE IF EXISTS ");
+		sql.append("HIVE_TEST");
+		logger.info(sql.toString());
+		hiveJdbcTemplate.execute(sql.toString());
+		return "Done";
+	}
+}
+			
+		</pre></section><footer><div class="navfooter"><hr/><table style="width: 100%; "><tr><td style="width: 40%; text-align: left; "><a accesskey="p" href="ch16s03.xhtml">上一页</a> </td><td style="width: 20%; text-align: center; "><a accesskey="u" href="ch16.xhtml">上一级</a></td><td style="width: 40%; text-align: right; "> <a accesskey="n" href="../phoenix/ch17.xhtml">下一页</a></td></tr><tr><td style="width: 40%; text-align: left; vertical-align: top; ">Configuration </td><td style="width: 20%; text-align: center; "><a accesskey="h" href="../../index.xhtml">起始页</a></td><td style="width: 40%; text-align: right; vertical-align: top; "> 第 17 章 Spring boot with Phoenix</td></tr></table></div></footer></body></html>

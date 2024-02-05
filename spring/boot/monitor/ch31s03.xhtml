@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><title>Nginx 跨域</title><link rel="stylesheet" type="text/css" href="../../docbook.css"/><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot"/><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config"/><link rel="prev" href="ch31s02.xhtml" title="启用 Springboot Admin"/><link rel="next" href="ch30s02.xhtml" title="Spring Boot with Prometheus"/></head><body><header><div class="navheader"><table style="width: 100%; "><tr><th style="text-align: center; " colspan="3">Nginx 跨域</th></tr><tr><td style="width: 20%; text-align: left; "><a accesskey="p" href="ch31s02.xhtml">上一页</a> </td><th style="width: 60%; text-align: center; ">第 31 章 SpringBoot Admin</th><td style="width: 20%; text-align: right; "> <a accesskey="n" href="ch30s02.xhtml">下一页</a></td></tr></table><hr/></div></header><section class="section" id="id3401"><div class="titlepage"><div><div><h4 class="title">Nginx 跨域</h4></div></div></div><pre class="screen">
+		
+server {
+    listen       192.168.30.11:80;
+    listen       192.168.30.11:443 ssl http2;
+    server_name  api.netkiller.cn;
+
+    ssl_certificate "/etc/pki/nginx/server.crt";
+    ssl_certificate_key "/etc/pki/nginx/private/server.key";
+    ssl_session_cache shared:SSL:1m;
+    ssl_session_timeout  10m;
+    ssl_ciphers PROFILE=SYSTEM;
+    ssl_prefer_server_ciphers on;
+
+    access_log /var/log/nginx/api.netkiller.cn.access.log;
+    error_log /var/log/nginx/api.netkiller.cn.error.log;
+
+    error_page 497 https://$host$uri?$args;
+
+    if ($scheme = http) {
+        return 301 https://$server_name$request_uri;
+    }
+
+    location / {
+        add_header Content-Security-Policy "upgrade-insecure-requests;connect-src *";
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header REMOTE-HOST $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_pass http://192.168.30.10:8088;
+    }
+
+    error_page 404 /404.html;
+        location = /40x.html {
+    }
+
+    error_page 500 502 503 504 /50x.html;
+        location = /50x.html {
+    }
+}		
+		
+		</pre></section><footer><div class="navfooter"><hr/><table style="width: 100%; "><tr><td style="width: 40%; text-align: left; "><a accesskey="p" href="ch31s02.xhtml">上一页</a> </td><td style="width: 20%; text-align: center; "><a accesskey="u" href="ch31.xhtml">上一级</a></td><td style="width: 40%; text-align: right; "> <a accesskey="n" href="ch30s02.xhtml">下一页</a></td></tr><tr><td style="width: 40%; text-align: left; vertical-align: top; ">启用 Springboot Admin </td><td style="width: 20%; text-align: center; "><a accesskey="h" href="../../index.xhtml">起始页</a></td><td style="width: 40%; text-align: right; vertical-align: top; "> Spring Boot with Prometheus</td></tr></table></div></footer></body></html>

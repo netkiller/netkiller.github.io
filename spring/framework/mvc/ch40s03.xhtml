@@ -1,0 +1,1061 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><title>@RestController</title><link rel="stylesheet" type="text/css" href="../../docbook.css"/><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot"/><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config"/><link rel="prev" href="ch40s02.xhtml" title="@Controller"/><link rel="next" href="ch40s04.xhtml" title="View"/></head><body><header><div class="navheader"><table style="width: 100%; "><tr><th style="text-align: center; " colspan="3">@RestController</th></tr><tr><td style="width: 20%; text-align: left; "><a accesskey="p" href="ch40s02.xhtml">上一页</a> </td><th style="width: 60%; text-align: center; ">第 40 章 Spring MVC</th><td style="width: 20%; text-align: right; "> <a accesskey="n" href="ch40s04.xhtml">下一页</a></td></tr></table><hr/></div></header><section class="section" id="RestController"><div class="titlepage"><div><div><h2 class="title" style="clear: both">@RestController</h2></div></div></div><p/><section class="section" id="id966"><div class="titlepage"><div><div><h3 class="title">上传文件</h3></div></div></div><pre class="programlisting">
+		
+    @PostMapping("/{device}/question/voice")
+    public String questionVoice(@PathVariable String device, @RequestParam("file") MultipartFile file, @RequestParam("session") String session) {
+
+        if (file.isEmpty()) {
+            logger.error("上传失败，请选择文件");
+        }
+
+        String fileName = file.getOriginalFilename();
+        String filePath = "/tmp/".concat(session.concat(".mp3"));
+        File saveAs = new File(filePath);
+        try {
+            file.transferTo(saveAs);
+            logger.info("上传成功 " + fileName);
+        } catch (IOException e) {
+            logger.error(e.toString(), e);
+            return "上传失败";
+        }
+        return "上传成功";
+    }		
+		
+		</pre></section><section class="section" id="id967"><div class="titlepage"><div><div><h3 class="title">返回实体</h3></div></div></div><pre class="programlisting">
+		
+	@RequestMapping("/get/{id}")
+	public Member getStatistics(@PathVariable long id) {
+		Member statistics = memberRepostitory.findOne(id);
+		if (statistics == null) {
+			statistics = new Member();
+		}
+		return statistics;
+	}
+		
+		</pre></section><section class="section" id="id968"><div class="titlepage"><div><div><h3 class="title">JSON</h3></div></div></div><p>MediaType.APPLICATION_JSON_VALUE 执行结果反馈json数据</p><pre class="programlisting">
+		
+@RestController
+@RequestMapping("/api/persons")
+public class MainController {
+
+    @RequestMapping(
+            value = "/detail/{id}", 
+            method = RequestMethod.GET, 
+            produces = MediaType.APPLICATION_JSON_VALUE
+            )
+    public ResponseEntity&lt;Persons&gt; getUserDetail(@PathVariable Long id) {
+
+        Persons user = personsRepository.findById(id);
+
+        return new ResponseEntity&lt;&gt;(user, HttpStatus.OK);
+    }
+
+}
+		
+		</pre></section><section class="section" id="restfull.raw.json"><div class="titlepage"><div><div><h3 class="title">处理原始 RAW JSON 数据</h3></div></div></div><pre class="programlisting">
+		
+	@RequestMapping(value = "/create", method = RequestMethod.POST, produces = { "application/xml", "application/json" })
+	public ResponseEntity&lt;Member&gt; create(@RequestBody Member member) {
+		memberRepository.save(member);
+		return new ResponseEntity&lt;Member&gt;(member, HttpStatus.OK);
+	}		
+		
+		</pre></section><section class="section" id="json.null"><div class="titlepage"><div><div><h3 class="title">返回 JSON 对象 NULL 专为 "" 字符串</h3></div></div></div><pre class="programlisting">
+		
+package api.config;
+
+import java.io.IOException;
+
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
+
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializerProvider;
+
+@Configuration
+public class JacksonConfig {
+    @Bean
+    @Primary
+    @ConditionalOnMissingBean(ObjectMapper.class)
+    public ObjectMapper jacksonObjectMapper(Jackson2ObjectMapperBuilder builder) {
+        ObjectMapper objectMapper = builder.createXmlMapper(false).build();
+        objectMapper.getSerializerProvider().setNullValueSerializer(new JsonSerializer&lt;Object&gt;() {
+            @Override
+            public void serialize(Object o, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException, JsonProcessingException {
+                jsonGenerator.writeString("");
+            }
+        });
+        return objectMapper;
+    }
+}
+
+		
+		</pre></section><section class="section" id="restful.xml"><div class="titlepage"><div><div><h3 class="title">XML</h3></div></div></div><p>restful 将同时支持 json 和 xml 数据传递</p><pre class="programlisting">
+		
+package com.example.api.restful;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.api.domain.RecentRead;
+import com.example.api.repository.RecentReadRepostitory;
+
+@RestController
+@RequestMapping("/restful/article")
+public class ArticleRestController {
+
+	@Autowired
+	private RecentReadRepostitory recentReadRepostitory;
+
+	@RequestMapping(value = "/recent/read/add/{memberId}/{articleId}", method = RequestMethod.GET, produces = { "application/xml", "application/json" })
+	public ResponseEntity&lt;RecentRead&gt; recentAdd(@PathVariable long memberId, @PathVariable long articleId) {
+		RecentRead recentRead = new RecentRead();
+		recentRead.setMemberId(memberId);
+		recentRead.setArticleId(articleId);
+		recentReadRepostitory.save(recentRead);
+		return new ResponseEntity&lt;RecentRead&gt;(recentRead, HttpStatus.OK);
+	}
+
+	@RequestMapping(value="/recent/read/list/{id}", produces = { "application/xml", "application/json" })
+	public List&lt;RecentRead&gt; recentList(@PathVariable long id) {
+		int page = 0;
+		int limit = 20;
+		List&lt;RecentRead&gt; recentRead = recentReadRepostitory.findByMemberId(id, new PageRequest(page, limit));
+		return recentRead;
+	}
+}
+		
+		</pre></section><section class="section" id="restful.json"><div class="titlepage"><div><div><h3 class="title">兼容传统 json 接口</h3></div></div></div><p>开发中发现很多人不适应新的接口方式，有时候只能妥协，这些顽固不化的人需要这样的数据库格式</p><pre class="programlisting">
+		
+{  
+   "status":true,
+   "reason":"登录成功",
+   "code":1,
+   "data":{
+      "id":2,
+      "name":null,
+      "sex":null,
+      "age":0,
+      "wechat":null,
+      "mobile":"13113668890",
+      "picture":null,
+      "ipAddress":"0:0:0:0:0:0:0:1"
+   }
+}
+		
+		</pre><p>返回数据必须放在 data 字典中, 而我通常是采用 http status code
+			来返回状态，返回结果是对象。实现上面的需求我们需要加入一个data成员变量，因为我们不清楚最终要返回什么对象。所以声明为
+			java.lang.Object
+		</p><pre class="programlisting">
+		
+package com.example.api.pojo;
+
+import java.io.Serializable;
+
+public class RestfulResponse implements Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -4045645995352698349L;
+
+	private boolean status;
+	private String reason;
+	private int code;
+	private Object data;
+
+	public RestfulResponse(boolean status, int code, String reason, Object data) {
+		this.status = status;
+		this.code = code;
+		this.reason = reason;
+		this.data = data;
+
+	}
+
+	public boolean isStatus() {
+		return status;
+	}
+
+	public void setStatus(boolean status) {
+		this.status = status;
+	}
+
+	public String getReason() {
+		return reason;
+	}
+
+	public void setReason(String reason) {
+		this.reason = reason;
+	}
+
+	public int getCode() {
+		return code;
+	}
+
+	public void setCode(int code) {
+		this.code = code;
+	}
+
+	public Object getData() {
+		return data;
+	}
+
+	public void setData(Object data) {
+		this.data = data;
+	}
+
+	@Override
+	public String toString() {
+		return "RestfulResponse [status=" + status + ", reason=" + reason + ", code=" + code + ", data=" + data + "]";
+	}
+
+}
+		
+		</pre><p>Service</p><pre class="programlisting">
+		
+	public RestfulResponse bindWechat(String mobile, String wechat) {
+		Member member = memberRepository.findByMobile(mobile);
+		member.setWechat(wechat);
+		memberRepository.save(member);
+		return new RestfulResponse(true, 1, "微信绑定成功", member);
+	}
+		
+		</pre><p>Controller</p><pre class="programlisting">
+		
+	@RequestMapping("/login/sms/{mobile}/{code}")
+	public RestfulResponse sms(@PathVariable String mobile, @PathVariable String wechat) {
+		return memberService.bindWechat(mobile, wechat);
+	}
+		
+		</pre></section><section class="section" id="restful.upload"><div class="titlepage"><div><div><h3 class="title">上传文件</h3></div></div></div><p/><pre class="screen">
+		
+spring.servlet.multipart.max-file-size=128KB
+spring.servlet.multipart.max-request-size=128KB
+spring.http.multipart.enabled=false
+		
+		</pre><p>RestController</p><pre class="programlisting">
+		
+package api.restful;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import api.pojo.RestfulResponse;
+
+@RestController
+@RequestMapping("/upload")
+public class UploadRestController {
+
+	private final static String FOLDER = "/tmp";
+
+	public UploadRestController() {
+		
+	}
+
+	@PostMapping("/single")
+	public RestfulResponse upload(@RequestParam("file") MultipartFile file, RedirectAttributes redirectAttributes) {
+
+		if (file.isEmpty()) {
+			return new RestfulResponse(false, 0, "Please select a file to upload", "");
+		}
+		try {
+			byte[] bytes = file.getBytes();
+			Path path = Paths.get(FOLDER + "/" + file.getOriginalFilename());
+			Files.write(path, bytes);
+
+			return new RestfulResponse(true, 0, "", path.toString());
+		} catch (Exception e) {
+			return new RestfulResponse(false, 0, e.getMessage(), null);
+		}
+	}
+
+	@PostMapping(value = "/group")
+	public RestfulResponse group(@RequestParam("files") MultipartFile[] files) {
+		List&lt;String&gt; filelist = new ArrayList&lt;String&gt;();
+		try {
+
+			for (MultipartFile file : files) {
+				File tmpfile = new File(FOLDER + "/" + file.getOriginalFilename());
+				file.transferTo(tmpfile);
+				filelist.add(tmpfile.getPath());
+			}
+			return new RestfulResponse(true, 0, null, filelist);
+		} catch (Exception e) {
+			return new RestfulResponse(false, 0, e.getMessage(), null);
+		}
+	}
+}
+		
+		</pre><p>由于上传文件名可能存在空格等特殊字符，这里使用UUID替代文件名</p><pre class="programlisting">
+		
+	@PostMapping(value = "/file")
+	public RestfulResponse file(@RequestParam("file") MultipartFile[] files) {
+		List&lt;Object&gt; filelist = new ArrayList&lt;Object&gt;();
+		try {
+
+			for (MultipartFile file : files) {
+			
+				UUID uuid = UUID.randomUUID();
+				String filename = String.format("%s/%s.%s", folder, uuid.toString(), this.getExtensionName(filename));
+
+				File tmpfile = new File(filename);
+				String filepath = tmpfile.getPath();
+				System.out.println(filepath);
+				file.transferTo(tmpfile);
+				filelist.add(tmpfile.toString());
+			}
+			return new RestfulResponse(true, 0, null, filelist);
+		} catch (Exception e) {
+			return new RestfulResponse(false, 0, e.getMessage(), null);
+		}
+	}
+
+	private String getExtensionName(String filename) {
+		if ((filename != null) &amp;&amp; (filename.length() &gt; 0)) {
+			int dot = filename.lastIndexOf('.');
+			if ((dot &gt; -1) &amp;&amp; (dot &lt; (filename.length() - 1))) {
+				return filename.substring(dot + 1);
+			}
+		}
+		return filename;
+	}
+		
+		</pre><pre class="programlisting">
+		
+获取文件名及后缀信息
+
+MultipartFile file = new MultipartFile();
+String file = file.getOriginalFilename()
+
+获取文件名
+
+MultipartFile file = new MultipartFile();
+String fileName = file.getOriginalFilename().substring(0,file.getOriginalFilename().lastIndexOf("."))
+
+
+获取文件后缀
+
+MultipartFile file = new MultipartFile();
+String fileSuffix = file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf("."))
+
+
+获取文件类型
+
+MultipartFile file = new MultipartFile();
+String fileType = file.getContentType()
+
+
+获取文件大小
+
+MultipartFile file = new MultipartFile();
+String fileSize = file.getSize()
+		
+		
+		</pre></section><section class="section" id="export.csv"><div class="titlepage"><div><div><h3 class="title">Spring boot with csv</h3></div></div></div><p>下面是一个导出 CSV 文件的例子</p><pre class="programlisting">
+		
+	@GetMapping("/export")
+	public void export(HttpServletResponse response) throws IOException {
+		response.setContentType("application/csv");
+		// response.setContentType("application/csv;charset=gb18030");
+		response.setHeader("Content-Disposition", "attachment; filename=\"file.csv\"");
+
+		BufferedWriter writer = new BufferedWriter(response.getWriter());
+
+		// 需要写入 utf8bom 头否则会出现中文乱码
+		// byte[] uft8bom = { (byte) 0xef, (byte) 0xbb, (byte) 0xbf };
+		String bom = new String(new byte[] { (byte) 0xEF, (byte) 0xBB, (byte) 0xBF });
+		writer.write(bom);
+		writer.write("A,B,C");
+		writer.newLine();
+		tableRepository.findAll().forEach(table -&gt; {
+			try {
+				String tmp = String.format("%s,%s,%s", table.getId(), table.getMethod(), table.getMoney());
+				writer.write(tmp);
+				writer.newLine();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+		});
+
+		writer.flush();
+		writer.close();
+	}		
+		
+		</pre></section><section class="section" id="json"><div class="titlepage"><div><div><h3 class="title">Json 处理</h3></div></div></div><section class="section" id="Problem Details"><div class="titlepage"><div><div><h4 class="title">Problem Details [RFC 7807]</h4></div></div></div><p>HTTP RFC 7807
+			规范：https://www.rfc-editor.org/rfc/rfc7807。这个规范里定义了HTTP
+			API的“问题细节”（Problem Details）内容。用它来携带HTTP错误返回信息，避免自定义新的错误返回格式。
+		</p><pre class="programlisting">
+	
+HTTP/1.1 403 Forbidden
+Content-Type: application/problem+json
+Content-Language: en
+
+{
+	"status": 403,
+	"type": "https://bankname.com/common-problems/low-balance",
+	"title": "You not have enough balance",
+	"detail": "Your current balance is 30 and you are transterring 50",
+	"instance": "/account-transfer-service"
+}		
+	
+		</pre><pre class="programlisting">
+	
+type：		问题的类型；
+title：		问题类型描述；
+status：	HTTP状态码；
+detail：	问题实例描述；
+instance：	URI的内容应该用来描述问题实例，但不是必须的。
+	
+		</pre><pre class="programlisting">
+	
+    @GetMapping("/ProblemDetail/v1/{id}")
+    public ResponseEntity config(@PathVariable("id") Long id) {
+        if (id &lt; 100) {
+            return ResponseEntity.ok(new Member(id, "netkiller"));
+        } else {
+            ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, "Member id '" + id + "' does no exist");
+            pd.setType(URI.create("https://www.netkiller.cn/errors/not-found"));
+            pd.setTitle("Record Not Found");
+            pd.setProperty("hostname", "www.netkiller.cn");
+            return ResponseEntity.status(404).body(pd);
+        }
+    }
+	
+		</pre><pre class="programlisting">
+	
+    @GetMapping(path = "/ProblemDetail/v2/{id}")
+    public ResponseEntity getEmployeeById_V3(@PathVariable("id") Long id) {
+
+        try {
+            //somthing threw this exception
+            throw new NullPointerException("Something was expected but it was null");
+        } catch (NullPointerException npe) {
+            ProblemDetail pd = ProblemDetail
+                    .forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR,
+                            "Null Pointer Exception");
+            pd.setType(URI.create("https://www.netkiller.cn/errors/npe"));
+            pd.setTitle("Null Pointer Exception");
+            pd.setProperty("hostname", "www.netkiller.cn");
+            throw new ErrorResponseException(HttpStatus.NOT_FOUND, pd, npe);
+        }
+    }
+	
+		</pre><section class="section" id="ResponseEntity"><div class="titlepage"><div><div><h5 class="title">ResponseEntity</h5></div></div></div><pre class="programlisting">
+			
+@PostMapping(path = "/foo", params = {"id", "name=John"})
+public ResponseEntity&lt;String&gt; handlePostRequest() {
+    // 处理请求
+    return ResponseEntity.ok("Success");
+}
+			
+			</pre><section class="section" id="id969"><div class="titlepage"><div><div><h6 class="title">status</h6></div></div></div><pre class="programlisting">
+			
+return ResponseEntity
+                  .status(HttpStatus.CREATED)
+                  .header("Location", locationUri)
+                  .body("Employee created successfully. Location: " + locationUri);		
+			
+				</pre></section></section></section><section class="section" id="javax.json"><div class="titlepage"><div><div><h4 class="title">javax.json.*</h4></div></div></div><section class="section" id="json.encode"><div class="titlepage"><div><div><h5 class="title">Json 编码</h5></div></div></div><pre class="programlisting">
+						
+package netkiller.json;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+
+import javax.json.*;
+
+public final class Writer {
+
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+		
+		JsonObjectBuilder jsonBuilder = Json.createObjectBuilder();
+		JsonObjectBuilder addressBuilder = Json.createObjectBuilder();
+		JsonArrayBuilder phoneNumBuilder = Json.createArrayBuilder();
+		
+		phoneNumBuilder.add("12355566688").add("0755-2222-3333");
+		
+		addressBuilder.add("street", "Longhua").add("city",	"Shenzhen").add("zipcode", 518000);
+		
+		jsonBuilder.add("nickname", "netkiller").add("name", "Neo").add("department", "IT").add("role",	"Admin");
+		
+		jsonBuilder.add("phone", phoneNumBuilder);
+		jsonBuilder.add("address", addressBuilder);
+		
+		JsonObject jsonObject = jsonBuilder.build();
+		
+		System.out.println(jsonObject);
+		
+		try {
+			// write to file
+			File file = new File("json.txt");
+			if (!file.exists()) {
+				file.createNewFile();
+			}
+			OutputStream os = null;
+			os = new FileOutputStream(file);
+			JsonWriter jsonWriter = Json.createWriter(os);
+			jsonWriter.writeObject(jsonObject);
+			jsonWriter.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	
+	}
+
+}
+			
+			</pre><p>运行后输出</p><pre class="screen">
+			
+{"nickname":"netkiller","name":"Neo","department":"IT","role":"Admin","phone":["12355566688","0755-2222-3333"],"address":{"street":"Longhua","city":"Shenzhen","zipcode":"518000"}}			
+			
+			</pre></section><section class="section" id="json.decode"><div class="titlepage"><div><div><h5 class="title">Json 解码</h5></div></div></div><pre class="programlisting">
+			
+package netkiller.json;
+
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonObject;
+import javax.json.JsonReader;
+import javax.json.JsonValue;
+
+public final class Reader {
+	
+	public static final String JSON_FILE="json.txt";
+	
+	public static void main(String[] args) throws IOException {
+		InputStream fis = new FileInputStream(JSON_FILE);
+		//create JsonReader object
+		JsonReader jsonReader = Json.createReader(fis);
+		
+		//get JsonObject from JsonReader
+		JsonObject jsonObject = jsonReader.readObject();
+		
+		//we can close IO resource and JsonReader now
+		jsonReader.close();
+		fis.close();
+		
+		System.out.printf("nickname: %s \n", jsonObject.getString("nickname"));
+		System.out.printf("name: %s \n", jsonObject.getString("name"));
+		System.out.printf("department: %s \n",
+		jsonObject.getString("department"));
+		System.out.printf("role: %s \n", jsonObject.getString("role"));
+		JsonArray jsonArray = jsonObject.getJsonArray("phone");
+		
+		//long[] numbers = new long[jsonArray.size()];
+		int index = 0;
+		for(JsonValue value : jsonArray){
+			//numbers[index++] = Long.parseLong(value.toString());
+			System.out.printf("phone[%d]: %s \n", index++, value.toString());
+		}
+		
+		//reading inner object from json object
+		JsonObject innerJsonObject = jsonObject.getJsonObject("address");
+		
+		System.out.printf("address: %s, %s, %d \n",
+		innerJsonObject.getString("street"),
+		innerJsonObject.getString("city"),
+		innerJsonObject.getInt("zipcode"));
+	
+	}
+
+}
+			
+			</pre><p>运行结果</p><pre class="screen">
+			
+nickname: netkiller
+name: Neo
+department: IT
+role: Admin
+phone[0]: +8612355566688
+phone[1]: 0755-2222-3333
+address: Longhua, Shenzhen, 518000
+			
+			</pre></section><section class="section" id="json.url"><div class="titlepage"><div><div><h5 class="title">URL获取Json</h5></div></div></div><pre class="programlisting">
+		
+package netkiller.json;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringReader;
+import java.net.URL;
+import java.net.URLConnection;
+import java.nio.charset.Charset;
+
+import javax.json.*;
+
+public class HttpUrl {
+
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+		String URL = "http://www.example.com/json/2/20/0.html";
+		// system.out.println("Requeted URL:" + URL);
+		StringBuilder sb = new StringBuilder();
+		URLConnection urlConn = null;
+		InputStreamReader in = null;
+		try {
+			URL url = new URL(URL);
+			urlConn = url.openConnection();
+			if (urlConn != null)
+				urlConn.setReadTimeout(60 * 1000);
+			if (urlConn != null &amp;&amp; urlConn.getInputStream() != null) {
+				in = new InputStreamReader(urlConn.getInputStream(), Charset.defaultCharset());
+				BufferedReader bufferedReader = new BufferedReader(in);
+				if (bufferedReader != null) {
+					int cp;
+					while ((cp = bufferedReader.read()) != -1) {
+						sb.append((char) cp);
+					}
+					bufferedReader.close();
+				}
+			}
+			in.close();
+
+			String jsonString = sb.toString();
+
+			//System.out.println(jsonString);
+
+			JsonReader reader = Json.createReader(new StringReader(jsonString));
+
+			JsonObject jsonObject = reader.readObject();
+
+			reader.close();
+
+			// System.out.println(jsonObject.size());
+
+			for (int i = 0; i &lt; jsonObject.size() - 2; i++) {
+				JsonObject rowObject = jsonObject.getJsonObject(Integer.toString(i));
+				// System.out.println(rowObject.toString());
+				System.out.printf("%s\t%s\t%s\n", rowObject.getJsonString("id"), rowObject.getJsonString("title"),
+						rowObject.getJsonString("ctime"));
+			}
+
+		} catch (Exception e) {
+			throw new RuntimeException("Exception while calling URL:" + URL, e);
+		}
+
+	}
+
+}
+		
+			</pre></section></section><section class="section" id="Jackson"><div class="titlepage"><div><div><h4 class="title">Jackson</h4></div></div></div><section class="section" id="id970"><div class="titlepage"><div><div><h5 class="title">Jackson 相关配置</h5></div></div></div><pre class="screen">
+		
+#序列化时间格式
+spring.jackson.date-format=yyyy-MM-dd HH:mm:ss
+spring.mvc.date-format=yyyy-MM-dd HH:mm:ss
+#mvc序列化时候时区选择
+spring.jackson.time-zone=GMT+8		
+		
+			</pre></section><section class="section" id="@JsonIgnore"><div class="titlepage"><div><div><h5 class="title">@JsonIgnore 返回json是不含有该字段</h5></div></div></div><pre class="programlisting">
+			
+	@JsonIgnore
+	private String entityName = this.getClass().getSimpleName();	
+			
+			</pre></section><section class="section" id="@JsonFormat 日期格式化"><div class="titlepage"><div><div><h5 class="title">@JsonFormat 格式化 json 时间格式</h5></div></div></div><section class="section" id="id971"><div class="titlepage"><div><div><h6 class="title">日期格式化</h6></div></div></div><p>默认 json 中的时间格式是这样的</p><pre class="screen">
+			
+"createDate":"2018-09-11T07:34:20.106+0000","updateDate":"2018-09-11T07:34:20.106+0000"			
+			
+				</pre><p>@JsonFormat 可以格式化 json 返回的时间格式。</p><pre class="programlisting">
+			
+@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")			
+			
+				</pre><p>格式化后</p><pre class="programlisting">
+			
+"createDate":"2018-09-11 07:42:44","updateDate":"2018-09-11 07:42:44"			
+			
+				</pre><p>解决时区问题，MongoDb 默认使用UTC,显示时间相差8小时</p><pre class="programlisting">
+			
+@JsonFormat(timezone = "GMT+8", pattern = "yyyy-MM-dd HH:mm:ss")	
+private Date createdDate = new Date();			
+			
+				</pre></section><section class="section" id="id972"><div class="titlepage"><div><div><h6 class="title">时区</h6></div></div></div><pre class="programlisting">
+			
+public class Test {
+   @JsonFormat(shape=JsonFormat.Shape.STRING, pattern="yyyy-MMM-dd HH:mm:ss z", timezone="EST")
+   @JsonProperty("pubDate")
+   private Date recentBookPubDate;	
+} 			
+			
+				</pre></section><section class="section" id="id973"><div class="titlepage"><div><div><h6 class="title">枚举</h6></div></div></div><pre class="programlisting">
+			
+public class Test {
+   @JsonFormat(shape=JsonFormat.Shape.NUMBER)
+   @JsonProperty("birthDate")
+   private Date birthDate;
+} 
+			
+				</pre><pre class="screen">
+			
+{
+  "birthDate" : 1528702883858
+} 			
+			
+				</pre></section><section class="section" id="id974"><div class="titlepage"><div><div><h6 class="title">枚举</h6></div></div></div><pre class="programlisting">
+			
+package cn.netkiller;
+import com.fasterxml.jackson.annotation.JsonFormat;
+
+@JsonFormat(shape=JsonFormat.Shape.NUMBER)
+enum Code {
+    BLOCKING,
+    CRITICAL,
+    MEDIUM,
+    LOW;
+} 
+
+@JsonFormat(shape=JsonFormat.Shape.STRING)
+enum Lang {
+	Java,
+	PHP,
+	Python
+} 
+			
+				</pre></section></section><section class="section" id="@JsonComponent"><div class="titlepage"><div><div><h5 class="title">@JsonComponent</h5></div></div></div><pre class="programlisting">
+		
+package cn.netkiller.json;
+
+public class Member {
+	private String name;
+
+	public Member() {
+		// TODO Auto-generated constructor stub
+	}
+
+	public Member(String name) {
+		// TODO Auto-generated constructor stub
+		this.name = name;
+
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	@Override
+	public String toString() {
+		return "Member [name=" + name + "]";
+	}
+
+}
+		
+		
+			</pre><pre class="programlisting">
+		
+package cn.netkiller.json;
+
+import java.io.IOException;
+
+import org.springframework.boot.jackson.JsonComponent;
+
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.TreeNode;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.node.TextNode;
+
+@JsonComponent
+public class Json {
+
+	public Json() {
+		// TODO Auto-generated constructor stub
+	}
+
+	public static class MemberJsonSerializer extends JsonSerializer&lt;Member&gt; {
+
+		@Override
+		public void serialize(Member value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+			// TODO Auto-generated method stub
+			gen.writeStartObject();
+			gen.writeStringField("member", value.toString());
+			gen.writeEndObject();
+
+		}
+	}
+
+	public static class MemberJsonDeserializer extends JsonDeserializer&lt;Member&gt; {
+
+		@Override
+		public Member deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
+			// TODO Auto-generated method stub
+			TreeNode treeNode = p.getCodec().readTree(p);
+			TextNode member = (TextNode) treeNode.get("member");
+			return new Member(member.asText());
+		}
+	}
+}		
+		
+			</pre><pre class="programlisting">
+		
+package cn.netkiller.json.controller;
+
+import cn.netkiller.json.Member;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+/**
+ *
+ * @author neo
+ */
+@RestController
+public class SimpleController {
+
+	@Autowired
+	public ObjectMapper objectMapper;
+
+	@GetMapping("/")
+	public String home() throws JsonMappingException, JsonProcessingException {
+		String json = "{\"name\":\"netkiller\"}";
+		Member member = objectMapper.readValue(json, Member.class);
+		System.out.println(member.getName());
+		return member.getName();
+	}
+
+}
+		
+			</pre></section><section class="section" id="ObjectToJson"><div class="titlepage"><div><div><h5 class="title">Object to Json</h5></div></div></div><pre class="programlisting">
+		
+ObjectMapper mapper = new ObjectMapper();
+User user = new User();
+
+//Object to JSON in file
+mapper.writeValue(new File("c:\\user.json"), user);
+
+//Object to JSON in String
+String jsonInString = mapper.writeValueAsString(user);
+
+//Convert object to JSON string and pretty print
+String jsonInString = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(user);
+		
+			</pre><pre class="programlisting">
+		
+	Notification notification = new Notification(status, time, summary + info);
+	ObjectMapper objectMapper = new ObjectMapper();
+	String json = objectMapper.writeValueAsString(notification);		
+		
+			</pre></section><section class="section" id="JsonToObject"><div class="titlepage"><div><div><h5 class="title">Json To Object</h5></div></div></div><pre class="programlisting">
+		
+ObjectMapper mapper = new ObjectMapper();
+String jsonInString = "{'name' : 'mkyong'}";
+
+//JSON from file to Object
+User user = mapper.readValue(new File("c:\\user.json"), User.class);
+
+//JSON from String to Object
+User user = mapper.readValue(jsonInString, User.class);
+		
+			</pre></section><section class="section" id="id975"><div class="titlepage"><div><div><h5 class="title">ObjectToJSON</h5></div></div></div><pre class="programlisting">
+			
+package cn.netkiller;
+import java.util.Date;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+public class ObjectToJSON {
+  public static void main(String[] args) throws JsonProcessingException {
+     Test test = new Test("Neo", 123, new Date());   
+     ObjectMapper mapper = new ObjectMapper();     
+     String jsonData = mapper.writerWithDefaultPrettyPrinter()
+		 .writeValueAsString(test);
+     System.out.println(jsonData);
+  }
+} 			
+			
+			</pre></section><section class="section" id="id976"><div class="titlepage"><div><div><h5 class="title">JSONToObject</h5></div></div></div><pre class="programlisting">
+			
+package cn.netkiller;
+import java.io.IOException;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+public class JSONToObject {
+	public static void main(String[] args) throws JsonParseException, JsonMappingException, IOException {
+		 String jsonData = 
+		    "{"
+			  +"\"name\" : \"Neo\","
+			  +"\"age\" : 12,"
+			  +"\"birthDate\" : \"2019-Jun-11 07:00:46 CST\""	
+		   +"}";
+		 ObjectMapper mapper = new ObjectMapper();
+		 Test test = mapper.readValue(jsonData, Test.class);
+		 System.out.println(test.getName()+" | "+test.getBirthDate()+" | "+ test.getAge());
+	}
+} 
+			
+			</pre></section><section class="section" id="id977"><div class="titlepage"><div><div><h5 class="title">JsonNode</h5></div></div></div><pre class="programlisting">
+			
+String[] picture;
+ObjectMapper mapper = new ObjectMapper();
+JsonNode jsonNode = mapper.convertValue(picture, JsonNode.class);		
+			
+			</pre></section></section><section class="section" id="id979"><div class="titlepage"><div><div><h4 class="title">org.json</h4></div></div></div><section class="section" id="id978"><div class="titlepage"><div><div><h5 class="title">JSONArray forEach</h5></div></div></div><pre class="programlisting">
+			
+            JSONArray playlists = object.getJSONArray("result");
+            Log.i(TAG, "播放数量：" + playlists.size() + " 列表" + playlists);
+
+            List&lt;String&gt; lists = new ArrayList&lt;String&gt;();
+
+            playlists.forEach(jsonObject -&gt; {
+                JSONObject obj = (JSONObject) jsonObject;
+                lists.add(obj.getString("url"));
+            });
+			
+			</pre></section></section><section class="section" id="gson"><div class="titlepage"><div><div><h4 class="title">Google Json</h4></div></div></div><section class="section" id="id980"><div class="titlepage"><div><div><h5 class="title">json 转 map</h5></div></div></div><pre class="programlisting">
+			
+ 		HashMap&lt;String, HashMap&lt;String, String&gt;&gt; data = new HashMap&lt;String, HashMap&lt;String, String&gt;&gt;();
+        Gson gson = new Gson();
+        data = gson.fromJson(jsonString, data.getClass());		
+			
+			</pre></section><section class="section" id="id981"><div class="titlepage"><div><div><h5 class="title">LinkedHashMap 转 Json</h5></div></div></div><pre class="programlisting">
+			
+Gson gson = new Gson();
+Map&lt;String, String&gt; data = new LinkedHashMap&lt;String, String&gt;() {{
+    put("text", text);
+    put("scene", "talk");
+}};
+
+String json = gson.toJson(data, LinkedHashMap.class);
+			
+			</pre><p>注意：String json = gson.toJson(data); 这样转换不成功，返回 null，必须指定 class
+				才能成功 String json = gson.toJson(data, LinkedHashMap.class); </p></section></section></section><section class="section" id="rest.synchronized"><div class="titlepage"><div><div><h3 class="title">synchronized</h3></div></div></div><p>避免接口无序执行，被同时多次执行，同一时间只能有一个请求，请求完毕之后才能进行下一次请求。</p><pre class="programlisting">
+		
+   @GetMapping("/lock/{id}")
+    public String lock1(@PathVariable("id") String id) throws InterruptedException {
+        synchronized (id.intern()) {
+            log.info(Thread.currentThread().getName() + " 上锁");
+            Thread.sleep(10000);
+            log.info(Thread.currentThread().getName() + " 解锁");
+        }
+        return Thread.currentThread().getName();
+    }		
+		
+		</pre><p>使用 ConcurrentHashMap 数据共享</p><pre class="programlisting">
+		
+	private final Map&lt;String, Object&gt; share = new ConcurrentHashMap&lt;&gt;();
+
+    @GetMapping("/share/{id}")
+    public Map&lt;String, Object&gt; shareTest(@PathVariable("id") String id) throws InterruptedException {
+
+//        share.computeIfAbsent(id, k -&gt; new Object());
+        share.computeIfAbsent(id, key -&gt; {
+            return new Date();
+        });
+
+        synchronized (share) {
+            log.info(Thread.currentThread().getName() + " 上锁");
+            Thread.sleep(1000);
+            log.info(Thread.currentThread().getName() + " 解锁");
+        }
+        return share;
+    }
+		
+		</pre></section><section class="section" id="spring.mvc.sse"><div class="titlepage"><div><div><h3 class="title">SSE Streaming in Spring MVC</h3></div></div></div><pre class="programlisting">
+		
+@GetMapping("/events")
+public ResponseBodyEmitter handle() {
+	ResponseBodyEmitter emitter = new ResponseBodyEmitter();
+	// Save the emitter somewhere..
+	return emitter;
+}
+
+// In some other thread
+emitter.send("Hello once");
+
+// and again later on
+emitter.send("Hello again");
+
+// and done at some point
+emitter.complete();
+
+		
+		
+		</pre><pre class="programlisting">
+		
+@GetMapping(path="/events", produces=MediaType.TEXT_EVENT_STREAM_VALUE)
+public SseEmitter handle() {
+	SseEmitter emitter = new SseEmitter();
+	// Save the emitter somewhere..
+	return emitter;
+}
+
+// In some other thread
+emitter.send("Hello once");
+
+// and again later on
+emitter.send("Hello again");
+
+// and done at some point
+emitter.complete();		
+		
+		</pre><pre class="programlisting">
+				
+@GetMapping("/mvc/sse")
+public SseEmitter streamSseMvc() {
+    SseEmitter emitter = new SseEmitter();
+    ExecutorService sseMvcExecutor = Executors.newSingleThreadExecutor();
+    sseMvcExecutor.execute(() -&gt; {
+        try {
+            for (int i = 0; true; i++) {
+                SseEventBuilder event = SseEmitter.event()
+                  .data("SSE MVC - " + LocalTime.now().toString())
+                  .id(String.valueOf(i))
+                  .name("sse event - mvc");
+                emitter.send(event);
+                Thread.sleep(1000);
+            }
+        } catch (Exception ex) {
+            emitter.completeWithError(ex);
+        }
+    });
+    return emitter;
+}
+		
+		</pre></section></section><footer><div class="navfooter"><hr/><table style="width: 100%; "><tr><td style="width: 40%; text-align: left; "><a accesskey="p" href="ch40s02.xhtml">上一页</a> </td><td style="width: 20%; text-align: center; "><a accesskey="u" href="ch40.xhtml">上一级</a></td><td style="width: 40%; text-align: right; "> <a accesskey="n" href="ch40s04.xhtml">下一页</a></td></tr><tr><td style="width: 40%; text-align: left; vertical-align: top; ">@Controller </td><td style="width: 20%; text-align: center; "><a accesskey="h" href="../../index.xhtml">起始页</a></td><td style="width: 40%; text-align: right; vertical-align: top; "> View</td></tr></table></div></footer></body></html>

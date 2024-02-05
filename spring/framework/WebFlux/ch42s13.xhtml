@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><title>常见问题</title><link rel="stylesheet" type="text/css" href="../../docbook.css"/><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot"/><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config"/><link rel="prev" href="ch42s12.xhtml" title="Webflux 安全"/><link rel="next" href="../ch43.xhtml" title="第 43 章 @Bean"/></head><body><header><div class="navheader"><table style="width: 100%; "><tr><th style="text-align: center; " colspan="3">常见问题</th></tr><tr><td style="width: 20%; text-align: left; "><a accesskey="p" href="ch42s12.xhtml">上一页</a> </td><th style="width: 60%; text-align: center; ">第 42 章 WebFlux framework</th><td style="width: 20%; text-align: right; "> <a accesskey="n" href="../ch43.xhtml">下一页</a></td></tr></table><hr/></div></header><section class="section" id="id4531"><div class="titlepage"><div><div><h2 class="title" style="clear: both">常见问题</h2></div></div></div><section class="section" id="id1065"><div class="titlepage"><div><div><h3 class="title">The Java/XML config for Spring MVC and Spring WebFlux cannot
+			both be enabled, e.g. via @EnableWebMvc and @EnableWebFlux, in the
+			same application.
+		</h3></div></div></div><p>是用 @EnableWebFlux 注解是，出现错误。这是因为 Mvc 与 Webflux
+			不能同时启用，通过下面配置可以解决。
+		</p><pre class="screen">
+			
+spring.main.web-application-type=reactive
+			
+		</pre></section><section class="section" id="id1066"><div class="titlepage"><div><div><h3 class="title">@EnableWebFluxSecurity 与 @EnableReactiveMethodSecurity 不生效
+		</h3></div></div></div><p>Mvc 不能与 Webflux 同时存在，默认系统是 Mvc 导致 Security 在 Webflux 下工作不正常。
+		</p><p>去掉 Mvc 依赖 </p><pre class="screen">
+			
+        &lt;dependency&gt;
+            &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+            &lt;artifactId&gt;spring-boot-starter-web&lt;/artifactId&gt;
+        &lt;/dependency&gt;			
+			
+		</pre><p>删除 @EnableWebSecurity 注解</p><pre class="programlisting">
+			
+@EnableWebMvc			
+@EnableWebSecurity
+			
+		</pre><p>增加配置</p><pre class="screen">
+			
+spring.main.web-application-type=reactive
+			
+		</pre><pre class="programlisting">
+			
+package cn.netkiller.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
+import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
+import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
+import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.core.userdetails.MapReactiveUserDetailsService;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.web.server.SecurityWebFilterChain;
+
+import static org.springframework.security.config.Customizer.withDefaults;
+
+@Configuration
+@EnableWebFluxSecurity
+@EnableReactiveMethodSecurity
+public class SecurityConfig {
+
+    @Bean
+    public MapReactiveUserDetailsService userDetailsService() {
+        UserDetails user = User.withDefaultPasswordEncoder()
+                .username("user")
+                .password("user")
+                .roles("USER")
+                .build();
+        return new MapReactiveUserDetailsService(user);
+    }
+
+    @Order(Ordered.HIGHEST_PRECEDENCE)
+    @Bean
+    SecurityWebFilterChain filterChain(ServerHttpSecurity httpSecurity) throws Exception {
+        httpSecurity
+                .authorizeExchange(exchanges -&gt; exchanges
+                        .anyExchange().authenticated()
+                )
+                .httpBasic(withDefaults())
+                .formLogin(withDefaults());
+        return httpSecurity.build();
+    }
+
+}
+			
+		</pre></section><section class="section" id="id1067"><div class="titlepage"><div><div><h3 class="title">webflux netty 不支持 Content-Type: application/x-www-form-urlencoded</h3></div></div></div><p>Post 数据无法使用 @RequestParam 读取，只能用于读取 URL 上的 GET 数据</p><pre class="screen">
+		
+[UnsupportedMediaTypeStatusException: 415 UNSUPPORTED_MEDIA_TYPE "Content type 'application/x-www-form-urlencoded' not supported"]		
+		
+		</pre></section></section><footer><div class="navfooter"><hr/><table style="width: 100%; "><tr><td style="width: 40%; text-align: left; "><a accesskey="p" href="ch42s12.xhtml">上一页</a> </td><td style="width: 20%; text-align: center; "><a accesskey="u" href="ch42.xhtml">上一级</a></td><td style="width: 40%; text-align: right; "> <a accesskey="n" href="../ch43.xhtml">下一页</a></td></tr><tr><td style="width: 40%; text-align: left; vertical-align: top; ">Webflux 安全 </td><td style="width: 20%; text-align: center; "><a accesskey="h" href="../../index.xhtml">起始页</a></td><td style="width: 40%; text-align: right; vertical-align: top; "> 第 43 章 @Bean</td></tr></table></div></footer></body></html>

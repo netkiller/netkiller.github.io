@@ -1,0 +1,3180 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><title>声明实体</title><link rel="stylesheet" type="text/css" href="../../docbook.css"/><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot"/><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config"/><link rel="prev" href="ch52.xhtml" title="第 52 章 Spring Data with MySQL"/><link rel="next" href="ch52s03.xhtml" title="Repository"/></head><body><header><div class="navheader"><table style="width: 100%; "><tr><th style="text-align: center; " colspan="3">声明实体</th></tr><tr><td style="width: 20%; text-align: left; "><a accesskey="p" href="ch52.xhtml">上一页</a> </td><th style="width: 60%; text-align: center; ">第 52 章 Spring Data with MySQL</th><td style="width: 20%; text-align: right; "> <a accesskey="n" href="ch52s03.xhtml">下一页</a></td></tr></table><hr/></div></header><section class="section" id="@Entity"><div class="titlepage"><div><div><h2 class="title" style="clear: both">声明实体</h2></div></div></div><section class="section" id="id1107"><div class="titlepage"><div><div><h3 class="title">@Entity 声明实体</h3></div></div></div><p>声明 Class 即是数据库表</p><pre class="programlisting">
+			
+@Entity
+@Table
+public class Your_table {
+	...
+	...
+}			
+			
+			</pre></section><section class="section" id="@Table"><div class="titlepage"><div><div><h3 class="title">@Table 定义表名</h3></div></div></div><section class="section" id="catalog"><div class="titlepage"><div><div><h4 class="title">catalog</h4></div></div></div><pre class="screen">
+				
+@Table(name="CUSTOMERS",catalog="hibernate")				
+				
+				</pre></section><section class="section" id="schema"><div class="titlepage"><div><div><h4 class="title">schema</h4></div></div></div><p>配置Schema</p><pre class="screen">
+				
+@Table(name="tabname", schema="public")
+				
+				</pre></section><section class="section" id="uniqueConstraints"><div class="titlepage"><div><div><h4 class="title">uniqueConstraints</h4></div></div></div><p>唯一索引</p><pre class="screen">
+				
+@Table(name="CUSTOMERS",uniqueConstraints={@UniqueConstraint(columnNames={"name","email"})})				
+				
+				</pre><p>定义多组唯一索引</p><pre class="screen">
+				
+uniqueConstraints={@UniqueConstraint(columnNames={"name","email"}),@UniqueConstraint(columnNames={"name","age"})} 				
+				
+				</pre></section></section><section class="section" id="@Id"><div class="titlepage"><div><div><h3 class="title">@Id 定义主键</h3></div></div></div><p>ID 字段，数据库中的主键。</p><pre class="screen">
+			
+@Id
+@GeneratedValue(strategy = GenerationType.IDENTITY)
+@Column(name = "id", unique = true, nullable = false, insertable = true, updatable = false)
+private int id;			
+			
+			</pre><p>@GeneratedValue 主键生成策略：</p><pre class="screen">
+			
+@GeneratedValue(strategy= GenerationType.IDENTITY) 	该注解由数据库自动生成，AUTO_INCREMENT 自增主键，在 mysql 数据库中使用最频繁，oracle 不支持。
+@GeneratedValue(strategy= GenerationType.AUTO) 		主键由程序控制，默认的主键生成策略，oracle 默认是序列化的方式，mysql 默认是主键自增的方式。
+@GeneratedValue(strategy= GenerationType.SEQUENCE) 	根据底层数据库的序列来生成主键，条件是数据库支持序列，Oracle支持，Mysql不支持。
+@GeneratedValue(strategy= GenerationType.TABLE) 	使用一个特定的数据库表格来保存主键，较少使用。
+			
+			</pre><p>Long = bigint</p><pre class="screen">
+			
+package cn.netkiller.domain;
+
+import jakarta.persistence.*;
+import lombok.Data;
+
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.Date;
+
+@Entity
+@Table
+@Data
+public class Picture implements Serializable {
+    @Serial
+    public static final long serialVersionUID = 1L;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", unique = true, nullable = false, insertable = true, updatable = false)
+    private Long id;
+    private String device;
+    private String model;
+    private String session;
+    private String prompt;
+    private String thumbnail;
+    private String image;
+    private String story;
+    private boolean share;
+    private int likes;
+    private int favorites;
+    private int forward;
+    private Date ctime;
+    private Date mtime;
+
+}
+			
+			
+			</pre><p/><pre class="screen">
+			
+CREATE TABLE `picture` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `ctime` datetime(6) DEFAULT NULL,
+  `favorites` int NOT NULL,
+  `image` varchar(255) DEFAULT NULL,
+  `likes` int NOT NULL,
+  `mtime` datetime(6) DEFAULT NULL,
+  `prompt` varchar(255) DEFAULT NULL,
+  `session` varchar(255) DEFAULT NULL,
+  `share` bit(1) NOT NULL,
+  `story` varchar(255) DEFAULT NULL,
+  `thumbnail` varchar(255) DEFAULT NULL,
+  `device` varchar(255) DEFAULT NULL,
+  `model` varchar(255) DEFAULT NULL,
+  `forward` int NOT NULL
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci			
+			
+			</pre><p>字符串做主键</p><pre class="screen">
+			
+package api.domain;
+
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
+@Entity
+@Table()
+public class TransactionsPostion {
+
+	@Id
+	private String address;
+	private String startblock;
+	private String endblock;
+
+	public TransactionsPostion() {
+		// TODO Auto-generated constructor stub
+	}
+
+	public String getAddress() {
+		return address;
+	}
+
+	public void setAddress(String address) {
+		this.address = address;
+	}
+
+	public String getStartblock() {
+		return startblock;
+	}
+
+	public void setStartblock(String startblock) {
+		this.startblock = startblock;
+	}
+
+	public String getEndblock() {
+		return endblock;
+	}
+
+	public void setEndblock(String endblock) {
+		this.endblock = endblock;
+	}
+
+}
+
+			
+			</pre><p>对应数据库表</p><pre class="screen">
+			
+CREATE TABLE "transactions_postion" (
+  "address" varchar(255) NOT NULL,
+  "endblock" varchar(255) DEFAULT NULL,
+  "startblock" varchar(255) DEFAULT NULL,
+  PRIMARY KEY ("address")
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+			
+			</pre></section><section class="section" id="@Column"><div class="titlepage"><div><div><h3 class="title">@Column 定义字段：</h3></div></div></div><pre class="screen">
+			
+unique 		属性表示该字段是否为唯一标识，默认为false。如果表中有一个字段需要唯一标识，则既可以使用该标记，也可以使用@Table标记中的@UniqueConstraint。
+nullable 	属性表示该字段是否可以为null值，默认为true。
+insertable 	属性表示在使用“INSERT”脚本插入数据时，是否需要插入该字段的值。
+updatable	属性表示在使用“UPDATE”脚本插入数据时，是否需要更新该字段的值。insertable和updatable属性一般多用于只读的属性，例如主键和外键等。这些字段的值通常是自动生成的。
+columnDefinition属性表示创建表时，该字段创建的SQL语句，一般用于通过Entity生成表定义时使用。
+table 		属性表示当映射多个表时，指定表的表中的字段。默认值为主表的表名。
+length 		属性表示字段的长度，当字段的类型为varchar时，该属性才有效，默认为255个字符。
+precision 	属性和scale属性表示精度，当字段类型为double时，precision表示数值的总长度，scale表示小数点所占的位数。	
+scale		int	列的精度，仅对十进制数值有效，表示小数位的总位数。默认为0。		
+			
+			</pre><section class="section" id="id1108"><div class="titlepage"><div><div><h4 class="title">字段长度</h4></div></div></div><p>字段长度定义</p><pre class="screen">
+				
+@Column(name="name", length=80, nullable=true)	
+				
+				</pre></section><section class="section" id="id1109"><div class="titlepage"><div><div><h4 class="title">浮点型</h4></div></div></div><pre class="screen">
+				
+	@Column(precision=18, scale=5)  
+    private BigDecimal principal; 	
+    
+    @Column(name="Price", columnDefinition="Decimal(10,2) default '100.00'")			
+				
+				</pre></section><section class="section" id="id1110"><div class="titlepage"><div><div><h4 class="title">创建于更新控制</h4></div></div></div><pre class="screen">
+				
+	@Column(name = "ctime", nullable = false, insertable = false, updatable = false)				
+				
+				</pre></section><section class="section" id="TEXT"><div class="titlepage"><div><div><h4 class="title">TEXT 类型</h4></div></div></div><pre class="programlisting">
+				
+	private String subject;
+	@Column(columnDefinition = "TEXT")
+	private String content;				
+				
+				</pre></section><section class="section" id="UNSIGNED"><div class="titlepage"><div><div><h4 class="title">整形数据类型</h4></div></div></div><p>无符号整形</p><pre class="programlisting">
+			
+package com.example.api.domain.elasticsearch;
+
+import java.util.Date;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
+@Entity
+@Table
+public class Member {
+	@Id
+	private int id;
+		
+	@Column(columnDefinition = "INT(10) UNSIGNED NOT NULL")
+	private int age;
+	
+	@Column(insertable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+	private Date ctime;
+
+	@Column(nullable = true, insertable = false, updatable = false, columnDefinition = "TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP")
+	private Date mtime;
+
+	@Column(columnDefinition = "enum('Y','N') DEFAULT 'N'")
+	private boolean status;
+}			
+			
+				</pre><pre class="programlisting">
+			
+CREATE TABLE `member` (
+  `id` int(11) NOT NULL,
+  `age` int(10) unsigned NOT NULL,
+  `ctime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `mtime` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  `status` enum('Y','N') DEFAULT 'N',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8			
+			
+				</pre></section></section><section class="section" id="@Transient"><div class="titlepage"><div><div><h3 class="title">非数据库字段</h3></div></div></div><p>@Transient 该注解标注的字段不会被应射到数据库当中</p></section><section class="section" id="@Lob"><div class="titlepage"><div><div><h3 class="title">@Lob 注解属性将被持久化为 Blog 或 Clob 类型</h3></div></div></div><div class="literallayout"><p><br/>
+			<br/>
+Clob（Character Large Ojects）类型是长字符串类型，具体的java.sql.Clob, Character[], char[] 和 java.lang.String 将被持久化为 Clob 类型。<br/>
+Blob（Binary Large Objects）类型是字节类型，具体的java.sql.Blob, Byte[], byte[] 和 serializable type 将被持久化为 Blob 类型。<br/>
+@Lob 持久化为Blob或者Clob类型,根据get方法的返回值不同,自动进行Clob和Blob的转换。<br/>
+因为这两种类型的数据一般占用的内存空间比较大，所以通常使用延迟加载的方式，与@Basic标记同时使用，设置加载方式为FetchType.LAZY。			<br/>
+			<br/>
+			</p></div><pre class="programlisting">
+			
+@Lob 
+@Basic(fetch = FetchType.LAZY) 
+@Column(name="content", columnDefinition="CLOB", nullable=true) 
+public String getContent() {
+    return content;
+}			
+			
+			</pre></section><section class="section" id="@NotNull"><div class="titlepage"><div><div><h3 class="title">@NotNull 不能为空声明</h3></div></div></div><pre class="programlisting">
+			
+	@NotNull
+	public String username;			
+			
+			</pre></section><section class="section" id="@Temporal"><div class="titlepage"><div><div><h3 class="title">@Temporal 日期定义</h3></div></div></div><pre class="programlisting">
+			
+@Entity
+public class Article {
+ 
+    @Id
+    @GeneratedValue
+    Integer id;
+  
+    @Temporal(TemporalType.DATE)
+    Date publicationDate;
+  
+    @Temporal(TemporalType.TIME)
+    Date publicationTime;
+  
+    @Temporal(TemporalType.TIMESTAMP)
+    Date creationDateTime;
+}			
+			
+			</pre></section><section class="section" id="@CreateDate"><div class="titlepage"><div><div><h3 class="title">创建日期</h3></div></div></div><pre class="screen">
+			
+    @Column(name = "create_at")
+    @CreatedDate
+    private Timestamp create_date;			
+			
+			</pre><section class="section" id="CreatedDate"><div class="titlepage"><div><div><h4 class="title">CreatedDate</h4></div></div></div><p>Spring 提供了 import
+					org.springframework.data.annotation.CreatedDate;
+				</p><p>但是这些只能作用于实体类。</p><pre class="screen">
+				
+	@CreatedDate
+    private Date createdDateTime;			
+				
+				</pre></section><section class="section" id="id1111"><div class="titlepage"><div><div><h4 class="title">与时间日期有关的 hibernate 注解</h4></div></div></div><section class="section" id="hibernate.time"><div class="titlepage"><div><div><h5 class="title">设置默认时间</h5></div></div></div><pre class="programlisting">
+				
+@Column(insertable = false) 
+@org.hibernate.annotations.ColumnDefault("1.00") 
+@org.hibernate.annotations.Generated(
+org.hibernate.annotations.GenerationTime.INSERT
+) 
+protected Date lastModified; 
+				
+					</pre></section><section class="section" id="createTime"><div class="titlepage"><div><div><h5 class="title">创建时间</h5></div></div></div><pre class="programlisting">
+				
+@Temporal(TemporalType.TIMESTAMP)  
+@Column(updatable = false)  
+@org.hibernate.annotations.CreationTimestamp  
+protected Date createdDate;   			
+				
+					</pre></section><section class="section" id="updateTime"><div class="titlepage"><div><div><h5 class="title">更新时间</h5></div></div></div><pre class="programlisting">
+				
+@Column(name="update_time")  
+@org.hibernate.annotations.UpdateTimestamp  
+@Temporal(TemporalType.TIMESTAMP)
+private Date updateTime;    			
+				
+					</pre><pre class="programlisting">
+				
+@Temporal(TemporalType.TIMESTAMP)  
+@Column(insertable = false, updatable = false)  
+@org.hibernate.annotations.Generated(  
+org.hibernate.annotations.GenerationTime.ALWAYS  
+) 
+				
+					</pre></section></section><section class="section" id="id1112"><div class="titlepage"><div><div><h4 class="title">数据库级别的默认创建日期时间定义</h4></div></div></div><pre class="programlisting">
+				
+package cn.netkiller.api.domain.elasticsearch;
+
+import java.util.Date;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
+@Entity
+@Table
+public class ElasticsearchTrash {
+	@Id
+	private int id;
+
+	@Column(columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+	private Date ctime;
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
+	public Date getCtime() {
+		return ctime;
+	}
+
+	public void setCtime(Date ctime) {
+		this.ctime = ctime;
+	}
+
+}				
+				
+				</pre><p>对应数据库DDL</p><pre class="programlisting">
+				
+CREATE TABLE `elasticsearch_trash` (
+  `id` int(11) NOT NULL,
+  `ctime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+				
+				</pre></section><section class="section" id="id1113"><div class="titlepage"><div><div><h4 class="title">数据库级别的默认创建日期与更新时间定义</h4></div></div></div><p>需求是这样的：</p><p>1.
+					创建时间与更新时间只能由数据库产生，不允许在实体类中产生，因为每个节点的时间/时区不一定一直。另外防止人为插入自定义时间时间。
+				</p><p>2. 插入记录的时候创建默认时间，创建时间不能为空，时间一旦插入不允许日后在实体类中修改。</p><p>3. 记录创建后更新日志字段为默认为 null 表示该记录没有被修改过。一旦数据被修改，修改日期字段将记录下最后的修改时间。
+				</p><p>4. 甚至你可以通过触发器实现一个history 表，用来记录数据的历史修改，详细请参考作者另一部电子书《Netkiller
+					Architect 手札》数据库设计相关章节。
+				</p><pre class="programlisting">
+				
+package cn.netkiller.api.domain.elasticsearch;
+
+import java.util.Date;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import javax.validation.constraints.Null;
+
+@Entity
+@Table
+public class ElasticsearchTrash {
+	@Id
+	private int id;
+
+	// 创建时间
+	@Column(insertable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+	private Date ctime;
+	
+	// 修改时间
+	@Column(nullable = true, insertable = false, updatable = false, columnDefinition = "TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP")
+	private Date mtime;
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
+	public Date getCtime() {
+		return ctime;
+	}
+
+	public void setCtime(Date ctime) {
+		this.ctime = ctime;
+	}
+
+	public Date getMtime() {
+		return mtime;
+	}
+
+	public void setMtime(Date mtime) {
+		this.mtime = mtime;
+	}
+
+}		
+				
+				</pre><p>对应数据库DDL</p><pre class="programlisting">
+				
+CREATE TABLE `elasticsearch_trash` (
+  `id` int(11) NOT NULL,
+  `ctime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `mtime` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8
+				
+				</pre></section><section class="section" id="id1114"><div class="titlepage"><div><div><h4 class="title">最后修改时间</h4></div></div></div><p>需求：记录最后一次修改时间</p><pre class="programlisting">
+				
+package cn.netkiller.api.domain.elasticsearch;
+
+import java.util.Date;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
+@Entity
+@Table
+public class ElasticsearchTrash {
+	@Id
+	private int id;
+
+	@Column(columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+	private Date lastModified;
+
+}					
+				
+				</pre><p>产生DDL语句如下</p><pre class="programlisting">
+				
+CREATE TABLE `elasticsearch_trash` (
+  `id` int(11) NOT NULL,
+  `last_modified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;				
+				
+				</pre></section></section><section class="section" id="@DateTimeFormat"><div class="titlepage"><div><div><h3 class="title">@DateTimeFormat 处理日期时间格式</h3></div></div></div><pre class="programlisting">
+			
+	public java.sql.Date createdate; 创建日期 YYYY-MM-DD
+	public java.util.Date finisheddate; 创建日期时间 YYYY-MM-DD HH:MM:SS
+			
+			</pre><p>Json默认为 yyyy-MM-ddTHH:mm:ss 注意日期与时间中间的T，修改日期格式将T去掉</p><pre class="screen">
+			
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	private Date createDate;
+			
+			</pre><pre class="programlisting">
+			
+    /**
+     * 日期 DATE  YYYY-MM-DD
+     */
+    @Column(name = "create_date")
+    @JsonFormat(shape= JsonFormat.Shape.STRING,pattern="yyyy-MM-dd HH:mm:ss",timezone="GMT+8")
+    private Date date;			
+			
+			</pre><p>下面我们实际演示一下，例如默认返回 "ctime": "2024-01-25T08:07:39.000+00:00" 这样的格式</p><pre class="screen">
+			
+HTTP/1.1 200 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Thu, 25 Jan 2024 08:10:32 GMT
+Connection: close
+
+{
+  "status": true,
+  "code": "SUCCESS",
+  "data": [
+    {
+      "id": 3918,
+      "session": "27310934-4159-4bc9-8142-67a3780faf35",
+      "progress": "1.音频上传",
+      "description": "test.amr",
+      "ctime": "2024-01-25T08:07:16.000+00:00"
+    },
+    {
+      "id": 3919,
+      "session": "27310934-4159-4bc9-8142-67a3780faf35",
+      "progress": "2.音频转换",
+      "description": "AMR 转 PCM",
+      "ctime": "2024-01-25T08:07:16.000+00:00"
+    },
+    {
+      "id": 3920,
+      "session": "27310934-4159-4bc9-8142-67a3780faf35",
+      "progress": "3.语音识别",
+      "description": "小明是个调皮的小男孩，他觉得地板上有很多污垢，于是他拿起了牙刷用它来刷地板，虽然效果不佳，但是小明却觉得是一种有趣的尝试。",
+      "ctime": "2024-01-25T08:07:36.000+00:00"
+    },
+    {
+      "id": 3921,
+      "session": "27310934-4159-4bc9-8142-67a3780faf35",
+      "progress": "4.内容合规",
+      "description": "合规：小明是个调皮的小男孩，他觉得地板上有很多污垢，于是他拿起了牙刷用它来刷地板，虽然效果不佳，但是小明却觉得是一种有趣的尝试。",
+      "ctime": "2024-01-25T08:07:36.000+00:00"
+    },
+    {
+      "id": 3922,
+      "session": "27310934-4159-4bc9-8142-67a3780faf35",
+      "progress": "5.故事创作",
+      "description": "小明，一个满腔调皮的小男孩，发现家里仿佛被污秽覆盖。他拿起牙刷，一面一面地在地板上划过，结果却不尽人意。然而，这个看似毫无预期的尝试，他自己却获得了无比的乐趣。\n\n问题：小明的行为可能使他的生活环境变得更糟糕，你会如何帮助他改变这种状况？",
+      "ctime": "2024-01-25T08:07:36.000+00:00"
+    },
+    {
+      "id": 3923,
+      "session": "27310934-4159-4bc9-8142-67a3780faf35",
+      "progress": "6.语音合成",
+      "description": "http://oss.test.netkiller.cn/2024/01/25/27310934-4159-4bc9-8142-67a3780faf35.mp3",
+      "ctime": "2024-01-25T08:07:39.000+00:00"
+    }
+  ],
+  "reason": "操作成功"
+}
+
+			
+			</pre><p>加入 @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") 注解</p><pre class="programlisting">
+			
+package cn.netkiller.domain;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.persistence.*;
+import lombok.Data;
+import org.hibernate.annotations.Comment;
+import org.hibernate.annotations.DynamicUpdate;
+
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.Date;
+
+@Entity
+@Table
+@DynamicUpdate
+@Data
+public class SessionStatus implements Serializable {
+    @Serial
+    public static final long serialVersionUID = 1L;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", unique = true, nullable = false, insertable = false, updatable = false, columnDefinition = "int unsigned")
+    @Comment("主键")
+    private Long id;
+
+    @Comment("会话主键")
+    private String session;
+
+    @Comment("进度")
+    private String progress;
+
+    @Lob
+    @Basic(fetch = FetchType.LAZY)
+    @Column(nullable = true, columnDefinition = "text")
+    @Comment("描述")
+    private String description;
+
+    @Column(insertable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @Comment("创建时间")
+    private Date ctime;
+}
+			
+			
+			</pre><p>日期被格式化为 "ctime": "2024-01-25 08:07:16"</p><pre class="screen">
+			
+HTTP/1.1 200 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Thu, 25 Jan 2024 08:12:10 GMT
+Connection: close
+
+{
+  "status": true,
+  "code": "SUCCESS",
+  "data": [
+    {
+      "id": 3918,
+      "session": "27310934-4159-4bc9-8142-67a3780faf35",
+      "progress": "1.音频上传",
+      "description": "test.amr",
+      "ctime": "2024-01-25 08:07:16"
+    },
+    {
+      "id": 3919,
+      "session": "27310934-4159-4bc9-8142-67a3780faf35",
+      "progress": "2.音频转换",
+      "description": "AMR 转 PCM",
+      "ctime": "2024-01-25 08:07:16"
+    },
+    {
+      "id": 3920,
+      "session": "27310934-4159-4bc9-8142-67a3780faf35",
+      "progress": "3.语音识别",
+      "description": "小明是个调皮的小男孩，他觉得地板上有很多污垢，于是他拿起了牙刷用它来刷地板，虽然效果不佳，但是小明却觉得是一种有趣的尝试。",
+      "ctime": "2024-01-25 08:07:36"
+    },
+    {
+      "id": 3921,
+      "session": "27310934-4159-4bc9-8142-67a3780faf35",
+      "progress": "4.内容合规",
+      "description": "合规：小明是个调皮的小男孩，他觉得地板上有很多污垢，于是他拿起了牙刷用它来刷地板，虽然效果不佳，但是小明却觉得是一种有趣的尝试。",
+      "ctime": "2024-01-25 08:07:36"
+    },
+    {
+      "id": 3922,
+      "session": "27310934-4159-4bc9-8142-67a3780faf35",
+      "progress": "5.故事创作",
+      "description": "小明，一个满腔调皮的小男孩，发现家里仿佛被污秽覆盖。他拿起牙刷，一面一面地在地板上划过，结果却不尽人意。然而，这个看似毫无预期的尝试，他自己却获得了无比的乐趣。\n\n问题：小明的行为可能使他的生活环境变得更糟糕，你会如何帮助他改变这种状况？",
+      "ctime": "2024-01-25 08:07:36"
+    },
+    {
+      "id": 3923,
+      "session": "27310934-4159-4bc9-8142-67a3780faf35",
+      "progress": "6.语音合成",
+      "description": "http://oss.test.netkiller.cn/2024/01/25/27310934-4159-4bc9-8142-67a3780faf35.mp3",
+      "ctime": "2024-01-25 08:07:39"
+    }
+  ],
+  "reason": "操作成功"
+}
+			
+			
+			</pre></section><section class="section" id="enum"><div class="titlepage"><div><div><h3 class="title">Enum 枚举数据类型</h3></div></div></div><p>Enum 枚举数据类型 MySQL 特殊数据类型</p><section class="section" id="EnumType.STRING"><div class="titlepage"><div><div><h4 class="title">实体中处理 enum 类型，存储字符串</h4></div></div></div><p>@Enumerated(EnumType.STRING) 注解可以使其成功字符串类型。</p><pre class="programlisting">
+					
+	public enum StatisticsType {
+		LIKE, COMMENT, BROWSE;
+	}
+
+	@Enumerated(EnumType.STRING)
+	private StatisticsType type;
+					
+				</pre><p>SQL</p><pre class="programlisting">
+				
+CREATE TABLE `statistics_history` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `member_id` bigint(20) NOT NULL,
+  `statistics_id` bigint(20) NOT NULL,
+  `type` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
+				
+				</pre></section><section class="section" id="EnumType.ORDINAL"><div class="titlepage"><div><div><h4 class="title">实体中处理 enum 类型，存储序号</h4></div></div></div><p>@Enumerated(value = EnumType.ORDINAL) //ORDINAL序数 </p><p>在实体中处理枚举类型适用于所有数据库，Spring data 将枚举视为 String 类型。</p><pre class="programlisting">
+				
+package cn.netkiller.api.domain;
+
+import java.io.Serializable;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
+@Entity
+@Table(name = "statistics_history")
+public class StatisticsHistory implements Serializable {
+
+	private static final long serialVersionUID = 1L;
+	
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "id",unique = true, nullable = false, insertable = true, updatable = false)
+	private long id;
+	private long memberId;
+	private long statisticsId;
+	
+	public enum StatisticsType {
+		LIKE, COMMENT, BROWSE;
+	}
+	
+	private StatisticsType type;
+	
+	public Long getId() {
+		return id;
+	}
+	
+	public void setId(Long id) {
+		this.id = id;
+	}
+	
+	public long getMemberId() {
+		return memberId;
+	}
+	
+	public void setMemberId(long memberId) {
+		this.memberId = memberId;
+	}
+	
+	public long getStatisticsId() {
+		return statisticsId;
+	}
+	
+	public void setStatisticsId(long statisticsId) {
+		this.statisticsId = statisticsId;
+	}
+	
+	public StatisticsType getType() {
+		return type;
+	}
+	
+	public void setType(StatisticsType type) {
+		this.type = type;
+	}
+
+}
+				
+				</pre><p>默认 enum 类型创建数据库等效 int(11)</p><pre class="programlisting">
+				
+CREATE TABLE `statistics_history` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `member_id` bigint(20) NOT NULL,
+  `statistics_id` bigint(20) NOT NULL,
+  `type` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
+SELECT * FROM test.statistics;
+				
+				</pre></section><section class="section" id="id1115"><div class="titlepage"><div><div><h4 class="title">数据库枚举类型</h4></div></div></div><p>在枚举中处理类型虽然可以适用于所有数据库，但有时我们希望适用数据库的枚举类型（例如MySQL），数据库中得枚举类型要比字符串效率更高
+				</p><pre class="programlisting">
+				
+package cn.netkiller.api.domain.elasticsearch;
+
+import java.util.Date;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
+@Entity
+@Table
+public class NetkillerTrash {
+	@Id
+	private int id;
+
+	@Column(columnDefinition = "enum('Y','N') DEFAULT 'N'")
+	private boolean status;
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
+	public boolean isStatus() {
+		return status;
+	}
+
+	public void setStatus(boolean status) {
+		this.status = status;
+	}
+
+}				
+				
+				</pre><p>实际对应的数据库DLL</p><pre class="programlisting">
+				
+CREATE TABLE `netkiller_trash` (
+  `id` int(11) NOT NULL,
+  `status` enum('Y','N') DEFAULT 'N',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8
+				
+				</pre></section><section class="section" id="id1116"><div class="titlepage"><div><div><h4 class="title">自定义枚举value属性</h4></div></div></div><pre class="programlisting">
+				
+public enum Gender {
+    MALE("男士"),
+    FEMALE("女士");
+
+    private final String value;
+
+    private Gender(String value) {
+        this.value = value;
+    }
+    
+    // value 转枚举
+    public static Gender fromValue(String value) {
+        for (Gender gender : values()) {
+            if (gender.toValue().equals(value)) {
+                return gender;
+            }
+        }
+        return null;
+    }
+
+    // 枚举转 value
+    public String toValue() {
+        return value;
+    }
+}				
+				
+				</pre><p>创建 Gender 的自定义转换器</p><pre class="programlisting">
+				
+// 实现 AttributeConverter 接口
+java复制代码public class GenderConverter implements AttributeConverter&lt;Gender, String&gt; {
+    @Override
+    public String convertToDatabaseColumn(Gender gender) {
+        return gender.toValue();
+    }
+
+    @Override
+    public Gender convertToEntityAttribute(String value) {
+        return Gender.fromValue(value);
+    }
+}				
+				
+				</pre><p>在实体中，枚举字段加 @Convert 注解</p><pre class="programlisting">
+				
+@Convert(converter = GenderConverter.class)
+@Column(name = "gender")
+private Gender gender;				
+				
+				</pre></section></section><section class="section" id="set"><div class="titlepage"><div><div><h3 class="title">SET 数据结构</h3></div></div></div><pre class="programlisting">
+			
+package common.domain;
+
+import java.util.Date;
+import java.util.Map;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Convert;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+
+import org.springframework.format.annotation.DateTimeFormat;
+import com.fasterxml.jackson.annotation.JsonFormat;
+
+import common.type.OptionConverter;
+
+@Entity
+public class ItemPool {
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "id", unique = true, nullable = false, insertable = false, updatable = false)
+	public int id;
+
+	@ManyToOne(cascade = { CascadeType.PERSIST, CascadeType.REMOVE })
+	@JoinColumn(name = "site_id", referencedColumnName = "id")
+	private Site site;
+
+	public String question;
+
+	@Column(columnDefinition = "json DEFAULT NULL")
+	@Convert(converter = OptionConverter.class)
+	public Map&lt;String, String&gt; options;
+
+	@Column(columnDefinition = "SET('A','B','C','D','E','F','G') DEFAULT NULL COMMENT '答案'")
+	public String answer;
+
+	@ManyToOne(cascade = { CascadeType.PERSIST, CascadeType.REMOVE })
+	@JoinColumn(name = "category_id", referencedColumnName = "id")
+	private Category category;
+
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+	@Column(columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间'")
+	public Date ctime;
+
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+	@Column(columnDefinition = "TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更改时间'")
+	public Date mtime;
+}
+			
+			</pre><p>定义 SET 如下，在JAVA中
+				SET被映射为逗号分隔的字符串（String），所以操作起来并无不同。使用字符串"A,B,C"存储即可，取出也同样是字符串。
+			</p><pre class="programlisting">
+			
+@Column(columnDefinition = "SET('A','B','C','D','E','F','G') DEFAULT NULL COMMENT '答案'")
+			
+			</pre><p>接入后查看</p><pre class="programlisting">
+			
+mysql&gt; select answer from item_pool;
++--------+
+| answer |
++--------+
+| A,B,C  |
++--------+
+1 row in set (0.00 sec)			
+			
+			</pre><p>完美实现</p></section><section class="section" id="json"><div class="titlepage"><div><div><h3 class="title">JSON 数据类型</h3></div></div></div><p>MySQL 5.7 中增加了 json 数据类型，下面是一个例子：</p><pre class="programlisting">
+			
+CREATE TABLE `test` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `your` json DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8
+			
+			</pre><p>我们需要在 Java 实体中定义 json
+				数据库结构，我搜索遍了整个互联网（Google,Bing,Baidu......），没有找到解决方案，功夫不负有心人，反复尝试后终于成功。记住我是第一个这样用的
+				：） 。
+			</p><pre class="programlisting">
+			
+package common.domain;
+
+import java.util.Date;
+import java.util.Map;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Convert;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+
+import org.springframework.format.annotation.DateTimeFormat;
+import com.fasterxml.jackson.annotation.JsonFormat;
+
+import common.type.OptionConverter;
+
+@Entity
+public class ItemPool {
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "id", unique = true, nullable = false, insertable = false, updatable = false)
+	public int id;
+
+	@ManyToOne(cascade = { CascadeType.PERSIST, CascadeType.REMOVE })
+	@JoinColumn(name = "site_id", referencedColumnName = "id")
+	private Site site;
+
+	public String name;
+
+	@Column(columnDefinition = "json DEFAULT NULL")
+	@Convert(converter = OptionConverter.class)
+	public Map&lt;String, String&gt; options;
+
+	@ManyToOne(cascade = { CascadeType.PERSIST, CascadeType.REMOVE })
+	@JoinColumn(name = "category_id", referencedColumnName = "id")
+	private Category category;
+
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+	@Column(columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间'")
+	public Date ctime;
+
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+	@Column(columnDefinition = "TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更改时间'")
+	public Date mtime;
+}
+
+			
+			</pre><p>类型转换 Class</p><pre class="programlisting">
+			
+package common.type;
+
+import java.util.Map;
+import javax.persistence.AttributeConverter;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
+public class OptionConverter implements AttributeConverter&lt;Map&lt;String, String&gt;, String&gt; {
+
+	Gson json = new Gson();
+
+	@Override
+	public String convertToDatabaseColumn(Map&lt;String, String&gt; items) {
+		return json.toJson(items, new TypeToken&lt;Map&lt;String, String&gt;&gt;() {
+		}.getType());
+	}
+
+	@Override
+	public Map&lt;String, String&gt; convertToEntityAttribute(String str) {
+		return json.fromJson(str, new TypeToken&lt;Map&lt;String, String&gt;&gt;() {
+		}.getType());
+	}
+}			
+			
+			</pre><p>通过 @Column(columnDefinition = "json DEFAULT NULL") 定义数据库为 JSON
+				数据类型
+			</p><p>数据存储与取出通过 @Convert(converter = OptionConverter.class) 做转换
+			</p><p>这里我需要使用
+				Map 数据结构 public Map&lt;String, String&gt; options;，
+				你可以根据你的实际需要定义数据类型 Class
+			</p><p>启动 Spring 项目后创建 Schema 如下：</p><pre class="programlisting">
+			
+CREATE TABLE `item_pool` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `ctime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '????',
+  `mtime` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '????',
+  `name` varchar(255) DEFAULT NULL,
+  `category_id` int(11) DEFAULT NULL,
+  `site_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `FKgwuxedi20fxclobkk2po053hj` (`category_id`),
+  KEY `FKiujumwssofow95st51ukklpgv` (`site_id`),
+  CONSTRAINT `FKgwuxedi20fxclobkk2po053hj` FOREIGN KEY (`category_id`) REFERENCES `category` (`id`),
+  CONSTRAINT `FKiujumwssofow95st51ukklpgv` FOREIGN KEY (`site_id`) REFERENCES `site` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8
+			
+			</pre><p>我们做个简单的测试, 创建仓库。</p><pre class="programlisting">
+			
+package common.repository;
+
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
+
+import common.domain.ItemPool;
+
+@Repository
+public interface ItemPoolRepository extends CrudRepository&lt;ItemPool, Integer&gt; {
+
+}
+			
+			</pre><pre class="programlisting">
+			
+package cn.netkiller.api.restful;
+
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
+
+import common.domain.ItemPool;
+import common.repository.ItemPoolRepository;
+
+@RestController
+public class TestRestController {
+
+	private static final Logger logger = LoggerFactory.getLogger(TestRestController.class);
+	@Autowired
+	private ItemPoolRepository itemPoolRepository;
+
+	@GetMapping("/test/json/data/type")
+	public void jsonType() {
+
+		ItemPool itemPool = new ItemPool();
+		itemPool.name = "Which is Operstion System?";
+		Map&lt;String, String&gt; opt = new LinkedHashMap&lt;String, String&gt;();
+		opt.put("A", "Linux");
+		opt.put("B", "Java");
+		itemPool.options = opt;
+		itemPoolRepository.save(itemPool);
+
+		itemPool = null;
+		itemPool = itemPoolRepository.findOne(1);
+		System.out.println(itemPool.toString());
+	}
+
+}
+
+			
+			</pre><p>只能用完美来形容</p><pre class="programlisting">
+			
+mysql&gt; select options from item_pool;
++-----------------------------+
+| options                     |
++-----------------------------+
+| {"A": "Linux", "B": "Java"} |
++-----------------------------+
+1 row in set (0.00 sec)			
+			
+			</pre></section><section class="section" id="index"><div class="titlepage"><div><div><h3 class="title">索引</h3></div></div></div><section class="section" id="id1117"><div class="titlepage"><div><div><h4 class="title">普通索引</h4></div></div></div><pre class="screen">
+				
+@Table(indexes = { @Index(name = "name", columnList = "name DESC"), @Index(name = "path", columnList = "path") })				
+				
+				</pre><pre class="programlisting">
+				
+package common.domain;
+
+import java.util.Date;
+import java.util.Set;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Index;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
+
+import org.springframework.format.annotation.DateTimeFormat;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+@Entity
+@Table(indexes = { @Index(name = "name", columnList = "name DESC"), @Index(name = "path", columnList = "path") })
+public class Category {
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "id", unique = true, nullable = false, insertable = true, updatable = false)
+	public int id;
+	public String name;
+	public String description;
+	public String path;
+
+	@Column(columnDefinition = "enum('Enabled','Disabled') DEFAULT 'Enabled' COMMENT '状态'")
+	public String status;
+
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+	@Column(columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间'")
+	public Date ctime;
+
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+	@Column(columnDefinition = "TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更改时间'")
+	public Date mtime;
+
+	@ManyToOne(cascade = { CascadeType.PERSIST, CascadeType.REMOVE })
+	@JoinColumn(name = "pid", referencedColumnName = "id")
+	private Category categorys;
+
+	@JsonIgnore
+	@OneToMany(cascade = CascadeType.ALL, mappedBy = "category", fetch = FetchType.EAGER)
+	private Set&lt;Category&gt; category;
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	public String getPath() {
+		return path;
+	}
+
+	public void setPath(String path) {
+		this.path = path;
+	}
+
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
+	}
+
+	public Date getCtime() {
+		return ctime;
+	}
+
+	public void setCtime(Date ctime) {
+		this.ctime = ctime;
+	}
+
+	public Date getMtime() {
+		return mtime;
+	}
+
+	public void setMtime(Date mtime) {
+		this.mtime = mtime;
+	}
+
+	public Category getCategorys() {
+		return categorys;
+	}
+
+	public void setCategorys(Category categorys) {
+		this.categorys = categorys;
+	}
+
+	public Set&lt;Category&gt; getCategory() {
+		return category;
+	}
+
+	public void setCategory(Set&lt;Category&gt; category) {
+		this.category = category;
+	}
+
+	@Override
+	public String toString() {
+		return "Category [id=" + id + ", name=" + name + ", description=" + description + ", path=" + path + ", status="
+				+ status + ", ctime=" + ctime + ", mtime=" + mtime + ", categorys=" + categorys + ", category="
+				+ category + "]";
+	}
+
+}
+				
+				
+				</pre></section><section class="section" id="unique"><div class="titlepage"><div><div><h4 class="title">唯一索引</h4></div></div></div><p>针对字段做唯一索引</p><pre class="screen">
+				
+@Column(unique = true)
+				
+				</pre></section><section class="section" id="uniqueConstraints"><div class="titlepage"><div><div><h4 class="title">复合索引</h4></div></div></div><p>创建由多个字段组成的复合索引</p><pre class="programlisting">
+				
+package cn.netkiller.api.model;
+
+import java.io.Serializable;
+import java.util.Date;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+import javax.persistence.UniqueConstraint;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+
+@Entity
+@Table(name = "comment", uniqueConstraints = { @UniqueConstraint(columnNames = { "member_id", "articleId" }) })
+public class Comment implements Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -1484408775034277681L;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "id", unique = true, nullable = false, insertable = true, updatable = false)
+	private int id;
+
+	@ManyToOne(cascade = { CascadeType.ALL })
+	@JoinColumn(name = "member_id")
+	private Member member;
+
+	private int articleId;
+
+	private String message;
+
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(updatable = false)
+	@org.hibernate.annotations.CreationTimestamp
+	protected Date createDate;
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
+	public Member getMember() {
+		return member;
+	}
+
+	public void setMember(Member member) {
+		this.member = member;
+	}
+
+	public int getArticleId() {
+		return articleId;
+	}
+
+	public void setArticleId(int articleId) {
+		this.articleId = articleId;
+	}
+
+	public String getMessage() {
+		return message;
+	}
+
+	public void setMessage(String message) {
+		this.message = message;
+	}
+
+	public Date getCreateDate() {
+		return createDate;
+	}
+
+	public void setCreateDate(Date createDate) {
+		this.createDate = createDate;
+	}
+}
+				
+				</pre><pre class="screen">
+				
+CREATE TABLE `comment` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `article_id` int(11) NOT NULL,
+  `create_date` datetime DEFAULT NULL,
+  `message` varchar(255) DEFAULT NULL,
+  `member_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UK5qxfiu92nwlvgli7bl3evl11m` (`member_id`,`article_id`),
+  CONSTRAINT `FKmrrrpi513ssu63i2783jyiv9m` FOREIGN KEY (`member_id`) REFERENCES `member` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+				
+				</pre></section></section><section class="section" id="@Embeddable"><div class="titlepage"><div><div><h3 class="title">嵌入</h3></div></div></div><section class="section" id="id1118"><div class="titlepage"><div><div><h4 class="title">@Embeddable / @Embedded</h4></div></div></div><pre class="programlisting">
+				
+package cn.netkiller.domain.demo;
+
+import jakarta.persistence.Embeddable;
+
+@Embeddable
+public class Address {
+
+    private String city;
+    private String district;
+    private String street;
+    private String community;
+}
+				
+				
+				</pre><pre class="programlisting">
+				
+package cn.netkiller.domain.demo;
+
+import jakarta.persistence.*;
+
+@Entity
+public class Company {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private long id;
+    private String name;
+
+    @Embedded
+    private Address address;
+}
+
+				
+				</pre><pre class="programlisting">
+				
+CREATE TABLE `company` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `city` varchar(255) DEFAULT NULL,
+  `community` varchar(255) DEFAULT NULL,
+  `district` varchar(255) DEFAULT NULL,
+  `street` varchar(255) DEFAULT NULL,
+  `name` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+				
+				</pre></section><section class="section" id="id1119"><div class="titlepage"><div><div><h4 class="title">@AttributeOverrides 定义字段名称</h4></div></div></div><pre class="programlisting">
+				
+@Data
+@Embeddable
+public class Address {
+    private String province;
+    private String city;
+    private String street;
+}
+				
+				</pre><pre class="programlisting">
+				
+@Data
+@Entity
+@Table
+public class Company {
+    @Id
+    @GeneratedValue
+    private Long id;
+ 
+    @Column
+    private String name;
+ 
+    // 公司地址
+    private Address address;
+ 
+    // 注册地址
+    @AttributeOverrides({
+        @AttributeOverride(name = "city", column = @Column(name= "location_city")),
+        @AttributeOverride(name = "province", column=@Column(name="location_province")),
+        @AttributeOverride(name = "street", column = @Column(name="location_street"))
+    })
+    private Address locationAddress;
+ 
+}
+				
+				</pre></section><section class="section" id="id1120"><div class="titlepage"><div><div><h4 class="title">创建复合主键</h4></div></div></div><p>定义实体</p><pre class="programlisting">
+		
+package cn.netkiller.wallet.domain;
+
+import java.io.Serializable;
+
+import javax.persistence.Column;
+import javax.persistence.Embeddable;
+import javax.persistence.EmbeddedId;
+import javax.persistence.Entity;
+
+@Entity
+public class UserToken {
+	@EmbeddedId
+	@Column(unique = true, nullable = false, insertable = true, updatable = false)
+	private UserTokenPrimaryKey primaryKey;
+
+	private String name;
+	private String symbol;
+	private int decimals;
+
+	public UserToken() {
+		// TODO Auto-generated constructor stub
+	}
+
+	public UserTokenPrimaryKey getPrimaryKey() {
+		return primaryKey;
+	}
+
+	public void setPrimaryKey(UserTokenPrimaryKey primaryKey) {
+		this.primaryKey = primaryKey;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getSymbol() {
+		return symbol;
+	}
+
+	public void setSymbol(String symbol) {
+		this.symbol = symbol;
+	}
+
+	public int getDecimals() {
+		return decimals;
+	}
+
+	public void setDecimals(int decimals) {
+		this.decimals = decimals;
+	}
+
+	@Override
+	public String toString() {
+		return "UserToken [primaryKey=" + primaryKey + ", name=" + name + ", symbol=" + symbol + ", decimals=" + decimals + "]";
+	}
+
+	@Embeddable
+	public static class UserTokenPrimaryKey implements Serializable {
+
+		private static final long serialVersionUID = 1242827922377178368L;
+		private String address;
+		private String contractAddress;
+
+		public UserTokenPrimaryKey() {
+		}
+
+		public UserTokenPrimaryKey(String address, String contractAddress) {
+			this.address = address;
+			this.contractAddress = contractAddress;
+		}
+
+		public String getAddress() {
+			return address;
+		}
+
+		public void setAddress(String address) {
+			this.address = address;
+		}
+
+		public String getContractAddress() {
+			return contractAddress;
+		}
+
+		public void setContractAddress(String contractAddress) {
+			this.contractAddress = contractAddress;
+		}
+
+		@Override
+		public String toString() {
+			return "UserTokenPrimaryKey [address=" + address + ", contractAddress=" + contractAddress + "]";
+		}
+
+	}
+
+}		
+		
+				</pre><p>实际效果</p><pre class="screen">
+		
+CREATE TABLE "user_has_token" (
+  "address" varchar(255) NOT NULL,
+  "contract_address" varchar(255) NOT NULL,
+  "decimals" int(11) NOT NULL,
+  "name" varchar(255) DEFAULT NULL,
+  "symbol" varchar(255) DEFAULT NULL,
+  PRIMARY KEY ("address","contract_address")
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+		
+				</pre><pre class="programlisting">
+		
+package cn.netkiller.wallet.repository;
+
+import java.util.List;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import cn.netkiller.wallet.domain.UserToken;
+import cn.netkiller.wallet.domain.UserToken.UserTokenPrimaryKey;;
+
+public interface UserTokenRepository extends JpaRepository&lt;UserToken, UserTokenPrimaryKey&gt; {
+
+	UserToken findOneByPrimaryKey(UserTokenPrimaryKey primaryKey);
+
+	@Query("select ut from UserToken ut where ut.primaryKey.address=:address")
+	List&lt;UserToken&gt; getByAddress(@Param("address") String address);
+
+	@Query("select ut from UserToken ut where ut.primaryKey.address=:address and ut.primaryKey.contractAddress=:contractAddress")
+	List&lt;UserToken&gt; findByPrimaryKey(@Param("address") String address, @Param("contractAddress") String contractAddress);
+}		
+		
+				</pre></section></section><section class="section" id="ForeignKey"><div class="titlepage"><div><div><h3 class="title">外键</h3></div></div></div><section class="section" id="JoinColumn"><div class="titlepage"><div><div><h4 class="title">@JoinColumn</h4></div></div></div><p>@JoinColumn与@Column注释类似，它的定义如下代码所示。 </p><pre class="screen">
+			
+@Target({METHOD, FIELD}) @Retention(RUNTIME) 
+
+public @interface JoinColumn { 
+
+String name() default ""; 
+
+String referencedColumnName() default ""; 
+
+boolean unique() default false; 
+
+boolean nullable() default true; 
+
+boolean insertable() default true; 
+
+boolean updatable() default true; 
+
+String columnDefinition() default ""; 
+
+String table() default ""; 
+
+}
+			
+				</pre><p>定义外键名称 @ForeignKey(name = "picture_id")</p><pre class="programlisting">
+				
+    @Id
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "id", foreignKey = @ForeignKey(name = "picture_id"))
+    private Picture picture;				
+				
+				</pre><pre class="programlisting">
+				
+CREATE TABLE `picture_psychoanalysis` (
+  `analysis` text COMMENT '心里分析',
+  `ctime` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `emotion` varchar(255) DEFAULT NULL COMMENT '感谢|愉快|抱怨|愤怒|喜爱|厌恶|恐惧|悲伤',
+  `mtime` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+  `replies` text COMMENT '建议回复话术',
+  `sentiment` varchar(255) DEFAULT NULL COMMENT '负向情绪|中性情绪|正向情绪',
+  `id` bigint unsigned NOT NULL,
+  PRIMARY KEY (`id`),
+  CONSTRAINT `picture_id` FOREIGN KEY (`id`) REFERENCES `picture` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='文生图心里分析'				
+				
+				</pre></section><section class="section" id="OneToOne"><div class="titlepage"><div><div><h4 class="title">@OneToOne</h4></div></div></div><p>一对一表结构，如下面ER图所示，users表是用户表里面有登陆信息，profile
+					保存的时死人信息，这样的目的是我们尽量减少users表的字段，在频繁操作该表的时候性能比较好，另外一个目的是为了横向水平扩展。
+				</p><pre class="programlisting">
+			
+    +----------+             +------------+
+    | users    |             | profile    |
+    +----------+             +------------+
+    | id       | &lt;---1:1---o | id         |
+    | name     |             | sex        |    
+    | password |             | email      |    
+    +----------+             +------------+ 
+			
+				</pre><pre class="programlisting">
+			
+package cn.netkiller.api.domain.test;
+
+import java.io.Serializable;
+
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
+@Entity
+@Table(name = "users")
+public class Users implements Serializable {
+	@Id
+	@GeneratedValue(strategy = GenerationType.AUTO)
+	private int id;
+	private String name;
+	private String password;
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
+	}
+
+	@Override
+	public String toString() {
+		return "Users [id=" + id + ", name=" + name + ", password=" + password + "]";
+	}
+}
+
+			
+				</pre><pre class="programlisting">
+			
+package cn.netkiller.api.domain.test;
+
+import java.io.Serializable;
+
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToOne;
+import javax.persistence.Table;
+
+@Entity
+@Table(name = "profile")
+public class Profile implements Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -2500499458196257167L;
+	@Id
+	@OneToOne
+	@JoinColumn(name = "id")
+	private Users users;
+
+	private int age;
+	private String sex;
+	private String email;
+
+	public Users getUsers() {
+		return users;
+	}
+
+	public void setUsers(Users users) {
+		this.users = users;
+	}
+
+	public int getAge() {
+		return age;
+	}
+
+	public void setAge(int age) {
+		this.age = age;
+	}
+
+	public String getSex() {
+		return sex;
+	}
+
+	public void setSex(String sex) {
+		this.sex = sex;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
+	}
+
+	@Override
+	public String toString() {
+		return "Profile [users=" + users + ", age=" + age + ", sex=" + sex + ", email=" + email + "]";
+	}
+
+}
+
+			
+				</pre><pre class="programlisting">
+			
+CREATE TABLE `users` (
+	`id` INT(11) NOT NULL AUTO_INCREMENT,
+	`name` VARCHAR(255) NULL DEFAULT NULL,
+	`password` VARCHAR(255) NULL DEFAULT NULL,
+	PRIMARY KEY (`id`)
+)
+COLLATE='utf8_general_ci'
+ENGINE=InnoDB;
+			
+CREATE TABLE `profile` (
+	`age` INT(11) NOT NULL,
+	`email` VARCHAR(255) NULL DEFAULT NULL,
+	`sex` VARCHAR(255) NULL DEFAULT NULL,
+	`id` INT(11) NOT NULL,
+	PRIMARY KEY (`id`),
+	CONSTRAINT `FK6x079ilawxjrfsljwyyi5ujjq` FOREIGN KEY (`id`) REFERENCES `users` (`id`)
+)
+COLLATE='utf8_general_ci'
+ENGINE=InnoDB;
+			
+				</pre><p>如果第二张表关联的并非主表的PK（主键）需要使用 referencedColumnName 指定。</p><pre class="programlisting">
+			
+@JoinColumn(name = "member_id",referencedColumnName="member_id") 			
+			
+				</pre><section class="section" id="id1121"><div class="titlepage"><div><div><h5 class="title">案例一</h5></div></div></div><pre class="programlisting">
+					
+package cn.netkiller.domain.demo;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+
+@Entity
+public class Book {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private long id;
+    private String name;
+
+}
+					
+					
+					</pre><pre class="programlisting">
+					
+package cn.netkiller.domain.demo;
+
+import jakarta.persistence.*;
+
+@Entity
+public class BookDetail {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private long id;
+
+    private long numberOfPages;
+
+    @OneToOne
+    private Book book;
+}
+					
+					
+					</pre><pre class="programlisting">
+					
+CREATE TABLE `book` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
+CREATE TABLE `book_detail` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `number_of_pages` bigint NOT NULL,
+  `book_id` bigint DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UK_29qtqq9pgixv8kqlt0woj1hyp` (`book_id`),
+  CONSTRAINT `FKl1hmgccsvfwcxhem3qw6l7gpm` FOREIGN KEY (`book_id`) REFERENCES `book` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+					
+					</pre></section><section class="section" id="id1122"><div class="titlepage"><div><div><h5 class="title"/></div></div></div><pre class="programlisting">
+					
+package cn.netkiller.domain.demo;
+
+import jakarta.persistence.*;
+
+@Entity
+public class Book {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private long id;
+    private String name;
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "book_detail")
+    private BookDetail bookDetail;
+}
+					
+					
+					</pre><pre class="programlisting">
+					
+package cn.netkiller.domain.demo;
+
+import jakarta.persistence.*;
+
+@Entity
+public class BookDetail {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private long id;
+
+
+    private long numberOfPages;
+
+
+    @OneToOne(cascade = CascadeType.ALL, mappedBy = "bookDetail")
+    private Book book;
+}
+					
+					
+					</pre><pre class="programlisting">
+					
+CREATE TABLE `book` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) DEFAULT NULL,
+  `book_detail` bigint DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UK_d8im4vqhlm2eo0mj9lwjvib94` (`book_detail`),
+  CONSTRAINT `FKagqqxsh6783b9dd9197ow49a5` FOREIGN KEY (`book_detail`) REFERENCES `book_detail` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
+CREATE TABLE `book_detail` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `number_of_pages` bigint NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci					
+					
+					</pre></section><section class="section" id="id1123"><div class="titlepage"><div><div><h5 class="title"/></div></div></div><pre class="programlisting">
+					
+package cn.netkiller.domain.demo;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+
+@Entity
+public class Users {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private long id;
+    private String name;
+
+}
+					
+					
+					</pre><pre class="programlisting">
+					
+package cn.netkiller.domain.demo;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToOne;
+
+@Entity
+public class Profile {
+    @Id
+    @OneToOne
+    private Users users;
+
+    private int age;
+
+
+}					
+					
+					</pre><pre class="programlisting">
+					
+CREATE TABLE `users` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
+CREATE TABLE `profile` (
+  `age` int NOT NULL,
+  `users_id` bigint NOT NULL,
+  PRIMARY KEY (`users_id`),
+  CONSTRAINT `FKi6d1noonlpe6oyk6pnwc1q49e` FOREIGN KEY (`users_id`) REFERENCES `users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+					
+					</pre><p>指定一对一字段名，默认是表名+PK，例如上面的例子 users_id，如果我们希望自定义字段名，可以使用 @JoinColumn(name = "id")</p><pre class="programlisting">
+					
+package cn.netkiller.domain.demo;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import lombok.Data;
+
+@Entity
+@Data
+public class Profile {
+    @Id
+    @OneToOne
+    @JoinColumn(name = "id")
+    private Users users;
+
+    private int age;
+    private boolean sex;
+}
+					
+					
+					</pre><p>效果展示</p><pre class="programlisting">
+					
+CREATE TABLE `profile` (
+  `age` int NOT NULL,
+  `sex` bit(1) NOT NULL,
+  `id` bigint NOT NULL,
+  PRIMARY KEY (`id`),
+  CONSTRAINT `FK6x079ilawxjrfsljwyyi5ujjq` FOREIGN KEY (`id`) REFERENCES `users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci					
+					
+					</pre></section><section class="section" id="id1124"><div class="titlepage"><div><div><h5 class="title">does not define an IdClass</h5></div></div></div><p>如果一对一的关系中，我们希望两端都是用 id 字段，而@OneToOne 一端是对象，必须定义一个 @Id，这时加入 @MapsId 可以解决 does not define an IdClass 错误，这时一段表中没有 @Id</p><pre class="programlisting">
+					
+package cn.netkiller.domain.demo;
+
+import jakarta.persistence.*;
+import lombok.Data;
+import org.hibernate.annotations.Comment;
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
+
+@Entity
+@Table
+@Data
+@DynamicInsert
+@DynamicUpdate
+@Comment("用户表")
+public class Users {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private long id;
+    private String username;
+    private String password;
+    private boolean status;
+
+}
+
+					
+					</pre><pre class="programlisting">
+					
+package cn.netkiller.domain.demo;
+
+import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import lombok.Data;
+import org.hibernate.annotations.*;
+
+@Entity
+@Table
+@Data
+@DynamicInsert
+@DynamicUpdate
+@Comment("用户信息表")
+public class Profile {
+
+    @Id
+    @Column(name = "id")
+    private Long id;
+
+    @MapsId
+    @OneToOne
+    @JoinColumn(name = "id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private Users users;
+
+    private int age;
+    private boolean sex;
+}
+					
+					
+					</pre><pre class="programlisting">
+					
+package cn.netkiller.repository.demo;
+
+import cn.netkiller.domain.demo.Profile;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface TestRepository extends JpaRepository&lt;Profile, Long&gt; {
+}
+
+					
+					</pre><pre class="programlisting">
+					
+CREATE TABLE `users` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `password` varchar(255) DEFAULT NULL,
+  `status` bit(1) NOT NULL,
+  `username` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='用户表'
+
+CREATE TABLE `profile` (
+  `id` bigint NOT NULL,
+  `age` int NOT NULL,
+  `sex` bit(1) NOT NULL,
+  PRIMARY KEY (`id`),
+  CONSTRAINT `FK6x079ilawxjrfsljwyyi5ujjq` FOREIGN KEY (`id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='用户信息表'
+					
+					</pre></section><section class="section" id="id1125"><div class="titlepage"><div><div><h5 class="title">共享主键</h5></div></div></div><pre class="programlisting">
+					
+package cn.netkiller.domain.demo;
+
+import jakarta.persistence.*;
+import lombok.Data;
+import org.hibernate.annotations.Comment;
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
+
+@Entity
+@Table
+@Data
+@DynamicInsert
+@DynamicUpdate
+@Comment("用户表")
+public class Users {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private long id;
+    private String username;
+    private String password;
+    private boolean status;
+
+    @OneToOne(mappedBy = "users", cascade = CascadeType.ALL)
+    @PrimaryKeyJoinColumn
+    private Profile profile;
+}
+					
+					
+					</pre><pre class="programlisting">
+					
+package cn.netkiller.domain.demo;
+
+import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import lombok.Data;
+import org.hibernate.annotations.*;
+
+@Entity
+@Table
+@Data
+@DynamicInsert
+@DynamicUpdate
+@Comment("用户信息表")
+public class Profile {
+
+    @Id
+    @Column(name = "id")
+    private Long id;
+
+    @MapsId
+    @OneToOne
+    @JoinColumn(name = "id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private Users users;
+
+    private int age;
+    private boolean sex;
+}
+					
+					
+					</pre><pre class="programlisting">
+					
+CREATE TABLE `users` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `password` varchar(255) DEFAULT NULL,
+  `status` bit(1) NOT NULL,
+  `username` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='用户表'
+
+CREATE TABLE `profile` (
+  `id` bigint NOT NULL,
+  `age` int NOT NULL,
+  `sex` bit(1) NOT NULL,
+  PRIMARY KEY (`id`),
+  CONSTRAINT `FK6x079ilawxjrfsljwyyi5ujjq` FOREIGN KEY (`id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='用户信息表'					
+					
+					</pre></section><section class="section" id="id1126"><div class="titlepage"><div><div><h5 class="title">null identifier</h5></div></div></div><p>@OneToOne 保存提示 null identifier，经过排查需要配置</p><pre class="programlisting">
+					
+package cn.netkiller.domain;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.ForeignKey;
+import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import lombok.Data;
+import org.hibernate.annotations.*;
+
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.Date;
+
+@Entity
+@Table
+@DynamicUpdate
+@DynamicInsert
+@Data
+@Comment("文生图心里分析")
+
+public class PicturePsychoanalysis implements Serializable {
+    @Serial
+    public static final long serialVersionUID = 1L;
+    
+    @Comment("Robert Plutchik 情感轮盘")
+    @Column(columnDefinition = "json")
+    public String plutchik;
+    
+    @Id
+    @Column(name = "id")
+    @Comment("Picture Id 一对一关系")
+    private Long id;
+    @MapsId
+    @OneToOne(cascade = CascadeType.MERGE)
+    @JoinColumn(name = "id", insertable = true, updatable = false, columnDefinition = "bigint unsigned", foreignKey = @ForeignKey(name = "picture_id"))
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private Picture picture;
+    @Comment("负向情绪|中性情绪|正向情绪")
+    private String sentiment;
+    @Comment("感谢|愉快|抱怨|愤怒|喜爱|厌恶|恐惧|悲伤")
+    private String emotion;
+    @Lob
+    @Basic(fetch = FetchType.LAZY)
+    @Column(nullable = true, columnDefinition = "text")
+    @Comment("建议回复话术")
+    private String replies;
+    @Lob
+    @Basic(fetch = FetchType.LAZY)
+    @Column(nullable = true, columnDefinition = "text")
+    @Comment("心里分析")
+    private String analysis;
+    //    public JSONObject plutchik;
+    @Column(insertable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    @Comment("创建时间")
+    private Date ctime;
+
+    @Column(nullable = true, insertable = false, updatable = false, columnDefinition = "TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP")
+    @Comment("修改时间")
+    private Date mtime;
+}
+					
+					</pre><p>讲 @OneToOne 增加 @OneToOne(cascade = CascadeType.MERGE) 参数，如果 CascadeType.ALL 需要改为 CascadeType.MERGE</p><pre class="programlisting">
+					
+	@Id
+    @Column(name = "id")
+    @Comment("Picture Id 一对一关系")
+    private Long id;
+    @MapsId
+    @OneToOne(cascade = CascadeType.MERGE)
+    @JoinColumn(name = "id", insertable = true, updatable = false, columnDefinition = "bigint unsigned", foreignKey = @ForeignKey(name = "picture_id"))
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private Picture picture;					
+					
+					</pre></section></section><section class="section" id="OneToMany"><div class="titlepage"><div><div><h4 class="title">OneToMany 一对多</h4></div></div></div><p>我们要实现一个一对多实体关系，ER 图如下</p><pre class="programlisting">
+			
+    +----------+          +------------+
+    | Classes  |          | Student    |
+    +----------+          +------------+
+    | id       | &lt;---+    | id         |
+    | name     |     |    | name       |    
+    +----------+     +--o | classes_id |    
+                          +------------+ 
+    
+			
+				</pre><p>classes 表需要 OneToMany 注解，Student 表需要 ManyToOne
+					注解，这样就建立起了表与表之间的关系
+				</p><pre class="programlisting">
+			
+package cn.netkiller.api.domain.test;
+
+import java.io.Serializable;
+import java.util.Set;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
+
+@Entity 
+@Table(name="classes") 
+public class Classes implements Serializable{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -5422905745519948312L;
+	@Id 
+	@GeneratedValue(strategy=GenerationType.AUTO) 
+	private int id; 
+	private String name; 
+	    
+	@OneToMany(cascade=CascadeType.ALL,mappedBy="classes")    
+	private Set&lt;Student&gt; students;
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public Set&lt;Student&gt; getStudents() {
+		return students;
+	}
+
+	public void setStudents(Set&lt;Student&gt; students) {
+		this.students = students;
+	}
+
+	@Override
+	public String toString() {
+		return "classes [id=" + id + ", name=" + name + ", students=" + students + "]";
+	} 
+}
+			
+				</pre><pre class="programlisting">
+			
+package cn.netkiller.api.domain.test;
+
+import java.io.Serializable;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+
+@Entity
+@Table(name = "student")
+public class Student implements Serializable{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 6737037465677800326L;
+	@Id
+	@GeneratedValue(strategy = GenerationType.AUTO)
+	private int id;
+	private String name;
+
+	// 若有多个cascade，可以是：{CascadeType.PERSIST,CascadeType.MERGE}
+	@ManyToOne(cascade = { CascadeType.ALL })
+	@JoinColumn(name = "classes_id") 
+	private Classes classes;
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public Classes getClasses() {
+		return classes;
+	}
+
+	public void setClasses(Classes classes) {
+		this.classes = classes;
+	}
+
+	@Override
+	public String toString() {
+		return "Student [id=" + id + ", name=" + name + ", classes=" + classes + "]";
+	}
+
+}
+
+			
+				</pre><p>最终 SQL 表如下</p><pre class="programlisting">
+			
+CREATE TABLE `classes` (
+	`id` INT(11) NOT NULL AUTO_INCREMENT,
+	`name` VARCHAR(255) NULL DEFAULT NULL,
+	PRIMARY KEY (`id`)
+)
+COLLATE='utf8_general_ci'
+ENGINE=InnoDB;	
+			
+CREATE TABLE `student` (
+	`id` INT(11) NOT NULL AUTO_INCREMENT,
+	`name` VARCHAR(255) NULL DEFAULT NULL,
+	`class_id` INT(11) NULL DEFAULT NULL,
+	PRIMARY KEY (`id`),
+	INDEX `FKnsl7w2nw6o6eq53hqlxfcijpm` (`class_id`),
+	CONSTRAINT `FKnsl7w2nw6o6eq53hqlxfcijpm` FOREIGN KEY (`class_id`) REFERENCES `classes` (`id`)
+)
+COLLATE='utf8_general_ci'
+ENGINE=InnoDB;
+			
+				</pre><pre class="programlisting">
+			
+      Classes classes=new Classes(); 
+      classes.setName("One"); 
+        
+      Student st1=new Student(); 
+      st1.setSname("jason"); 
+      st1.setClasses(classes); 
+      studentRepostitory.save(st1); 
+        
+      Student st2=new Student(); 
+      st2.setSname("neo"); 
+      st2.setClasses(classes); 
+      studentRepostitory.save(st2); 
+			
+				</pre></section><section class="section" id="ManyToMany"><div class="titlepage"><div><div><h4 class="title">ManyToMany 多对多</h4></div></div></div><p>用户与角色就是一个多对多的关系，多对多是需要中间表做关联的。所以我方需要一个 user_has_role 表。</p><pre class="programlisting">
+			
+    +----------+          +---------------+            +--------+
+    | users    |          | user_has_role |            | role   |
+    +----------+          +---------------+            +--------+
+    | id       | &lt;------o | user_id       |      /---&gt; | id     |
+    | name     |          | role_id       | o---+      | name   |
+    | password |          |               |            |        |
+    +----------+          +---------------+            +--------+
+			
+				</pre><p>创建 User 表</p><pre class="programlisting">
+			
+package cn.netkiller.api.domain.test;
+
+import java.io.Serializable;
+import java.util.Set;
+
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+import javax.persistence.Table;
+import javax.persistence.JoinColumn;
+
+@Entity
+@Table(name = "users")
+public class Users implements Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -2480194112597046349L;
+	@Id
+	@GeneratedValue(strategy = GenerationType.AUTO)
+	private int id;
+	private String name;
+	private String password;
+
+	@ManyToMany(fetch = FetchType.EAGER)
+	@JoinTable(name = "user_has_role", joinColumns = { @JoinColumn(name = "user_id", referencedColumnName = "id") }, inverseJoinColumns = { @JoinColumn(name = "role_id", referencedColumnName = "id") })
+	private Set&lt;Roles&gt; roles;
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
+	}
+
+	public Set&lt;Roles&gt; getRoles() {
+		return roles;
+	}
+
+	public void setRoles(Set&lt;Roles&gt; roles) {
+		this.roles = roles;
+	}
+
+	@Override
+	public String toString() {
+		return "Users [id=" + id + ", name=" + name + ", password=" + password + ", roles=" + roles + "]";
+	}
+
+}
+			
+				</pre><p>创建 Role 表</p><pre class="programlisting">
+			
+package cn.netkiller.api.domain.test;
+
+import java.io.Serializable;
+import java.util.Set;
+
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.ManyToMany;
+import javax.persistence.Table;
+
+@Entity
+@Table(name = "roles")
+public class Roles implements Serializable {
+	private static final long serialVersionUID = 6737037465677800326L;
+	@Id
+	@GeneratedValue(strategy = GenerationType.AUTO)
+	private int id;
+	private String name;
+	@ManyToMany(mappedBy = "roles")
+	private Set&lt;Users&gt; users;
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public Set&lt;Users&gt; getUsers() {
+		return users;
+	}
+
+	public void setUsers(Set&lt;Users&gt; users) {
+		this.users = users;
+	}
+
+	@Override
+	public String toString() {
+		return "Roles [id=" + id + ", name=" + name + ", users=" + users + "]";
+	}
+
+}
+
+			
+				</pre><p>最终产生数据库表如下</p><pre class="programlisting">
+			
+CREATE TABLE `users` (
+	`id` INT(11) NOT NULL AUTO_INCREMENT,
+	`name` VARCHAR(255) NULL DEFAULT NULL,
+	`password` VARCHAR(255) NULL DEFAULT NULL,
+	PRIMARY KEY (`id`)
+)
+COLLATE='utf8_general_ci'
+ENGINE=InnoDB;	
+
+CREATE TABLE `roles` (
+	`id` INT(11) NOT NULL AUTO_INCREMENT,
+	`name` VARCHAR(255) NULL DEFAULT NULL,
+	PRIMARY KEY (`id`)
+)
+COLLATE='utf8_general_ci'
+ENGINE=InnoDB;
+			
+CREATE TABLE `user_has_role` (
+	`user_id` INT(11) NOT NULL,
+	`role_id` INT(11) NOT NULL,
+	PRIMARY KEY (`user_id`, `role_id`),
+	INDEX `FKsvvq61v3koh04fycopbjx72hj` (`role_id`),
+	CONSTRAINT `FK2dl1ftxlkldulcp934i3125qo` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
+	CONSTRAINT `FKsvvq61v3koh04fycopbjx72hj` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`)
+)
+COLLATE='utf8_general_ci'
+ENGINE=InnoDB;
+			
+				</pre><pre class="programlisting">
+			
+			
+				</pre></section><section class="section" id="orphanRemoval"><div class="titlepage"><div><div><h4 class="title">外键级联操作</h4></div></div></div><p>cascade 属性： 指定级联操作的行为(可多选)</p><pre class="programlisting">
+				
+CascadeType.PERSIST：级联新增（又称级联保存）：对A对象保存时也会对B对象进行保存。并且，只有A类新增时，会级联B对象新增。若B对象在数据库存在则抛异常。对应EntityManager的presist方法。
+CascadeType.MERGE：级联合并（级联更新）：指A类新增或者变化，会级联B对象（新增或者变化）。对应EntityManager的merge方法。
+CascadeType.REMOVE：级联删除：只有A类删除时，会级联删除B类,即在设置的那一端进行删除时，另一端才会级联删除。对应EntityManager的remove方法。
+CascadeType.REFRESH：级联刷新：获取A对象时也重新获取最新的B对象。对EntityManager的refresh(object)方法。即会重新查询数据库里的最新数据（用的比较少）
+CascadeType.DETACH：级联分离。
+CascadeType.ALL：级联所有操作。
+				
+				</pre><section class="section" id="id1127"><div class="titlepage"><div><div><h5 class="title">CascadeType.PERSIST</h5></div></div></div><pre class="programlisting">
+					
+@OneToMany(mappedBy = "boss", cascade = CascadeType.PERSIST)  
+private List&lt;Staff&gt; staffList;	
+					
+					</pre></section><section class="section" id="id1128"><div class="titlepage"><div><div><h5 class="title">CascadeType.REMOVE</h5></div></div></div><pre class="programlisting">
+					
+@OneToMany(mappedBy = "boss", cascade = CascadeType.REMOVE)  
+private List&lt;Staff&gt; staffList;
+					
+					</pre></section><section class="section" id="id1129"><div class="titlepage"><div><div><h5 class="title">外键级联删除</h5></div></div></div><p>orphanRemoval 是 JPA 定义，并不是数据库原生</p><pre class="programlisting">
+					
+    @Id
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "id", foreignKey = @ForeignKey(name = "picture_id"))
+    private Picture picture;						
+					
+					</pre><p>orphanRemoval = true 可以实现数据级联删除</p><pre class="programlisting">
+			
+package cn.netkiller.api.domain;
+
+import java.io.Serializable;
+import java.util.Set;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Table;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+@Entity
+@Table(name = "member")
+public class Member implements Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "id", unique = true, nullable = false, insertable = true, updatable = false)
+	private int id;
+
+	private String name;
+	private String sex;
+	private int age;
+	private String wechat;
+
+	@Column(unique = true)
+	private String mobile;
+	private String picture;
+	private String ipAddress;
+
+	@JsonIgnore
+	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "member")
+	private Set&lt;Comment&gt; comment;
+	@JsonIgnore
+	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "member")
+	private Set&lt;StatisticsHistory&gt; statisticsHistory;
+
+	public Member() {
+	}
+
+	public Member(int id) {
+		this.id = id;
+	}
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getSex() {
+		return sex;
+	}
+
+	public void setSex(String sex) {
+		this.sex = sex;
+	}
+
+	public int getAge() {
+		return age;
+	}
+
+	public void setAge(int age) {
+		this.age = age;
+	}
+
+	public String getWechat() {
+		return wechat;
+	}
+
+	public void setWechat(String wechat) {
+		this.wechat = wechat;
+	}
+
+	public String getMobile() {
+		return mobile;
+	}
+
+	public void setMobile(String mobile) {
+		this.mobile = mobile;
+	}
+
+	public String getPicture() {
+		return picture;
+	}
+
+	public void setPicture(String picture) {
+		this.picture = picture;
+	}
+
+	public String getIpAddress() {
+		return ipAddress;
+	}
+
+	public void setIpAddress(String ipAddress) {
+		this.ipAddress = ipAddress;
+	}
+
+	@Override
+	public String toString() {
+		return "Member [id=" + id + ", name=" + name + ", sex=" + sex + ", age=" + age + ", wechat=" + wechat + ", mobile=" + mobile + ", picture=" + picture + ", ipAddress=" + ipAddress + "]";
+	}
+
+}			
+			
+					</pre></section><section class="section" id="id1130"><div class="titlepage"><div><div><h5 class="title">MySQL ON DELETE CASCADE</h5></div></div></div><p>@OnDelete(action = OnDeleteAction.CASCADE)</p><pre class="programlisting">
+					
+package cn.netkiller.domain;
+
+import jakarta.persistence.*;
+import lombok.Data;
+import org.hibernate.annotations.Comment;
+import org.hibernate.annotations.DynamicUpdate;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.Date;
+
+@Entity
+@Table
+@DynamicUpdate
+@Data
+@Comment("文生图心里分析")
+public class PicturePsychoanalysis implements Serializable {
+    @Serial
+    public static final long serialVersionUID = 1L;
+
+    @Id
+    @OneToOne()
+    @JoinColumn(name = "id", foreignKey = @ForeignKey(name = "picture_id"))
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private Picture picture;
+
+//    @Column(unique = true, nullable = false, insertable = true, updatable = false)
+//    @Comment("会话")
+//    private String session;
+
+    @Comment("负向情绪|中性情绪|正向情绪")
+    private String sentiment;
+
+    @Comment("感谢|愉快|抱怨|愤怒|喜爱|厌恶|恐惧|悲伤")
+    private String emotion;
+
+    @Lob
+    @Basic(fetch = FetchType.LAZY)
+    @Column(nullable = true, columnDefinition = "text")
+    @Comment("建议回复话术")
+    private String replies;
+
+    @Lob
+    @Basic(fetch = FetchType.LAZY)
+    @Column(nullable = true, columnDefinition = "text")
+    @Comment("心里分析")
+    private String analysis;
+
+    @Column(insertable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    @Comment("创建时间")
+    private Date ctime;
+
+    @Column(nullable = true, insertable = false, updatable = false, columnDefinition = "TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP")
+    @Comment("修改时间")
+    private Date mtime;
+}
+					
+					
+					</pre><p/><pre class="programlisting">
+					
+CREATE TABLE `picture_psychoanalysis` (
+  `analysis` text COMMENT '心里分析',
+  `ctime` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `emotion` varchar(255) DEFAULT NULL COMMENT '感谢|愉快|抱怨|愤怒|喜爱|厌恶|恐惧|悲伤',
+  `mtime` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+  `replies` text COMMENT '建议回复话术',
+  `sentiment` varchar(255) DEFAULT NULL COMMENT '负向情绪|中性情绪|正向情绪',
+  `id` bigint unsigned NOT NULL,
+  PRIMARY KEY (`id`),
+  CONSTRAINT `picture_id` FOREIGN KEY (`id`) REFERENCES `picture` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='文生图心里分析'					
+					
+					</pre></section></section><section class="section" id="@JoinTable"><div class="titlepage"><div><div><h4 class="title">@JoinTable</h4></div></div></div><pre class="screen">
+				
+@JoinTable(name = "table")				
+				
+				</pre><pre class="programlisting">
+				
+@OneToMany(cascade = CascadeType.ALL)
+@JoinTable
+private List&lt;UserProfile&gt; userProfile;				
+				
+				</pre><pre class="programlisting">
+				
+@JoinTable(name = "cust_user",
+    joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id")
+)		
+				
+				</pre><pre class="programlisting">
+				
+@JoinTable(name = "cust_user",
+    inverseJoinColumns = @JoinColumn(name = "user_ext_id", referencedColumnName = "id")
+)			
+				
+				</pre><pre class="programlisting">
+				
+@JoinTable(name = "cust_user",
+    joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),
+    inverseJoinColumns = @JoinColumn(name = "user_ext_id", referencedColumnName = "id"),
+    uniqueConstraints = {
+        @UniqueConstraint(name = "unique_user_id", columnNames = {"user_id"}),
+        @UniqueConstraint(name = "unique_user_ext_id", columnNames = {"user_ext_id"})
+    }
+)		
+				
+				</pre><section class="section" id="id1131"><div class="titlepage"><div><div><h5 class="title">多对多实例</h5></div></div></div><pre class="programlisting">
+					
+package cn.netkiller.domain;
+
+import jakarta.persistence.*;
+import lombok.Data;
+
+import java.io.Serializable;
+
+@Entity
+@Table
+@Data
+public class Consumer implements Serializable {
+    public static final long serialVersionUID = 7998903421265538801L;
+    public String firstName;
+    public String lastName;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", unique = true, nullable = false, insertable = false, updatable = false, columnDefinition = "int unsigned")
+    public Integer id;
+
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinTable(name = "consumer_has_device",
+            joinColumns =
+                    {@JoinColumn(name = "consumer_id", referencedColumnName = "id")},
+            inverseJoinColumns =
+                    {@JoinColumn(name = "device_id", referencedColumnName = "id")})
+    private Device device;
+
+    public Consumer() {
+    }
+
+}
+
+					
+					</pre><pre class="programlisting">
+					
+package cn.netkiller.domain;
+
+import jakarta.persistence.*;
+import lombok.Data;
+import org.hibernate.annotations.Comment;
+import org.hibernate.annotations.DynamicUpdate;
+
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.Date;
+
+@Entity
+@Table
+@DynamicUpdate
+@Data
+@Comment("设备表")
+public class Device implements Serializable {
+    @Serial
+    public static final long serialVersionUID = 1L;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", unique = true, nullable = false, insertable = false, updatable = false, columnDefinition = "int unsigned")
+    @Comment("主键")
+    private Integer id;
+
+    @Comment("设备名称")
+    private String name;
+
+    @Comment("型号")
+    private String model;
+    @Comment("版本")
+    private String fireware;
+    @Comment("版本")
+    private String version;
+
+    @Column(unique = true, nullable = false, insertable = true, updatable = false)
+    @Comment("序列号")
+    private String sn;
+    @Comment("ip")
+    private String ip;
+
+    @Comment("mac")
+    private String mac;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @Comment("最后一次登陆时间")
+    private Date lastTime;
+
+    @Column(columnDefinition = "enum('Y','N') DEFAULT 'N'")
+    @Comment("设备状态")
+    private boolean status;
+
+    @Column(insertable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    @Comment("创建时间")
+    private Date ctime;
+
+    @Column(nullable = true, insertable = false, updatable = false, columnDefinition = "TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP")
+    @Comment("修改时间")
+    private Date mtime;
+}
+
+					
+					</pre><pre class="programlisting">
+					
+CREATE TABLE `consumer` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `first_name` varchar(255) DEFAULT NULL,
+  `last_name` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
+CREATE TABLE `device` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `ctime` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `fireware` varchar(255) DEFAULT NULL COMMENT '版本',
+  `ip` varchar(255) DEFAULT NULL COMMENT 'ip',
+  `last_time` datetime(6) DEFAULT NULL COMMENT '最后一次登陆时间',
+  `mac` varchar(255) DEFAULT NULL COMMENT 'mac',
+  `model` varchar(255) DEFAULT NULL COMMENT '型号',
+  `mtime` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+  `name` varchar(255) DEFAULT NULL COMMENT '设备名称',
+  `sn` varchar(255) NOT NULL COMMENT '序列号',
+  `status` enum('Y','N') DEFAULT 'N' COMMENT '设备状态',
+  `version` varchar(255) DEFAULT NULL COMMENT '版本',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UK_bg7pgyvfwv0q65tmquumxff3d` (`sn`)
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='设备表'
+
+CREATE TABLE `consumer_has_device` (
+  `device_id` int unsigned DEFAULT NULL,
+  `consumer_id` int unsigned NOT NULL,
+  PRIMARY KEY (`consumer_id`),
+  UNIQUE KEY `UK_ibck20j1s6ch97lncg99uvpgh` (`device_id`),
+  CONSTRAINT `FKcottusf6sx3bnouahp29vjdwk` FOREIGN KEY (`device_id`) REFERENCES `device` (`id`),
+  CONSTRAINT `FKq7u4eyw8pmfkwg4yymjljx8ra` FOREIGN KEY (`consumer_id`) REFERENCES `consumer` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+					
+					</pre></section></section><section class="section" id="@OrderBy"><div class="titlepage"><div><div><h4 class="title">@OrderBy</h4></div></div></div><pre class="programlisting">
+				
+// JPA 默认根据 Student 的 ID 主键对 studentList 集合数据进行递增排序
+@OneToMany(cascade = CascadeType.ALL)
+@OrderBy
+private List&lt;Student&gt; studentList;
+ 
+// 手动指定 id 字段的排序方式，ASC 递增排序，DESC 递减排序
+@OneToMany(cascade = CascadeType.ALL)
+@OrderBy("id desc")
+private List&lt;Student&gt; studentList;
+ 
+// 手动指定按照 salary 属性进行递减排序
+@OneToMany(cascade = CascadeType.ALL)
+@OrderBy("salary desc")
+private List&lt;Student&gt; studentList;
+ 
+// 手动指定按照多个属性进行排序
+// 下面将根据 sex 和 salay 进行递增排序
+@OneToMany(cascade = CascadeType.ALL)
+@OrderBy("sex,salary")
+private List&lt;Student&gt; studentList;
+ 
+// 下面将根据 sex 递增排序，salary 递增排序
+@OneToMany(cascade = CascadeType.ALL)
+@OrderBy("sex asc,salary asc")
+private List&lt;Student&gt; studentList;
+ 
+// 下面将根据 sex 递增排序，salary 递减排序
+@OneToMany(cascade = CascadeType.ALL)
+@OrderBy("sex asc,salary desc")
+private List&lt;Student&gt; studentList;				
+				
+				</pre></section></section><section class="section" id="@ElementCollection"><div class="titlepage"><div><div><h3 class="title">映射集合属性</h3></div></div></div><p>@ElementCollection 很像 @OneToMany，甚至有些场景可以相互替代，@ElementCollection 更适合 List/Set/Map/Array 等数据类型，而 @OneToMany 是对应一个实体。</p><pre class="programlisting">
+			
+import javax.persistence.*;
+import java.util.*;
+import javax.persistence.*;
+
+@Entity
+public class Employee {
+     @Id
+     @GeneratedValue(strategy = GenerationType.AUTO)
+     private int id;
+     private String name;
+     
+     @ElementCollection
+     private Set&lt;Address&gt; address = new HashSet&lt;Address&gt;();
+}			
+			
+			</pre><pre class="programlisting">
+			
+import javax.persistence.*;
+
+@Embeddable
+public class Address {
+     private String province;
+     private String city;
+     private String state;
+}
+			
+			</pre><p>Set 集合</p><pre class="programlisting">
+			
+	@ElementCollection
+    private final Set&lt;String&gt; address = new HashSet&lt;String&gt;();			
+			
+			</pre><p>List 集合</p><pre class="programlisting">
+			
+	@ElementCollection(targetClass = String.class) //指定集合中元素的类型
+	@CollectionTable(name = "school_inf", joinColumns = @JoinColumn(name="pid",nullable = false)) //表示外键不能为空
+	@Column(name = "school_name") 		//指定表中保存集合元素的列名
+	@OrderColumn(name = "list_order") 	//索引列
+	private List&lt;String&gt; schools = new ArrayList&lt;String&gt;();		
+			
+			</pre><p>数组集合</p><pre class="programlisting">
+			
+@Entity
+@Table
+public class Student {
+
+	@Id @Column
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Integer sid;
+	private String name;
+	private Integer age;
+	@ElementCollection(targetClass=String.class) //集合中元素的类型
+	@CollectionTable(name = "school", joinColumns = @JoinColumn(name="sid",nullable = false))//指定外键的名称为sid,并且不能为空
+	@Column(name = "school_name") //指定schools属性，在表中的列名
+	@OrderColumn(name = "array_order")
+	private String[] schools = new String[3];
+	
+}
+		
+			
+			</pre><p>Map 集合</p><pre class="programlisting">
+			
+@Entity
+@Table(name = "student")
+public class Student {
+
+	@Id @Column
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Integer sid;
+	private String name;
+	private Integer age;
+	@ElementCollection(targetClass = Float.class) //对于Map类型的属性：指定的是Value的类型
+	@CollectionTable(name = "score_info", joinColumns = @JoinColumn(name="sid", nullable = false))
+	@MapKeyClass(String.class) 		// 指定Map中key的类型
+	@MapKeyColumn(name="suject") 	//指定索引列，也就是key的列名
+	@Column(name = "score") //映射保存Map, Value的列名
+	private Map&lt;String, Float&gt; scores = new HashMap&lt;String, Float&gt;(); //科目和成绩
+
+}			
+			
+			</pre><section class="section" id="id1132"><div class="titlepage"><div><div><h4 class="title">外键名称</h4></div></div></div><pre class="programlisting">
+				
+    @ElementCollection
+    @CollectionTable(joinColumns = @JoinColumn(name = "pid", nullable = false))
+    private Set&lt;Status&gt; address = new HashSet&lt;Status&gt;();
+				
+				</pre></section></section><section class="section" id="@JsonIgnore"><div class="titlepage"><div><div><h3 class="title">@JsonIgnore</h3></div></div></div><p>当尸体返回 Json 数据结构是，将不包含 @JsonIgnore 定义变量。</p><pre class="programlisting">
+				
+	@JsonIgnore  
+    @OneToMany(mappedBy = "owner")  
+    private List&lt;Pet&gt; pets;  
+				
+			</pre></section><section class="section" id="@EnableJpaAuditing"><div class="titlepage"><div><div><h3 class="title">@EnableJpaAuditing 开启 JPA 审计功能</h3></div></div></div><pre class="programlisting">
+		
+@SpringBootApplication
+@EnableJpaAuditing
+public class Application {
+    
+    public static void main(String[] args) throws Exception {
+        SpringApplication.run(Application .class, args);
+    }
+}		
+		
+			</pre><p>在需要审计实体中加入 @EntityListeners(AuditingEntityListener.class)
+			</p><pre class="programlisting">
+		
+@EntityListeners(AuditingEntityListener.class)
+public class Member  implements Serializable {
+
+    private static final long serialVersionUID = -6163675075289529459L;
+
+    @JsonIgnore
+    String entityName = this.getClass().getSimpleName();
+
+    @CreatedBy
+    String createdBy;
+
+    @LastModifiedBy
+    String modifiedBy;
+    /**
+     * 实体创建时间
+     */
+    @Temporal(TemporalType.TIMESTAMP)
+    @CreatedDate
+    protected Date dateCreated = new Date();
+
+    /**
+     * 实体修改时间
+     */
+    @Temporal(TemporalType.TIMESTAMP)
+    @LastModifiedDate
+    protected Date dateModified = new Date();
+
+     #省略getter setter
+}		
+		
+			</pre></section><section class="section" id="@Comment"><div class="titlepage"><div><div><h3 class="title">注释 @Comment</h3></div></div></div><pre class="programlisting">
+			
+    @Column(columnDefinition = "int unsigned NOT NULL DEFAULT '0'")
+    @Comment("点赞")
+    private int likes;
+    @Column(columnDefinition = "int unsigned NOT NULL DEFAULT '0'")
+    @Comment("收藏")
+    private int favorites;
+    @Column(columnDefinition = "int unsigned NOT NULL DEFAULT '0'")
+    @Comment("转发")
+    private int forward;			
+			
+			</pre></section><section class="section" id="@Pattern"><div class="titlepage"><div><div><h3 class="title">@Pattern 数据匹配</h3></div></div></div><pre class="programlisting">
+			
+    /**
+     * 性别 CHAR(1) 0:女 1:男
+     */
+    @Pattern(regexp = "[01]")
+    @Column(name = "gender",columnDefinition = "char(1)")
+    private String gender;
+
+    /**
+     * 身份证号 CHAR(18)
+     */
+    @Pattern(regexp = "^([1-6][1-9]|50)\\d{4}(18|19|20)\\d{2}((0[1-9])|10|11|12)(([0-2][1-9])|10|20|30|31)\\d{3}[0-9Xx]$")
+    @Column(name = "identityCard",columnDefinition = "char(18)")
+    private String identityCard;
+
+    /**
+     * 所属部门 CHAR(2)  01：金融一部, 02：金融二部, 03：创新中心
+     */
+    @Pattern(regexp = "(01|02|03)")
+    @Column(name = "department",columnDefinition = "char(2)")
+    private String department;			
+			
+			</pre></section><section class="section" id="Inheritance"><div class="titlepage"><div><div><h3 class="title">实体继承</h3></div></div></div><p>B、C 类继承 A 所有属性，并且主键均为数据库（auto_increment）</p><pre class="programlisting">
+			
+@MappedSuperclass
+@(strategy = InheritanceType.TABLE_PER_CLASS)
+public class A{
+    @Id
+    @GeneratedValue(strategy=GenerationType.IDENTITY)
+    private int id;
+}
+			
+			</pre><pre class="programlisting">
+			
+@Entity
+@Table(name="b")
+public class B extends A{
+
+}
+			
+			</pre><pre class="programlisting">
+			
+@Entity
+@Table(name="c")
+public class C extends A{
+
+}
+			
+			</pre></section></section><footer><div class="navfooter"><hr/><table style="width: 100%; "><tr><td style="width: 40%; text-align: left; "><a accesskey="p" href="ch52.xhtml">上一页</a> </td><td style="width: 20%; text-align: center; "><a accesskey="u" href="ch52.xhtml">上一级</a></td><td style="width: 40%; text-align: right; "> <a accesskey="n" href="ch52s03.xhtml">下一页</a></td></tr><tr><td style="width: 40%; text-align: left; vertical-align: top; ">第 52 章 Spring Data with MySQL </td><td style="width: 20%; text-align: center; "><a accesskey="h" href="../../index.xhtml">起始页</a></td><td style="width: 40%; text-align: right; vertical-align: top; "> Repository</td></tr></table></div></footer></body></html>

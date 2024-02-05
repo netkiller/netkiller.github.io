@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><title>第 57 章 Apache ShardingSphere</title><link rel="stylesheet" type="text/css" href="../docbook.css"/><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot"/><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config"/><link rel="prev" href="ch56.xhtml" title="第 56 章 Spring boot with Data restful"/><link rel="next" href="../security/pt04.xhtml" title="部分 IV. Spring Security"/></head><body><header><div class="navheader"><table style="width: 100%; "><tr><th style="text-align: center; " colspan="3">第 57 章 Apache ShardingSphere</th></tr><tr><td style="width: 20%; text-align: left; "><a accesskey="p" href="ch56.xhtml">上一页</a> </td><th style="width: 60%; text-align: center; ">部分 III. Spring Data</th><td style="width: 20%; text-align: right; "> <a accesskey="n" href="../security/pt04.xhtml">下一页</a></td></tr></table><hr/></div></header><section class="chapter" id="shardingsphere"><div class="titlepage"><div><div><h2 class="title">第 57 章 Apache ShardingSphere</h2></div></div></div><div class="toc"><div class="toc-title">目录</div><ul class="toc"><li><span class="section"><a href="ch57.xhtml#id1240">微服务集群环境，雪花算法出现重复ID</a></span><ul><li><span class="section"><a href="ch57.xhtml#id1238">方案一、配置实现</a></span></li><li><span class="section"><a href="ch57.xhtml#id1239">方案二、代码实现</a></span></li></ul></li></ul></div><section class="section" id="id1240"><div class="titlepage"><div><div><h2 class="title" style="clear: both">微服务集群环境，雪花算法出现重复ID</h2></div></div></div><pre class="screen">
+		
+Caused by: com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException: Duplicate entry '854658443787632640' for key 'PRIMARY'		
+		
+		</pre><pre class="screen">
+		
+# 指定 工作机器数量 最大是2的10次方 ， 即小于 1024 就可以 
+spring.shardingsphere.sharding.tables.shard.key-generator.props.worker.id=1000
+
+max-vibration-offset 
+
+# 最大容忍的时钟回拨毫秒数, 雪花算法依据时间戳来生成的，一旦时间戳回拨就会造成 id 重复的可能
+spring.shardingsphere.sharding.tables.shard.key-generator.max.tolerate.time.difference.milliseconds=5
+		
+		</pre><section class="section" id="id1238"><div class="titlepage"><div><div><h3 class="title">方案一、配置实现</h3></div></div></div><p>随机指定 worker.id，这样在kubernetes集群环境，每次启动pod，worker.id 都会自动变化。</p><pre class="screen">
+			
+spring.shardingsphere.sharding.tables.test.key-generator.props.worker.id=${random.int[1,1024]}
+			
+			</pre><p>查看当前 worker.id</p><pre class="programlisting">
+			
+package cn.netkiller.controller.test;//package cn.netkiller.controller;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RefreshScope
+@RestController
+public class TestRestController {
+
+    @Value("${spring.shardingsphere.sharding.tables.test.key-generator.props.worker.id}")
+    public String workerId;
+
+    public TestRestController() {
+
+    }
+
+    @GetMapping("/workerId")
+    public String snow() {
+        return this.workerId;
+    }
+}
+			
+			</pre></section><section class="section" id="id1239"><div class="titlepage"><div><div><h3 class="title">方案二、代码实现</h3></div></div></div><pre class="programlisting">
+			
+package cn.netkiller.config;
+
+import org.springframework.context.annotation.Configuration;
+
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+
+/**
+ * 动态指定sharding jdbc 的 work.id 雪花算法中的属性，然后通过 System.setProperty() 设置环境变量
+ * workId 可以用主机名、IP地址、Mac地址，最大值 1L &lt;&lt; 100，就是1024，即 0&lt;= workId &lt; 1024
+ * {@link SnowflakeShardingKeyGenerator#getWorkerId()}
+ */
+@Configuration
+public class SnowFlakeWordIdConfiguration {
+    static {
+        try {
+            InetAddress ip4 = Inet4Address.getLocalHost();
+            String addressIp = ip4.getHostAddress();
+            System.setProperty("workerId", (Math.abs(addressIp.hashCode()) % 1024) + "");
+        } catch (UnknownHostException e) {
+            throw new RuntimeException(e);
+        }
+    }
+}
+			
+			</pre><p>配置文件添加 key-generator.props.worker.id 设置 ${workerId} 变量</p><pre class="screen">
+			
+          key-generator:
+            column: id
+            props:
+              worker:
+                id: ${workerId}
+            type: SNOWFLAKE
+			
+			</pre></section></section></section><footer><div class="navfooter"><hr/><table style="width: 100%; "><tr><td style="width: 40%; text-align: left; "><a accesskey="p" href="ch56.xhtml">上一页</a> </td><td style="width: 20%; text-align: center; "><a accesskey="u" href="pt03.xhtml">上一级</a></td><td style="width: 40%; text-align: right; "> <a accesskey="n" href="../security/pt04.xhtml">下一页</a></td></tr><tr><td style="width: 40%; text-align: left; vertical-align: top; ">第 56 章 Spring boot with Data restful </td><td style="width: 20%; text-align: center; "><a accesskey="h" href="../index.xhtml">起始页</a></td><td style="width: 40%; text-align: right; vertical-align: top; "> 部分 IV. Spring Security</td></tr></table></div></footer></body></html>

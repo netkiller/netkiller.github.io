@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><title>Repository</title><link rel="stylesheet" type="text/css" href="../../docbook.css"/><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot"/><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config"/><link rel="prev" href="ch10s03.xhtml" title="MongoTemplate"/><link rel="next" href="../mysql/ch11.xhtml" title="第 11 章 Spring boot with MySQL"/></head><body><header><div class="navheader"><table style="width: 100%; "><tr><th style="text-align: center; " colspan="3">Repository</th></tr><tr><td style="width: 20%; text-align: left; "><a accesskey="p" href="ch10s03.xhtml">上一页</a> </td><th style="width: 60%; text-align: center; ">第 10 章 Spring boot with MongoDB</th><td style="width: 20%; text-align: right; "> <a accesskey="n" href="../mysql/ch11.xhtml">下一页</a></td></tr></table><hr/></div></header><section class="section" id="Repository"><div class="titlepage"><div><div><h3 class="title">Repository</h3></div></div></div><p>在上一节 MongoTemplate 中，继续添加下面代码。</p><pre class="programlisting">
+			
+package api;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
+
+@SpringBootApplication
+@EnableAutoConfiguration(exclude = { DataSourceAutoConfiguration.class })
+@ComponentScan({ "api.web", "api.rest","api.service" })
+@EnableMongoRepositories
+public class Application {
+	
+	
+    public @Bean WebMvcConfigurer corsConfigurer() {
+        return new WebMvcConfigurerAdapter() {
+            @Override
+            public void addCorsMappings(CorsRegistry registry) {
+                registry.addMapping("/**");
+            }
+        };
+    }
+	public static void main(String[] args) {
+		SpringApplication.run(Application.class, args);
+	}
+
+}
+			
+		</pre><p>Resource: src/main/resources/application.properties</p><pre class="programlisting">
+			
+spring.data.mongodb.uri=mongodb://finance:XQ8os82I0pFoZBMd4@mdb.netkiller.cn/finance
+spring.data.mongodb.repositories.enabled=true
+			
+		</pre><p>CityRepository.java</p><pre class="programlisting">
+			
+package repository;
+
+import java.util.List;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.mongodb.repository.MongoRepository;
+
+import domain.City;
+
+public interface CityRepository extends MongoRepository&lt;City, String&gt; {
+	public Page&lt;City&gt; findAll(Pageable pageable);
+
+	public City findByNameAndCountry(String name, String country);
+
+	public City findByName(String name);
+
+	public List&lt;City&gt; findByCountry(String country);
+
+}
+			
+		</pre><p>City.java</p><pre class="programlisting">
+			
+package domain;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+@Document(collection = "city")
+public class City {
+	
+	@Id
+    private String id;
+	public String name;
+	public String country;
+	
+	public City(String name, String country){
+		this.setName(name);
+		this.setCountry(country);
+	}
+	public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
+	}
+	public String getCountry() {
+		return country;
+	}
+	public void setCountry(String country) {
+		this.country = country;
+	}
+	@Override
+	public String toString() {
+		return "City [id=" + id + ", name=" + name + ", country=" + country + "]";
+	}
+	
+}
+			
+		</pre><p>在 IndexController 中调用 CityRepository</p><pre class="programlisting">
+			
+package web;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import repository.CityRepository;
+
+import domain.City;
+import repository.CityRepository;
+
+@Controller
+public class IndexController {
+	
+	@Autowired
+	private CityRepository repository;
+	
+	@RequestMapping("/index")
+	@ResponseBody
+	public ModelAndView index() {
+		String message = "Hello";
+		return new ModelAndView("home/welcome", "variable", message);
+	}
+	
+	@RequestMapping("/curd")
+	@ResponseBody
+	public String curd() {
+
+		repository.deleteAll();
+
+		// save a couple of city
+		repository.save(new City("Shenzhen", "China"));
+		repository.save(new City("Beijing", "China"));
+
+		System.out.println("--------------------------------");
+		// fetch all city
+		for (City city : repository.findAll()) {
+			System.out.println(city);
+		}
+		// fetch an individual city
+		System.out.println("--------------------------------");
+		System.out.println(repository.findByName("Shenzhen"));
+		System.out.println("--------------------------------");
+		for (City city : repository.findByCountry("China")) {
+			System.out.println(city);
+		}
+
+		String message = "Hello";
+		return message;
+	}
+}
+			
+		</pre></section><footer><div class="navfooter"><hr/><table style="width: 100%; "><tr><td style="width: 40%; text-align: left; "><a accesskey="p" href="ch10s03.xhtml">上一页</a> </td><td style="width: 20%; text-align: center; "><a accesskey="u" href="ch10.xhtml">上一级</a></td><td style="width: 40%; text-align: right; "> <a accesskey="n" href="../mysql/ch11.xhtml">下一页</a></td></tr><tr><td style="width: 40%; text-align: left; vertical-align: top; ">MongoTemplate </td><td style="width: 20%; text-align: center; "><a accesskey="h" href="../../index.xhtml">起始页</a></td><td style="width: 40%; text-align: right; vertical-align: top; "> 第 11 章 Spring boot with MySQL</td></tr></table></div></footer></body></html>

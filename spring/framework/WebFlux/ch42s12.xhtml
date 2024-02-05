@@ -1,0 +1,323 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><title>Webflux 安全</title><link rel="stylesheet" type="text/css" href="../../docbook.css"/><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot"/><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config"/><link rel="prev" href="ch42s11.xhtml" title="WebClient"/><link rel="next" href="ch42s13.xhtml" title="常见问题"/></head><body><header><div class="navheader"><table style="width: 100%; "><tr><th style="text-align: center; " colspan="3">Webflux 安全</th></tr><tr><td style="width: 20%; text-align: left; "><a accesskey="p" href="ch42s11.xhtml">上一页</a> </td><th style="width: 60%; text-align: center; ">第 42 章 WebFlux framework</th><td style="width: 20%; text-align: right; "> <a accesskey="n" href="ch42s13.xhtml">下一页</a></td></tr></table><hr/></div></header><section class="section" id="id4514"><div class="titlepage"><div><div><h2 class="title" style="clear: both">Webflux 安全</h2></div></div></div><section class="section" id="id1062"><div class="titlepage"><div><div><h3 class="title">Token 拦截器</h3></div></div></div><pre class="programlisting">
+			
+package cn.netkiller.config;
+
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.server.reactive.ServerHttpResponse;
+import org.springframework.stereotype.Component;
+import org.springframework.web.server.ServerWebExchange;
+import org.springframework.web.server.WebFilter;
+import org.springframework.web.server.WebFilterChain;
+import reactor.core.publisher.Mono;
+
+
+@Component
+@Order
+@Slf4j
+public class TokenWebFilter implements WebFilter {
+    @Override
+    public Mono&lt;Void&gt; filter(ServerWebExchange exchange, WebFilterChain chain) {
+        log.info(exchange.getRequest().getURI().toString());
+        if (!exchange.getRequest().getHeaders().containsKey("token")) {
+            ServerHttpResponse response = exchange.getResponse();
+            response.setStatusCode(HttpStatus.FORBIDDEN);
+            response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+            return response.writeWith(Mono.just(response.bufferFactory().wrap("{\"msg\":\"no token\"}".getBytes())));
+        } else {
+            exchange.getAttributes().put("auth", "true");
+            return chain.filter(exchange).doFinally(s -&gt; {
+                log.info("request after, url:{}, statusCode:{}", exchange.getRequest().getURI(), exchange.getResponse().getStatusCode());
+            });
+        }
+    }
+}
+			
+			
+		</pre></section><section class="section" id="id1063"><div class="titlepage"><div><div><h3 class="title">JWT</h3></div></div></div><pre class="programlisting">
+		
+iss (issuer)：签发人
+exp (expiration time)：过期时间
+sub (subject)：主题
+aud (audience)：受众
+nbf (Not Before)：生效时间
+iat (Issued At)：签发时间
+jti (JWT ID)：编号
+		
+		</pre><pre class="programlisting">
+		
+package cn.netkiller.config;
+
+
+import cn.netkiller.component.JwtTokeComponent;
+import cn.netkiller.utils.ResponseJson;
+import com.google.gson.Gson;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.annotation.Order;
+import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.server.reactive.ServerHttpResponse;
+import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
+import org.springframework.web.server.ServerWebExchange;
+import org.springframework.web.server.WebFilter;
+import org.springframework.web.server.WebFilterChain;
+import reactor.core.publisher.Mono;
+
+@Component
+@Order
+@Slf4j
+public class TokenWebFilter implements WebFilter {
+
+    private static final String[] patterns = {"/token", "/verifier", "/mock/*", "/swagger/*", "/badges/**"};
+    private final AntPathMatcher pathMatcher = new AntPathMatcher();
+    @Autowired
+    private JwtTokeComponent jwtTokeComponent;
+
+    public TokenWebFilter() {
+
+    }
+
+    @Override
+    public Mono&lt;Void&gt; filter(ServerWebExchange exchange, WebFilterChain chain) {
+
+        exchange.getFormData().subscribe(System.out::println);
+        exchange.getFormData().doOnNext(n -&gt; {
+            n.forEach((k, v) -&gt; {
+                log.info("K: {}, V: {}", k, v);
+            });
+        });
+        log.info("No Token");
+
+        String path = exchange.getRequest().getPath().toString();
+        for (String pattern : patterns) {
+            if (pathMatcher.match(pattern, path)) {
+                log.info("Permit Pattern '" + pattern + "' matches path '" + path + "'");
+                return chain.filter(exchange);
+            }
+        }
+
+
+        if (!exchange.getRequest().getHeaders().containsKey("token")) {
+            ServerHttpResponse response = exchange.getResponse();
+            response.setStatusCode(HttpStatus.FORBIDDEN);
+            response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+            Mono&lt;DataBuffer&gt; message = Mono.just(response.bufferFactory().wrap(new ResponseJson(false, ResponseJson.Code.TokenException, "请提供 Token", null).toString().getBytes()));
+            return response.writeWith(message);
+        } else {
+            String token = exchange.getRequest().getHeaders().getFirst("token");
+            log.info("token: " + token);
+            ResponseJson jwt = jwtTokeComponent.verifier(token);
+            log.info("jwt: " + jwt.isStatus());
+            if (jwt.isStatus()) {
+                return chain.filter(exchange);
+            } else {
+                ServerHttpResponse response = exchange.getResponse();
+                response.setStatusCode(HttpStatus.FORBIDDEN);
+                response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+                Gson gson = new Gson();
+                String jsonString = gson.toJson(jwt);
+                Mono&lt;DataBuffer&gt; message = Mono.just(response.bufferFactory().wrap(jsonString.getBytes()));
+                return response.writeWith(message);
+            }
+        }
+    }
+}
+		
+		
+		</pre><pre class="programlisting">
+		
+package cn.netkiller.component;
+
+import cn.netkiller.utils.ResponseJson;
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.*;
+import com.auth0.jwt.interfaces.DecodedJWT;
+import com.auth0.jwt.interfaces.JWTVerifier;
+import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import reactor.core.publisher.Mono;
+
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+
+@Slf4j
+@Component
+@NoArgsConstructor
+public class JwtTokeComponent {
+    @Value("${app.expires}")
+    private int expires;
+    @Value("${app.audience}")
+    private String audience;
+    @Value("${app.id}")
+    private String appId;
+    @Value("${app.key}")
+    private String appKey;
+    @Value("${app.secret}")
+    private String secret;
+    @Value("${app.subject}")
+    private String subject;
+    @Value("#{'${app.role}'.split(',')}")
+    private List role;
+
+    public ResponseJson verifier(String token) {
+        ResponseJson response;
+        try {
+            DecodedJWT jwt = this.verify(token);
+            response = new ResponseJson(true, ResponseJson.Code.SUCCESS, "Token 校验成功", jwt);
+        } catch (SignatureVerificationException e) {
+            response = new ResponseJson(false, ResponseJson.Code.TokenException, e.getMessage(), "Token 签名失败");
+        } catch (TokenExpiredException e) {
+            response = new ResponseJson(false, ResponseJson.Code.TokenExpiredException, e.getMessage(), "Token 过期");
+        } catch (AlgorithmMismatchException e) {
+            response = new ResponseJson(false, ResponseJson.Code.AlgorithmMismatchException, e.getMessage(), "Token 签名算法异常");
+        } catch (JWTVerificationException e) {
+            response = new ResponseJson(false, ResponseJson.Code.TokenException, e.getMessage(), "Token 校验失败");
+        } catch (Exception e) {
+            response = new ResponseJson(false, ResponseJson.Code.Exception, e.getMessage(), "Token 异常");
+        }
+        log.error(response.toString());
+        return response;
+    }
+
+    public Mono&lt;String&gt; getToken(String appId, String appKey) {
+
+
+        Calendar instance = Calendar.getInstance();
+        instance.add(Calendar.DATE, expires);
+//        instance.add(Calendar.SECOND, 30);
+        try {
+//            Algorithm algorithm = Algorithm.RSA256(rsaPublicKey, rsaPrivateKey);
+            Algorithm algorithm = Algorithm.HMAC256(secret);
+
+            String token = JWT.create()
+                    .withJWTId(appKey)
+                    .withIssuer(appId)
+                    .withIssuedAt(new Date())
+                    .withSubject(subject)
+                    .withKeyId(appKey)
+                    .withAudience(audience)
+                    .withClaim("role", role)
+                    .withExpiresAt(instance.getTime())
+                    .sign(algorithm);
+            return Mono.just(token);
+        } catch (JWTCreationException exception) {
+            log.error(exception.getMessage());
+        }
+        return Mono.empty();
+    }
+
+    public DecodedJWT verify(String token) {
+        Algorithm algorithm = Algorithm.HMAC256(secret);
+        JWTVerifier verifier = JWT.require(algorithm)
+                // specify an specific claim validations
+                .withIssuer(appId)
+                .withJWTId(appKey)
+                .withSubject(subject)
+                .withAudience(audience)
+                // reusable verifier instance
+                .build();
+
+        DecodedJWT decodedJWT = verifier.verify(token);
+        log.info(decodedJWT.getClaims().toString());
+
+        return decodedJWT;
+    }
+
+}
+		
+		
+		</pre></section><section class="section" id="id1064"><div class="titlepage"><div><div><h3 class="title">spring-boot-starter-security</h3></div></div></div><pre class="programlisting">
+		
+        &lt;dependency&gt;
+            &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+            &lt;artifactId&gt;spring-boot-starter-security&lt;/artifactId&gt;
+        &lt;/dependency&gt;		
+		
+		</pre><p>默认用户名是 user，密码会打印到终端</p><pre class="screen">
+		
+2024-01-03T18:52:01.027+08:00  WARN 33537 --- [watch-development] [           main] .s.s.UserDetailsServiceAutoConfiguration : 
+
+Using generated security password: 823fcdcc-e2dd-4967-84b4-546db9175357
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2024-01-03T18:52:01.081+08:00  INFO 33537 --- [watch-development] [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 13 endpoint(s) beneath base path '/actuator'		
+		
+		</pre><p>访问方式</p><pre class="screen">
+		
+neo@MacBook-Pro-M2 ~&gt; curl -X 'GET' 'http://user:823fcdcc-e2dd-4967-84b4-546db9175357@localhost:8080/mock/mono'
+hello webflux⏎ 
+		
+		</pre><p>修改密码，在配置文件中增加</p><pre class="screen">
+		
+#
+spring.security.user.name=user
+spring.security.user.password=123456
+#		
+		
+		</pre><pre class="programlisting">
+		
+package cn.netkiller.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
+import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
+import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
+import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.core.userdetails.MapReactiveUserDetailsService;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.web.server.SecurityWebFilterChain;
+
+@Configuration
+@EnableWebFluxSecurity
+@EnableReactiveMethodSecurity
+public class SecurityConfig {
+//    @Autowired
+//    private TokenWebFilter tokenWebFilter;
+
+    @Bean
+    public MapReactiveUserDetailsService userDetailsService() {
+        UserDetails user = User.withDefaultPasswordEncoder()
+                .username("user")
+                .password("user")
+                .roles("USER")
+                .build();
+        return new MapReactiveUserDetailsService(user);
+    }
+
+    @Order(Ordered.HIGHEST_PRECEDENCE)
+    @Bean
+    SecurityWebFilterChain filterChain(ServerHttpSecurity httpSecurity) throws Exception {
+        httpSecurity.csrf().disable()
+                .authorizeExchange(exchanges -&gt; exchanges
+                        .pathMatchers("/").permitAll()
+                        .pathMatchers("/token", "/verifier").permitAll()
+                        .pathMatchers("/mock/*").permitAll()
+                        .pathMatchers("/ping", "/version").permitAll()
+                        .pathMatchers("/badges/**", "/chat/**", "/status/**", "/picture/**").permitAll()
+                        .anyExchange().authenticated()
+                );
+//                .addFilterBefore(tokenWebFilter, SecurityWebFiltersOrder.FIRST);
+//                .httpBasic(withDefaults())
+//                .formLogin(withDefaults());
+        return httpSecurity.build();
+    }
+
+}
+		
+		
+		</pre></section></section><footer><div class="navfooter"><hr/><table style="width: 100%; "><tr><td style="width: 40%; text-align: left; "><a accesskey="p" href="ch42s11.xhtml">上一页</a> </td><td style="width: 20%; text-align: center; "><a accesskey="u" href="ch42.xhtml">上一级</a></td><td style="width: 40%; text-align: right; "> <a accesskey="n" href="ch42s13.xhtml">下一页</a></td></tr><tr><td style="width: 40%; text-align: left; vertical-align: top; ">WebClient </td><td style="width: 20%; text-align: center; "><a accesskey="h" href="../../index.xhtml">起始页</a></td><td style="width: 40%; text-align: right; vertical-align: top; "> 常见问题</td></tr></table></div></footer></body></html>

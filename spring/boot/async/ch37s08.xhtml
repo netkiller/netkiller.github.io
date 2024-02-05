@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><title>线程池监控</title><link rel="stylesheet" type="text/css" href="../../docbook.css"/><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot"/><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config"/><link rel="prev" href="ch37s07.xhtml" title="设置线程名称"/><link rel="next" href="ch37s09.xhtml" title="注意事项"/></head><body><header><div class="navheader"><table style="width: 100%; "><tr><th style="text-align: center; " colspan="3">线程池监控</th></tr><tr><td style="width: 20%; text-align: left; "><a accesskey="p" href="ch37s07.xhtml">上一页</a> </td><th style="width: 60%; text-align: center; ">第 37 章 Spring boot with Async</th><td style="width: 20%; text-align: right; "> <a accesskey="n" href="ch37s09.xhtml">下一页</a></td></tr></table><hr/></div></header><section class="section" id="id3675"><div class="titlepage"><div><div><h3 class="title">线程池监控</h3></div></div></div><p>监控指标</p><pre class="screen">
+		
+neo@MacBook-Pro-M2 ~&gt; curl -s http://www.netkiller.cn:8080/actuator/metrics | jq | grep executor
+    "executor.active",
+    "executor.completed",
+    "executor.pool.core",
+    "executor.pool.max",
+    "executor.pool.size",
+    "executor.queue.remaining",
+    "executor.queued",		
+		
+		</pre><p>获取指标</p><pre class="screen">
+		
+neo@MacBook-Pro-M2 ~&gt; curl -s http://www.netkiller.cn:8080/actuator/metrics/executor.active | jq
+{
+  "name": "executor.active",
+  "description": "The approximate number of threads that are actively executing tasks",
+  "baseUnit": "threads",
+  "measurements": [
+    {
+      "statistic": "VALUE",
+      "value": 0
+    }
+  ],
+  "availableTags": [
+    {
+      "tag": "name",
+      "values": [
+        "asyncExecutor"
+      ]
+    }
+  ]
+}		
+		
+		</pre><p/><pre class="programlisting">
+		
+    @Autowired
+    ThreadPoolTaskExecutor threadPoolTaskExecutor;
+    		
+    @GetMapping("/pool")
+    public String pool() {
+        int activeCount = threadPoolTaskExecutor.getActiveCount();
+        long completedTaskCount = threadPoolTaskExecutor.getThreadPoolExecutor().getCompletedTaskCount();
+        long taskCount = threadPoolTaskExecutor.getThreadPoolExecutor().getTaskCount();
+        int queue = threadPoolTaskExecutor.getThreadPoolExecutor().getQueue().size();
+        String monitor = String.format("Task: %d, Queue: %d, Active: %d, Completed: %d\n", taskCount, queue, activeCount, completedTaskCount);
+        log.info(monitor);
+        return monitor;
+    }	
+		
+		</pre></section><footer><div class="navfooter"><hr/><table style="width: 100%; "><tr><td style="width: 40%; text-align: left; "><a accesskey="p" href="ch37s07.xhtml">上一页</a> </td><td style="width: 20%; text-align: center; "><a accesskey="u" href="ch37.xhtml">上一级</a></td><td style="width: 40%; text-align: right; "> <a accesskey="n" href="ch37s09.xhtml">下一页</a></td></tr><tr><td style="width: 40%; text-align: left; vertical-align: top; ">设置线程名称 </td><td style="width: 20%; text-align: center; "><a accesskey="h" href="../../index.xhtml">起始页</a></td><td style="width: 40%; text-align: right; vertical-align: top; "> 注意事项</td></tr></table></div></footer></body></html>

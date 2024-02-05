@@ -1,0 +1,327 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><title>Interceptor/Filter 拦截器/过滤</title><link rel="stylesheet" type="text/css" href="../../docbook.css"/><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot"/><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config"/><link rel="prev" href="ch40s05.xhtml" title="校验器(Validator)"/><link rel="next" href="faq/ch41.xhtml" title="第 41 章 FAQ"/></head><body><header><div class="navheader"><table style="width: 100%; "><tr><th style="text-align: center; " colspan="3">Interceptor/Filter 拦截器/过滤</th></tr><tr><td style="width: 20%; text-align: left; "><a accesskey="p" href="ch40s05.xhtml">上一页</a> </td><th style="width: 60%; text-align: center; ">第 40 章 Spring MVC</th><td style="width: 20%; text-align: right; "> <a accesskey="n" href="faq/ch41.xhtml">下一页</a></td></tr></table><hr/></div></header><section class="section" id="interceptor"><div class="titlepage"><div><div><h2 class="title" style="clear: both">Interceptor/Filter 拦截器/过滤</h2></div></div></div><section class="section" id="interceptor.session"><div class="titlepage"><div><div><h3 class="title">Session 拦截</h3></div></div></div><p>WebMvcConfigurerAdapter</p><pre class="programlisting">
+		
+package mis.config;
+
+import mis.interceptor.SpringMVCInterceptor;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
+
+@Configuration
+public class WebAppConfig extends WebMvcConfigurerAdapter {
+    /**
+     * 配置拦截器
+     */
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(new SpringMVCInterceptor()).addPathPatterns("/**");
+    }
+}		
+		
+		</pre><p>HandlerInterceptor</p><pre class="programlisting">
+		
+package mis.interceptor;
+
+import org.springframework.util.StringUtils;
+import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.web.servlet.ModelAndView;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+public class SpringMVCInterceptor implements HandlerInterceptor {
+    @Override
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object o) throws Exception {
+
+        if(request.getServletPath().startsWith("/index") || request.getServletPath().startsWith("/login")) {
+            return true;
+        }
+
+        String username = (String)request.getSession().getAttribute("userName");
+        if (StringUtils.isEmpty(username)){
+            response.sendRedirect(request.getContextPath() + "/index");
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public void postHandle(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Object o, ModelAndView modelAndView) throws Exception {
+
+    }
+
+    @Override
+    public void afterCompletion(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Object o, Exception e) throws Exception {
+
+    }
+}
+		
+		</pre></section><section class="section" id="interceptor.token"><div class="titlepage"><div><div><h3 class="title">Token 拦截</h3></div></div></div><pre class="programlisting">
+		
+package cn.netkiller.annotation;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+@Target({ElementType.METHOD, ElementType.TYPE})
+@Retention(RetentionPolicy.RUNTIME)
+public @interface TokenPass {
+    boolean required() default true;
+}
+
+package cn.netkiller.annotation;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+@Target({ElementType.METHOD, ElementType.TYPE})
+@Retention(RetentionPolicy.RUNTIME)
+public @interface TokenVerification {
+    boolean required() default true;
+}
+		
+		
+		</pre><pre class="programlisting">
+		
+package cn.netkiller.component;
+
+import cn.netkiller.annotation.TokenPass;
+import cn.netkiller.annotation.TokenVerification;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+import org.springframework.web.method.HandlerMethod;
+import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.web.servlet.ModelAndView;
+
+import java.lang.reflect.Method;
+
+@Slf4j
+@Component
+public class TokenHandlerInterceptor implements HandlerInterceptor {
+
+    // 返回 true 表示继续向下执行，返回 false 表示中断后续操作
+    @Override
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        String token = request.getHeader("token");// 从 http 请求头中取出 token
+        // 如果不是映射到方法直接通过
+        if (!(handler instanceof HandlerMethod handlerMethod)) {
+            return true;
+        }
+        Method method = handlerMethod.getMethod();
+
+        //检查方法是否有TokenPass注解，有则跳过认证，直接通过
+        if (method.isAnnotationPresent(TokenPass.class)) {
+            TokenPass tokenPass = method.getAnnotation(TokenPass.class);
+            if (tokenPass.required()) {
+                return true;
+            }
+        }
+        //检查 TokenVerification 需要用户权限的注解
+        if (method.isAnnotationPresent(TokenVerification.class)) {
+            TokenVerification tokenVerification = method.getAnnotation(TokenVerification.class);
+            if (tokenVerification.required()) {
+                // 执行认证
+                if (token == null) {
+                    throw new RuntimeException("无 token，请重新登录");
+                }
+
+                // token 校验逻辑写在这里 
+
+            }
+        }
+        throw new RuntimeException("没有权限");
+    }
+
+
+    // 目标方法执行后, 该方法在控制器处理请求方法调用之后、解析视图之前执行, 可以通过此方法对请求域中的模型和视图做进一步修改
+    @Override
+    public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) throws Exception {
+        log.debug("postHandle");
+
+    }
+
+    // 页面渲染后, 该方法在视图渲染结束后执行, 可以通过此方法实现资源清理、记录日志信息等工作
+    @Override
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
+        log.debug("afterCompletion");
+
+    }
+
+}
+		
+		
+		</pre><pre class="programlisting">
+		
+package cn.netkiller.config;
+
+import cn.netkiller.component.TokenHandlerInterceptor;
+import jakarta.annotation.Resource;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+
+@Configuration
+public class TokenWebMvcConfigurer implements WebMvcConfigurer {
+    @Resource
+    private TokenHandlerInterceptor tokenHandlerInterceptor;
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        //注册拦截器,并设置拦截的请求路径
+        //addPathPatterns为拦截此请求路径的请求
+        //excludePathPatterns为不拦截此路径的请求
+        registry.addInterceptor(tokenHandlerInterceptor)
+                .addPathPatterns("/mock/*")
+                .excludePathPatterns("/device/*")
+                .excludePathPatterns("/callback/*");
+    }
+}
+		
+		
+		</pre><pre class="programlisting">
+		
+package cn.netkiller.controller;
+
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import java.util.Map;
+
+
+@ControllerAdvice
+public class GloablExceptionHandler {
+    @ResponseBody
+    @ExceptionHandler(Exception.class)
+    public Object handleException(Exception e) {
+        String msg = e.getMessage();
+        if (msg == null || msg.equals("")) {
+            msg = "服务器出错";
+        }
+
+        return Map.of("message", msg, "status", 500);
+    }
+}
+
+		
+		</pre><pre class="programlisting">
+		
+package cn.netkiller.controller;
+
+import lombok.extern.slf4j.Slf4j;
+import org.reactivestreams.Publisher;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Mono;
+
+@RestController
+@RequestMapping("/mock")
+@Slf4j
+public class HomeController {
+
+	//无需 token 可以访问
+    @TokenPass		
+    @GetMapping("/neo")
+    public String neo() {
+        return "https://www.netkiller.cn";
+    }
+    
+    // 需要 Token 才能访问
+    @TokenVerification    
+    @GetMapping("/netkiller")
+    public String netkiller() {
+        return "https://www.netkiller.cn";
+    }    		
+}
+		
+		</pre><p/><pre class="screen">
+		
+neo@MacBook-Pro-M2 ~&gt; curl -X 'GET' 'http://localhost:8080/mock/neo'
+https://www.netkiller.cn⏎
+
+neo@MacBook-Pro-M2 ~&gt; curl -X 'GET' 'http://localhost:8080/mock/netkiller'
+{"message":"无 token，请重新登录","status":500}⏎
+                                                                                                                                                                                                                                                                                                          
+neo@MacBook-Pro-M2 ~&gt; curl -X 'GET' 'http://localhost:8080/mock/flux' -H 'token: 8A8691CF-DC81-4477-84D8-DC5CDDF98568'
+https://www.netkiller.cn⏎		
+		
+		</pre></section><section class="section" id="Filter"><div class="titlepage"><div><div><h3 class="title">过滤器</h3></div></div></div><pre class="programlisting">
+		
+package cn.netkiller.config;
+
+import jakarta.servlet.*;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+
+import java.io.IOException;
+
+@Component
+@Slf4j
+public class MyFilter implements Filter {
+    @Override
+    public void init(FilterConfig filterConfig) throws ServletException {
+        log.info(" myfilter init");
+    }
+
+    @Override
+    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
+        log.info("myfilter execute");
+    }
+
+    @Override
+    public void destroy() {
+        log.info("myfilter destroy");
+    }
+}
+		
+		
+		</pre><section class="section" id="OncePerRequestFilter"><div class="titlepage"><div><div><h4 class="title"/></div></div></div><pre class="programlisting">
+			
+package cn.netkiller.config.filter;
+ 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.lang.NonNull;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.servlet.HandlerExceptionResolver;
+ 
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+ 
+@Component
+public class CustomExceptionFilter extends OncePerRequestFilter {
+    @Autowired
+    @Qualifier("handlerExceptionResolver")
+    private HandlerExceptionResolver resolver;
+ 
+    @Override
+    protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain) throws ServletException, IOException {
+        try {
+            filterChain.doFilter(request, response);
+        } catch (Exception e) {
+            resolver.resolveException(request, response, null, e);
+        }
+    }
+}			
+			
+			</pre></section></section><section class="section" id="id1006"><div class="titlepage"><div><div><h3 class="title">拦截器获取PathVariable变量</h3></div></div></div><pre class="programlisting">
+		
+    Map&lt;String, String&gt; pathVars = (Map&lt;String, String&gt;) request.getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE);
+    log.info(pathVars.toString());		
+		
+		</pre></section></section><footer><div class="navfooter"><hr/><table style="width: 100%; "><tr><td style="width: 40%; text-align: left; "><a accesskey="p" href="ch40s05.xhtml">上一页</a> </td><td style="width: 20%; text-align: center; "><a accesskey="u" href="ch40.xhtml">上一级</a></td><td style="width: 40%; text-align: right; "> <a accesskey="n" href="faq/ch41.xhtml">下一页</a></td></tr><tr><td style="width: 40%; text-align: left; vertical-align: top; ">校验器(Validator) </td><td style="width: 20%; text-align: center; "><a accesskey="h" href="../../index.xhtml">起始页</a></td><td style="width: 40%; text-align: right; vertical-align: top; "> 第 41 章 FAQ</td></tr></table></div></footer></body></html>

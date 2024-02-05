@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><title>RestClient</title><link rel="stylesheet" type="text/css" href="../../docbook.css"/><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot"/><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config"/><link rel="prev" href="RestTemplate/ch49s04.xhtml" title="String boot with RestTemplate"/><link rel="next" href="../../data/pt03.xhtml" title="部分 III. Spring Data"/></head><body><header><div class="navheader"><table style="width: 100%; "><tr><th style="text-align: center; " colspan="3">RestClient</th></tr><tr><td style="width: 20%; text-align: left; "><a accesskey="p" href="RestTemplate/ch49s04.xhtml">上一页</a> </td><th style="width: 60%; text-align: center; ">第 49 章 Spring 工具集</th><td style="width: 20%; text-align: right; "> <a accesskey="n" href="../../data/pt03.xhtml">下一页</a></td></tr></table><hr/></div></header><section class="section" id="RestClient"><div class="titlepage"><div><div><h2 class="title" style="clear: both">RestClient</h2></div></div></div><section class="section" id="id1090"><div class="titlepage"><div><div><h3 class="title">创建 RestClient</h3></div></div></div><p>Bean 注入方式</p><pre class="programlisting">
+		
+@Value("${REMOTE_BASE_URI:http://localhost:3000}")
+String baseURI;
+
+@Bean
+RestClient restClient() {
+  return RestClient.create(baseURI);
+}		
+		
+		</pre><pre class="programlisting">
+		
+RestClient defaultClient = RestClient.create();
+
+RestClient customClient = RestClient.builder()
+  .requestFactory(new HttpComponentsClientHttpRequestFactory())
+  .messageConverters(converters -&gt; converters.add(new MyCustomMessageConverter()))
+  .baseUrl("https://example.com")
+  .defaultUriVariables(Map.of("variable", "foo"))
+  .defaultHeader("My-Header", "Foo")
+  .requestInterceptor(myCustomInterceptor)
+  .requestInitializer(myCustomInitializer)
+  .build();		
+		
+		</pre></section><section class="section" id="id1091"><div class="titlepage"><div><div><h3 class="title">Get 操作</h3></div></div></div><pre class="programlisting">
+		
+restClient.get()
+	.uri("/employees")
+	//...
+
+restClient.get()
+	.uri("/employees/{id}", id)
+	//...		
+		
+		</pre><p/><pre class="programlisting">
+		
+List&lt;Employee&gt; employeeList = restClient.get()
+    .uri("/employees")
+    .accept(MediaType.APPLICATION_JSON)
+    .retrieve()
+    .body(List.class);
+    
+ResponseEntity&lt;List&gt; responseEntity = restClient.get()
+    .uri("/employees")
+    .accept(MediaType.APPLICATION_JSON)
+    .retrieve()
+    .toEntity(List.class);    		
+		
+		</pre></section><section class="section" id="id1092"><div class="titlepage"><div><div><h3 class="title">Post Json</h3></div></div></div><pre class="programlisting">
+		
+    @Cacheable(value = "translate", key = "#chinese", unless = "#result == null")
+    public String translate(String chinese) {
+        String english = null;
+        RestClient restClient = RestClient.builder().baseUrl(url).build();
+        String accessToken = this.getAccessToken();
+        HashMap&lt;String, String&gt; data = new LinkedHashMap&lt;String, String&gt;() {{
+            put("q", chinese);
+            put("from", "zh");
+            put("to", "en");
+        }};
+        ResponseEntity&lt;Translate&gt; response = restClient.post()
+                .uri("/rpc/2.0/mt/texttrans/v1-?access_token={access_token}", Map.of("access_token", accessToken))
+                .contentType(APPLICATION_JSON)
+                .body(data)
+                .retrieve()
+                .toEntity(Translate.class);
+
+        if (response.getStatusCode() == HttpStatus.OK) {
+            Translate translate = response.getBody();
+            if (translate.getResult() != null) {
+                english = translate.getResult().getTrans_result().get(0).get("dst");
+            }
+            log.info("Translate english: {}", english);
+        } else {
+            log.info("Translate: " + response);
+        }
+        return english;
+    }		
+		
+		</pre></section><section class="section" id="id1093"><div class="titlepage"><div><div><h3 class="title">HTTP Authorization Basic</h3></div></div></div><pre class="programlisting">
+		
+	@GetMapping("/{device}/test")
+    public String get(@PathVariable String device) throws InterruptedException {
+
+        String username = System.getProperty("username", "admin");
+        String password = System.getProperty("password", "uPQKFe98IwZCzgVGjbWIQRyRyyecb2Ha");
+
+        Base64.Encoder encoder = Base64.getEncoder();
+        String authorization = encoder.encodeToString((username + ":" + password).getBytes(StandardCharsets.UTF_8));
+        RestClient restClient = RestClient.builder()
+                .baseUrl("http://gpt.netkiller.cn:8080")
+                .defaultHeader("Authorization", "Basic " + authorization)
+                .build();
+
+        String question = "test";
+
+        String result = restClient.get().uri(uriBuilder -&gt; uriBuilder
+                .path("/ask/cache_chatgpt")
+                .queryParam("question", question)
+                .build()).retrieve().body(String.class);
+
+        return result;
+    }		
+		
+		</pre></section><section class="section" id="id1094"><div class="titlepage"><div><div><h3 class="title">onStatus</h3></div></div></div><pre class="programlisting">
+		
+		ResponseEntity&lt;JsonObject&gt; responseEntity = restClient.get()
+                .uri(uriBuilder -&gt; uriBuilder
+                        .path("/articles/1.html")
+                        .queryParam("question", URLEncoder.encode(question, StandardCharsets.UTF_8))
+                        .build())
+                .retrieve()
+                .onStatus(status -&gt; status.value() == 404, (request, response) -&gt; {
+                	throw new ArticleNotFoundException(response)
+                }).toEntity(JsonObject.class);
+		
+		</pre></section></section><footer><div class="navfooter"><hr/><table style="width: 100%; "><tr><td style="width: 40%; text-align: left; "><a accesskey="p" href="RestTemplate/ch49s04.xhtml">上一页</a> </td><td style="width: 20%; text-align: center; "><a accesskey="u" href="ch49.xhtml">上一级</a></td><td style="width: 40%; text-align: right; "> <a accesskey="n" href="../../data/pt03.xhtml">下一页</a></td></tr><tr><td style="width: 40%; text-align: left; vertical-align: top; ">String boot with RestTemplate </td><td style="width: 20%; text-align: center; "><a accesskey="h" href="../../index.xhtml">起始页</a></td><td style="width: 40%; text-align: right; vertical-align: top; "> 部分 III. Spring Data</td></tr></table></div></footer></body></html>

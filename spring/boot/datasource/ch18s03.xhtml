@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><title>JPA 多数据源</title><link rel="stylesheet" type="text/css" href="../../docbook.css"/><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot"/><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config"/><link rel="prev" href="ch18s02.xhtml" title="多数据源配置"/><link rel="next" href="../pool/ch19.xhtml" title="第 19 章 连接池配置"/></head><body><header><div class="navheader"><table style="width: 100%; "><tr><th style="text-align: center; " colspan="3">JPA 多数据源</th></tr><tr><td style="width: 20%; text-align: left; "><a accesskey="p" href="ch18s02.xhtml">上一页</a> </td><th style="width: 60%; text-align: center; ">第 18 章 Spring boot with Datasource</th><td style="width: 20%; text-align: right; "> <a accesskey="n" href="../pool/ch19.xhtml">下一页</a></td></tr></table><hr/></div></header><section class="section" id="id1541"><div class="titlepage"><div><div><h3 class="title">JPA 多数据源</h3></div></div></div><p>多个 JPA 数据配置非常简单，请参考下面的例子。注意两点，第一点是设置Repository的位置：</p><pre class="screen">
+		
+@EnableJpaRepositories(
+        entityManagerFactoryRef="entityManagerFactoryPrimary",
+        transactionManagerRef="transactionManagerPrimary",
+        basePackages= { "cn.netkiller.repository.primary" }) //设置Repository所在位置
+		
+		</pre><p>第二点是设置 Domain 位置，与 Repository 成套出现</p><pre class="screen">
+		
+	public LocalContainerEntityManagerFactoryBean entityManagerFactoryPrimary (EntityManagerFactoryBuilder builder) {
+        return builder
+                .dataSource(primaryDataSource)
+                .properties(getVendorProperties(primaryDataSource))
+                .packages("cn.netkiller.domain.primary") //设置实体类所在包
+                .persistenceUnit("primaryPersistenceUnit")
+                .build();
+    }		
+		
+		</pre><p>首先配置第一组数据源。</p><pre class="programlisting">
+		
+package cn.netkiller.project.config;
+		
+@Configuration
+@EnableTransactionManagement
+@EnableJpaRepositories(
+        entityManagerFactoryRef="entityManagerFactoryPrimary",
+        transactionManagerRef="transactionManagerPrimary",
+        basePackages= { "cn.netkiller.repository.primary" }) //设置Repository所在位置
+public class PrimaryConfig {
+
+    @Autowired @Qualifier("primaryDataSource")
+    private DataSource primaryDataSource;
+
+    @Primary
+    @Bean(name = "entityManagerPrimary")
+    public EntityManager entityManager(EntityManagerFactoryBuilder builder) {
+        return entityManagerFactoryPrimary(builder).getObject().createEntityManager();
+    }
+
+    @Primary
+    @Bean(name = "entityManagerFactoryPrimary")
+    public LocalContainerEntityManagerFactoryBean entityManagerFactoryPrimary (EntityManagerFactoryBuilder builder) {
+        return builder
+                .dataSource(primaryDataSource)
+                .properties(getVendorProperties(primaryDataSource))
+                .packages("cn.netkiller.domain.primary") //设置实体类所在包
+                .persistenceUnit("primaryPersistenceUnit")
+                .build();
+    }
+
+    @Autowired
+    private JpaProperties jpaProperties;
+
+    private Map&lt;String, String&gt; getVendorProperties(DataSource dataSource) {
+        return jpaProperties.getHibernateProperties(dataSource);
+    }
+
+    @Primary
+    @Bean(name = "transactionManagerPrimary")
+    public PlatformTransactionManager transactionManagerPrimary(EntityManagerFactoryBuilder builder) {
+        return new JpaTransactionManager(entityManagerFactoryPrimary(builder).getObject());
+    }
+
+}		
+		
+		</pre><p>设置第二组数据源</p><pre class="programlisting">
+		
+package cn.netkiller.project.config;
+		
+@Configuration
+@EnableTransactionManagement
+@EnableJpaRepositories(
+        entityManagerFactoryRef="entityManagerFactorySecondary",
+        transactionManagerRef="transactionManagerSecondary",
+        basePackages= { "cn.netkiller.repository.secondary" }) //设置Repository所在位置
+public class SecondaryConfig {
+
+    @Autowired @Qualifier("secondaryDataSource")
+    private DataSource secondaryDataSource;
+
+    @Bean(name = "entityManagerSecondary")
+    public EntityManager entityManager(EntityManagerFactoryBuilder builder) {
+        return entityManagerFactorySecondary(builder).getObject().createEntityManager();
+    }
+
+    @Bean(name = "entityManagerFactorySecondary")
+    public LocalContainerEntityManagerFactoryBean entityManagerFactorySecondary (EntityManagerFactoryBuilder builder) {
+        return builder
+                .dataSource(secondaryDataSource)
+                .properties(getVendorProperties(secondaryDataSource))
+                .packages("cn.netkiller.repository.domain.secondary") //设置Domain实体类所在位置
+                .persistenceUnit("secondaryPersistenceUnit")
+                .build();
+    }
+
+    @Autowired
+    private JpaProperties jpaProperties;
+
+    private Map&lt;String, String&gt; getVendorProperties(DataSource dataSource) {
+        return jpaProperties.getHibernateProperties(dataSource);
+    }
+
+    @Bean(name = "transactionManagerSecondary")
+    PlatformTransactionManager transactionManagerSecondary(EntityManagerFactoryBuilder builder) {
+        return new JpaTransactionManager(entityManagerFactorySecondary(builder).getObject());
+    }
+
+}
+		
+		</pre></section><footer><div class="navfooter"><hr/><table style="width: 100%; "><tr><td style="width: 40%; text-align: left; "><a accesskey="p" href="ch18s02.xhtml">上一页</a> </td><td style="width: 20%; text-align: center; "><a accesskey="u" href="ch18.xhtml">上一级</a></td><td style="width: 40%; text-align: right; "> <a accesskey="n" href="../pool/ch19.xhtml">下一页</a></td></tr><tr><td style="width: 40%; text-align: left; vertical-align: top; ">多数据源配置 </td><td style="width: 20%; text-align: center; "><a accesskey="h" href="../../index.xhtml">起始页</a></td><td style="width: 40%; text-align: right; vertical-align: top; "> 第 19 章 连接池配置</td></tr></table></div></footer></body></html>

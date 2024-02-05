@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><title>第 66 章 Spring Cloud Gateway</title><link rel="stylesheet" type="text/css" href="../docbook.css"/><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot"/><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config"/><link rel="prev" href="ch65s05.xhtml" title="配置手册"/><link rel="next" href="ch66s02.xhtml" title="路由配置"/></head><body><header><div class="navheader"><table style="width: 100%; "><tr><th style="text-align: center; " colspan="3">第 66 章 Spring Cloud Gateway</th></tr><tr><td style="width: 20%; text-align: left; "><a accesskey="p" href="ch65s05.xhtml">上一页</a> </td><th style="width: 60%; text-align: center; ">部分 V. Spring Cloud</th><td style="width: 20%; text-align: right; "> <a accesskey="n" href="ch66s02.xhtml">下一页</a></td></tr></table><hr/></div></header><section class="chapter" id="gateway"><div class="titlepage"><div><div><h2 class="title">第 66 章 Spring Cloud Gateway</h2></div></div></div><div class="toc"><div class="toc-title">目录</div><ul class="toc"><li><span class="section"><a href="ch66.xhtml#id1389">Gateway 例子</a></span><ul><li><span class="section"><a href="ch66.xhtml#id1385">Maven</a></span></li><li><span class="section"><a href="ch66.xhtml#id1386">SpringApplication</a></span></li><li><span class="section"><a href="ch66.xhtml#id1387">application.yml</a></span></li><li><span class="section"><a href="ch66.xhtml#id1388">RouteLocator 方式</a></span></li></ul></li><li><span class="section"><a href="ch66s02.xhtml">路由配置</a></span><ul><li><span class="section"><a href="ch66s02.xhtml#id1390">转发操作</a></span></li><li><span class="section"><a href="ch66s02.xhtml#id1391">URL 参数</a></span></li></ul></li></ul></div><p>SpringCloud Gateway是基于WebFlux框架实现的网关服务器</p><div class="orderedlist"><div class="orderedlist-title">gateway网关路由配置有两种方式</div><ol class="orderedlist" type="1"><li class="listitem">通过@Bean自定义RouteLocator，在启动主类Application中配置</li><li class="listitem">在配置文件yml中配置</li></ol></div><p>这两种方式都可以实现网关路由，还可以同时使用，写在配置配置文件中对于运维更友好。</p><section class="section" id="id1389"><div class="titlepage"><div><div><h3 class="title">Gateway 例子</h3></div></div></div><section class="section" id="id1385"><div class="titlepage"><div><div><h4 class="title">Maven</h4></div></div></div><pre class="screen">
+			
+&lt;project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"&gt;
+	&lt;modelVersion&gt;4.0.0&lt;/modelVersion&gt;
+
+	&lt;groupId&gt;cn.netkiller&lt;/groupId&gt;
+	&lt;artifactId&gt;gateway&lt;/artifactId&gt;
+	&lt;version&gt;0.0.1-SNAPSHOT&lt;/version&gt;
+	&lt;packaging&gt;jar&lt;/packaging&gt;
+
+	&lt;name&gt;gateway&lt;/name&gt;
+	&lt;url&gt;http://www.netkiller.cn&lt;/url&gt;
+
+	&lt;properties&gt;
+		&lt;project.build.sourceEncoding&gt;UTF-8&lt;/project.build.sourceEncoding&gt;
+		&lt;project.reporting.outputEncoding&gt;UTF-8&lt;/project.reporting.outputEncoding&gt;
+		&lt;java.version&gt;11&lt;/java.version&gt;
+		&lt;spring-cloud.version&gt;Greenwich.SR1&lt;/spring-cloud.version&gt;
+	&lt;/properties&gt;
+
+	&lt;parent&gt;
+		&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+		&lt;artifactId&gt;spring-boot-starter-parent&lt;/artifactId&gt;
+		&lt;version&gt;2.1.3.RELEASE&lt;/version&gt;
+		&lt;relativePath /&gt;
+	&lt;/parent&gt;
+
+
+	&lt;dependencyManagement&gt;
+		&lt;dependencies&gt;
+			&lt;dependency&gt;
+				&lt;groupId&gt;org.springframework.cloud&lt;/groupId&gt;
+				&lt;artifactId&gt;spring-cloud-dependencies&lt;/artifactId&gt;
+				&lt;version&gt;${spring-cloud.version}&lt;/version&gt;
+				&lt;type&gt;pom&lt;/type&gt;
+				&lt;scope&gt;import&lt;/scope&gt;
+			&lt;/dependency&gt;
+		&lt;/dependencies&gt;
+	&lt;/dependencyManagement&gt;
+
+	&lt;dependencies&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-actuator&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.cloud&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-cloud-starter-gateway&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+	&lt;/dependencies&gt;
+&lt;/project&gt;
+			
+			
+			</pre></section><section class="section" id="id1386"><div class="titlepage"><div><div><h4 class="title">SpringApplication</h4></div></div></div><pre class="programlisting">
+			
+package cn.netkiller.gateway;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class Application {
+	public static void main(String[] args) {
+
+		SpringApplication.run(Application.class, args);
+
+	}
+}
+			
+			</pre></section><section class="section" id="id1387"><div class="titlepage"><div><div><h4 class="title">application.yml</h4></div></div></div><p>resources/application.yml</p><pre class="screen">
+			
+server:
+  port: 8080
+spring:
+  application:
+    name: spring-cloud-gateway
+  cloud:
+    gateway:
+      routes:
+      - id: linux
+        uri: http://www.netkiller.cn
+        predicates:
+        - Path=/linux
+
+logging:
+  level:
+    org.springframework.cloud.gateway: TRACE
+    org.springframework.http.server.reactive: DEBUG
+    org.springframework.web.reactive: DEBUG
+    reactor.ipc.netty: DEBUG			
+			
+			</pre></section><section class="section" id="id1388"><div class="titlepage"><div><div><h4 class="title">RouteLocator 方式</h4></div></div></div><pre class="programlisting">
+		
+package com.springcloud.gateway;
+ 
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.gateway.route.RouteLocator;
+import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
+import org.springframework.context.annotation.Bean;
+ 
+@SpringBootApplication
+public class GatewayApplication {
+ 
+    public static void main(String[] args) {
+        SpringApplication.run(GatewayApplication.class, args);
+    }
+ 
+    @Bean
+    public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
+        return builder.routes()
+                .route("path_route", r -&gt; r.path("/linux")
+                        .uri("http://www.netkiller.cn"))
+                .build();
+    }
+ 
+}		
+		
+			</pre></section></section></section><footer><div class="navfooter"><hr/><table style="width: 100%; "><tr><td style="width: 40%; text-align: left; "><a accesskey="p" href="ch65s05.xhtml">上一页</a> </td><td style="width: 20%; text-align: center; "><a accesskey="u" href="pt05.xhtml">上一级</a></td><td style="width: 40%; text-align: right; "> <a accesskey="n" href="ch66s02.xhtml">下一页</a></td></tr><tr><td style="width: 40%; text-align: left; vertical-align: top; ">配置手册 </td><td style="width: 20%; text-align: center; "><a accesskey="h" href="../index.xhtml">起始页</a></td><td style="width: 40%; text-align: right; vertical-align: top; "> 路由配置</td></tr></table></div></footer></body></html>

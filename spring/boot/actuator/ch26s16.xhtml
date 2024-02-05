@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><title>自定义监控指标</title><link rel="stylesheet" type="text/css" href="../../docbook.css"/><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot"/><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config"/><link rel="prev" href="ch26s15.xhtml" title="控制器映射 URL"/><link rel="next" href="../test/ch27.xhtml" title="第 27 章 SpringBootTest"/></head><body><header><div class="navheader"><table style="width: 100%; "><tr><th style="text-align: center; " colspan="3">自定义监控指标</th></tr><tr><td style="width: 20%; text-align: left; "><a accesskey="p" href="ch26s15.xhtml">上一页</a> </td><th style="width: 60%; text-align: center; ">第 26 章 Spring Boot Actuator</th><td style="width: 20%; text-align: right; "> <a accesskey="n" href="../test/ch27.xhtml">下一页</a></td></tr></table><hr/></div></header><section class="section" id="actuator.endpoint"><div class="titlepage"><div><div><h3 class="title">自定义监控指标</h3></div></div></div><pre class="programlisting">
+		
+package cn.netkiller.config;
+
+import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
+import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
+import org.springframework.context.annotation.Configuration;
+
+import java.util.*;
+
+@Configuration
+@Endpoint(id = "netkiller")
+public class TestEndpoint {
+    @ReadOperation
+    public Map&lt;String, Object&gt; threadPoolsMetric() {
+        Map&lt;String, Object&gt; metricMap = new HashMap&lt;&gt;();
+        List&lt;Map&gt; threadPools = new ArrayList&lt;&gt;();
+        Map&lt;String, Object&gt; poolInfo = new HashMap&lt;&gt;();
+        poolInfo.put("thread.pool.name", "netkiller");
+        poolInfo.put("thread.pool.core.size", 100);
+        poolInfo.put("thread.pool.time", new Date());
+        threadPools.add(poolInfo);
+        metricMap.put("netkiller", threadPools);
+        return metricMap;
+    }
+}		
+		
+		</pre><p>验证</p><pre class="screen">
+		
+neo@MacBook-Pro-M2 ~&gt; curl -s http://www.netkiller.cn:8080/actuator/netkiller | jq
+{
+  "netkiller": [
+    {
+      "thread.pool.time": "2023-04-24T09:08:14.407+00:00",
+      "thread.pool.core.size": 100,
+      "thread.pool.name": "netkiller"
+    }
+  ]
+}		
+		
+		</pre></section><footer><div class="navfooter"><hr/><table style="width: 100%; "><tr><td style="width: 40%; text-align: left; "><a accesskey="p" href="ch26s15.xhtml">上一页</a> </td><td style="width: 20%; text-align: center; "><a accesskey="u" href="ch26.xhtml">上一级</a></td><td style="width: 40%; text-align: right; "> <a accesskey="n" href="../test/ch27.xhtml">下一页</a></td></tr><tr><td style="width: 40%; text-align: left; vertical-align: top; ">控制器映射 URL </td><td style="width: 20%; text-align: center; "><a accesskey="h" href="../../index.xhtml">起始页</a></td><td style="width: 40%; text-align: right; vertical-align: top; "> 第 27 章 SpringBootTest</td></tr></table></div></footer></body></html>

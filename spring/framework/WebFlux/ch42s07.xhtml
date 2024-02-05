@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><title>Mono</title><link rel="stylesheet" type="text/css" href="../../docbook.css"/><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot"/><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config"/><link rel="prev" href="ch42s06.xhtml" title="Webflux Mongdb"/><link rel="next" href="ch42s08.xhtml" title="Flux 返回多条数据"/></head><body><header><div class="navheader"><table style="width: 100%; "><tr><th style="text-align: center; " colspan="3">Mono</th></tr><tr><td style="width: 20%; text-align: left; "><a accesskey="p" href="ch42s06.xhtml">上一页</a> </td><th style="width: 60%; text-align: center; ">第 42 章 WebFlux framework</th><td style="width: 20%; text-align: right; "> <a accesskey="n" href="ch42s08.xhtml">下一页</a></td></tr></table><hr/></div></header><section class="section" id="webflux.mono"><div class="titlepage"><div><div><h2 class="title" style="clear: both">Mono</h2></div></div></div><p>Mono(返回0或1个元素)/Flux(返回0-n个元素)</p><section class="section" id="id1026"><div class="titlepage"><div><div><h3 class="title">Mono.just()/Mono.justOrEmpty()</h3></div></div></div><pre class="programlisting">
+		
+Mono.justOrEmpty(Optional.of("Netkiller")).subscribe(System.out::println);		
+		
+		</pre></section><section class="section" id="id1027"><div class="titlepage"><div><div><h3 class="title">MonoSink 创建 Mono</h3></div></div></div><pre class="programlisting">
+		
+Mono.create(sink -&gt; sink.success("Netkiller")).subscribe(System.out::println);	
+		
+		</pre><pre class="programlisting">
+		
+    @GetMapping("mono")
+    public Mono&lt;Object&gt; mono() {
+        return Mono.create(monoSink -&gt; {
+                    log.info("创建 Mono");
+                    monoSink.success("hello webflux");
+                })
+                .doOnSubscribe(subscription -&gt; { //当订阅者去订阅发布者的时候，该方法会调用
+                    log.info("doOnSubscribe={}", subscription);
+                }).doOnNext(next -&gt; { //当订阅者收到数据时，改方法会调用
+                    log.info("doOnNext={}", next);
+                });
+    }
+		
+		</pre></section><section class="section" id="id1028"><div class="titlepage"><div><div><h3 class="title">Supplier 创建 Mono</h3></div></div></div><p>从 Supplier 创建 Mono</p><pre class="programlisting">
+		
+    @GetMapping("/get")
+    private Mono&lt;String&gt; get() {
+        log.info("start");
+        Mono&lt;String&gt; result = Mono.fromSupplier(() -&gt; {
+            try {
+                TimeUnit.SECONDS.sleep(5);
+            } catch (InterruptedException e) {
+            }
+            return "netkiller";
+        });
+        log.info("end");
+        return result;
+    }		
+		
+		</pre></section><section class="section" id="id1029"><div class="titlepage"><div><div><h3 class="title">then()</h3></div></div></div><pre class="programlisting">
+		
+Mono.empty()
+    .then()
+    .doOnSuccess(i -&gt; System.out.println("On success: " + i))
+    .doOnError(i -&gt; System.out.println("On error: " + i))
+    .block();
+
+Mono.empty()
+    .then(Mono.just("Good bye"))
+    .doOnSuccess(i -&gt; System.out.println("On success: " + i))
+    .doOnError(i -&gt; System.out.println("On error: " + i))
+    .block();
+
+Mono.just("Hello World")
+    .then(Mono.just("Good bye"))
+    .doOnSuccess(i -&gt; System.out.println("On success: " + i))
+    .doOnError(i -&gt; System.out.println("On error: " + i))
+    .block();
+
+Mono.error(new RuntimeException("Something wrong"))
+    .then(Mono.just("Good bye"))
+    .doOnSuccess(i -&gt; System.out.println("On success: " + i))
+    .doOnError(i -&gt; System.out.println("On error: " + i))
+    .block();
+
+Mono.error(new RuntimeException("Something wrong"))
+    .then(Mono.error(new RuntimeException("Something very wrong")))
+    .doOnSuccess(i -&gt; System.out.println("On success: " + i))
+    .doOnError(i -&gt; System.out.println("On error: " + i))
+    .block();
+		
+		</pre></section><section class="section" id="id1030"><div class="titlepage"><div><div><h3 class="title">异常处理</h3></div></div></div><pre class="programlisting">
+		
+Mono.just("Netkiller")
+        .concatWith(Mono.error(new IllegalStateException()))
+        .subscribe(System.out::println, System.err::println);
+		
+		
+		</pre><pre class="programlisting">
+		
+Mono.just("Netkiller")
+        .concatWith(Mono.error(new IllegalStateException()))
+        .onErrorReturn("defaultError")
+        .subscribe(System.out::println);		
+		
+		</pre><pre class="programlisting">
+		
+Mono.just("Netkiller")
+         .concatWith(Mono.error(new IllegalStateException()))
+         .switchOnError(Mono.just("defaultError"))
+         .subscribe(System.out::println);
+		
+		
+		</pre></section><section class="section" id="id1031"><div class="titlepage"><div><div><h3 class="title">同步阻塞等待结果</h3></div></div></div><pre class="programlisting">
+		
+        Mono.just("Hello World")
+                .doOnNext(i -&gt; System.out.println("On next: " + i))
+                .doOnSuccess(i -&gt; System.out.println("On success: " + i))
+                .doOnError(i -&gt; System.out.println("On error: " + i))
+                .block();	
+                
+		Mono.empty()
+		    .doOnNext(i -&gt; System.out.println("On next: " + i))
+		    .doOnSuccess(i -&gt; System.out.println("On success: " + i))
+		    .doOnError(i -&gt; System.out.println("On error: " + i))
+		    .block();
+
+		Mono.just("Hello World")
+		    .mapNotNull(s -&gt; null)
+		    .doOnNext(i -&gt; System.out.println("On next: " + i))
+		    .doOnSuccess(i -&gt; System.out.println("On success: " + i))
+		    .doOnError(i -&gt; System.out.println("On error: " + i))
+		    .block();       
+				    
+		Mono.error(new RuntimeException("Something wrong"))
+		    .doOnNext(i -&gt; System.out.println("On next: " + i))
+		    .doOnSuccess(i -&gt; System.out.println("On success: " + i))
+		    .doOnError(i -&gt; System.out.println("On error: " + i))
+		    .block();
+    
+		
+		</pre><pre class="programlisting">
+		
+        Mono.delay(Duration.ofMillis(10)).map(d -&gt; {
+            System.out.println(d);
+            return d;
+        }).block();		
+        Mono.delay(Duration.ofMillis(10)).map(d -&gt; {
+            System.out.println(d);
+            return d;
+        }).subscribe(System.out::println);        
+		
+		</pre></section></section><footer><div class="navfooter"><hr/><table style="width: 100%; "><tr><td style="width: 40%; text-align: left; "><a accesskey="p" href="ch42s06.xhtml">上一页</a> </td><td style="width: 20%; text-align: center; "><a accesskey="u" href="ch42.xhtml">上一级</a></td><td style="width: 40%; text-align: right; "> <a accesskey="n" href="ch42s08.xhtml">下一页</a></td></tr><tr><td style="width: 40%; text-align: left; vertical-align: top; ">Webflux Mongdb </td><td style="width: 20%; text-align: center; "><a accesskey="h" href="../../index.xhtml">起始页</a></td><td style="width: 40%; text-align: right; vertical-align: top; "> Flux 返回多条数据</td></tr></table></div></footer></body></html>

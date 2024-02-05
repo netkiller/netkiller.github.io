@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><title>@Cacheable 的用法</title><link rel="stylesheet" type="text/css" href="../../docbook.css"/><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot"/><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config"/><link rel="prev" href="ch34s02.xhtml" title="启用 Cache"/><link rel="next" href="ch34s04.xhtml" title="@CachePut 用法"/></head><body><header><div class="navheader"><table style="width: 100%; "><tr><th style="text-align: center; " colspan="3">@Cacheable 的用法</th></tr><tr><td style="width: 20%; text-align: left; "><a accesskey="p" href="ch34s02.xhtml">上一页</a> </td><th style="width: 60%; text-align: center; ">第 34 章 Spring boot with Caching</th><td style="width: 20%; text-align: right; "> <a accesskey="n" href="ch34s04.xhtml">下一页</a></td></tr></table><hr/></div></header><section class="section" id="@Cacheable"><div class="titlepage"><div><div><h3 class="title">@Cacheable 的用法</h3></div></div></div><pre class="programlisting">
+        
+@Cacheable(value="users", key="#id")
+public User find(Integer id) {
+
+	return null;
+
+}			
+        
+		</pre><p>引用对象</p><pre class="programlisting">
+        
+@Cacheable(value="users", key="#user.id")
+public User find(User user) {
+
+return null;
+
+}			
+        
+		</pre><p>条件判断</p><pre class="programlisting">
+        
+@Cacheable(value="messagecache", key="#id", condition="id &lt; 10")
+public String getMessage(int id){
+
+return "hello"+id;
+
+}
+
+@Cacheable(value="test",condition="#userName.length()&gt;2")
+@Cacheable(value={"users"}, key="#user.id", condition="#user.id%2==0")
+        
+		</pre><p>#p0 参数索引，p0表示第一个参数</p><pre class="programlisting">
+        
+@Cacheable(value="users", key="#p0")
+public User find(Integer id) {
+
+return null;
+
+}
+
+@Cacheable(value="users", key="#p0.id")
+public User find(User user) {
+
+return null;
+
+}
+        
+		</pre><p>@Cacheable 如果没有任何参数将会自动生成 key ，前提是必须设置 @CacheConfig(cacheNames =
+			"test")
+		</p><pre class="programlisting">
+        
+@GetMapping("/cache/auto")
+@Cacheable()
+public Attribute auto() {
+    Attribute attribute = new Attribute();
+    attribute.setName("sdfsdf");
+    return attribute;
+}			
+        
+		</pre><pre class="screen">
+        
+127.0.0.1:6379&gt; keys *
+1) "test::SimpleKey []"			
+        
+		</pre><section class="section" id="id916"><div class="titlepage"><div><div><h4 class="title">SpEL表达式</h4></div></div></div><pre class="programlisting">
+        
+@GetMapping("/cache/expire")
+@Cacheable("test1#${select.cache.timeout:1000}")
+public String expire() {
+    return "Test";
+}
+
+@GetMapping("/cache/expire")
+@Cacheable("test1#${select.cache.timeout:1000}#${select.cache.refresh:600}")
+public String expire() {
+    return "Test";
+}
+        
+			</pre></section><section class="section" id="id917"><div class="titlepage"><div><div><h4 class="title">排除 null 结果</h4></div></div></div><p>使用 unless 排除 null 结果</p><pre class="programlisting">
+			
+    @Cacheable(value = "translate", key = "#chinese", unless="#result == null")
+    public String translate(String chinese) {
+    }			
+			
+			</pre><p>通过配置文件设置spring.cache.redis.cache-null-values</p><pre class="screen">
+			
+spring.cache.redis.cache-null-values=false			
+			
+			</pre></section><section class="section" id="id918"><div class="titlepage"><div><div><h4 class="title">排除 empty</h4></div></div></div><p>List 不会返回 null，怎么不缓存空的 list 呢？使用 unless="#result.empty" 可以实现</p><pre class="programlisting">
+			
+@Cacheable(unless="#result.empty")
+public List&lt;Object&gt; getList() {
+  // method implementation
+}			
+			
+			</pre></section></section><footer><div class="navfooter"><hr/><table style="width: 100%; "><tr><td style="width: 40%; text-align: left; "><a accesskey="p" href="ch34s02.xhtml">上一页</a> </td><td style="width: 20%; text-align: center; "><a accesskey="u" href="ch34.xhtml">上一级</a></td><td style="width: 40%; text-align: right; "> <a accesskey="n" href="ch34s04.xhtml">下一页</a></td></tr><tr><td style="width: 40%; text-align: left; vertical-align: top; ">启用 Cache </td><td style="width: 20%; text-align: center; "><a accesskey="h" href="../../index.xhtml">起始页</a></td><td style="width: 40%; text-align: right; vertical-align: top; "> @CachePut 用法</td></tr></table></div></footer></body></html>

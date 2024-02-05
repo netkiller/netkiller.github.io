@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><title>Controller</title><link rel="stylesheet" type="text/css" href="../../docbook.css"/><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot"/><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config"/><link rel="prev" href="ch13s05.xhtml" title="JdbcTemplate"/><link rel="next" href="ch13s07.xhtml" title="Test"/></head><body><header><div class="navheader"><table style="width: 100%; "><tr><th style="text-align: center; " colspan="3">Controller</th></tr><tr><td style="width: 20%; text-align: left; "><a accesskey="p" href="ch13s05.xhtml">上一页</a> </td><th style="width: 60%; text-align: center; ">第 13 章 Spring boot with PostgreSQL</th><td style="width: 20%; text-align: right; "> <a accesskey="n" href="ch13s07.xhtml">下一页</a></td></tr></table><hr/></div></header><section class="section" id="id1520"><div class="titlepage"><div><div><h3 class="title">Controller</h3></div></div></div><pre class="programlisting">
+			
+package cn.netkiller.web;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import cn.netkiller.model.Customer;
+import cn.netkiller.repository.CustomerRepository;
+
+@Controller
+@RequestMapping("/test/pgsql")
+public class TestPostgreSQLController {
+
+	@Autowired
+	private CustomerRepository customerRepository;
+
+	@RequestMapping("/save")
+	public @ResponseBody String process() {
+		customerRepository.save(new Customer("Neo", "Chan"));
+		customerRepository.save(new Customer("Luke", "Liu"));
+		customerRepository.save(new Customer("Ran", "Guo"));
+		customerRepository.save(new Customer("Joey", "Chen"));
+		customerRepository.save(new Customer("Larry", "Huang"));
+		return "Done";
+	}
+
+	@RequestMapping("/findall")
+	public @ResponseBody String findAll() {
+		String result = "&lt;html&gt;";
+
+		for (Customer cust : customerRepository.findAll()) {
+			result += "&lt;div&gt;" + cust.toString() + "&lt;/div&gt;";
+		}
+
+		return result + "&lt;/html&gt;";
+	}
+
+	@RequestMapping("/findbyid")
+	public @ResponseBody String findById(@RequestParam("id") long id) {
+		String result = "";
+		result = customerRepository.findOne(id).toString();
+		return result;
+	}
+
+	@RequestMapping("/findbylastname")
+	public @ResponseBody String fetchDataByLastName(@RequestParam("lastname") String lastName) {
+		String result = "&lt;html&gt;";
+
+		for (Customer cust : customerRepository.findByLastName(lastName)) {
+			result += "&lt;div&gt;" + cust.toString() + "&lt;/div&gt;";
+		}
+
+		return result + "&lt;/html&gt;";
+	}
+
+	@Autowired
+	private JdbcTemplate jdbcTemplate;
+
+	@RequestMapping(value = "/jdbc")
+	public @ResponseBody String dailyStats(@RequestParam Integer id) {
+		String query = "SELECT id, firstname, lastname from customer where id = " + id;
+
+		return jdbcTemplate.queryForObject(query, (resultSet, i) -&gt; {
+			System.out.println(resultSet.getLong(1)+","+ resultSet.getString(2)+","+ resultSet.getString(3));
+			return (resultSet.getLong(1)+","+ resultSet.getString(2)+","+ resultSet.getString(3));
+		});
+	}
+}
+			
+		</pre></section><footer><div class="navfooter"><hr/><table style="width: 100%; "><tr><td style="width: 40%; text-align: left; "><a accesskey="p" href="ch13s05.xhtml">上一页</a> </td><td style="width: 20%; text-align: center; "><a accesskey="u" href="ch13.xhtml">上一级</a></td><td style="width: 40%; text-align: right; "> <a accesskey="n" href="ch13s07.xhtml">下一页</a></td></tr><tr><td style="width: 40%; text-align: left; vertical-align: top; ">JdbcTemplate </td><td style="width: 20%; text-align: center; "><a accesskey="h" href="../../index.xhtml">起始页</a></td><td style="width: 40%; text-align: right; vertical-align: top; "> Test</td></tr></table></div></footer></body></html>

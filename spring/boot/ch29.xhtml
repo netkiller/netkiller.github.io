@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><title>第 29 章 Spring boot with starter</title><link rel="stylesheet" type="text/css" href="../docbook.css"/><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot"/><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config"/><link rel="prev" href="ch28.xhtml" title="第 28 章 Spring boot with Aop"/><link rel="next" href="ch29s02.xhtml" title="引用 starter"/></head><body><header><div class="navheader"><table style="width: 100%; "><tr><th style="text-align: center; " colspan="3">第 29 章 Spring boot with starter</th></tr><tr><td style="width: 20%; text-align: left; "><a accesskey="p" href="ch28.xhtml">上一页</a> </td><th style="width: 60%; text-align: center; ">部分 I. Spring Boot</th><td style="width: 20%; text-align: right; "> <a accesskey="n" href="ch29s02.xhtml">下一页</a></td></tr></table><hr/></div></header><section class="chapter" id="springboot.starter"><div class="titlepage"><div><div><h2 class="title">第 29 章 Spring boot with starter</h2></div></div></div><div class="toc"><div class="toc-title">目录</div><ul class="toc"><li><span class="section"><a href="ch29.xhtml#id893">实现 starter</a></span><ul><li><span class="section"><a href="ch29.xhtml#id889">Maven pom.xml 依赖包</a></span></li><li><span class="section"><a href="ch29.xhtml#id890">配置文件处理</a></span></li><li><span class="section"><a href="ch29.xhtml#id891">自动配置文件</a></span></li><li><span class="section"><a href="ch29.xhtml#id892">启用 starter 的自定义注解</a></span></li></ul></li><li><span class="section"><a href="ch29s02.xhtml">引用 starter</a></span><ul><li><span class="section"><a href="ch29s02.xhtml#id894">Maven pom.xml 引入依赖</a></span></li><li><span class="section"><a href="ch29s02.xhtml#id895">通过注解配置 starter</a></span></li><li><span class="section"><a href="ch29s02.xhtml#id896">测试运行结果</a></span></li></ul></li></ul></div><p>spring-boot-starter-xxxxx 是 Spring boot 子模块，开发中我们可以根据自己的需求开引用所需的功能，这样不必引用所有的 Spring boot 依赖包。</p><p>我们也可以开发自己的 starter 模块和自定义注解，将我们的项目化整为零，模块化，随时根据项目的需要引用，并且可以使用自定义注解启用它们。</p><section class="section" id="id893"><div class="titlepage"><div><div><h3 class="title">实现 starter</h3></div></div></div><section class="section" id="id889"><div class="titlepage"><div><div><h4 class="title">Maven pom.xml 依赖包</h4></div></div></div><pre class="screen">
+			
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"&gt;
+	&lt;modelVersion&gt;4.0.0&lt;/modelVersion&gt;
+
+	&lt;groupId&gt;cn.netkiller&lt;/groupId&gt;
+	&lt;artifactId&gt;spring-boot-starter-customize&lt;/artifactId&gt;
+	&lt;version&gt;0.0.1-SNAPSHOT&lt;/version&gt;
+	&lt;packaging&gt;jar&lt;/packaging&gt;
+
+	&lt;name&gt;Spring Boot Starter Project&lt;/name&gt;
+
+	&lt;parent&gt;
+		&lt;groupId&gt;cn.netkiller&lt;/groupId&gt;
+		&lt;artifactId&gt;parent&lt;/artifactId&gt;
+		&lt;version&gt;0.0.1-SNAPSHOT&lt;/version&gt;
+	&lt;/parent&gt;
+
+	&lt;properties&gt;
+		&lt;project.build.sourceEncoding&gt;UTF-8&lt;/project.build.sourceEncoding&gt;
+		&lt;start-class&gt;cn.netkiller.starter.App&lt;/start-class&gt;
+		&lt;java.version&gt;11&lt;/java.version&gt;
+		&lt;lombok.version&gt;1.16.18&lt;/lombok.version&gt;
+	&lt;/properties&gt;
+
+	&lt;dependencies&gt;
+
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.projectlombok&lt;/groupId&gt;
+			&lt;artifactId&gt;lombok&lt;/artifactId&gt;
+			&lt;version&gt;${lombok.version}&lt;/version&gt;
+			&lt;scope&gt;provided&lt;/scope&gt;
+		&lt;/dependency&gt;
+
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-test&lt;/artifactId&gt;
+			&lt;scope&gt;test&lt;/scope&gt;
+		&lt;/dependency&gt;
+
+	&lt;/dependencies&gt;
+	&lt;build&gt;
+		&lt;plugins&gt;
+			&lt;plugin&gt;
+				&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+				&lt;artifactId&gt;spring-boot-maven-plugin&lt;/artifactId&gt;
+			&lt;/plugin&gt;
+		&lt;/plugins&gt;
+	&lt;/build&gt;
+
+&lt;/project&gt;
+			
+			
+			</pre></section><section class="section" id="id890"><div class="titlepage"><div><div><h4 class="title">配置文件处理</h4></div></div></div><p>application.properties 加入短信网关的配置项</p><pre class="screen">
+			
+sms.gateway.url=https://sms.netkiller.cn/v1
+sms.gateway.username=netkiller
+sms.gateway.password=passw0rd			
+			
+			</pre><p>SmsProperties 用于读取前缀为 sms.gateway 的配置项。</p><pre class="programlisting">
+			
+package cn.netkiller.autoconfigure;
+
+import org.springframework.boot.context.properties.ConfigurationProperties;
+
+import lombok.Data;
+
+@ConfigurationProperties(prefix = "sms.gateway")
+@Data
+public class SmsProperties {
+
+	private String url;
+
+	private String username;
+
+	private String password;
+
+	public String getUrl() {
+		return url;
+	}
+
+	public void setUrl(String url) {
+		this.url = url;
+	}
+
+	public String getUsername() {
+		return username;
+	}
+
+	public void setUsername(String username) {
+		this.username = username;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
+	}
+
+	@Override
+	public String toString() {
+		return "SmsProperties [url=" + url + ", username=" + username + ", password=" + password + "]";
+	}
+
+}			
+			
+			</pre></section><section class="section" id="id891"><div class="titlepage"><div><div><h4 class="title">自动配置文件</h4></div></div></div><pre class="programlisting">
+			
+package cn.netkiller.autoconfigure;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import cn.netkiller.sms.SmsSender;
+
+@EnableConfigurationProperties(value = SmsProperties.class)
+@Configuration
+public class SmsAutoConfiguration {
+
+	@Autowired
+	private SmsProperties smsProperties;
+
+	@Bean
+	public SmsSender send() {
+		return new SmsSender(this.smsProperties);
+	}
+}			
+			
+			</pre></section><section class="section" id="id892"><div class="titlepage"><div><div><h4 class="title">启用 starter 的自定义注解</h4></div></div></div><pre class="programlisting">
+			
+package cn.netkiller.autoconfigure;
+
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.RetentionPolicy;
+
+import org.springframework.context.annotation.Import;
+
+@Target({ ElementType.TYPE })
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+@Import({ SmsAutoConfiguration.class })
+public @interface EnableSms {
+
+}			
+			
+			</pre></section></section></section><footer><div class="navfooter"><hr/><table style="width: 100%; "><tr><td style="width: 40%; text-align: left; "><a accesskey="p" href="ch28.xhtml">上一页</a> </td><td style="width: 20%; text-align: center; "><a accesskey="u" href="pt01.xhtml">上一级</a></td><td style="width: 40%; text-align: right; "> <a accesskey="n" href="ch29s02.xhtml">下一页</a></td></tr><tr><td style="width: 40%; text-align: left; vertical-align: top; ">第 28 章 Spring boot with Aop </td><td style="width: 20%; text-align: center; "><a accesskey="h" href="../index.xhtml">起始页</a></td><td style="width: 40%; text-align: right; vertical-align: top; "> 引用 starter</td></tr></table></div></footer></body></html>

@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><title>第 6 章 Spring boot with Logging</title><link rel="stylesheet" type="text/css" href="../docbook.css"/><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot"/><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config"/><link rel="prev" href="properties/ch05s16.xhtml" title="加密 application.properties 中的敏感内容"/><link rel="next" href="ch06s02.xhtml" title="打印日志"/></head><body><header><div class="navheader"><table style="width: 100%; "><tr><th style="text-align: center; " colspan="3">第 6 章 Spring boot with Logging</th></tr><tr><td style="width: 20%; text-align: left; "><a accesskey="p" href="properties/ch05s16.xhtml">上一页</a> </td><th style="width: 60%; text-align: center; ">部分 I. Spring Boot</th><td style="width: 20%; text-align: right; "> <a accesskey="n" href="ch06s02.xhtml">下一页</a></td></tr></table><hr/></div></header><section class="chapter" id="spring.boot.logging"><div class="titlepage"><div><div><h2 class="title">第 6 章 Spring boot with Logging</h2></div></div></div><div class="toc"><div class="toc-title">目录</div><ul class="toc"><li><span class="section"><a href="ch06.xhtml#application.properties.logging">配置日志文件</a></span><ul><li><span class="section"><a href="ch06.xhtml#id785">日志输出级别</a></span></li><li><span class="section"><a href="ch06.xhtml#id786">Spring boot 2.1 以后的版本不打印 Mapped 日志问题</a></span></li><li><span class="section"><a href="ch06.xhtml#id787">禁止控制台输出日志</a></span></li><li><span class="section"><a href="ch06.xhtml#id788">定制日志格式</a></span></li><li><span class="section"><a href="ch06.xhtml#id789">彩色输出</a></span></li></ul></li><li><span class="section"><a href="ch06s02.xhtml">打印日志</a></span><ul><li><span class="section"><a href="ch06s02.xhtml#id790">lombok</a></span></li></ul></li><li><span class="section"><a href="ch06s03.xhtml">logback 配置详解</a></span><ul><li><span class="section"><a href="ch06s03.xhtml#logback.stdout">标准输出</a></span></li><li><span class="section"><a href="ch06s03.xhtml#id791">禁止 logback 日志输出</a></span></li><li><span class="section"><a href="ch06s03.xhtml#logback.level">指定Class过滤日志</a></span></li><li><span class="section"><a href="ch06s03.xhtml#logback.attr">configuration 属性配置</a></span></li><li><span class="section"><a href="ch06s03.xhtml#logback.contextName">contextName 设置上下文名称</a></span></li><li><span class="section"><a href="ch06s03.xhtml#logback.property">property 设置变量</a></span></li><li><span class="section"><a href="ch06s03.xhtml#logback.encoder">encoder 日志格式设置</a></span></li><li><span class="section"><a href="ch06s03.xhtml#RollingFileAppender">RollingFileAppender</a></span></li><li><span class="section"><a href="ch06s03.xhtml#id794">日志过滤</a></span></li><li><span class="section"><a href="ch06s03.xhtml#logback.file">标准输出</a></span></li><li><span class="section"><a href="ch06s03.xhtml#id795">MDC</a></span></li><li><span class="section"><a href="ch06s03.xhtml#logback.mongodb">日志写入 MongoDB</a></span></li><li><span class="section"><a href="ch06s03.xhtml#logback.logstash">日志发送给 logstash</a></span></li><li><span class="section"><a href="ch06s03.xhtml#springboot.fluentd">fluentd</a></span></li><li><span class="section"><a href="ch06s03.xhtml#Loki4j">Loki4j Logback</a></span></li></ul></li><li><span class="section"><a href="ch06s04.xhtml">Log4j2 + Gelf + Logstash</a></span><ul><li><span class="section"><a href="ch06s04.xhtml#id808">Maven 配置</a></span></li><li><span class="section"><a href="ch06s04.xhtml#id809">log4j2.xml 配置</a></span></li><li><span class="section"><a href="ch06s04.xhtml#id810">Java 测试代码</a></span></li><li><span class="section"><a href="ch06s04.xhtml#id811">Logstash 配置</a></span></li><li><span class="section"><a href="ch06s04.xhtml#id812">测试结果</a></span></li><li><span class="section"><a href="ch06s04.xhtml#id820">Log4j2 更多技巧</a></span></li></ul></li><li><span class="section"><a href="ch06s05.xhtml">日志报警</a></span><ul><li><span class="section"><a href="ch06s05.xhtml#id821">Logstash 配置</a></span></li><li><span class="section"><a href="ch06s05.xhtml#id822">监控 SpringBootApplication 的启动和退出</a></span></li></ul></li><li><span class="section"><a href="ch06s06.xhtml">Spring boot with ELK(Elasticsearch + Logstash + Kibana)</a></span><ul><li><span class="section"><a href="ch06s06.xhtml#id823">TCP 方案</a></span></li><li><span class="section"><a href="ch06s06.xhtml#id824">Redis 方案</a></span></li><li><span class="section"><a href="ch06s06.xhtml#id825">Kafka 方案</a></span></li><li><span class="section"><a href="ch06s06.xhtml#id826">Other</a></span></li></ul></li></ul></div><p>通过命令行改变日志的输出级别</p><pre class="screen">
+	
+java -jar app.jar --debug  
+
+在application.properties中配置
+debug=true  
+
+application.yml
+debug=true  
+
+相同的方式使能TRACE级别的日志
+java -jar app.jar --trace  
+
+application.properties
+trace=true
+
+application.yml
+trace=true	
+	
+	</pre><section class="section" id="application.properties.logging"><div class="titlepage"><div><div><h3 class="title">配置日志文件</h3></div></div></div><p>一般的日志需求可以通过配置 application.properties实现。</p><p>Spring Boot中 日志默认是输出到控制台的，这样是为了方便开发人员，但是在生产环境中应该输出到日志文件中。</p><div class="itemizedlist"><div class="itemizedlist-title">配置如下</div><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem">logging.file.path: 指定日志文件的路径	</li><li class="listitem">logging.file.name: 日志的文件名(默认为spring.log)</li><li class="listitem">logging.pattern.console: 控制台的输出格式</li><li class="listitem">logging.pattern.file: 日志文件的输出格式</li><li class="listitem">logging.pattern.level: 定义渲染不同级别日志的格式。默认是%5p.</li></ul></div><div class="tip"><h3 class="title">提示</h3><p>注意：这两个属性不能同时配置，只需要配置一个即可。</p></div><div class="tip"><h3 class="title">提示</h3><p>旧版本</p><p>logging.file，设置文件，可以是绝对路径，也可以是相对路径。如：logging.file=my.log</p><p>logging.path，设置目录，如果 logging.file
+				没有设置，会在该目录下创建spring.log文件作为默认日志文件。
+			</p><pre class="screen">
+		
+logging.file=target/spring.log
+#logging.path=
+		
+			</pre><p>如果仍不能满足可以使用 logback.xml 配置日志。</p><pre class="screen">
+		
+logging.path=/tmp
+logging.config=classpath:logback.xml
+		
+			</pre></div><section class="section" id="id785"><div class="titlepage"><div><div><h4 class="title">日志输出级别</h4></div></div></div><pre class="screen">
+		
+几种常见的日志级别由低到高分为：TRACE &lt; DEBUG &lt; INFO &lt; WARN &lt; ERROR &lt; FATAL
+		
+			</pre><p>显示所有DEBUG信息</p><pre class="screen">
+			
+logging.level.root=DEBUG			
+			
+			</pre><p>仅仅显示 springframework 调试信息</p><pre class="screen">
+			
+logging.level.org.springframework.web=DEBUG			
+			
+			</pre><p>仅仅显示 cn.netkiller.web.TestController 调试信息</p><pre class="screen">
+			
+private static final Logger log = LoggerFactory.getLogger(TestController.class);
+
+log.debug(message);
+
+logging.level.cn.netkiller.web.TestController=DEBUG			
+			
+
+			</pre><p>YAML 配置文件写法</p><pre class="screen">
+			
+logging:
+  level:
+    root: info
+    cn.netkiller.test: debug
+    cn.netkiller.sharding.MonthShardingAlgorithm: DEBUG
+			
+			</pre></section><section class="section" id="id786"><div class="titlepage"><div><div><h4 class="title">Spring boot 2.1 以后的版本不打印 Mapped 日志问题</h4></div></div></div><pre class="screen">
+		
+logging.level.org.springframework.web=trace		
+		
+			</pre></section><section class="section" id="id787"><div class="titlepage"><div><div><h4 class="title">禁止控制台输出日志</h4></div></div></div><p>禁止控制台日志输出，同时将日志写入日志文件.</p><p>src/main/resources/application.properties</p><pre class="screen">
+			
+logging.file.path=/tmp
+logging.file.name=/tmp/spring.log
+logging.level.root=INFO
+logging.level.org.springframework.web=DEBUG
+logging.level.org.hibernate=ERROR
+			
+			</pre><p>src/main/resources/logback.xml</p><pre class="screen">
+			
+$ cat src/main/resources/logback.xml
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;configuration&gt;
+  &lt;include resource="org/springframework/boot/logging/logback/defaults.xml" /&gt;
+  &lt;include resource="org/springframework/boot/logging/logback/file-appender.xml" /&gt;
+
+  &lt;root level="INFO"&gt;
+    &lt;appender-ref ref="FILE" /&gt;
+  &lt;/root&gt;
+&lt;/configuration&gt;
+			
+			</pre><p>使用 java -jar project-version-xxx.jar 启动后控制不会再输出日志</p></section><section class="section" id="id788"><div class="titlepage"><div><div><h4 class="title">定制日志格式</h4></div></div></div><div class="itemizedlist"><div class="itemizedlist-title">定制日志格式有两个配置</div><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem">logging.pattern.console：控制台的输出格式	</li><li class="listitem">logging.pattern.file：日志文件的输出格式</li></ul></div><p>分别是控制台的输出格式和文件中的日志输出格式</p><p>举例</p><pre class="screen">
+			
+logging.pattern.console=%d{yyyy/MM/dd-HH:mm:ss} [%thread] %-5level %logger- %msg%n
+logging.pattern.file=%d{yyyy/MM/dd-HH:mm} [%thread] %-5level %logger- %msg%n			
+			
+			</pre><p>格式说明</p><pre class="screen">
+			
+%d{HH:mm:ss.SSS} 日志输出时间
+%thread 	输出日志的进程名字，这在Web应用以及异步任务处理中很有用
+%-5level 	日志级别，并且使用5个字符靠左对齐
+%logger		日志输出者的名字
+%msg		日志消息
+%n			平台的换行符
+			
+			</pre></section><section class="section" id="id789"><div class="titlepage"><div><div><h4 class="title">彩色输出</h4></div></div></div><pre class="programlisting">
+			
+spring.main.banner-mode=off 
+spring.output.ansi.enabled=ALWAYS
+logging.pattern.console=%clr(%d{yy-MM-dd E HH:mm:ss.SSS}){blue} %clr(%-5p) %clr(${PID}){faint} %clr(---){faint} %clr([%8.15t]){cyan} %clr(%-40.40logger{0}){blue} %clr(:){red} %clr(%m){faint}%n			
+			
+			</pre></section></section></section><footer><div class="navfooter"><hr/><table style="width: 100%; "><tr><td style="width: 40%; text-align: left; "><a accesskey="p" href="properties/ch05s16.xhtml">上一页</a> </td><td style="width: 20%; text-align: center; "><a accesskey="u" href="pt01.xhtml">上一级</a></td><td style="width: 40%; text-align: right; "> <a accesskey="n" href="ch06s02.xhtml">下一页</a></td></tr><tr><td style="width: 40%; text-align: left; vertical-align: top; ">加密 application.properties 中的敏感内容 </td><td style="width: 20%; text-align: center; "><a accesskey="h" href="../index.xhtml">起始页</a></td><td style="width: 40%; text-align: right; vertical-align: top; "> 打印日志</td></tr></table></div></footer></body></html>

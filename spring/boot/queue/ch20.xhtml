@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><title>第 20 章 Spring boot with Queue</title><link rel="stylesheet" type="text/css" href="../../docbook.css"/><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot"/><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config"/><link rel="prev" href="../pool/ch19s06.xhtml" title="HikariPool"/><link rel="next" href="ch20s02.xhtml" title="Spring boot with Apache Kafka"/></head><body><header><div class="navheader"><table style="width: 100%; "><tr><th style="text-align: center; " colspan="3">第 20 章 Spring boot with Queue</th></tr><tr><td style="width: 20%; text-align: left; "><a accesskey="p" href="../pool/ch19s06.xhtml">上一页</a> </td><th style="width: 60%; text-align: center; ">部分 I. Spring Boot</th><td style="width: 20%; text-align: right; "> <a accesskey="n" href="ch20s02.xhtml">下一页</a></td></tr></table><hr/></div></header><section class="chapter" id="index"><div class="titlepage"><div><div><h2 class="title">第 20 章 Spring boot with Queue</h2></div></div></div><div class="toc"><div class="toc-title">目录</div><ul class="toc"><li><span class="section"><a href="ch20.xhtml#rabbitmq">Spring boot with RabbitMQ(AMQP)</a></span><ul><li><span class="section"><a href="ch20.xhtml#id842">maven</a></span></li><li><span class="section"><a href="ch20.xhtml#id843">RabbitMQConfig</a></span></li><li><span class="section"><a href="ch20.xhtml#id844">生产者</a></span></li><li><span class="section"><a href="ch20.xhtml#id845">消费者</a></span></li></ul></li><li><span class="section"><a href="ch20s02.xhtml">Spring boot with Apache Kafka</a></span><ul><li><span class="section"><a href="ch20s02.xhtml#id846">安装 kafka</a></span></li><li><span class="section"><a href="ch20s02.xhtml#maven">maven</a></span></li><li><span class="section"><a href="ch20s02.xhtml#application">Spring boot Application</a></span></li><li><span class="section"><a href="ch20s02.xhtml#EnableKafka">EnableKafka</a></span></li><li><span class="section"><a href="ch20s02.xhtml#KafkaListener">KafkaListener</a></span></li><li><span class="section"><a href="ch20s02.xhtml#spring.boot.kafka.test">测试</a></span></li><li><span class="section"><a href="ch20s02.xhtml#spring.boot.kafka.example">完整的发布订阅实例</a></span></li><li><span class="section"><a href="ch20s02.xhtml#spring.cloud.kafka">Spring cloud with Kafka</a></span></li></ul></li></ul></div><p/><section class="section" id="rabbitmq"><div class="titlepage"><div><div><h3 class="title">Spring boot with RabbitMQ(AMQP)</h3></div></div></div><section class="section" id="id842"><div class="titlepage"><div><div><h4 class="title">maven</h4></div></div></div><pre class="programlisting">
+			
+&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-boot-starter-amqp&lt;/artifactId&gt;
+&lt;/dependency&gt;
+			
+			</pre></section><section class="section" id="id843"><div class="titlepage"><div><div><h4 class="title">RabbitMQConfig</h4></div></div></div><pre class="programlisting">
+			
+@Configuration
+public class RabbitMQConfig {
+
+    public final static String QUEUE_NAME = "spring-boot-queue";
+    public final static String EXCHANGE_NAME = "spring-boot-exchange";
+    public final static String ROUTING_KEY = "spring-boot-key";
+
+    // 创建队列
+    @Bean
+    public Queue queue() {
+        return new Queue(QUEUE_NAME);
+    }
+
+    // 创建一个 topic 类型的交换器
+    @Bean
+    public TopicExchange exchange() {
+        return new TopicExchange(EXCHANGE_NAME);
+    }
+
+    // 使用路由键（ROUTING_KEY）把队列（Queue）绑定到交换器（Exchange）
+    @Bean
+    public Binding binding(Queue queue, TopicExchange exchange) {
+        return BindingBuilder.bind(queue).to(exchange).with(ROUTING_KEY);
+    }
+
+    @Bean
+    public ConnectionFactory connectionFactory() {
+        CachingConnectionFactory connectionFactory = new CachingConnectionFactory("127.0.0.1", 5672);
+        connectionFactory.setUsername("guest");
+        connectionFactory.setPassword("guest");
+        return connectionFactory;
+    }
+
+    @Bean
+    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
+        return new RabbitTemplate(connectionFactory);
+    }
+
+}
+			
+			</pre></section><section class="section" id="id844"><div class="titlepage"><div><div><h4 class="title">生产者</h4></div></div></div><pre class="programlisting">
+			
+@RestController
+public class ProducerController {
+
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
+
+    @GetMapping("/sendMessage")
+    public String sendMessage() {
+        new Thread(() -&gt; {
+            for (int i = 0; i &lt; 100; i++) {
+                String value = new DateTime().toString("yyyy-MM-dd HH:mm:ss");
+                System.out.println("send message {}", value);
+                rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_NAME, RabbitMQConfig.ROUTING_KEY, value);
+            }
+        }).start();
+        return "ok";
+    }
+
+}
+			
+			</pre></section><section class="section" id="id845"><div class="titlepage"><div><div><h4 class="title">消费者</h4></div></div></div><pre class="programlisting">
+			
+@Component
+public class Consumer {
+
+    @RabbitListener(queues = RabbitMQConfig.QUEUE_NAME)
+    public void consumeMessage(String message) {
+        System.out.println("consume message {}", message);
+    }
+}
+			
+			</pre></section></section></section><footer><div class="navfooter"><hr/><table style="width: 100%; "><tr><td style="width: 40%; text-align: left; "><a accesskey="p" href="../pool/ch19s06.xhtml">上一页</a> </td><td style="width: 20%; text-align: center; "><a accesskey="u" href="../pt01.xhtml">上一级</a></td><td style="width: 40%; text-align: right; "> <a accesskey="n" href="ch20s02.xhtml">下一页</a></td></tr><tr><td style="width: 40%; text-align: left; vertical-align: top; ">HikariPool </td><td style="width: 20%; text-align: center; "><a accesskey="h" href="../../index.xhtml">起始页</a></td><td style="width: 40%; text-align: right; vertical-align: top; "> Spring boot with Apache Kafka</td></tr></table></div></footer></body></html>

@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><title>ElasticsearchConfiguration</title><link rel="stylesheet" type="text/css" href="../../../docbook.css"/><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot"/><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config"/><link rel="prev" href="ch15s03.xhtml" title="application.properties"/><link rel="next" href="ch15s05.xhtml" title="RestController"/></head><body><header><div class="navheader"><table style="width: 100%; "><tr><th style="text-align: center; " colspan="3">ElasticsearchConfiguration</th></tr><tr><td style="width: 20%; text-align: left; "><a accesskey="p" href="ch15s03.xhtml">上一页</a> </td><th style="width: 60%; text-align: center; ">第 15 章 Spring boot with Elasticsearch TransportClient</th><td style="width: 20%; text-align: right; "> <a accesskey="n" href="ch15s05.xhtml">下一页</a></td></tr></table><hr/></div></header><section class="section" id="id1530"><div class="titlepage"><div><div><h3 class="title">ElasticsearchConfiguration</h3></div></div></div><pre class="programlisting">
+               
+package com.example.api.config;
+
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+
+import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.elasticsearch.transport.client.PreBuiltTransportClient;
+import org.elasticsearch.common.settings.Settings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class ElasticsearchConfiguration implements FactoryBean&lt;TransportClient&gt;, InitializingBean, DisposableBean {
+	private static final Logger logger = LoggerFactory.getLogger(ElasticsearchConfiguration.class);
+
+	@Value("${spring.data.elasticsearch.cluster-nodes}")
+	private String clusterNodes;
+
+	private TransportClient transportClient;
+	private PreBuiltTransportClient preBuiltTransportClient;
+
+	@Override
+	public void destroy() throws Exception {
+		try {
+			logger.info("Closing elasticSearch client");
+			if (transportClient != null) {
+				transportClient.close();
+			}
+		} catch (final Exception e) {
+			logger.error("Error closing ElasticSearch client: ", e);
+		}
+	}
+
+	@Override
+	public TransportClient getObject() throws Exception {
+		return transportClient;
+	}
+
+	@Override
+	public Class&lt;TransportClient&gt; getObjectType() {
+		return TransportClient.class;
+	}
+
+	@Override
+	public boolean isSingleton() {
+		return false;
+	}
+
+	@Override
+	public void afterPropertiesSet() throws Exception {
+		buildClient();
+	}
+
+	protected void buildClient() {
+		try {
+			preBuiltTransportClient = new PreBuiltTransportClient(settings());
+
+			String InetSocket[] = clusterNodes.split(":");
+			String address = InetSocket[0];
+			Integer port = Integer.valueOf(InetSocket[1]);
+			transportClient = preBuiltTransportClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(address), port));
+
+		} catch (UnknownHostException e) {
+			logger.error(e.getMessage());
+		}
+	}
+
+	/**
+	 * 初始化默认的client
+	 */
+	private Settings settings() {
+//		Settings settings = Settings.builder().put("cluster.name", clusterName).put("client.transport.sniff", true).build();
+		Settings settings = Settings.builder().put("cluster.name", "elasticsearch").build();
+		return settings;
+	}
+}
+            
+		</pre></section><footer><div class="navfooter"><hr/><table style="width: 100%; "><tr><td style="width: 40%; text-align: left; "><a accesskey="p" href="ch15s03.xhtml">上一页</a> </td><td style="width: 20%; text-align: center; "><a accesskey="u" href="ch15.xhtml">上一级</a></td><td style="width: 40%; text-align: right; "> <a accesskey="n" href="ch15s05.xhtml">下一页</a></td></tr><tr><td style="width: 40%; text-align: left; vertical-align: top; ">application.properties </td><td style="width: 20%; text-align: center; "><a accesskey="h" href="../../../index.xhtml">起始页</a></td><td style="width: 40%; text-align: right; vertical-align: top; "> RestController</td></tr></table></div></footer></body></html>

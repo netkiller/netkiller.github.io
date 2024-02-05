@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><title>第 71 章 Spring Integration</title><link rel="stylesheet" type="text/css" href="../docbook.css"/><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot"/><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config"/><link rel="prev" href="../cloud/ch70s10.xhtml" title="feign.RetryableException: Read timed out executing"/><link rel="next" href="ch71s02.xhtml" title="MQTT Support"/></head><body><header><div class="navheader"><table style="width: 100%; "><tr><th style="text-align: center; " colspan="3">第 71 章 Spring Integration</th></tr><tr><td style="width: 20%; text-align: left; "><a accesskey="p" href="../cloud/ch70s10.xhtml">上一页</a> </td><th style="width: 60%; text-align: center; "> </th><td style="width: 20%; text-align: right; "> <a accesskey="n" href="ch71s02.xhtml">下一页</a></td></tr></table><hr/></div></header><section class="chapter" id="index"><div class="titlepage"><div><div><h1 class="title">第 71 章 Spring Integration</h1></div></div></div><div class="toc"><div class="toc-title">目录</div><ul class="toc"><li><span class="section"><a href="ch71.xhtml#RedisLockRegistry">Spring Redis Lock</a></span><ul><li><span class="section"><a href="ch71.xhtml#id1454">Maven 依赖</a></span></li><li><span class="section"><a href="ch71.xhtml#id1455">配置锁</a></span></li><li><span class="section"><a href="ch71.xhtml#id1456">使用方法</a></span></li></ul></li><li><span class="section"><a href="ch71s02.xhtml">MQTT Support</a></span><ul><li><span class="section"><a href="ch71s02.xhtml#Inbound">入站消息通道适配器</a></span></li><li><span class="section"><a href="ch71s02.xhtml#Outbound">出站通道适配器</a></span></li><li><span class="section"><a href="ch71s02.xhtml#ACK">手动 ACK 应答</a></span></li></ul></li></ul></div><section class="section" id="RedisLockRegistry"><div class="titlepage"><div><div><h2 class="title" style="clear: both">Spring Redis Lock</h2></div></div></div><section class="section" id="id1454"><div class="titlepage"><div><div><h3 class="title">Maven 依赖</h3></div></div></div><pre class="programlisting">
+			
+        &lt;dependency&gt;
+            &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+            &lt;artifactId&gt;spring-boot-starter-integration&lt;/artifactId&gt;
+        &lt;/dependency&gt;
+
+        &lt;dependency&gt;
+            &lt;groupId&gt;org.springframework.integration&lt;/groupId&gt;
+            &lt;artifactId&gt;spring-integration-redis&lt;/artifactId&gt;
+        &lt;/dependency&gt;			
+			
+			</pre></section><section class="section" id="id1455"><div class="titlepage"><div><div><h3 class="title">配置锁</h3></div></div></div><pre class="programlisting">
+			
+package cn.netkiller.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.integration.redis.util.RedisLockRegistry;
+
+@Configuration
+public class RedisLockRegistryConfiguration {
+    @Bean
+    public RedisLockRegistry redisLockRegistry(RedisConnectionFactory redisConnectionFactory) {
+        return new RedisLockRegistry(redisConnectionFactory, "netkiller-lock");
+    }
+}
+			
+			
+			</pre><p/><pre class="programlisting">
+			
+  @Bean(destroyMethod = "destroy")
+  public RedisLockRegistry redisLockRegistry(RedisConnectionFactory redisConnectionFactory) {
+    return new RedisLockRegistry(redisConnectionFactory, "neo-lock",
+        TimeUnit.MINUTES.toMillis(10));
+  }			
+			
+			</pre></section><section class="section" id="id1456"><div class="titlepage"><div><div><h3 class="title">使用方法</h3></div></div></div><pre class="programlisting">
+			
+@Autowired
+private RedisLockRegistry redisLockRegistry;
+			
+		Lock lock = redisLockRegistry.obtain(device);
+        if (lock.tryLock()) {
+            try {
+                // manipulate protected state
+            } finally {
+                lock.unlock();
+            }
+        } else {
+            // perform alternative actions
+        }			
+			
+			</pre><pre class="programlisting">
+			
+@Autowired
+private RedisLockRegistry redisLockRegistry;
+
+Lock lock = redisLockRegistry.obtain(key);
+boolean locked = false;
+try {
+  locked = lock.tryLock();
+  if (!locked) {
+    // 没有获取到锁的逻辑    
+  }
+
+  // 获取锁的逻辑
+} finally {
+  if (locked) {
+    lock.unlock();
+  }
+}			
+			
+			</pre><p>如果没有上锁，上锁后返回 true 状态。如果已经上锁阻塞等待10秒，然后再返回锁状态</p><pre class="programlisting">
+			
+    public boolean isLock(String device) {
+
+        Lock lock = redisLockRegistry.obtain(device);
+        boolean status = false;
+        try {
+            status = lock.tryLock(10, TimeUnit.SECONDS);
+
+        } catch (Exception e) {
+            log.info(e.getMessage());
+        }
+        log.warn("status: {} &lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;", status);
+        return status;
+    }			
+			
+			</pre></section></section></section><footer><div class="navfooter"><hr/><table style="width: 100%; "><tr><td style="width: 40%; text-align: left; "><a accesskey="p" href="../cloud/ch70s10.xhtml">上一页</a> </td><td style="width: 20%; text-align: center; "> </td><td style="width: 40%; text-align: right; "> <a accesskey="n" href="ch71s02.xhtml">下一页</a></td></tr><tr><td style="width: 40%; text-align: left; vertical-align: top; ">feign.RetryableException: Read timed out executing </td><td style="width: 20%; text-align: center; "><a accesskey="h" href="../index.xhtml">起始页</a></td><td style="width: 40%; text-align: right; vertical-align: top; "> MQTT Support</td></tr></table></div></footer></body></html>

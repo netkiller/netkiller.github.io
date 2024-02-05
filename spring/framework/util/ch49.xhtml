@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><title>第 49 章 Spring 工具集</title><link rel="stylesheet" type="text/css" href="../../docbook.css"/><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot"/><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config"/><link rel="prev" href="../tomcat/ch48s04.xhtml" title="集成 Mybatis"/><link rel="next" href="ch49s02.xhtml" title="ServletUriComponentsBuilder"/></head><body><header><div class="navheader"><table style="width: 100%; "><tr><th style="text-align: center; " colspan="3">第 49 章 Spring 工具集</th></tr><tr><td style="width: 20%; text-align: left; "><a accesskey="p" href="../tomcat/ch48s04.xhtml">上一页</a> </td><th style="width: 60%; text-align: center; ">部分 II. Spring Framework</th><td style="width: 20%; text-align: right; "> <a accesskey="n" href="ch49s02.xhtml">下一页</a></td></tr></table><hr/></div></header><section class="chapter" id="index"><div class="titlepage"><div><div><h2 class="title">第 49 章 Spring 工具集</h2></div></div></div><div class="toc"><div class="toc-title">目录</div><ul class="toc"><li><span class="section"><a href="ch49.xhtml#UriComponents">URL 拼装/解析</a></span></li><li><span class="section"><a href="ch49s02.xhtml">ServletUriComponentsBuilder</a></span></li><li><span class="section"><a href="ch49s03.xhtml">URL 路径相关</a></span></li><li><span class="section"><a href="RestTemplate/ch49s04.xhtml">String boot with RestTemplate</a></span><ul><li><span class="section"><a href="RestTemplate/ch49s04.xhtml#restTemplate.example">RestTemplate Example</a></span></li><li><span class="section"><a href="RestTemplate/ch49s04.xhtml#restTemplate.getForObject">GET 操作</a></span></li><li><span class="section"><a href="RestTemplate/ch49s04.xhtml#restTemplate.postForObject">POST 操作</a></span></li><li><span class="section"><a href="RestTemplate/ch49s04.xhtml#restTemplate.put">PUT 操作</a></span></li><li><span class="section"><a href="RestTemplate/ch49s04.xhtml#restTemplate.delete">Delete 操作</a></span></li><li><span class="section"><a href="RestTemplate/ch49s04.xhtml#restTemplate.exchange">上传文件</a></span></li><li><span class="section"><a href="RestTemplate/ch49s04.xhtml#RestTemplate.auth">HTTP Auth</a></span></li><li><span class="section"><a href="RestTemplate/ch49s04.xhtml#RestTemplate.double.auth">PKCS12</a></span></li><li><span class="section"><a href="RestTemplate/ch49s04.xhtml#RestTemplate.timeout">Timeout 超时设置</a></span></li></ul></li><li><span class="section"><a href="ch49s05.xhtml">RestClient</a></span><ul><li><span class="section"><a href="ch49s05.xhtml#id1090">创建 RestClient</a></span></li><li><span class="section"><a href="ch49s05.xhtml#id1091">Get 操作</a></span></li><li><span class="section"><a href="ch49s05.xhtml#id1092">Post Json</a></span></li><li><span class="section"><a href="ch49s05.xhtml#id1093">HTTP Authorization Basic</a></span></li><li><span class="section"><a href="ch49s05.xhtml#id1094">onStatus</a></span></li></ul></li></ul></div><section class="section" id="UriComponents"><div class="titlepage"><div><div><h2 class="title" style="clear: both">URL 拼装/解析</h2></div></div></div><pre class="programlisting">
+		
+        UriComponents https = UriComponentsBuilder.newInstance()
+                .scheme("https")
+                .host("www.netkiller.cn")
+                .port("8080")
+                .path("/article")
+                .queryParam("id", "9527")
+                .encode(StandardCharsets.UTF_8)
+                .build();
+
+        log.info(https.toUriString());		
+		
+		</pre><p>URL 解析</p><pre class="programlisting">
+		
+String httpUrl = "https://www.netkiller.cn:8080/article?id=9527";		
+UriComponents uriComponents = UriComponentsBuilder.fromHttpUrl(httpUrl).build();
+
+提取协议头
+String scheme = uriComponents.getScheme();
+// scheme = https
+System.out.println("scheme = " + scheme);
+
+获取host操作。
+String host = uriComponents.getHost();
+// host = felord.cn
+System.out.println("host = " + host);
+
+提取 Port 端口。
+
+int port = uriComponents.getPort();
+// port = -1
+System.out.println("port = " + port);
+但是很奇怪的是上面的是 -1,很多人误以为会是80。其实 Http 协议确实是80，但是java.net.URL#getPort()规定，若 URL 的实例未申明（省略）端口号，则返回值为-1。所以当返回了-1就等同于80，但是 URL 中不直接体现它们。
+
+提取 Path 路径
+String path = uriComponents.getPath();
+// path = /spring-security/{article}
+System.out.println("path = " + path);
+
+提取 Query 参数
+
+String query = uriComponents.getQuery();
+// query = version=1&amp;timestamp=123123325
+System.out.println("query = " + query);
+更加合理的提取方式：
+
+MultiValueMap&lt;String, String&gt; queryParams = uriComponents.getQueryParams();
+// queryParams = {version=[1], timestamp=[123123325]}
+System.out.println("queryParams = " + queryParams);
+		
+		</pre><p>替换变量</p><pre class="programlisting">
+		
+        UriComponents uriComponents = UriComponentsBuilder.newInstance()
+                .scheme("https")
+                .host("www.netkiller.cn")
+                .port("8080")
+                .path("/article/{category}")
+                .queryParam("id", "9527")
+                .encode(StandardCharsets.UTF_8)
+                .build();
+
+        UriComponents expand = uriComponents.expand("story");
+
+        log.info(expand.toUriString());
+        # https://www.netkiller.cn:8080/article/story?id=9527
+        
+        UriComponents uriComponents = UriComponentsBuilder.newInstance()
+                .scheme("https")
+                .host("www.netkiller.cn")
+                .port("8080")
+                .path("/book/{chapter}/{section}")
+                .queryParam("id", "9527")
+                .encode(StandardCharsets.UTF_8)
+                .build();
+        UriComponents expand = uriComponents.expand(Map.of("chapter", "chapter1", "section", "section2"));
+
+        log.info(expand.toUriString());
+        # https://www.netkiller.cn:8080/book/chapter1/section2?id=9527        
+		
+		</pre></section></section><footer><div class="navfooter"><hr/><table style="width: 100%; "><tr><td style="width: 40%; text-align: left; "><a accesskey="p" href="../tomcat/ch48s04.xhtml">上一页</a> </td><td style="width: 20%; text-align: center; "><a accesskey="u" href="../pt02.xhtml">上一级</a></td><td style="width: 40%; text-align: right; "> <a accesskey="n" href="ch49s02.xhtml">下一页</a></td></tr><tr><td style="width: 40%; text-align: left; vertical-align: top; ">集成 Mybatis </td><td style="width: 20%; text-align: center; "><a accesskey="h" href="../../index.xhtml">起始页</a></td><td style="width: 40%; text-align: right; vertical-align: top; "> ServletUriComponentsBuilder</td></tr></table></div></footer></body></html>

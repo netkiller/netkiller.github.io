@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><title>第 44 章 Service</title><link rel="stylesheet" type="text/css" href="../../docbook.css"/><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot"/><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config"/><link rel="prev" href="../ch43s02.xhtml" title="InitializingBean"/><link rel="next" href="ch44s02.xhtml" title="定义接口"/></head><body><header><div class="navheader"><table style="width: 100%; "><tr><th style="text-align: center; " colspan="3">第 44 章 Service</th></tr><tr><td style="width: 20%; text-align: left; "><a accesskey="p" href="../ch43s02.xhtml">上一页</a> </td><th style="width: 60%; text-align: center; ">部分 II. Spring Framework</th><td style="width: 20%; text-align: right; "> <a accesskey="n" href="ch44s02.xhtml">下一页</a></td></tr></table><hr/></div></header><section class="chapter" id="index"><div class="titlepage"><div><div><h2 class="title">第 44 章 Service</h2></div></div></div><div class="toc"><div class="toc-title">目录</div><ul class="toc"><li><span class="section"><a href="ch44.xhtml#service.ComponentScan">Application</a></span></li><li><span class="section"><a href="ch44s02.xhtml">定义接口</a></span></li><li><span class="section"><a href="ch44s03.xhtml">实现接口</a></span></li><li><span class="section"><a href="ch44s04.xhtml">调用 Service</a></span></li><li><span class="section"><a href="ch44s05.xhtml">context.getBean 调用 Service</a></span></li><li><span class="section"><a href="ch44s06.xhtml">AopContext</a></span></li><li><span class="section"><a href="ch44s07.xhtml">Service 单例/多例模式</a></span><ul><li><span class="section"><a href="ch44s07.xhtml#id1069">Service 是单例模式</a></span></li><li><span class="section"><a href="ch44s07.xhtml#id1070">Service 多例实现</a></span></li></ul></li><li><span class="section"><a href="ch44s08.xhtml">构造方法</a></span></li></ul></div><section class="section" id="service.ComponentScan"><div class="titlepage"><div><div><h2 class="title" style="clear: both">Application</h2></div></div></div><p>@ComponentScan({ "web", "rest","service" }) 一定要包含 Service
+			目录。否则无法实现 @Autowired自动装配。你可以直接@ComponentScan扫描所有目录。
+		</p><pre class="programlisting">
+			
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.authentication.UserCredentials;
+import org.springframework.data.mongodb.MongoDbFactory;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.SimpleMongoDbFactory;
+import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
+
+import com.mongodb.Mongo;
+
+import pojo.ApplicationConfiguration;
+
+@Configuration
+@SpringBootApplication
+@EnableConfigurationProperties(ApplicationConfiguration.class)
+@EnableAutoConfiguration(exclude = { DataSourceAutoConfiguration.class })
+@ComponentScan({ "web", "rest","service" })
+@EnableMongoRepositories
+public class Application {
+	
+	@SuppressWarnings("deprecation")
+	public @Bean MongoDbFactory mongoDbFactory() throws Exception {
+		UserCredentials userCredentials = new UserCredentials("finance", "your_password");
+		return new SimpleMongoDbFactory(new Mongo("mdb.netkiller.cn"), "finance", userCredentials);
+	}
+
+	public @Bean MongoTemplate mongoTemplate() throws Exception {
+		return new MongoTemplate(mongoDbFactory());
+	}
+
+	public static void main(String[] args) {
+		SpringApplication.run(Application.class, args);
+	}
+
+}
+			
+		</pre></section></section><footer><div class="navfooter"><hr/><table style="width: 100%; "><tr><td style="width: 40%; text-align: left; "><a accesskey="p" href="../ch43s02.xhtml">上一页</a> </td><td style="width: 20%; text-align: center; "><a accesskey="u" href="../pt02.xhtml">上一级</a></td><td style="width: 40%; text-align: right; "> <a accesskey="n" href="ch44s02.xhtml">下一页</a></td></tr><tr><td style="width: 40%; text-align: left; vertical-align: top; ">InitializingBean </td><td style="width: 20%; text-align: center; "><a accesskey="h" href="../../index.xhtml">起始页</a></td><td style="width: 40%; text-align: right; vertical-align: top; "> 定义接口</td></tr></table></div></footer></body></html>

@@ -1,0 +1,372 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><title>校验器(Validator)</title><link rel="stylesheet" type="text/css" href="../../docbook.css"/><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot"/><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config"/><link rel="prev" href="ch40s04.xhtml" title="View"/><link rel="next" href="ch40s06.xhtml" title="Interceptor/Filter 拦截器/过滤"/></head><body><header><div class="navheader"><table style="width: 100%; "><tr><th style="text-align: center; " colspan="3">校验器(Validator)</th></tr><tr><td style="width: 20%; text-align: left; "><a accesskey="p" href="ch40s04.xhtml">上一页</a> </td><th style="width: 60%; text-align: center; ">第 40 章 Spring MVC</th><td style="width: 20%; text-align: right; "> <a accesskey="n" href="ch40s06.xhtml">下一页</a></td></tr></table><hr/></div></header><section class="section" id="validation"><div class="titlepage"><div><div><h2 class="title" style="clear: both">校验器(Validator)</h2></div></div></div><p>常见的校验注解</p><pre class="screen">
+	
+@Null 被注释的元素必须为 null
+@NotNull 被注释的元素必须不为 null
+@AssertTrue 被注释的元素必须为 true
+@AssertFalse 被注释的元素必须为 false
+@Min(value) 被注释的元素必须是一个数字，其值必须大于等于指定的最小值
+@Max(value) 被注释的元素必须是一个数字，其值必须小于等于指定的最大值
+@DecimalMin(value) 被注释的元素必须是一个数字，其值必须大于等于指定的最小值
+@DecimalMax(value) 被注释的元素必须是一个数字，其值必须小于等于指定的最大值
+@Size(max=, min=) 被注释的元素的大小必须在指定的范围内
+@Digits (integer, fraction) 被注释的元素必须是一个数字，其值必须在可接受的范围内
+@Past 被注释的元素必须是一个过去的日期
+@Future 被注释的元素必须是一个将来的日期
+@Pattern(regex=,flag=) 被注释的元素必须符合指定的正则表达式
+
+Hibernate Validator提供的校验注解：
+@NotBlank(message =) 验证字符串非null，且长度必须大于0
+@Email 被注释的元素必须是电子邮箱地址
+@Length(min=,max=) 被注释的字符串的大小必须在指定的范围内
+@NotEmpty 被注释的字符串的必须非空
+@Range(min=,max=,message=) 被注释的元素必须在合适的范围内	
+	
+	</pre><section class="section" id="id1000"><div class="titlepage"><div><div><h3 class="title">常规用法</h3></div></div></div><section class="section" id="id997"><div class="titlepage"><div><div><h4 class="title">定义校验器</h4></div></div></div><pre class="programlisting">
+		
+package web.domain;
+
+import javax.validation.constraints.Email;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+
+public class User {
+
+	private Long id;
+
+	@NotNull(message = "用户账号不能为空")
+	@Size(min = 6, max = 11, message = "账号长度必须是6-11个字符")
+	private String username;
+
+	@NotNull(message = "用户密码不能为空")
+	@Size(min = 6, max = 8, message = "密码长度必须是6-8个字符")
+	private String password;
+
+	@NotNull(message = "用户邮箱不能为空")
+	@Email(message = "邮箱格式不正确")
+	private String email;
+
+	// 不允许为空，并且年龄的最小值为18
+	@NotNull
+	@Min(18)
+	private Integer age;
+
+	public User() {
+		// TODO Auto-generated constructor stub
+	}
+
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public String getUsername() {
+		return username;
+	}
+
+	public void setUsername(String username) {
+		this.username = username;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
+	}
+
+	public Integer getAge() {
+		return age;
+	}
+
+	public void setAge(Integer age) {
+		this.age = age;
+	}
+
+	@Override
+	public String toString() {
+		return "User [id=" + id + ", username=" + username + ", password=" + password + ", email=" + email + ", age=" + age + "]";
+	}
+
+}
+		
+		
+			</pre></section><section class="section" id="id998"><div class="titlepage"><div><div><h4 class="title">获取 BindingResult 结果</h4></div></div></div><pre class="programlisting">
+		
+package web.restful;
+
+import javax.validation.Valid;
+
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.ObjectError;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import web.domain.User;
+
+@RestController
+@RequestMapping("/restful")
+public class TestRestController {
+
+	@RequestMapping("/test")
+	public String home() {
+		return "OK";
+	}
+
+	@PostMapping("/validation")
+	public String addUser(@RequestBody @Valid User user, BindingResult bindingResult) {
+		// 如果有参数校验失败，返回错误信息
+		if (bindingResult.hasErrors()) {
+			System.out.println(user.toString());
+			System.out.println(bindingResult.getErrorCount());
+			System.out.println(bindingResult.getAllErrors());
+		}
+
+		for (ObjectError error : bindingResult.getAllErrors()) {
+			return error.getDefaultMessage();
+		}
+		return user.toString();
+	}
+
+}
+		
+		
+			</pre></section><section class="section" id="id999"><div class="titlepage"><div><div><h4 class="title">测试校验效果</h4></div></div></div><pre class="screen">
+			
+neo@MacBook-Pro-Neo ~/workspace/Management % curl -H "Content-Type: application/json" -d '{"id":100000, "username":"netkiller", "password":"123456", "email":"netkillermsn.com"}' curl http://localhost:8080/restful/validation
+邮箱格式不正确
+
+neo@MacBook-Pro-Neo ~/workspace/Management % curl -H "Content-Type: application/json" -d '{"id":100000, "username":"netkiller", "password":"123456", "email":"netkiller@msn.com"}' curl http://localhost:8080/restful/validation
+must not be null
+
+neo@MacBook-Pro-Neo ~/workspace/Management % curl -H "Content-Type: application/json" -d '{"id":100000, "username":"netkiller", "password":"123456", "email":"netkiller@msn.com", "age":20}' curl http://localhost:8080/restful/validation
+User [id=100000, username=netkiller, password=123456, email=netkiller@msn.com, age=20]
+			
+			</pre></section></section><section class="section" id="id1005"><div class="titlepage"><div><div><h3 class="title">自定义注解</h3></div></div></div><p>下面实现一个手机号码检查的注解。</p><pre class="screen">
+		
+@Retention ：用来说明该注解类的生命周期。它有以下三个参数：
+RetentionPolicy.SOURCE : 注解只保留在源文件中
+RetentionPolicy.CLASS : 注解保留在class文件中，在加载到JVM虚拟机时丢弃
+RetentionPolicy.RUNTIME : 注解保留在程序运行期间，此时可以通过反射获得定义在某个类上的所有注解。
+
+@Target : 用来说明该注解可以被声明在那些元素之前。
+ElementType.TYPE：说明该注解只能被声明在一个类前。
+ElementType.FIELD：说明该注解只能被声明在一个类的字段前。
+ElementType.METHOD：说明该注解只能被声明在一个类的方法前。
+ElementType.PARAMETER：说明该注解只能被声明在一个方法参数前。
+ElementType.CONSTRUCTOR：说明该注解只能声明在一个类的构造方法前。
+ElementType.LOCAL_VARIABLE：说明该注解只能声明在一个局部变量前。
+ElementType.ANNOTATION_TYPE：说明该注解只能声明在一个注解类型前。
+ElementType.PACKAGE：说明该注解只能声明在一个包名前。
+
+@Constraint来限定自定义注解的方法
+		
+		</pre><section class="section" id="id1001"><div class="titlepage"><div><div><h4 class="title">定义校验器注解接口</h4></div></div></div><pre class="programlisting">
+			
+package cn.netkiller.web.annotation;
+
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.ElementType;
+
+import javax.validation.Constraint;
+import javax.validation.Payload;
+
+import cn.netkiller.web.annotation.impl.MobileValidator;
+
+@Target({ ElementType.METHOD, ElementType.FIELD, ElementType.ANNOTATION_TYPE, ElementType.CONSTRUCTOR, ElementType.PARAMETER })
+@Retention(RetentionPolicy.RUNTIME)
+@Constraint(validatedBy = MobileValidator.class)
+@Documented
+// 注解的实现类。
+public @interface Mobile {
+	// 校验错误的默认信息
+	String message() default "手机号码格式不正确！";
+
+	// 是否强制校验
+	boolean isRequired() default true;
+
+	Class&lt;?&gt;[] groups() default {};
+
+	Class&lt;? extends Payload&gt;[] payload() default {};
+}
+			
+			</pre></section><section class="section" id="id1002"><div class="titlepage"><div><div><h4 class="title">实现接口</h4></div></div></div><pre class="programlisting">
+			
+package cn.netkiller.web.annotation.impl;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.validation.ConstraintValidator;
+import javax.validation.ConstraintValidatorContext;
+
+import org.springframework.util.StringUtils;
+
+import cn.netkiller.web.annotation.Mobile;
+
+public class MobileValidator implements ConstraintValidator&lt;Mobile, String&gt; {
+
+	public MobileValidator() {
+		// TODO Auto-generated constructor stub
+	}
+
+	private boolean required = false;
+
+	@Override
+	public void initialize(Mobile constraintAnnotation) {
+		required = constraintAnnotation.isRequired();
+	}
+
+	@Override
+	public boolean isValid(String phone, ConstraintValidatorContext constraintValidatorContext) {
+		Pattern mobile_pattern = Pattern.compile("1\\d{10}");
+		// System.out.println(phone);
+		// 是否为手机号的实现
+		if (required) {
+			if (StringUtils.isEmpty(phone)) {
+				return false;
+			}
+			Matcher m = mobile_pattern.matcher(phone);
+			return m.matches();
+
+		} else {
+			return StringUtils.isEmpty(phone);
+		}
+	}
+}			
+			
+			</pre></section><section class="section" id="id1003"><div class="titlepage"><div><div><h4 class="title">注解用法</h4></div></div></div><pre class="programlisting">
+			
+package cn.netkiller.web.domain;
+
+import java.util.Date;
+
+import javax.validation.constraints.Email;
+import javax.validation.constraints.Future;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+
+import cn.netkiller.web.annotation.Mobile;
+
+public class User {
+
+	private Long id;
+
+	@NotNull(message = "用户账号不能为空")
+	@Size(min = 6, max = 11, message = "账号长度必须是6-11个字符")
+	private String username;
+
+	@NotNull(message = "用户密码不能为空")
+	@Size(min = 6, max = 8, message = "密码长度必须是6-8个字符")
+	private String password;
+
+	@NotNull(message = "用户邮箱不能为空")
+	@Email(message = "邮箱格式不正确")
+	private String email;
+
+	// 这里是新添加的注解奥
+	@Mobile(message = "手机号码格式错误！！！")
+	private String phone;
+
+	// 不允许为空，并且年龄的最小值为18
+	@NotNull
+	@Min(18)
+	private Integer age;
+
+	@Future
+	private Date createTime;
+
+	public User() {
+		// TODO Auto-generated constructor stub
+	}
+
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public String getUsername() {
+		return username;
+	}
+
+	public void setUsername(String username) {
+		this.username = username;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
+	}
+
+	public Integer getAge() {
+		return age;
+	}
+
+	public void setAge(Integer age) {
+		this.age = age;
+	}
+
+	public String getPhone() {
+		return phone;
+	}
+
+	public void setPhone(String phone) {
+		this.phone = phone;
+	}
+
+	@Override
+	public String toString() {
+		return "User [id=" + id + ", username=" + username + ", password=" + password + ", email=" + email + ", phone=" + phone + ", age=" + age + "]";
+	}
+
+}			
+			
+			</pre></section><section class="section" id="id1004"><div class="titlepage"><div><div><h4 class="title">测试注解</h4></div></div></div><pre class="screen">
+			
+neo@MacBook-Pro-Neo ~ % curl -H "Content-Type: application/json" -d '{"id":100000, "username":"netkiller", "password":"123456", "email":"netkiller@msn.com", "age":20, "phone":"BB"}' curl http://localhost:8080/restful/validation
+手机号码格式错误！！！
+
+neo@MacBook-Pro-Neo ~ % curl -H "Content-Type: application/json" -d '{"id":100000, "username":"netkiller", "password":"123456", "email":"netkiller@msn.com", "age":20, "phone":"2433"}' curl http://localhost:8080/restful/validation
+手机号码格式错误！！！
+
+neo@MacBook-Pro-Neo ~ % curl -H "Content-Type: application/json" -d '{"id":100000, "username":"netkiller", "password":"123456", "email":"netkiller@msn.com", "age":20, "phone":"130"}' curl http://localhost:8080/restful/validation
+手机号码格式错误！！！% 
+
+
+neo@MacBook-Pro-Neo ~ % curl -H "Content-Type: application/json" -d '{"id":100000, "username":"netkiller", "password":"123456", "email":"netkiller@msn.com", "age":20, "phone":"13022223333"}' curl http://localhost:8080/restful/validation
+User [id=100000, username=netkiller, password=123456, email=netkiller@msn.com, phone=13022223333, age=20]% 			
+			
+			</pre></section></section></section><footer><div class="navfooter"><hr/><table style="width: 100%; "><tr><td style="width: 40%; text-align: left; "><a accesskey="p" href="ch40s04.xhtml">上一页</a> </td><td style="width: 20%; text-align: center; "><a accesskey="u" href="ch40.xhtml">上一级</a></td><td style="width: 40%; text-align: right; "> <a accesskey="n" href="ch40s06.xhtml">下一页</a></td></tr><tr><td style="width: 40%; text-align: left; vertical-align: top; ">View </td><td style="width: 20%; text-align: center; "><a accesskey="h" href="../../index.xhtml">起始页</a></td><td style="width: 40%; text-align: right; vertical-align: top; "> Interceptor/Filter 拦截器/过滤</td></tr></table></div></footer></body></html>

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><title>httpBasic 配置</title><link rel="stylesheet" type="text/css" href="../docbook.css"/><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot"/><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config"/><link rel="prev" href="ch58s04.xhtml" title="@PreAuthorize"/><link rel="next" href="ch58s06.xhtml" title=""/></head><body><header><div class="navheader"><table style="width: 100%; "><tr><th style="text-align: center; " colspan="3">httpBasic 配置</th></tr><tr><td style="width: 20%; text-align: left; "><a accesskey="p" href="ch58s04.xhtml">上一页</a> </td><th style="width: 60%; text-align: center; ">第 58 章 Springboot 3 + Security 6</th><td style="width: 20%; text-align: right; "> <a accesskey="n" href="ch58s06.xhtml">下一页</a></td></tr></table><hr/></div></header><section class="section" id="httpBasic"><div class="titlepage"><div><div><h2 class="title" style="clear: both">httpBasic 配置</h2></div></div></div><pre class="programlisting">
+			
+package cn.aigcsst.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.web.SecurityFilterChain;
+
+import static org.springframework.security.config.Customizer.withDefaults;
+
+/**
+ * @author Neo
+ * @description Security 配置类
+ * @date 2023-01-26 21:18
+ */
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity
+public class WebSecurityConfig {
+
+//    @Autowired
+//    private SecurityTokenAuthenticationFilter securityTokenAuthenticationFilter;
+
+//    @Value("${spring.profiles.active}")
+//    private String env;
+
+    @Bean
+    public WebSecurityCustomizer ignoringCustomizer() {
+        return (web) -&gt; web.ignoring().requestMatchers("/token", "/version");
+    }
+
+    @Bean
+    public UserDetailsService userDetailsService() {
+        InMemoryUserDetailsManager manager = new InMemoryUserDetailsManager();
+        manager.createUser(User.withDefaultPasswordEncoder().username("user").password("password").roles("USER").build());
+        manager.createUser(User.withDefaultPasswordEncoder().username("neo").password("chen").roles("USER").build());
+        return manager;
+    }
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
+        http.csrf(csrf -&gt; csrf.disable())
+                .authorizeHttpRequests(authorize -&gt; {
+                            authorize
+                                    .requestMatchers("/", "/ping", "/exclude", "/mock/**", "/test/**").permitAll()
+                                    .requestMatchers("/swagger/**").permitAll()
+                                    .requestMatchers("/picture/**", "/chat/**", "/badges/**", "/device/**", "/album/**", "/book/**", "/tools/**").permitAll()
+                                    .requestMatchers("/firefly/**", "/resources/**").permitAll()
+                                    .anyRequest().authenticated();
+                        }
+                ).httpBasic(withDefaults());
+
+        return http.build();
+    }
+}
+			
+		</pre></section><footer><div class="navfooter"><hr/><table style="width: 100%; "><tr><td style="width: 40%; text-align: left; "><a accesskey="p" href="ch58s04.xhtml">上一页</a> </td><td style="width: 20%; text-align: center; "><a accesskey="u" href="ch58.xhtml">上一级</a></td><td style="width: 40%; text-align: right; "> <a accesskey="n" href="ch58s06.xhtml">下一页</a></td></tr><tr><td style="width: 40%; text-align: left; vertical-align: top; ">@PreAuthorize </td><td style="width: 20%; text-align: center; "><a accesskey="h" href="../index.xhtml">起始页</a></td><td style="width: 40%; text-align: right; vertical-align: top; "> </td></tr></table></div></footer></body></html>

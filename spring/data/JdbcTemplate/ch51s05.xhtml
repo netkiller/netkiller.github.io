@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><title>queryForList</title><link rel="stylesheet" type="text/css" href="../../docbook.css"/><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot"/><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config"/><link rel="prev" href="ch51s04.xhtml" title="queryForObject"/><link rel="next" href="ch51s06.xhtml" title="queryForMap"/></head><body><header><div class="navheader"><table style="width: 100%; "><tr><th style="text-align: center; " colspan="3">queryForList</th></tr><tr><td style="width: 20%; text-align: left; "><a accesskey="p" href="ch51s04.xhtml">上一页</a> </td><th style="width: 60%; text-align: center; ">第 51 章 Spring Data with JdbcTemplate</th><td style="width: 20%; text-align: right; "> <a accesskey="n" href="ch51s06.xhtml">下一页</a></td></tr></table><hr/></div></header><section class="section" id="queryForList"><div class="titlepage"><div><div><h2 class="title" style="clear: both">queryForList</h2></div></div></div><pre class="programlisting">
+			
+List rows = jdbcTemplate.queryForList("SELECT * FROM USER");  
+Iterator it = rows.iterator();  
+while(it.hasNext()) {  
+    Map userMap = (Map) it.next();  
+    System.out.print(userMap.get("id") + "\t");  
+    System.out.print(userMap.get("name") + "\t");  
+    System.out.print(userMap.get("sex") + "\t");  
+    System.out.println(userMap.get("age") + "\t");  
+}
+			
+		</pre><section class="section" id="id1101"><div class="titlepage"><div><div><h3 class="title">Iterator 用法</h3></div></div></div><pre class="programlisting">
+		
+List&lt;Map&lt;String, Object&gt;&gt; rows = jdbcTemplate.queryForList("select * from user_token where address=? and contract_address not in (select contract_address from token)", new Object[] { address });
+Iterator&lt;Map&lt;String, Object&gt;&gt; it = rows.iterator();
+while (it.hasNext()) {
+	Map&lt;String, Object&gt; userMap = (Map&lt;String, Object&gt;) it.next();
+	
+	String contractAddress = (String) userMap.get("contract_address");
+	String symbol = (String) userMap.get("symbol");
+	int decimals = (int) userMap.get("decimals");
+}		
+		
+			</pre></section><section class="section" id="id1102"><div class="titlepage"><div><div><h3 class="title">for 循环</h3></div></div></div><pre class="programlisting">
+		
+	@RequestMapping("/article/tag/{siteId}")
+	public ResponseRestful tag(@PathVariable int siteId) {
+		List&lt;Tag&gt; tags = new ArrayList&lt;Tag&gt;();
+		List&lt;Map&lt;String, Object&gt;&gt; rows = new ArrayList&lt;Map&lt;String, Object&gt;&gt;();
+
+		String sql = "SELECT id,name FROM cms.tag WHERE site_id = ?";
+		rows = jdbcTemplate.queryForList(sql, new Object[] { siteId });
+
+		for (Map&lt;String, Object&gt; row : rows) {
+			Tag tag = new Tag();
+			tag.setId((Integer) row.get("id"));
+			tag.setName((String) row.get("name"));
+			tags.add(tag);
+		}
+		logger.info("tag {} SQL: {}", siteId, sql);
+		return new ResponseRestful(true, tags.size(), "标签", tags);
+	}			
+		
+			</pre></section><section class="section" id="id1103"><div class="titlepage"><div><div><h3 class="title">forEach 用法</h3></div></div></div><pre class="programlisting">
+			
+		jdbcTemplate.queryForList("select id from public.contract").forEach(item -&gt; {
+			logger.debug(item.toString());
+		});			
+			
+			</pre></section></section><footer><div class="navfooter"><hr/><table style="width: 100%; "><tr><td style="width: 40%; text-align: left; "><a accesskey="p" href="ch51s04.xhtml">上一页</a> </td><td style="width: 20%; text-align: center; "><a accesskey="u" href="ch51.xhtml">上一级</a></td><td style="width: 40%; text-align: right; "> <a accesskey="n" href="ch51s06.xhtml">下一页</a></td></tr><tr><td style="width: 40%; text-align: left; vertical-align: top; ">queryForObject </td><td style="width: 20%; text-align: center; "><a accesskey="h" href="../../index.xhtml">起始页</a></td><td style="width: 40%; text-align: right; vertical-align: top; "> queryForMap</td></tr></table></div></footer></body></html>

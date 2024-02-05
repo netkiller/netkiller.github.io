@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><title>MongoRepository</title><link rel="stylesheet" type="text/css" href="../docbook.css"/><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot"/><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config"/><link rel="prev" href="ch54s03.xhtml" title="@Document"/><link rel="next" href="ch54s05.xhtml" title="mongoTemplate"/></head><body><header><div class="navheader"><table style="width: 100%; "><tr><th style="text-align: center; " colspan="3">MongoRepository</th></tr><tr><td style="width: 20%; text-align: left; "><a accesskey="p" href="ch54s03.xhtml">上一页</a> </td><th style="width: 60%; text-align: center; ">第 54 章 Spring Data with MongoDB</th><td style="width: 20%; text-align: right; "> <a accesskey="n" href="ch54s05.xhtml">下一页</a></td></tr></table><hr/></div></header><section class="section" id="MongoRepository"><div class="titlepage"><div><div><h2 class="title" style="clear: both">MongoRepository</h2></div></div></div><section class="section" id="id1225"><div class="titlepage"><div><div><h3 class="title">扫描仓库接口</h3></div></div></div><p>默认不需要设置，除非你的包不在当前包下，或者命令不是 repository。</p><pre class="programlisting">
+			
+@EnableMongoRepositories(basePackages = "cn.netkiller.repository")		
+			
+			</pre></section><section class="section" id="findAll"><div class="titlepage"><div><div><h3 class="title">findAll()</h3></div></div></div><pre class="programlisting">
+			
+	@RequestMapping(value = "read", method = RequestMethod.GET, produces = { "application/xml", "application/json" })
+	@ResponseStatus(HttpStatus.OK)
+	public List&lt;Withdraw&gt; read() {
+		return repository.findAll();
+	}
+			
+			</pre></section><section class="section" id="deleteAll"><div class="titlepage"><div><div><h3 class="title">deleteAll()</h3></div></div></div><pre class="programlisting">
+			
+repository.deleteAll();
+			
+			</pre></section><section class="section" id="save"><div class="titlepage"><div><div><h3 class="title">save()</h3></div></div></div><pre class="programlisting">
+			
+repository.save(new City("Shenzhen", "China"));
+			
+			</pre></section><section class="section" id="count"><div class="titlepage"><div><div><h3 class="title">count()</h3></div></div></div><pre class="programlisting">
+			
+	@RequestMapping("count")
+	public long count() {
+		return repository.count();
+	}
+			
+			</pre></section><section class="section" id="Repository.exists"><div class="titlepage"><div><div><h3 class="title">exists() 判断是否存在</h3></div></div></div><pre class="programlisting">
+			
+boolean isExists = userRepository.exists(user.getId());			
+			
+			</pre></section><section class="section" id="existsById"><div class="titlepage"><div><div><h3 class="title">existsById()</h3></div></div></div><pre class="programlisting">
+			
+memberRepository.existsById(id);			
+			
+			</pre></section><section class="section" id="findByXXXX"><div class="titlepage"><div><div><h3 class="title">findByXXXX</h3></div></div></div><pre class="programlisting">
+			
+List&lt;User&gt; findByName(String name);
+
+List&lt;User&gt; users = userRepository.findByName("Eric");
+			
+			</pre></section><section class="section" id="findAllOrderBy"><div class="titlepage"><div><div><h3 class="title">findAll with OrderBy</h3></div></div></div><section class="section" id="id1226"><div class="titlepage"><div><div><h4 class="title">order by boolean 布尔型数据排序</h4></div></div></div><p>因为 boolean 数据 true = 1, false = 0 所以 ASC false 会排列在前面。所有很多时候而我们需要 DESC 排序</p><pre class="programlisting">
+				
+List&lt;ShippingAddress&gt; shippingAddress = shippingAddressRepository.findAllByMemberIdOrderByDefaultsDesc(memberId);			
+				
+				</pre></section></section><section class="section" id="findsort"><div class="titlepage"><div><div><h3 class="title">findAll with Sort</h3></div></div></div><pre class="programlisting">
+			
+List&lt;User&gt; users = userRepository.findAll(new Sort(Sort.Direction.ASC, "name"));			
+			
+			</pre></section><section class="section" id="findpage"><div class="titlepage"><div><div><h3 class="title">FindAll with Pageable</h3></div></div></div><pre class="programlisting">
+			
+Pageable pageable = PageRequest.of(0, 1);
+Page&lt;User&gt; page = userRepository.findAll(pageable);
+List&lt;User&gt; users = pages.getContent();	
+			
+			</pre><section class="section" id="PageRequest"><div class="titlepage"><div><div><h4 class="title">PageRequest - springboot 1.x 旧版本</h4></div></div></div><pre class="programlisting">
+			
+Page&lt;User&gt; findByLastname(String lastname, Pageable pageable);			
+			
+				</pre><pre class="programlisting">
+			
+	@RequestMapping(value = "read/{size}/{page}", method = RequestMethod.GET, produces = { "application/xml", "application/json" })
+	@ResponseStatus(HttpStatus.OK)
+	public List&lt;Withdraw&gt; readPage(@PathVariable int size, @PathVariable int page){
+		PageRequest pageRequest = new PageRequest(page-1,size);
+		return repository.findAll(pageRequest).getContent();
+	}
+			
+				</pre><p>URL翻页参数，每次返回10条记录</p><pre class="screen">
+					第一页 http://localhost:8080/v1/withdraw/read/10/1.json
+					第二页 http://localhost:8080/v1/withdraw/read/10/2.json
+					...
+					第五页 http://localhost:8080/v1/withdraw/read/10/5.json
+				</pre></section></section><section class="section" id="StartingWith"><div class="titlepage"><div><div><h3 class="title">StartingWith 和 EndingWith</h3></div></div></div><pre class="programlisting">
+			
+List&lt;User&gt; findByNameStartingWith(String regexp);
+List&lt;User&gt; findByNameEndingWith(String regexp);
+
+List&lt;User&gt; users = userRepository.findByNameStartingWith("N");
+List&lt;User&gt; users = userRepository.findByNameEndingWith("o");
+			
+			</pre></section><section class="section" id="Between"><div class="titlepage"><div><div><h3 class="title">Between</h3></div></div></div><p>数值范围</p><pre class="programlisting">
+			
+List&lt;User&gt; findByAgeBetween(int ageGT, int ageLT);
+
+List&lt;User&gt; users = userRepository.findByAgeBetween(20, 50);
+			
+			</pre><p>日期范围，取值 e.g. 2018-07-04 00:00:00 and 2018-07-04 23:59:59</p><pre class="programlisting">
+			
+List&lt;Member&gt; findByCreatedDateBetween(DateTime start, DateTime end);	
+
+List&lt;Member&gt; findByCreatedDate(@Temporal(TemporalType.DATE) Date date);		
+			
+			</pre></section><section class="section" id="Before.After"><div class="titlepage"><div><div><h3 class="title">Before / After</h3></div></div></div><pre class="programlisting">
+			
+List&lt;Assets&gt; findAllByUpdateDateBefore(Date yesterday);
+List&lt;Assets&gt; findAllByUpdateDateBeforeAndStatus(Date yesterday, String status);
+
+List&lt;Assets&gt; findAllByUpdateDateAfter(Date yesterday);
+			
+			</pre></section><section class="section" id="@Query"><div class="titlepage"><div><div><h3 class="title">@Query</h3></div></div></div><pre class="programlisting">
+			
+public interface PersonRepository extends MongoRepository&lt;Person, String&gt; {
+	@Query("{ 'name' : ?0 }")
+	List&lt;Person&gt; findWithQuery(String userId);
+}
+
+	@Query(value = "{'statusHistories':{$elemMatch:{'status':{$in:['PROCESSABLE']}}},'created' : { '$gt' : { '$date' : ':?0' } , '$lt' : { '$date' : ':?1'}}}", count = true)
+	Long countMe(@Param("dateFrom") Date datefrom, @Param("dateTo") Date dateTo);
+			
+			</pre></section></section><footer><div class="navfooter"><hr/><table style="width: 100%; "><tr><td style="width: 40%; text-align: left; "><a accesskey="p" href="ch54s03.xhtml">上一页</a> </td><td style="width: 20%; text-align: center; "><a accesskey="u" href="ch54.xhtml">上一级</a></td><td style="width: 40%; text-align: right; "> <a accesskey="n" href="ch54s05.xhtml">下一页</a></td></tr><tr><td style="width: 40%; text-align: left; vertical-align: top; ">@Document </td><td style="width: 20%; text-align: center; "><a accesskey="h" href="../index.xhtml">起始页</a></td><td style="width: 40%; text-align: right; vertical-align: top; "> mongoTemplate</td></tr></table></div></footer></body></html>

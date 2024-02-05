@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><title>Springboot 3 Security + OncePerRequestFilter</title><link rel="stylesheet" type="text/css" href="../docbook.css"/><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot"/><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config"/><link rel="prev" href="ch58.xhtml" title="第 58 章 Springboot 3 + Security 6"/><link rel="next" href="ch58s03.xhtml" title="SecurityFilterChain"/></head><body><header><div class="navheader"><table style="width: 100%; "><tr><th style="text-align: center; " colspan="3">Springboot 3 Security + OncePerRequestFilter</th></tr><tr><td style="width: 20%; text-align: left; "><a accesskey="p" href="ch58.xhtml">上一页</a> </td><th style="width: 60%; text-align: center; ">第 58 章 Springboot 3 + Security 6</th><td style="width: 20%; text-align: right; "> <a accesskey="n" href="ch58s03.xhtml">下一页</a></td></tr></table><hr/></div></header><section class="section" id="OncePerRequestFilter"><div class="titlepage"><div><div><h2 class="title" style="clear: both">Springboot 3 Security + OncePerRequestFilter</h2></div></div></div><section class="section" id="OncePerRequestFilter"><div class="titlepage"><div><div><h3 class="title">OncePerRequestFilter</h3></div></div></div><pre class="programlisting">
+			
+package cn.netkiller.config;
+
+import cn.netkiller.annotation.TokenPass;
+import cn.netkiller.component.JwtTokeComponent;
+import cn.netkiller.utils.ResponseJson;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.method.HandlerMethod;
+import org.springframework.web.servlet.HandlerExceptionResolver;
+import org.springframework.web.servlet.HandlerExecutionChain;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
+
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
+
+
+@Component
+@Slf4j
+public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter {
+    @Autowired
+    private ApplicationContext applicationContext;
+    @Autowired
+    private JwtTokeComponent jwtTokeComponent;
+
+    @Autowired
+//    @Qualifier("handlerExceptionResolver")
+    private HandlerExceptionResolver handlerExceptionResolver;
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        String url = request.getRequestURL().toString();
+        log.info(request.getRequestURL().toString());
+//        return super.shouldNotFilter(request);
+        return url.contains("/exclude");
+    }
+
+    /**
+     * token过滤器配置
+     *
+     * @param request
+     * @param response
+     * @param filterChain
+     * @throws ServletException
+     * @throws IOException
+     */
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        final String token = request.getHeader("token");
+        if (token == null || token.isEmpty()) {
+            // 没有携带 token 则 放行
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+
+        log.info("doFilterInternal: " + request.getRequestURI());
+        log.info("doFilterInternal: " + request.getHttpServletMapping().getPattern());
+
+        try {
+//            if (token == null) {
+//                throw new RuntimeException("无 token");
+//            }
+            
+            RequestMappingHandlerMapping requestMappingHandlerMapping = (RequestMappingHandlerMapping) applicationContext.getBean("requestMappingHandlerMapping");
+            // Map&lt;RequestMappingInfo, HandlerMethod&gt; handlerMethods = req2HandlerMapping.getHandlerMethods();
+            HandlerExecutionChain handlerExecutionChain = requestMappingHandlerMapping.getHandler(request);
+            if (Objects.nonNull(handlerExecutionChain)) {
+                HandlerMethod handlerMethod = (HandlerMethod) handlerExecutionChain.getHandler();
+//                if (handlerMethod.getBeanType().getName().startsWith(MY_CONTROLLER_PACKAGE_NAME)) {
+//                    log.info(handlerMethod.getBeanType().getSimpleName());
+//                }
+
+                Method method = handlerMethod.getMethod();
+
+                //检查方法是否有TokenPass注解，有则跳过认证，直接通过
+                if (method.isAnnotationPresent(TokenPass.class)) {
+                    TokenPass tokenPass = method.getAnnotation(TokenPass.class);
+                    if (tokenPass.required()) {
+                        filterChain.doFilter(request, response);
+                        return;
+                    }
+                }
+                //检查 TokenVerification 需要用户权限的注解
+//        if (method.isAnnotationPresent(TokenVerification.class)) {
+//            TokenVerification tokenVerification = method.getAnnotation(TokenVerification.class);
+//            if (tokenVerification.required()) {
+//                //
+//            }
+//        }
+                // token 校验逻辑写在这里
+//        log.info("token: " + token);
+                ResponseJson jwt = jwtTokeComponent.verifier(token);
+//        log.info("jwt: " + jwt.isStatus());
+                if (!jwt.isStatus()) {
+                    throw new RuntimeException(jwt.getReason());
+                }
+
+                // 执行认证
+                Set&lt;GrantedAuthority&gt; authorities = new HashSet&lt;&gt;();
+                authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+                authorities.add(new SimpleGrantedAuthority("ROLE_WATCH"));
+                authorities.add(new SimpleGrantedAuthority("ROLE_PICTURE"));
+
+                UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken("netkiller", null, authorities);
+                authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+
+                log.info(authenticationToken.toString());
+            }
+        } catch (Exception e) {
+            log.info(e.getMessage());
+            handlerExceptionResolver.resolveException(request, response, null, e);
+            return;
+        }
+
+        /**
+         * 将请求转发给过滤器链下一个filter
+         */
+        filterChain.doFilter(request, response);
+    }
+
+}
+			
+			
+			</pre></section><section class="section" id="SecurityConfiguration"><div class="titlepage"><div><div><h3 class="title">SecurityConfiguration</h3></div></div></div><pre class="programlisting">
+			
+package cn.netkiller.config;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+/**
+ * @author Neo
+ * @description Security 配置类
+ * @date 2023-01-26 21:18
+ */
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity
+public class SecurityConfiguration {
+
+    @Autowired
+    private SecurityTokenAuthenticationFilter securityTokenAuthenticationFilter;
+
+//    @Value("${spring.profiles.active}")
+//    private String env;
+
+    @Bean
+    public WebSecurityCustomizer ignoringCustomizer() {
+        return (web) -&gt; web.ignoring().requestMatchers("/token", "/version");
+    }
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+//        http.authorizeRequests().anyRequest().permitAll();
+        http.csrf(csrf -&gt; csrf.disable())
+                .authorizeHttpRequests(authorize -&gt; {
+                            authorize
+                                    .requestMatchers("/", "/ping", "/exclude", "/mock/**", "/test/**").permitAll()
+                                    .requestMatchers("/token").permitAll()
+                                    .requestMatchers("/picture/**", "/chat/**", "/badges/**", "/album/**", "/book/**").permitAll()
+                                    .requestMatchers("/static/**", "/resources/**").permitAll()
+                                    .anyRequest().authenticated();
+                        }
+                )
+                .addFilterBefore(securityTokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
+    }
+
+
+}
+			
+			</pre></section></section><footer><div class="navfooter"><hr/><table style="width: 100%; "><tr><td style="width: 40%; text-align: left; "><a accesskey="p" href="ch58.xhtml">上一页</a> </td><td style="width: 20%; text-align: center; "><a accesskey="u" href="ch58.xhtml">上一级</a></td><td style="width: 40%; text-align: right; "> <a accesskey="n" href="ch58s03.xhtml">下一页</a></td></tr><tr><td style="width: 40%; text-align: left; vertical-align: top; ">第 58 章 Springboot 3 + Security 6 </td><td style="width: 20%; text-align: center; "><a accesskey="h" href="../index.xhtml">起始页</a></td><td style="width: 40%; text-align: right; vertical-align: top; "> SecurityFilterChain</td></tr></table></div></footer></body></html>

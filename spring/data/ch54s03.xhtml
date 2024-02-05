@@ -1,0 +1,559 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><title>@Document</title><link rel="stylesheet" type="text/css" href="../docbook.css"/><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot"/><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config"/><link rel="prev" href="ch54s02.xhtml" title="MongoDB 多数据源"/><link rel="next" href="ch54s04.xhtml" title="MongoRepository"/></head><body><header><div class="navheader"><table style="width: 100%; "><tr><th style="text-align: center; " colspan="3">@Document</th></tr><tr><td style="width: 20%; text-align: left; "><a accesskey="p" href="ch54s02.xhtml">上一页</a> </td><th style="width: 60%; text-align: center; ">第 54 章 Spring Data with MongoDB</th><td style="width: 20%; text-align: right; "> <a accesskey="n" href="ch54s04.xhtml">下一页</a></td></tr></table><hr/></div></header><section class="section" id="@Document"><div class="titlepage"><div><div><h2 class="title" style="clear: both">@Document</h2></div></div></div><p>复杂的 @Document 数据类型定义</p><pre class="programlisting">
+		
+package cn.netkiller.domain;
+
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+@Document
+public class MultilevelDirectSellingTradingRebate {
+
+	public enum Type {
+		POINT, CASH, GIFT
+	}
+
+	public enum Rebate {
+		DIRECT, INDIRECT
+	}
+
+	public enum Status {
+		New, Rejected, Approved
+	}
+
+	@Id
+	private String id;
+	public String name;
+	public Date beginDate;
+	public Date endDate;
+	public double lowAmount;
+	public double highAmount;
+	public Type type;
+	public Status status = Status.New;
+	public List&lt;Map&lt;String, Map&lt;?, ?&gt;&gt;&gt; product;
+
+	@Override
+	public String toString() {
+		return "MultilevelDirectSellingTradingRebate [id=" + id + ", name=" + name + ", beginDate=" + beginDate
+				+ ", endDate=" + endDate + ", lowAmount=" + lowAmount + ", highAmount=" + highAmount + ", type=" + type
+				+ ", status=" + status + ", product=" + product + "]";
+	}
+
+}
+		
+		</pre><section class="section" id="@Document"><div class="titlepage"><div><div><h3 class="title">指定表名</h3></div></div></div><p>默认使用 class 作为表名</p><pre class="programlisting">
+			
+@Document
+public class Multilevel {
+	...
+	...
+}			
+			
+			</pre><p>指定特别表名</p><pre class="programlisting">
+			
+@Document(collection = "author")			
+			
+			</pre></section><section class="section" id="@Id"><div class="titlepage"><div><div><h3 class="title">@Id</h3></div></div></div><pre class="programlisting">
+			
+	@Id
+	private String id;		
+			
+			</pre></section><section class="section" id="@Version"><div class="titlepage"><div><div><h3 class="title">@Version</h3></div></div></div><pre class="programlisting">
+			
+	@Version 
+	private Long version;			
+			
+			</pre></section><section class="section" id="@Field"><div class="titlepage"><div><div><h3 class="title">@Field 定义字段名</h3></div></div></div><pre class="programlisting">
+			
+@Field("url")
+private String link;			
+			
+			</pre></section><section class="section" id="@Indexed"><div class="titlepage"><div><div><h3 class="title">@Indexed</h3></div></div></div><p>
+				<a class="ulink" href="https://docs.spring.io/spring-data/mongodb/docs/current/api/org/springframework/data/mongodb/core/index/Indexed.html" target="_top">https://docs.spring.io/spring-data/mongodb/docs/current/api/org/springframework/data/mongodb/core/index/Indexed.html</a>
+			</p><p>索引</p><section class="section" id="id1213"><div class="titlepage"><div><div><h4 class="title">普通索引</h4></div></div></div><pre class="programlisting">
+				
+@Indexed		
+				
+				</pre></section><section class="section" id="id1214"><div class="titlepage"><div><div><h4 class="title">唯一索引</h4></div></div></div><pre class="programlisting">
+				
+@Indexed(unique=true)	
+				
+				</pre></section><section class="section" id="id1215"><div class="titlepage"><div><div><h4 class="title">索引排序方式</h4></div></div></div><pre class="programlisting">
+				
+@Indexed(name = "first_name_index", direction = IndexDirection.DESCENDING)		
+				
+				</pre></section><section class="section" id="id1216"><div class="titlepage"><div><div><h4 class="title">稀疏索引</h4></div></div></div><p>稀疏索引允许唯一索引存在多个 null 值</p><pre class="programlisting">
+				
+	@Indexed(unique = true, sparse = true)
+	private String uuid;
+	
+	@Indexed(unique = true, sparse = true)
+	private String transactionId = null;
+				
+				</pre></section><section class="section" id="id1217"><div class="titlepage"><div><div><h4 class="title">索引过期时间设置</h4></div></div></div><pre class="programlisting">
+				
+@Indexed(name = "expire_after_seconds_index", expireAfterSeconds = 10)
+private LocalDateTime updateDate;				
+				
+				</pre></section></section><section class="section" id="@CompoundIndex"><div class="titlepage"><div><div><h3 class="title">@CompoundIndex 复合索引</h3></div></div></div><section class="section" id="id1218"><div class="titlepage"><div><div><h4 class="title">普通复合索引</h4></div></div></div><pre class="programlisting">
+				
+@Document
+@CompoundIndexes({
+    @CompoundIndex(name = "email_age", def = "{'email.id' : 1, 'age': 1}")
+})
+public class User {
+    //
+}			
+				
+				</pre><pre class="programlisting">
+				
+@Document
+@CompoundIndexes({
+  @CompoundIndex(def = "{'firstName':1, 'salary':-1}", name = "compound_index_1"),
+  @CompoundIndex(def = "{'secondName':1, 'profession':1}", name = "compound_index_2")
+})
+public class Person {
+  @Id private String id;
+  private String firstName;
+  private String secondName;
+  private LocalDateTime dateOfBirth;
+  private Address address;
+  private String profession;
+  private int salary;
+  // constructor
+  // getters and setters
+}			
+				
+				</pre></section><section class="section" id="id1219"><div class="titlepage"><div><div><h4 class="title">唯一复合索引</h4></div></div></div><p>唯一复合索引：楼层和房号不能相同，不然就是同一个房间了</p><pre class="programlisting">
+				
+@CompoundIndexes({ 
+    @CompoundIndex(name = "floor_num", def = "{'floor' : 1, 'num': 1}",unique=true) 
+})				
+				
+				</pre><p>不允许同名</p><pre class="programlisting">
+				
+@CompoundIndexes({ @CompoundIndex(name = "username", def = "{'firstname' : 1, 'lastname': 1}", unique = true) })		
+				
+				</pre></section></section><section class="section" id="@TextIndexed"><div class="titlepage"><div><div><h3 class="title">@TextIndexed</h3></div></div></div><pre class="programlisting">
+			
+@Document(language = "spanish")
+class SomeEntity {
+
+    @TextIndexed String foo;
+
+    @Language String lang;
+
+    Nested nested;
+}
+
+class Nested {
+
+    @TextIndexed(weight=5) String bar;
+    String roo;
+}			
+			
+			</pre></section><section class="section" id="@GeoSpatialIndex"><div class="titlepage"><div><div><h3 class="title">@GeoSpatialIndex 地理位置索引</h3></div></div></div><p>点数据索引</p><pre class="programlisting">
+				
+	@GeoSpatialIndexed
+	private GeoJsonPoint location; // GPS 定位信息
+				
+			</pre><p>2D 数据索引</p><pre class="programlisting">
+				
+@GeoSpatialIndexed(type = GeoSpatialIndexType.GEO_2DSPHERE)				
+				
+			</pre></section><section class="section" id="@Transient"><div class="titlepage"><div><div><h3 class="title">@Transient 丢弃数据，不存到 mongodb</h3></div></div></div><pre class="programlisting">
+			
+public class User {
+     
+    @Transient
+    private Integer age;
+
+    // standard getter and setter
+ 
+}	
+			
+			</pre></section><section class="section" id="@DBRef"><div class="titlepage"><div><div><h3 class="title">@DBRef 做外外键引用</h3></div></div></div><section class="section" id="id1220"><div class="titlepage"><div><div><h4 class="title">Article 类</h4></div></div></div><pre class="programlisting">
+				
+package cn.netkiller.api.domain;
+
+import java.util.List;
+
+import org.springframework.data.mongodb.core.mapping.DBRef;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+@Document
+public class Article {
+
+	private String title; // 名称
+	private String description; // 描述
+	private String tag; // 类型
+	@DBRef
+	private List&lt;Hypermedia&gt; hypermedia; // 图片，视频
+
+	public Article() {
+		// TODO Auto-generated constructor stub
+	}
+
+	public String getTitle() {
+		return title;
+	}
+
+	public void setTitle(String title) {
+		this.title = title;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	public String getTag() {
+		return tag;
+	}
+
+	public void setTag(String tag) {
+		this.tag = tag;
+	}
+
+	public List&lt;Hypermedia&gt; getHypermedia() {
+		return hypermedia;
+	}
+
+	public void setHypermedia(List&lt;Hypermedia&gt; hypermedia) {
+		this.hypermedia = hypermedia;
+	}
+
+	@Override
+	public String toString() {
+		return "Article [title=" + title + ", description=" + description + ", tag=" + tag + ", hypermedia=" + hypermedia + "]";
+	}
+
+}
+				
+				
+				</pre></section><section class="section" id="id1221"><div class="titlepage"><div><div><h4 class="title">Hypermedia 类</h4></div></div></div><pre class="programlisting">
+				
+package api.domain;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+@Document
+public class Hypermedia {
+
+	@Id
+	private String id;
+	private String hash;
+	private String name;
+	private String size;
+
+	public Hypermedia() {
+		// TODO Auto-generated constructor stub
+	}
+
+	public Hypermedia(String hash, String name, String size) {
+		this.hash = hash;
+		this.name = name;
+		this.size = size;
+	}
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	public String getHash() {
+		return hash;
+	}
+
+	public void setHash(String hash) {
+		this.hash = hash;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getSize() {
+		return size;
+	}
+
+	public void setSize(String size) {
+		this.size = size;
+	}
+
+	@Override
+	public String toString() {
+		return "Hypermedia [id=" + id + ", hash=" + hash + ", name=" + name + ", size=" + size + "]";
+	}
+
+}
+				
+				
+				</pre><p>如果你只查询 Article 表，不会单独查询 Hypermedia，返回结果可以掩藏 Id ，不写 get/set 方法即可。</p><pre class="programlisting">
+				
+package cn.netkiller.api.domain;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+@Document
+public class Hypermedia {
+
+	@Id
+	private String id;
+	private String hash;
+	private String name;
+	private String size;
+
+	public Hypermedia() {
+		// TODO Auto-generated constructor stub
+	}
+
+	public Hypermedia(String hash, String name, String size) {
+		this.hash = hash;
+		this.name = name;
+		this.size = size;
+	}
+
+	public String getHash() {
+		return hash;
+	}
+
+	public void setHash(String hash) {
+		this.hash = hash;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getSize() {
+		return size;
+	}
+
+	public void setSize(String size) {
+		this.size = size;
+	}
+
+	@Override
+	public String toString() {
+		return "Hypermedia [hash=" + hash + ", name=" + name + ", size=" + size + "]";
+	}
+
+}
+
+				
+				</pre></section><section class="section" id="id1222"><div class="titlepage"><div><div><h4 class="title">MongoRepository</h4></div></div></div><pre class="programlisting">
+				
+package cn.netkiller.api.repository;
+
+import org.springframework.data.mongodb.repository.MongoRepository;
+
+import api.domain.Article;
+
+public interface ArticleRepository extends MongoRepository&lt;Article, String&gt; {
+
+}
+
+				
+				</pre><pre class="programlisting">
+				
+package cn.netkiller.api.repository;
+
+import org.springframework.data.mongodb.repository.MongoRepository;
+
+import api.domain.Hypermedia;
+
+public interface HypermediaRepository extends MongoRepository&lt;Hypermedia, String&gt; {
+
+}
+				
+				</pre></section><section class="section" id="id1223"><div class="titlepage"><div><div><h4 class="title">RestController</h4></div></div></div><pre class="programlisting">
+				
+package cn.netkiller.api.restful;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import api.domain.Article;
+import api.domain.Hypermedia;
+import api.repository.ArticleRepository;
+import api.repository.HypermediaRepository;
+
+@RestController
+@RequestMapping("/article")
+public class ArticleRestController {
+
+	@Autowired
+	private ArticleRepository articleRepository;
+
+	@Autowired
+	private HypermediaRepository hypermediaRepository;
+
+	public ArticleRestController() {
+		// TODO Auto-generated constructor stub
+	}
+
+	@GetMapping("/save")
+	public Article save() {
+
+		Article article = new Article();
+		article.setTitle("标题");
+		article.setDescription("摘要");
+		article.setTag("标签");
+
+		Hypermedia hypermedia = new Hypermedia("AAA", "BBB", "CCC");
+		hypermediaRepository.save(hypermedia);
+
+		List&lt;Hypermedia&gt; hypermedias = new ArrayList&lt;Hypermedia&gt;();
+		hypermedias.add(hypermedia);
+
+		article.setHypermedia(hypermedias);
+
+		articleRepository.save(article);
+
+		System.out.println(article);
+
+		return article;
+	}
+
+}
+				
+				
+				</pre></section><section class="section" id="id1224"><div class="titlepage"><div><div><h4 class="title">运行结果</h4></div></div></div><pre class="programlisting">
+				
+neo@MacBook-Pro ~ % curl -s -H "Accept: application/json" -H "Content-Type: application/json" -H "Authorization: Bearer ${TOKEN}" -X GET ${URL}/article/save | jq
+{
+  "title": "标题",
+  "description": "摘要",
+  "tag": "标签",
+  "hypermedia": [
+    {
+      "hash": "AAA",
+      "name": "BBB",
+      "size": "CCC"
+    }
+  ]
+}
+				
+				</pre><p>MongoDB 结果</p><p>db.getCollection('article').find({})</p><pre class="screen">
+				
+/* 1 */
+{
+    "_id" : ObjectId("5bab66f8c92782395817cb05"),
+    "title" : "标题",
+    "description" : "摘要",
+    "tag" : "标签",
+    "hypermedia" : [ 
+        {
+            "$ref" : "hypermedia",
+            "$id" : ObjectId("5bab66f8c92782395817cb04")
+        }
+    ],
+    "_class" : "cn.netkiller.api.domain.Article"
+}				
+				
+				</pre><p>db.getCollection('hypermedia').find({})</p><pre class="screen">
+				
+/* 1 */
+{
+    "_id" : ObjectId("5bab66b9c927823951f4f5fe"),
+    "hash" : "AAA",
+    "name" : "BBB",
+    "size" : "CCC",
+    "_class" : "api.domain.Hypermedia"
+}				
+				
+				</pre></section></section><section class="section" id="DateTimeFormat"><div class="titlepage"><div><div><h3 class="title">@DateTimeFormat</h3></div></div></div><pre class="programlisting">
+			
+@DateTimeFormat( pattern = "yyyy-MM-dd" )
+private Date birthday
+
+@DateTimeFormat(iso = DateTimeFormat.ISO.NONE)
+private final Calendar datetime;
+
+@DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
+private Date date;
+
+@DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+private Date createdDate = new Date();			
+			
+			</pre></section><section class="section" id="NumberFormat"><div class="titlepage"><div><div><h3 class="title">@NumberFormat</h3></div></div></div><pre class="programlisting">
+				@NumberFormat(style=Style.CURRENCY)
+				private double money;
+			</pre></section><section class="section" id="Enum"><div class="titlepage"><div><div><h3 class="title">在 @Document 中使用 Enum 类型</h3></div></div></div><pre class="programlisting">
+			
+	public enum Type {
+		POINT, CASH, GIFT
+	}
+
+	public enum Rebate {
+		DIRECT, INDIRECT
+	}
+
+	public enum Status {
+		New, Rejected, Approved
+	}
+			
+			</pre><p>枚举类型的赋值方法</p><pre class="programlisting">
+			
+		MultilevelDirectSellingTradingRebate multilevelDirectSellingTradingRebate = new MultilevelDirectSellingTradingRebate();
+		multilevelDirectSellingTradingRebate.name = "TEST";
+		multilevelDirectSellingTradingRebate.beginDate = new Date();
+		multilevelDirectSellingTradingRebate.endDate = new Date();
+		multilevelDirectSellingTradingRebate.lowAmount = 1.5d;
+		multilevelDirectSellingTradingRebate.highAmount = 100d;
+		multilevelDirectSellingTradingRebate.type = Type.CASH;			
+			
+			</pre></section><section class="section" id="document.list"><div class="titlepage"><div><div><h3 class="title">在 @Document 中定义数据结构 List/Map</h3></div></div></div><pre class="programlisting">
+			
+	public List&lt;Map&lt;String, Map&lt;?, ?&gt;&gt;&gt; product;
+			
+			</pre><p>下面是数据集结构的赋值例子</p><pre class="programlisting">
+			
+	Map&lt;Enum&lt;Rebate&gt;, Double&gt; rebate = new HashMap&lt;Enum&lt;Rebate&gt;, Double&gt;();
+
+	rebate.put(Rebate.DIRECT, 10.05d);
+	rebate.put(Rebate.INDIRECT, 6.05d);
+
+	Map&lt;String, Map&lt;?, ?&gt;&gt; prod1 = new HashMap&lt;String, Map&lt;?, ?&gt;&gt;();
+	prod1.put("USDRMB", rebate);
+
+	List&lt;Map&lt;String, Map&lt;?, ?&gt;&gt;&gt; products = new ArrayList&lt;Map&lt;String, Map&lt;?, ?&gt;&gt;&gt;();
+	products.add(prod1);
+	multilevelDirectSellingTradingRebate.product = products;
+			
+			</pre></section><section class="section" id="mongodb.geojson"><div class="titlepage"><div><div><h3 class="title">GeoJson 数据类型</h3></div></div></div><pre class="programlisting">
+			
+	@GeoSpatialIndexed
+	private GeoJsonPoint location; // GPS 地址位置
+			
+			</pre><pre class="programlisting">
+			
+location = new GeoJsonPoint(Double.valueOf(longitude), Double.valueOf(latitude));			
+			
+			</pre></section></section><footer><div class="navfooter"><hr/><table style="width: 100%; "><tr><td style="width: 40%; text-align: left; "><a accesskey="p" href="ch54s02.xhtml">上一页</a> </td><td style="width: 20%; text-align: center; "><a accesskey="u" href="ch54.xhtml">上一级</a></td><td style="width: 40%; text-align: right; "> <a accesskey="n" href="ch54s04.xhtml">下一页</a></td></tr><tr><td style="width: 40%; text-align: left; vertical-align: top; ">MongoDB 多数据源 </td><td style="width: 20%; text-align: center; "><a accesskey="h" href="../index.xhtml">起始页</a></td><td style="width: 40%; text-align: right; vertical-align: top; "> MongoRepository</td></tr></table></div></footer></body></html>

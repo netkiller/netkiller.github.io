@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><title>Spring boot with ELK(Elasticsearch + Logstash + Kibana)</title><link rel="stylesheet" type="text/css" href="../docbook.css"/><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot"/><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config"/><link rel="prev" href="ch06s05.xhtml" title="日志报警"/><link rel="next" href="ch07.xhtml" title="第 7 章 Spring boot with Undertow"/></head><body><header><div class="navheader"><table style="width: 100%; "><tr><th style="text-align: center; " colspan="3">Spring boot with ELK(Elasticsearch + Logstash + Kibana)</th></tr><tr><td style="width: 20%; text-align: left; "><a accesskey="p" href="ch06s05.xhtml">上一页</a> </td><th style="width: 60%; text-align: center; ">第 6 章 Spring boot with Logging</th><td style="width: 20%; text-align: right; "> <a accesskey="n" href="ch07.xhtml">下一页</a></td></tr></table><hr/></div></header><section class="section" id="SpringBoot.ELK"><div class="titlepage"><div><div><h3 class="title">Spring boot with ELK(Elasticsearch + Logstash + Kibana)</h3></div></div></div><p>将 Spring boot 日志写入 ELK 有多种实现方式，这里仅提供三种方案：</p><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>Spring boot -&gt; logback -&gt; Tcp/IP -&gt; logstash -&gt;
+					elasticsearch
+				</p>
+				这种方式实现非常方便不需要而外包或者软件
+			</li><li class="listitem"><p>Spring boot -&gt; logback -&gt; Redis -&gt; logstash -&gt;
+					elasticsearch
+				</p>
+				利用 Redis 提供的发布订阅功能将日志投递到 elasticsearch
+			</li><li class="listitem"><p>Spring boot -&gt; logback -&gt; Kafka -&gt; logstash -&gt;
+					elasticsearch
+				</p>
+				Kafka 方法适合大数据的情况。
+			</li></ol></div><section class="section" id="id823"><div class="titlepage"><div><div><h4 class="title">TCP 方案</h4></div></div></div><p>logstash 配置</p><pre class="programlisting">
+			
+input {
+  tcp {
+    host =&gt; "172.16.1.16" 
+    port =&gt; 9250
+    mode =&gt; "server"
+    tags =&gt; ["tags"]
+    codec =&gt; json_lines  //可能需要更新logstash插件
+  }
+}
+
+output {
+ stdout{codec =&gt;rubydebug}
+  elasticsearch {
+   hosts =&gt; ["localhost:9200"]  //这块配置需要带端口号
+    flush_size =&gt; 1000
+
+  }
+}			
+			
+			</pre><p>Spring boot logback.xml 配置</p><pre class="programlisting">
+			
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;configuration&gt;
+    &lt;property resource="properties/logback-variables.properties" /&gt; 
+
+    &lt;appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender"&gt;
+        &lt;encoder charset="UTF-8"&gt;
+            &lt;pattern&gt;%d{HH:mm:ss.SSS} [%thread] %-5level %logger - %msg%n
+            &lt;/pattern&gt;
+        &lt;/encoder&gt;
+    &lt;/appender&gt;
+    &lt;appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender"&gt;
+        &lt;destination&gt;172.16.1.16:9250&lt;/destination&gt;
+        &lt;encoder charset="UTF-8" class="net.logstash.logback.encoder.LogstashEncoder" /&gt;
+    &lt;/appender&gt;
+
+    &lt;!--&lt;appender name="async" class="ch.qos.logback.classic.AsyncAppender"&gt;--&gt;
+        &lt;!--&lt;appender-ref ref="stash" /&gt;--&gt;
+    &lt;!--&lt;/appender&gt;--&gt;
+    
+    &lt;root level="info"&gt;                    &lt;!-- 设置日志级别 --&gt;
+        &lt;appender-ref ref="STDOUT" /&gt;
+        &lt;appender-ref ref="LOGSTASH" /&gt;
+    &lt;/root&gt;
+&lt;/configuration&gt;			
+			
+			</pre></section><section class="section" id="id824"><div class="titlepage"><div><div><h4 class="title">Redis 方案</h4></div></div></div><p>https://github.com/kmtong/logback-redis-appender</p><p>Maven pom.xml 增加 Logback Redis 依赖</p><pre class="programlisting">
+			
+&lt;!-- https://mvnrepository.com/artifact/com.cwbase/logback-redis-appender --&gt;
+&lt;dependency&gt;
+    &lt;groupId&gt;com.cwbase&lt;/groupId&gt;
+    &lt;artifactId&gt;logback-redis-appender&lt;/artifactId&gt;
+    &lt;version&gt;1.1.5&lt;/version&gt;
+&lt;/dependency&gt;			
+			
+			</pre><p>Spring boot logback.xml 配置</p><pre class="programlisting">
+			
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;configuration&gt;
+	&lt;include resource="org/springframework/boot/logging/logback/defaults.xml" /&gt;
+	&lt;include resource="org/springframework/boot/logging/logback/file-appender.xml" /&gt;
+	&lt;property name="type.name" value="test" /&gt;
+	&lt;appender name="LOGSTASH" class="com.cwbase.logback.RedisAppender"&gt;
+		&lt;source&gt;spring-application&lt;/source&gt;
+		&lt;type&gt;${type.name}&lt;/type&gt;
+		&lt;host&gt;localhost&lt;/host&gt;
+		&lt;key&gt;logstash:redis&lt;/key&gt;
+		&lt;tags&gt;test-2&lt;/tags&gt;
+		&lt;mdc&gt;true&lt;/mdc&gt;
+		&lt;location&gt;true&lt;/location&gt;
+		&lt;callerStackIndex&gt;0&lt;/callerStackIndex&gt;
+		&lt;!--additionalField添加附加字段 用于head插件显示 --&gt;
+		&lt;additionalField&gt;
+			&lt;key&gt;MyKey&lt;/key&gt;
+			&lt;value&gt;MyValue&lt;/value&gt;
+		&lt;/additionalField&gt;
+		&lt;additionalField&gt;
+			&lt;key&gt;MySecondKey&lt;/key&gt;
+			&lt;value&gt;MyOtherValue&lt;/value&gt;
+		&lt;/additionalField&gt;
+	&lt;/appender&gt;
+	&lt;root level="INFO"&gt;
+		&lt;appender-ref ref="FILE" /&gt;
+		&lt;appender-ref ref="LOGSTASH" /&gt;
+	&lt;/root&gt;
+&lt;/configuration&gt;
+			
+			</pre><p>logstash 配置</p><pre class="programlisting">
+			
+input {
+    redis {
+        host =&gt; 'localhost'
+        data_type =&gt; 'list'
+        port =&gt; "6379"
+        key =&gt; 'logstash:redis' #自定义
+        type =&gt; 'redis-input'   #自定义
+    }
+}
+output {
+    elasticsearch {
+        host =&gt; "localhost" 
+        codec =&gt; "json"
+        protocol =&gt; "http"
+    }
+}
+			
+			</pre></section><section class="section" id="id825"><div class="titlepage"><div><div><h4 class="title">Kafka 方案</h4></div></div></div><pre class="programlisting">
+			
+			</pre></section><section class="section" id="id826"><div class="titlepage"><div><div><h4 class="title">Other</h4></div></div></div><pre class="programlisting">
+			
+			</pre></section></section><footer><div class="navfooter"><hr/><table style="width: 100%; "><tr><td style="width: 40%; text-align: left; "><a accesskey="p" href="ch06s05.xhtml">上一页</a> </td><td style="width: 20%; text-align: center; "><a accesskey="u" href="ch06.xhtml">上一级</a></td><td style="width: 40%; text-align: right; "> <a accesskey="n" href="ch07.xhtml">下一页</a></td></tr><tr><td style="width: 40%; text-align: left; vertical-align: top; ">日志报警 </td><td style="width: 20%; text-align: center; "><a accesskey="h" href="../index.xhtml">起始页</a></td><td style="width: 40%; text-align: right; vertical-align: top; "> 第 7 章 Spring boot with Undertow</td></tr></table></div></footer></body></html>

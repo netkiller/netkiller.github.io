@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><title>访问控制列表（Access Control List，ACL）</title><link rel="stylesheet" type="text/css" href="../../docbook.css"/><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot"/><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config"/><link rel="prev" href="ch60s03.xhtml" title="Spring Boot with Web Security(2.x)"/><link rel="next" href="../../cloud/pt05.xhtml" title="部分 V. Spring Cloud"/></head><body><header><div class="navheader"><table style="width: 100%; "><tr><th style="text-align: center; " colspan="3">访问控制列表（Access Control List，ACL）</th></tr><tr><td style="width: 20%; text-align: left; "><a accesskey="p" href="ch60s03.xhtml">上一页</a> </td><th style="width: 60%; text-align: center; ">第 60 章 Spring boot with Spring security(2.x)</th><td style="width: 20%; text-align: right; "> <a accesskey="n" href="../../cloud/pt05.xhtml">下一页</a></td></tr></table><hr/></div></header><section class="section" id="HttpSecurity"><div class="titlepage"><div><div><h2 class="title" style="clear: both">访问控制列表（Access Control List，ACL）</h2></div></div></div><section class="section" id="antMatchers"><div class="titlepage"><div><div><h3 class="title">antMatchers</h3></div></div></div><p>/** 表示放行所有请求URL</p><pre class="programlisting">
+			
+http.authorizeRequests().antMatchers("/**" ).permitAll();		
+			
+			</pre><p>匹配精确的URL地址 "/","/products","/product/show/*","/css/**" </p><pre class="programlisting">
+			
+	@Override
+	protected void configure(HttpSecurity httpSecurity) throws Exception {
+    httpSecurity
+            .authorizeRequests().antMatchers("/","/products","/product/show/*","/css/**").permitAll()
+            .anyRequest().authenticated()
+            .and()
+            .formLogin().loginPage("/login").permitAll()
+            .and()
+            .logout().permitAll();
+ 
+   httpSecurity.csrf().disable();
+   httpSecurity.headers().frameOptions().disable();
+}			
+			
+			</pre></section><section class="section" id="httpBasic"><div class="titlepage"><div><div><h3 class="title">HTTP Auth</h3></div></div></div><pre class="programlisting">
+			
+	@Override
+	protected void configure(HttpSecurity http) throws Exception {
+		http.authorizeRequests().antMatchers("/ping","/v1/*/ping","/v1/public/**" ).permitAll()
+		.anyRequest().authenticated()
+		.and().rememberMe().and().httpBasic()
+		.and().csrf().disable();
+	}
+			
+			</pre></section><section class="section" id="HttpMethod"><div class="titlepage"><div><div><h3 class="title">Rest</h3></div></div></div><pre class="programlisting">
+			
+protected void configure(HttpSecurity http) throws Exception {
+    http
+      .csrf().disable()
+      .authorizeRequests()
+        .antMatchers(HttpMethod.POST, "/api/**").authenticated()
+        .antMatchers(HttpMethod.PUT, "/api/**").authenticated()
+        .antMatchers(HttpMethod.DELETE, "/api/**").authenticated()
+        .anyRequest().permitAll()
+        .and()
+      .httpBasic().and()
+      .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+}
+			
+			</pre></section><section class="section" id="hasRole"><div class="titlepage"><div><div><h3 class="title">hasRole</h3></div></div></div><pre class="programlisting">
+			
+		
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+       
+      http.authorizeRequests()
+        .antMatchers("/", "/member").access("hasRole('USER') or hasRole('ADMIN') or hasRole('DBA')")
+        .and().formLogin().loginPage("/login")
+        .usernameParameter("sso").passwordParameter("password")
+        .and().exceptionHandling().accessDeniedPage("/403");
+    }
+			
+			</pre></section><section class="section" id="hasAnyRole"><div class="titlepage"><div><div><h3 class="title">hasAnyRole()</h3></div></div></div><pre class="programlisting">
+			
+ 	@Autowired
+    private AccessDeniedHandler accessDeniedHandler;
+    			
+	@Override
+    protected void configure(HttpSecurity http) throws Exception {
+
+        http.csrf().disable()
+                .authorizeRequests()
+					.antMatchers("/", "/home", "/about").permitAll()
+					.antMatchers("/admin/**").hasAnyRole("ADMIN")
+					.antMatchers("/user/**").hasAnyRole("USER")
+					.anyRequest().authenticated()
+                .and()
+                .formLogin()
+					.loginPage("/login")
+					.permitAll()
+					.and()
+                .logout()
+					.permitAll()
+					.and()
+                .exceptionHandling().accessDeniedHandler(accessDeniedHandler);
+    }			
+			
+			</pre></section><section class="section" id="withUser"><div class="titlepage"><div><div><h3 class="title">withUser</h3></div></div></div><section class="section" id="id1313"><div class="titlepage"><div><div><h4 class="title">添加用户</h4></div></div></div><pre class="programlisting">
+			
+	@Autowired
+    public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
+        auth
+            .inMemoryAuthentication()
+                .withUser("user").password("password").roles("USER");
+
+    }
+			
+				</pre></section><section class="section" id="withUser"><div class="titlepage"><div><div><h4 class="title">添加多个用户，并指定角色</h4></div></div></div><p>添加多个用户</p><pre class="programlisting">
+			
+	@Autowired
+    public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
+
+        auth.inMemoryAuthentication()
+                .withUser("user").password("password").roles("USER")
+                .and()
+                .withUser("admin").password("password").roles("ADMIN");
+    }		
+			
+				</pre><pre class="programlisting">
+			
+	
+	@Autowired
+    public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
+        auth
+            .inMemoryAuthentication()
+                .withUser("user").password("password").roles("USER")
+                .and()
+                .withUser("admin").password("admin").roles("ADMIN")
+                .and()
+                .withUser("admin").password("super").roles("ADMIN","SYS","DBA")
+                ;
+    }
+			
+				</pre></section><section class="section" id="getAuthentication"><div class="titlepage"><div><div><h4 class="title">获取当前用户</h4></div></div></div><pre class="programlisting">
+				
+Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+String currentPrincipalName = authentication.getName();
+				
+				</pre></section></section></section><footer><div class="navfooter"><hr/><table style="width: 100%; "><tr><td style="width: 40%; text-align: left; "><a accesskey="p" href="ch60s03.xhtml">上一页</a> </td><td style="width: 20%; text-align: center; "><a accesskey="u" href="ch60.xhtml">上一级</a></td><td style="width: 40%; text-align: right; "> <a accesskey="n" href="../../cloud/pt05.xhtml">下一页</a></td></tr><tr><td style="width: 40%; text-align: left; vertical-align: top; ">Spring Boot with Web Security(2.x) </td><td style="width: 20%; text-align: center; "><a accesskey="h" href="../../index.xhtml">起始页</a></td><td style="width: 40%; text-align: right; vertical-align: top; "> 部分 V. Spring Cloud</td></tr></table></div></footer></body></html>

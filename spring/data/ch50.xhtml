@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><title>第 50 章 EntityManager</title><link rel="stylesheet" type="text/css" href="../docbook.css"/><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot"/><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config"/><link rel="prev" href="pt03.xhtml" title="部分 III. Spring Data"/><link rel="next" href="JdbcTemplate/ch51.xhtml" title="第 51 章 Spring Data with JdbcTemplate"/></head><body><header><div class="navheader"><table style="width: 100%; "><tr><th style="text-align: center; " colspan="3">第 50 章 EntityManager</th></tr><tr><td style="width: 20%; text-align: left; "><a accesskey="p" href="pt03.xhtml">上一页</a> </td><th style="width: 60%; text-align: center; ">部分 III. Spring Data</th><td style="width: 20%; text-align: right; "> <a accesskey="n" href="JdbcTemplate/ch51.xhtml">下一页</a></td></tr></table><hr/></div></header><section class="chapter" id="EntityManager"><div class="titlepage"><div><div><h2 class="title">第 50 章 EntityManager</h2></div></div></div><pre class="programlisting">
+		
+@Repository 
+@Transactional(readOnly = true)  
+class AccountServiceImpl implements AccountService {  
+ 
+  @PersistenceContext 
+  private EntityManager em;  
+ 
+  @Override 
+  @Transactional 
+  public Account save(Account account) {  
+ 
+    if (account.getId() == null) {  
+      em.persist(account);  
+      return account;  
+    } else {  
+      return em.merge(account);  
+    }  
+  }  
+ 
+  @Override 
+  public List&lt;Account&gt; findByCustomer(Customer customer) {  
+ 
+    TypedQuery query = em.createQuery("select a from Account a where a.customer = ?1", Account.class);  
+    query.setParameter(1, customer);  
+ 
+    return query.getResultList();  
+  }  
+  
+  @Override 
+  public List&lt;Customer&gt; findAll(int page, int pageSize) {  
+ 
+    TypedQuery query = em.createQuery("select c from Customer c", Customer.class);  
+ 
+    query.setFirstResult(page * pageSize);  
+    query.setMaxResults(pageSize);  
+ 
+    return query.getResultList();  
+  }  
+   
+} 
+		
+	</pre></section><footer><div class="navfooter"><hr/><table style="width: 100%; "><tr><td style="width: 40%; text-align: left; "><a accesskey="p" href="pt03.xhtml">上一页</a> </td><td style="width: 20%; text-align: center; "><a accesskey="u" href="pt03.xhtml">上一级</a></td><td style="width: 40%; text-align: right; "> <a accesskey="n" href="JdbcTemplate/ch51.xhtml">下一页</a></td></tr><tr><td style="width: 40%; text-align: left; vertical-align: top; ">部分 III. Spring Data </td><td style="width: 20%; text-align: center; "><a accesskey="h" href="../index.xhtml">起始页</a></td><td style="width: 40%; text-align: right; vertical-align: top; "> 第 51 章 Spring Data with JdbcTemplate</td></tr></table></div></footer></body></html>
