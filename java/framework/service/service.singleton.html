@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>52.7. Service 单例/多例模式</title><link rel="stylesheet" type="text/css" href="../../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><link rel="home" href="../../index.html" title="Netkiller Java 手札（版）" /><link rel="up" href="index.html" title="第 52 章 Service" /><link rel="prev" href="AopContext.html" title="52.6. AopContext" /><link rel="next" href="ch52s08.html" title="52.8. 构造方法" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
+		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://edu.51cto.com/lecturer/1703915.html">51CTO学院</a> | <a xmlns="" href="https://edu.csdn.net/lecturer/6423">CSDN程序员研修院</a> | <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> | <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">腾讯云社区</a> | <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">阿里云栖社区</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">52.7. Service 单例/多例模式</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="AopContext.html">上一页</a> </td><th width="60%" align="center">第 52 章 Service</th><td width="20%" align="right"> <a accesskey="n" href="ch52s08.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="service.singleton"></a>52.7. Service 单例/多例模式</h2></div></div></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1247"></a>52.7.1. Service 是单例模式</h3></div></div></div><p>Service 的变量是共享的，这是与 new Object 的区别。</p><p>同步执行</p><pre class="programlisting">
+			
+package cn.netkiller.service;
+
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+
+@Service
+@Slf4j
+@Data
+public class TestService {
+
+    private String share;
+
+}
+			
+			</pre><pre class="programlisting">
+			
+    @GetMapping("get")
+    public String get() {
+        return testService.getShare();
+    }
+
+    @GetMapping("set")
+    public String set(@RequestParam("value") String value) {
+        testService.setShare(value);
+        return testService.getShare();
+    }			
+			
+			</pre><pre class="screen">
+			
+neo@MacBook-Pro-M2 ~/w/watch (main)&gt; curl -s 'http://localhost:8080/test/set?value=aaa'
+aaa⏎                                                                                                                                                                                                                                                
+neo@MacBook-Pro-M2 ~/w/watch (main)&gt; curl -s 'http://localhost:8080/test/get'
+aaa⏎                                                                                                                                                                                                                                                
+neo@MacBook-Pro-M2 ~/w/watch (main)&gt; curl -s 'http://localhost:8080/test/set?value=bbb'
+bbb⏎                                                                                                                                                                                                                                                
+neo@MacBook-Pro-M2 ~/w/watch (main)&gt; curl -s 'http://localhost:8080/test/get'
+bbb⏎                			
+			
+			</pre><p>我们可以看到 Service 是 singleton 单例模式</p><pre class="screen">
+			
+neo@MacBook-Pro-M2 ~/w/watch (main)&gt; curl -s 'http://neo:chen@localhost:8080/actuator/beans' |jq '.contexts.[].beans.testService'
+{
+  "aliases": [],
+  "scope": "singleton",
+  "type": "cn.netkiller.service.TestService$$SpringCGLIB$$0",
+  "resource": "file [/Users/neo/workspace/watch/target/classes/cn/netkiller/service/TestService.class]",
+  "dependencies": []
+}		
+			
+			</pre><p>在多线程或者异步执行的情况会更糟</p><pre class="programlisting">
+		
+package cn.netkiller.service;
+
+import cn.netkiller.domain.Chat;
+import cn.netkiller.repository.ChatRepository;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+
+@Service
+@Slf4j
+public class TestService {
+
+    private String test;
+
+    @Async
+    public void test1() {
+        this.test = "Test 1";
+    }
+
+    @Async
+    public void test2() {
+        this.test = "Test 2";
+    }
+
+    @Async
+    public void test() {
+        log.info(this.test);
+    }
+}
+
+		
+			</pre><pre class="programlisting">
+		
+    @Autowired
+    private TestService testService;
+    		
+    @GetMapping("test")
+    private Mono&lt;String&gt; test() {
+        chatService.test();
+        return Mono.just("OK");
+    }
+    		
+    @GetMapping("/test1")
+    public Mono&lt;String&gt; test1() {
+        String test = "测试";
+        chatService.test1();
+        return Mono.just(test);
+    }
+
+    @GetMapping("/test2")
+    public Mono&lt;String&gt; test2() {
+        chatService.test2();
+        return Mono.just("OK");
+    }
+
+		
+			</pre><pre class="programlisting">
+		
+2024-01-01T14:09:10.022+08:00  INFO 59782 --- [watch-development] [         task-1] cn.netkiller.service.TestService           : null
+2024-01-01T14:09:24.694+08:00  INFO 59782 --- [watch-development] [         task-3] cn.netkiller.service.TestService           : Test 1
+2024-01-01T14:10:04.394+08:00  INFO 59782 --- [watch-development] [         task-8] cn.netkiller.service.TestService           : Test 2
+		
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1248"></a>52.7.2. Service 多例实现</h3></div></div></div><p>要实现 Service 多例模式很简单，只需要在 Service 根 Controller 中同时增加
+				@Scope("prototype") 即可</p><pre class="programlisting">
+			
+package cn.netkiller.service;
+
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Scope;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+
+@Service
+@Slf4j
+@Data
+@Scope("prototype")
+public class TestService {
+
+    private String share = "default";
+
+    public TestService() {
+        this.share = "init";
+    }
+}			
+			
+			</pre><pre class="programlisting">
+			
+package cn.netkiller.controller;
+
+import cn.netkiller.ai.AiChain;
+import cn.netkiller.annotation.TokenPass;
+import cn.netkiller.annotation.TokenVerification;
+import cn.netkiller.component.StreamService;
+import cn.netkiller.domain.Picture;
+import cn.netkiller.domain.PicturePsychoanalysis;
+import cn.netkiller.domain.embeddable.StreamTopic;
+import cn.netkiller.service.AiService;
+import cn.netkiller.service.PicturePsychoanalysisService;
+import cn.netkiller.service.TestService;
+import cn.netkiller.utils.ResponseJson;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.MediaType;
+import org.springframework.http.codec.ServerSentEvent;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxSink;
+import reactor.core.publisher.Mono;
+import reactor.core.publisher.ParallelFlux;
+import reactor.core.scheduler.Schedulers;
+
+import java.io.IOException;
+import java.security.Principal;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+
+@RestController
+@Slf4j
+@RequestMapping("/test")
+@Scope(value = "prototype")
+public class TestController {
+  
+    @Autowired
+    private TestService testService;
+
+    @GetMapping("get")
+    public String get() {
+        return testService.getShare();
+    }
+
+    @GetMapping("set")
+    public String set(@RequestParam("value") String value) {
+        testService.setShare(value);
+        return testService.getShare();
+    }
+
+}
+			
+			</pre><pre class="programlisting">
+			
+neo@MacBook-Pro-M2 ~/w/watch (main)&gt; curl -s 'http://localhost:8080/test/get'
+init⏎                                                                                                                                                                                                                                               
+neo@MacBook-Pro-M2 ~/w/watch (main)&gt; curl -s 'http://localhost:8080/test/set?value=bbb'
+bbb⏎                                                                                                                                                                                                                                                
+neo@MacBook-Pro-M2 ~/w/watch (main)&gt; curl -s 'http://localhost:8080/test/get'
+init⏎                                                                                                                                                                                                                                               
+neo@MacBook-Pro-M2 ~/w/watch (main)&gt; curl -s 'http://localhost:8080/test/get'
+init⏎                                                                                                                                                                                                                                               
+neo@MacBook-Pro-M2 ~/w/watch (main)&gt; curl -s 'http://localhost:8080/test/set?value=aaa'
+aaa⏎                                                                                                                                                                                                                                                
+neo@MacBook-Pro-M2 ~/w/watch (main)&gt; curl -s 'http://localhost:8080/test/get'
+init⏎ 
+			
+			</pre><p>去掉构造方法</p><pre class="programlisting">
+			
+	package cn.netkiller.service;
+
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Scope;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+
+@Service
+@Slf4j
+@Data
+@Scope("prototype")
+public class TestService {
+
+    private String share = "default";
+
+    public TestService() {
+        this.share = "init";
+    }
+}			
+			
+			</pre><p>测试结果</p><pre class="programlisting">
+			
+neo@MacBook-Pro-M2 ~/w/watch (main)&gt; curl -s 'http://localhost:8080/test/get'
+default⏎                                                                                                                                                                                                                                            
+neo@MacBook-Pro-M2 ~/w/watch (main)&gt; curl -s 'http://localhost:8080/test/set?value=aaa'
+aaa⏎                                                                                                                                                                                                                                                
+neo@MacBook-Pro-M2 ~/w/watch (main)&gt; curl -s 'http://localhost:8080/test/get'
+default⏎ 	
+			
+			</pre><pre class="screen">
+			
+neo@MacBook-Pro-M2 ~/w/watch (main)&gt; curl -s 'http://neo:chen@localhost:8080/actuator/beans' |jq '.contexts.[].beans.testController'
+{
+  "aliases": [],
+  "scope": "prototype",
+  "type": "cn.netkiller.controller.TestController$$SpringCGLIB$$0",
+  "resource": "file [/Users/neo/workspace/watch/target/classes/cn/netkiller/controller/TestController.class]",
+  "dependencies": [
+    "picturePsychoanalysisService",
+    "streamService",
+    "testService",
+    "aiService"
+  ]
+}
+neo@MacBook-Pro-M2 ~/w/watch (main)&gt; curl -s 'http://neo:chen@localhost:8080/actuator/beans' |jq '.contexts.[].beans.testService'
+{
+  "aliases": [],
+  "scope": "prototype",
+  "type": "cn.netkiller.service.TestService$$SpringCGLIB$$0",
+  "resource": "file [/Users/neo/workspace/watch/target/classes/cn/netkiller/service/TestService.class]",
+  "dependencies": []
+}
+			
+			</pre></div></div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
+			window.changyan.api.config({
+			appid: 'cyvwjQUG3',
+			conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
+			});
+</script><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="AopContext.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ch52s08.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">52.6. AopContext </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 52.8. 构造方法</td></tr></table></div><script xmlns="">
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+			ga('create', 'UA-11694057-1', 'auto');
+			ga('send', 'pageview');
+
+		</script><script xmlns="" async="async">
+			var _hmt = _hmt || [];
+			(function() {
+			var hm = document.createElement("script");
+			hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(hm, s);
+			})();
+</script><script xmlns="" async="async">
+			(function(){
+			var bp = document.createElement('script');
+			var curProtocol = window.location.protocol.split(':')[0];
+			if (curProtocol === 'https') {
+			bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+			}
+			else {
+			bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+			}
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(bp, s);
+			})();
+</script></body></html>

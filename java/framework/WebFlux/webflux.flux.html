@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>50.8. Flux 返回多条数据</title><link rel="stylesheet" type="text/css" href="../../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><link rel="home" href="../../index.html" title="Netkiller Java 手札（版）" /><link rel="up" href="webflux.html" title="第 50 章 WebFlux framework" /><link rel="prev" href="webflux.mono.html" title="50.7. Mono" /><link rel="next" href="webflux.sse.html" title="50.9. SSE" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
+		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://edu.51cto.com/lecturer/1703915.html">51CTO学院</a> | <a xmlns="" href="https://edu.csdn.net/lecturer/6423">CSDN程序员研修院</a> | <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> | <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">腾讯云社区</a> | <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">阿里云栖社区</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">50.8. Flux 返回多条数据</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="webflux.mono.html">上一页</a> </td><th width="60%" align="center">第 50 章 WebFlux framework</th><td width="20%" align="right"> <a accesskey="n" href="webflux.sse.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="webflux.flux"></a>50.8. Flux 返回多条数据</h2></div></div></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1210"></a>50.8.1. FluxSink 创建异步 Flux</h3></div></div></div><pre class="programlisting">
+		
+        Flux&lt;String&gt; flux = Flux.create(sink -&gt; {
+            sink.next("Neo");
+            sink.next("netkiller");
+            sink.complete();
+        });
+        flux.subscribe(System.out::println);		
+		
+		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1211"></a>50.8.2. SynchronousSink 创建同步 Flux</h3></div></div></div><pre class="programlisting">
+		
+        Flux&lt;String&gt; generate = Flux.generate(synchronousSink -&gt; {
+            synchronousSink.next("Neo");
+            synchronousSink.complete();
+        });
+        generate.subscribe(System.out::println);		
+		
+		</pre><p>多个值</p><pre class="programlisting">
+		
+final Random random = new Random();
+Flux.generate(ArrayList::new, (list, sink) -&gt; {
+    int value = random.nextInt(100);
+    list.add(value);
+    sink.next(value);
+    if (list.size() == 10) {
+        sink.complete();
+    }
+    return list;
+}).subscribe(System.out::println);		
+		
+		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1212"></a>50.8.3. just()</h3></div></div></div><pre class="programlisting">
+		
+//单个元素
+Flux.just("just").subscribe(System.out::println);
+//多个元素
+Flux.just("just", "just1", "just2").subscribe(System.out::println);	
+		
+		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1213"></a>50.8.4. 从 Flux/Mono 创建 Flux</h3></div></div></div><pre class="programlisting">
+		
+//Flux-&gt;Flux
+Flux.from(Flux.just("just", "just1", "just2")).subscribe(System.out::println);
+//Mono-&gt;Mono
+Flux.from(Mono.just("just")).subscribe(System.out::println);	
+		
+		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1214"></a>50.8.5. 消息订阅</h3></div></div></div><pre class="programlisting">
+		
+Flux.just("Netkiller1", "Netkiller2", "Netkiller3")
+        .subscribe(data -&gt; System.out.println("onNext:" + data), err -&gt; {
+        }, () -&gt; System.out.println("onComplete"));		
+		
+		</pre><p>多个订阅者</p><pre class="programlisting">
+		
+    List&lt;String&gt; list = new ArrayList&lt;&gt;();
+        list.add("1");
+        list.add("2");
+        list.add("3");
+        list.add("4");
+        list.add("5");
+        Flux&lt;String&gt; flux = Flux.fromIterable(list);
+        flux.subscribe(System.out::println);
+        flux.subscribe(System.out::println);
+        flux.subscribe(System.out::println);
+		
+		</pre><p>手动控制</p><pre class="programlisting">
+		
+	Flux&lt;String&gt; flux = Flux.fromIterable(list);
+        ConnectableFlux&lt;String&gt; con = flux.publish();
+        con.subscribe(System.out::println);
+        con.subscribe(System.out::println);
+        con.subscribe(System.out::println);
+        // 手动的开启消费数据
+        con.connect();		
+		
+		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1215"></a>50.8.6. 从 Flux/Mono 创建 Flux</h3></div></div></div><pre class="programlisting">
+		
+Flux.fromArray(new String[] { "arr", "arr", "arr", "arr" }).subscribe(System.out::println);	
+		
+		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1216"></a>50.8.7. 从 Iterable 创建 Flux</h3></div></div></div><pre class="programlisting">
+		
+Set&lt;String&gt; v = new HashSet&lt;&gt;();
+v.add("1");
+v.add("2");
+v.add("3");
+Flux.fromIterable(() -&gt; v.iterator()).subscribe(System.out::println);
+		
+		</pre><p>autoConnect(5) 表示如果订阅者达到5个 就自动开启</p><pre class="programlisting">
+		
+        Flux&lt;String&gt; auto = flux.publish().autoConnect(5);
+        auto.subscribe(System.out::println);
+        auto.subscribe(System.out::println);
+        auto.subscribe(System.out::println);		
+		
+		</pre><p>停止消费策略</p><pre class="programlisting">
+		
+		// 如果订阅者少于三个就会停止消费数据，直到订阅者达到三个为止
+        Flux&lt;String&gt; auto = flux.publish().refCount(3);
+        auto.subscribe(System.out::println);
+        auto.subscribe(System.out::println);
+        auto.subscribe(System.out::println);
+
+        Thread.sleep(1000L);
+
+      	// 如果订阅者少于三个且超过十秒没有新的订阅才会停止消费数据
+        Flux&lt;String&gt; auto = flux.publish().refCount(3,Duration.ofSeconds(10));
+        auto.subscribe(System.out::println);
+        auto.subscribe(System.out::println);
+        auto.subscribe(System.out::println);		
+		
+		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1217"></a>50.8.8. 从 Stream 创建 Flux</h3></div></div></div><p>从 Stream 返回 Flux</p><pre class="programlisting">
+		
+    @GetMapping(path = "/sse", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    private Flux&lt;String&gt; getWords() {
+        Stream&lt;String&gt; items = Arrays.asList("alpha", "bravo", "charlie").stream();
+        return Flux.fromStream(items);
+    }		
+		
+		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1218"></a>50.8.9. defer()</h3></div></div></div><pre class="programlisting">
+		
+Flux.defer(() -&gt; Flux.just("just", "just1", "just2")).subscribe(System.out::println);		
+		
+		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="Flux.interval"></a>50.8.10. Flux.interval()</h3></div></div></div><pre class="programlisting">
+		
+Flux.interval(Duration.of(500, ChronoUnit.MILLIS)).subscribe(System.out::println);	
+Flux.interval(Duration.ofSeconds(2), Duration.ofMillis(200)).subscribe(System.out::println);
+
+Flux.intervalMillis(1000).subscribe(System.out::println);
+		
+		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1219"></a>50.8.11. Flux.empty()</h3></div></div></div><pre class="programlisting">
+		
+Flux.empty().subscribe(System.out::println);		
+		
+		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1220"></a>50.8.12. Flux.error()</h3></div></div></div><pre class="programlisting">
+		
+Flux.error(new RuntimeException()).subscribe(System.out::println);
+		
+		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1221"></a>50.8.13. Flux.never()</h3></div></div></div><pre class="programlisting">
+		
+Flux.never().subscribe(System.out::println);
+		
+		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1222"></a>50.8.14. Flux.range()</h3></div></div></div><pre class="programlisting">
+		
+Flux.range(0, 100).subscribe(System.out::println);
+		
+		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1223"></a>50.8.15. 返回数据</h3></div></div></div><p>返回 List</p><pre class="programlisting">
+		
+    @GetMapping("flux")
+    public Flux&lt;Picture&gt; flux() {
+        List&lt;Picture&gt; list = new ArrayList&lt;Picture&gt;();
+        IntStream.range(1, 10).forEach(i -&gt; {
+            Picture picture = new Picture();
+            picture.setId(Long.valueOf(i));
+            picture.setImage("https://www.netkiller.cn/images/" + i + ".png");
+            list.add(picture);
+        });
+        return Flux.fromIterable(list);
+    }
+		
+		</pre><p>返回 Map</p><pre class="programlisting">
+		
+    @GetMapping("map")
+    public Flux&lt;Map.Entry&lt;String, String&gt;&gt; map() {
+        Map&lt;String, String&gt; map = new HashMap&lt;&gt;();
+        IntStream.range(1, 10).forEach(i -&gt; {
+            map.put("key" + i, "value" + i);
+        });
+
+        return Flux.fromIterable(map.entrySet());
+    }
+		
+		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1224"></a>50.8.16. 持续更新 Flux</h3></div></div></div><pre class="programlisting">
+	
+		AtomicReference&lt;FluxSink&lt;String&gt;&gt; fluxSink = new AtomicReference&lt;FluxSink&lt;String&gt;&gt;();
+
+        Flux&lt;String&gt; response = Flux.create(sink -&gt; {
+            fluxSink.set(sink);
+        });
+        response.subscribe(System.out::println);
+        //下发元素
+        fluxSink.get().next("Neo");
+        fluxSink.get().next("Netkiller");
+	
+		</pre><pre class="programlisting">
+		
+	Consumer&lt;String&gt; producer;
+
+    @Test
+    public void testFluxCreate() {
+        Flux.create(sink -&gt; {
+            producer = nextData -&gt; sink.next(nextData);
+        }).subscribe(e -&gt; System.out.println(e));
+
+        //do something
+
+        //下发元素
+        producer.accept("Neo");
+
+        producer.accept("Netkiller");
+
+    }
+
+	FluxSink&lt;String&gt; outSink;
+    @Test
+    public void testFluxCreate() {
+        Flux&lt;String&gt; f = Flux.create(sink -&gt; {
+            outSink = sink;
+        });
+        f.subscribe(e -&gt; System.out.println(e))
+        //do something
+
+        //下发元素
+        outSink.next("Neo");
+
+        outSink.next("Netkiller");
+    }
+		
+		
+		</pre><pre class="programlisting">
+	
+interface MyEventListener&lt;T&gt; {
+    void onDataChunk(List&lt;T&gt; chunk);
+    void processComplete();
+}
+
+
+Flux&lt;String&gt; bridge = Flux.create(sink -&gt; {
+    myEventProcessor.register( 
+      new MyEventListener&lt;String&gt;() { 
+
+        public void onDataChunk(List&lt;String&gt; chunk) {
+          for(String s : chunk) {
+            sink.next(s); 
+          }
+        }
+        public void processComplete() {
+            sink.complete(); 
+        }
+    });
+});	
+	
+		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1225"></a>50.8.17. map(), flatMap()</h3></div></div></div><pre class="programlisting">
+		
+        Flux.just(1, 2, 3, 4)
+                .log()
+                .map(i -&gt; {
+                    return i * 2;
+                })
+                .subscribe(System.out::println);		
+		
+		</pre><pre class="programlisting">
+		
+        Flux.just(1, 2, 3, 4)
+                .log()
+                .flatMap(e -&gt; {
+                    return Flux.just(e * 2).delayElements(Duration.ofSeconds(1));
+                })
+                .subscribe(System.out::println);		
+		
+		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1226"></a>50.8.18. 过滤</h3></div></div></div><pre class="programlisting">
+		
+        Flux&lt;Integer&gt; flux = Flux.just(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+
+        flux.map(num -&gt; num * 2) // 将每个元素乘以2
+                .filter(num -&gt; num % 2 == 0) // 过滤掉奇数
+                .subscribe(System.out::println);		
+		
+		</pre></div></div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
+			window.changyan.api.config({
+			appid: 'cyvwjQUG3',
+			conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
+			});
+</script><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="webflux.mono.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="webflux.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="webflux.sse.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">50.7. Mono </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 50.9. SSE</td></tr></table></div><script xmlns="">
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+			ga('create', 'UA-11694057-1', 'auto');
+			ga('send', 'pageview');
+
+		</script><script xmlns="" async="async">
+			var _hmt = _hmt || [];
+			(function() {
+			var hm = document.createElement("script");
+			hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(hm, s);
+			})();
+</script><script xmlns="" async="async">
+			(function(){
+			var bp = document.createElement('script');
+			var curProtocol = window.location.protocol.split(':')[0];
+			if (curProtocol === 'https') {
+			bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+			}
+			else {
+			bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+			}
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(bp, s);
+			})();
+</script></body></html>
