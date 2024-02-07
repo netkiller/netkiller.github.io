@@ -10,7 +10,110 @@
     &lt;version&gt;6.2.1&lt;/version&gt;
 &lt;/dependency&gt;
 		
-		</pre><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="Inbound"></a>71.2.1. 入站消息通道适配器</h3></div></div></div><p></p></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="Outbound"></a>71.2.2. 出站通道适配器</h3></div></div></div><p></p></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="ACK"></a>71.2.3. 手动 ACK 应答</h3></div></div></div><a class="ulink" href="o" target="_top">o</a><p></p><p></p><p></p><p></p><p></p><p></p><p>
+		</pre><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="Inbound"></a>71.2.1. 入站消息通道适配器</h3></div></div></div><p></p></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="Outbound"></a>71.2.2. 出站通道适配器</h3></div></div></div><p></p><pre class="programlisting">
+			
+package cn.netkiller.config;
+
+import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.integration.annotation.IntegrationComponentScan;
+import org.springframework.integration.annotation.MessagingGateway;
+import org.springframework.integration.annotation.ServiceActivator;
+import org.springframework.integration.channel.DirectChannel;
+import org.springframework.integration.config.EnableIntegration;
+import org.springframework.integration.mqtt.core.DefaultMqttPahoClientFactory;
+import org.springframework.integration.mqtt.core.MqttPahoClientFactory;
+import org.springframework.integration.mqtt.outbound.MqttPahoMessageHandler;
+import org.springframework.integration.mqtt.support.MqttHeaders;
+import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.MessageHandler;
+import org.springframework.messaging.handler.annotation.Header;
+
+@Configuration
+@EnableIntegration
+@IntegrationComponentScan
+public class MqttConfiguration {
+    @Value("${mqtt.broker}")
+    private String broker;
+    @Value("${mqtt.username}")
+    private String username;
+    @Value("${mqtt.password}")
+    private String password;
+
+    private final int qos = 2;
+    @Value("${mqtt.topic.prefix}")
+    private String prefix;
+
+    @Bean
+    public MqttPahoClientFactory mqttClientFactory() {
+        DefaultMqttPahoClientFactory factory = new DefaultMqttPahoClientFactory();
+        MqttConnectOptions options = new MqttConnectOptions();
+        options.setServerURIs(new String[]{broker});
+        options.setUserName(username);
+        options.setPassword(password.toCharArray());
+        options.setAutomaticReconnect(true);
+        options.setCleanSession(false);
+        options.setKeepAliveInterval(20);
+//        options.setConnectionTimeout(30000);
+//        options.setExecutorServiceTimeout(30000);
+        factory.setConnectionOptions(options);
+        return factory;
+    }
+
+    @Bean
+    @ServiceActivator(inputChannel = "mqttOutboundChannel")
+    public MessageHandler mqttOutbound() {
+        MqttPahoMessageHandler messageHandler = new MqttPahoMessageHandler("testClient", mqttClientFactory());
+        messageHandler.setAsync(true);
+        messageHandler.setDefaultTopic("testTopic");
+        return messageHandler;
+    }
+
+    @Bean
+    public MessageChannel mqttOutboundChannel() {
+        return new DirectChannel();
+    }
+
+    @MessagingGateway(defaultRequestChannel = "mqttOutboundChannel")
+    public interface MyGateway {
+
+        void sendToMqtt(String data);
+
+        void sendToMqtt(@Header(MqttHeaders.TOPIC) String topic, String data);
+
+    }
+}
+			
+			</pre><p></p><pre class="programlisting">
+			
+    @Autowired
+    private MqttConfiguration.MyGateway myGateway;
+
+    @GetMapping("/mqtt")
+    public Mono&lt;String&gt; mqtt(Principal principal) {
+        myGateway.sendToMqtt("Test");
+        myGateway.sendToMqtt("neo", "Test");
+        return Mono.empty();
+    }			
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1452"></a>71.2.3. @MessagingGateway 定义消息网管接口</h3></div></div></div>
+			
+    @MessagingGateway(defaultRequestChannel = "mqttOutboundChannel")
+    public interface MyGateway {
+
+        void sendToMqtt(String data);
+
+        void sendToMqtt(@Header(MqttHeaders.TOPIC) String topic, String data);
+
+        void sendToMqtt(@Header(MqttHeaders.TOPIC) String topic, @Header(MqttHeaders.QOS) int qos, String payload);
+
+        void sendToMqtt(@Header(MqttHeaders.TOPIC) String topic, @Header(MqttHeaders.QOS) int qos, byte[] payload);
+
+    }			
+			
+		</div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="ACK"></a>71.2.4. 手动 ACK 应答</h3></div></div></div><a class="ulink" href="o" target="_top">o</a><p></p><p></p><p></p><p></p><p></p><p>
 			</p><p>
 			</p><p>
 
