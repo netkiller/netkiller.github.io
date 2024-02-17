@@ -1,0 +1,989 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>10.7. CompletableFuture</title><link rel="stylesheet" type="text/css" href="../../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><link rel="home" href="../../index.html" title="Netkiller Java 手札（版）" /><link rel="up" href="index.html" title="第 10 章 Java 并发编程" /><link rel="prev" href="FutureTask.html" title="10.6. FutureTask" /><link rel="next" href="ThreadPool.html" title="10.8. java 线程池" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
+		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">10.7. CompletableFuture</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="FutureTask.html">上一页</a> </td><th width="60%" align="center">第 10 章 Java 并发编程</th><td width="20%" align="right"> <a accesskey="n" href="ThreadPool.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="CompletableFuture"></a>10.7. CompletableFuture</h2></div></div></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="runAsync"></a>10.7.1. runAsync 创建没有返回值的异步任务</h3></div></div></div><p>runAsync
+				创建没有返回值的异步任务。它有如下两个方法，一个是使用默认线程池（ForkJoinPool.commonPool()）的方法，一个是自定义线程池的重载方法
+			</p><pre class="programlisting">
+			
+package cn.netkiller;
+
+import cn.netkiller.thread.ThreadManager;
+import lombok.SneakyThrows;
+
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+public class Main {
+    @SneakyThrows
+    public static void main(String[] args) {
+
+        CompletableFuture.runAsync(() -&gt; {
+            System.out.println("do something...");
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        CompletableFuture.runAsync(() -&gt; {
+            System.out.println("do something...");
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }, executorService);
+
+        CompletableFuture&lt;Void&gt; completableFuture = CompletableFuture.runAsync(() -&gt; {
+            System.out.println("do something....");
+//            Thread.currentThread().setName("测试有返回值的异步执行");
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        ThreadManager tm = new ThreadManager();
+        System.out.println(tm.show());
+
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        System.out.println("Result -&gt;" + completableFuture.isDone());
+
+
+    }
+}
+			
+			</pre><p></p><pre class="screen">
+			
+do something...
+do something...
+do something....
+
+=======================================================================================
+|   ID |                             Name | Group | Daemon |         State | Priority |
+---------------------------------------------------------------------------------------
+|    1 |                             main |  main |  false |      RUNNABLE |        5 |
+|   21 | ForkJoinPool.commonPool-worker-1 |  main |   true | TIMED_WAITING |        5 |
+|   22 |                  pool-1-thread-1 |  main |  false | TIMED_WAITING |        5 |
+|   23 | ForkJoinPool.commonPool-worker-2 |  main |   true | TIMED_WAITING |        5 |
+=======================================================================================
+
+Result -&gt;true
+			
+			</pre><pre class="programlisting">
+			
+package cn.netkiller.test;
+
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class Test {
+    public static void main(String[] args) throws ExecutionException, InterruptedException {
+        System.out.println(Thread.currentThread());
+
+        AtomicInteger variable = new AtomicInteger(0);
+        CompletableFuture&lt;Void&gt; runAsync = CompletableFuture.runAsync(() -&gt; process(variable));
+        runAsync.join();
+        System.out.println(variable.get());
+
+    }
+
+    public static void process(AtomicInteger variable) {
+        System.out.println(Thread.currentThread().getName() + " Process...");
+        variable.set(1024);
+    }
+}
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="supplyAsync"></a>10.7.2. supplyAsync 创建带有返回值的异步任务。</h3></div></div></div><p>supplyAsync
+				创建带有返回值的异步任务。它有如下两个方法，一个是使用默认线程池（ForkJoinPool.commonPool()）的方法，一个是带有自定义线程池的重载方法
+			</p><pre class="screen">
+			
+// 带返回值异步请求，默认线程池
+public static &lt;U&gt; CompletableFuture&lt;U&gt; supplyAsync(Supplier&lt;U&gt; supplier)
+ 
+// 带返回值的异步请求，可以自定义线程池
+public static &lt;U&gt; CompletableFuture&lt;U&gt; supplyAsync(Supplier&lt;U&gt; supplier, Executor executor)			
+			
+			</pre><pre class="programlisting">
+			
+package cn.netkiller;
+
+import cn.netkiller.thread.ThreadManager;
+import lombok.SneakyThrows;
+
+import java.util.concurrent.CompletableFuture;
+
+public class Main {
+    @SneakyThrows
+    public static void main(String[] args) {
+
+        CompletableFuture&lt;String&gt; completableFuture = CompletableFuture.supplyAsync(() -&gt; {
+            System.out.println("do something....");
+            return "done";
+        });
+
+        System.out.println("Result -&gt;" + completableFuture.get());
+
+        ThreadManager tm = new ThreadManager();
+        System.out.println(tm.show());
+    }
+}			
+			
+			</pre><p>运行结果</p><pre class="screen">
+			
+do something....
+Result -&gt;done
+=======================================================================================
+|   ID |                             Name | Group | Daemon |         State | Priority |
+---------------------------------------------------------------------------------------
+|    1 |                             main |  main |  false |      RUNNABLE |        5 |
+|   21 | ForkJoinPool.commonPool-worker-1 |  main |   true | TIMED_WAITING |        5 |
+=======================================================================================		
+			
+			</pre><pre class="programlisting">
+			
+package cn.netkiller;
+
+import cn.netkiller.thread.ThreadManager;
+import lombok.SneakyThrows;
+
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+public class Main {
+    @SneakyThrows
+    public static void main(String[] args) {
+
+
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+
+        CompletableFuture&lt;String&gt; completableFuture = CompletableFuture.supplyAsync(() -&gt; {
+            System.out.println("do something....");
+            try {
+                Thread.sleep(30000);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            return "done";
+        }, executorService);
+
+        System.out.println("Result -&gt;" + completableFuture.get());
+
+        ThreadManager tm = new ThreadManager();
+        System.out.println(tm.show());
+    }
+}
+			
+			</pre><p>运行结果</p><pre class="screen">
+			
+do something....
+Result -&gt;done
+======================================================================
+|   ID |            Name | Group | Daemon |         State | Priority |
+----------------------------------------------------------------------
+|    1 |            main |  main |  false |      RUNNABLE |        5 |
+|   21 | pool-1-thread-1 |  main |  false |       WAITING |        5 |
+======================================================================			
+			
+			</pre><p>设置线程名称</p><pre class="programlisting">
+			
+package cn.netkiller;
+
+import cn.netkiller.thread.ThreadManager;
+import lombok.SneakyThrows;
+
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+public class Main {
+    @SneakyThrows
+    public static void main(String[] args) {
+
+        CompletableFuture&lt;String&gt; completableFuture = CompletableFuture.supplyAsync(() -&gt; {
+            System.out.println("do something....");
+            Thread.currentThread().setName("测试有返回值的异步执行");
+            return "done";
+        });
+
+        System.out.println("Result -&gt;" + completableFuture.get());
+
+        ThreadManager tm = new ThreadManager();
+        System.out.println(tm.show());
+    }
+}			
+			
+			</pre><p>运行结果</p><pre class="screen">
+			
+do something....
+Result -&gt;done
+==================================================================
+|   ID |        Name | Group | Daemon |         State | Priority |
+------------------------------------------------------------------
+|    1 |        main |  main |  false |      RUNNABLE |        5 |
+|   21 | 测试有返回值的异步执行 |  main |   true | TIMED_WAITING | 5 |
+==================================================================	
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="get"></a>10.7.3. 获取结果</h3></div></div></div><pre class="programlisting">
+			
+        CompletableFuture&lt;String&gt; completableFuture = CompletableFuture.completedFuture("Hello netkiller");
+        if (completableFuture.isDone()) {
+            System.out.println(completableFuture.get());
+        }			
+			
+			</pre><p>Spring Service 用法</p><pre class="programlisting">
+			
+@Service
+public class MyService {
+
+    @Async
+    public CompletableFuture&lt;String&gt; asyncMethod() {
+        // 异步方法逻辑...
+        return CompletableFuture.completedFuture("Result");
+    }
+}
+
+// 调用异步方法并获取结果
+CompletableFuture&lt;String&gt; future = myService.asyncMethod();
+String result = future.get(); // 阻塞等待结果			
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="Run"></a>10.7.4. thenRun / thenRunAsync</h3></div></div></div><p>thenRun/thenRunAsync 功能是什么？完成前置任务之后，自己在执行。</p><p>thenRun/thenRunAsync 区别是什么？thenRun 使用同一个线程执行任务，thenRunAsync
+				会再开一个新线程执行任务。
+			</p><pre class="programlisting">
+			
+    @GetMapping("/completableFutureRun")
+    public String completableFutureRun() {
+        CompletableFuture&lt;Void&gt; completableFuture = CompletableFuture.runAsync(() -&gt; {
+            System.out.println(Thread.currentThread().getName() + " - CompletableFuture 前置任务");
+            try {
+                Thread.sleep(5 * 1000);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        CompletableFuture thenRun = completableFuture.thenRun(() -&gt; {
+            System.out.println(Thread.currentThread().getName() + " - 接着执行第二个 thenRun 任务");
+        });
+        CompletableFuture thenRunAsync = completableFuture.thenRunAsync(() -&gt; {
+            System.out.println(Thread.currentThread().getName() + " - 接着执行第二个 thenRunAsync 任务");
+        });
+        return "Done";
+    }			
+			
+			</pre><p>运行结果</p><pre class="screen">
+			
+ForkJoinPool.commonPool-worker-1 - CompletableFuture 前置任务
+ForkJoinPool.commonPool-worker-1 - 接着执行第二个 thenRun 任务
+ForkJoinPool.commonPool-worker-2 - 接着执行第二个 thenRunAsync 任务
+			
+			</pre><p>这里可以看到 thenRunAsync 的线程变化，开启新线程
+				ForkJoinPool.commonPool-worker-2 处理任务
+			</p></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="Accept"></a>10.7.5. thenAccept / thenAcceptAsync</h3></div></div></div><p>thenAccept/thenAcceptAsync 的功能是，前置任务执行完毕之后，将返回值给到
+				thenAccept/thenAcceptAsync，再执行接下来的任务。
+			</p><pre class="programlisting">
+			
+    @GetMapping("/completableFutureAccept")
+    public String completableFutureAccept() {
+        CompletableFuture&lt;String&gt; supplyAsync = CompletableFuture.supplyAsync(() -&gt; {
+            log.info(Thread.currentThread().getName() + " - CompletableFuture 前置任务");
+            try {
+                Thread.sleep(5 * 1000);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            return "前置任务执行完成";
+        });
+        CompletableFuture&lt;Void&gt; thenAccept = supplyAsync.thenAccept((rev) -&gt; {
+            log.info(Thread.currentThread().getName() + " - 接着执行第二个 thenAccept 任务");
+            log.info("前置任务返回值：" + rev);
+        });
+        CompletableFuture&lt;Void&gt; thenAcceptAsync = supplyAsync.thenAcceptAsync((rev) -&gt; {
+            log.info(Thread.currentThread().getName() + " - 接着执行第二个 thenAcceptAsync 任务");
+            log.info("前置任务返回值：" + rev);
+        });
+        return "Done";
+    }			
+			
+			</pre><p>输出结果</p><pre class="screen">
+			
+2023-05-10T10:38:48.008+08:00  INFO 96282 --- [onPool-worker-1] c.n.c.test.TestThreadController          : ForkJoinPool.commonPool-worker-1 - CompletableFuture 前置任务
+2023-05-10T10:38:53.015+08:00  INFO 96282 --- [onPool-worker-2] c.n.c.test.TestThreadController          : ForkJoinPool.commonPool-worker-2 - 接着执行第二个 thenAcceptAsync 任务
+2023-05-10T10:38:53.015+08:00  INFO 96282 --- [onPool-worker-1] c.n.c.test.TestThreadController          : ForkJoinPool.commonPool-worker-1 - 接着执行第二个 thenAccept 任务
+2023-05-10T10:38:53.016+08:00  INFO 96282 --- [onPool-worker-2] c.n.c.test.TestThreadController          : 前置任务返回值：前置任务执行完成
+2023-05-10T10:38:53.016+08:00  INFO 96282 --- [onPool-worker-1] c.n.c.test.TestThreadController          : 前置任务返回值：前置任务执行完成			
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="Apply"></a>10.7.6. thenApply / thenApplyAsync</h3></div></div></div><p>thenApply/thenApplyAsync
+				前置任务执行完毕之后，结果作为入参，thenApply/thenApplyAsync 执行完毕之后再返回执行结果
+			</p><pre class="programlisting">
+			
+    @GetMapping("/completableFutureApply")
+    public String completableFutureApply() throws ExecutionException, InterruptedException {
+        CompletableFuture&lt;String&gt; supplyAsync = CompletableFuture.supplyAsync(() -&gt; {
+            log.info(Thread.currentThread().getName() + " - CompletableFuture 前置任务");
+            try {
+                Thread.sleep(5 * 1000);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            return "第一步";
+        });
+
+        CompletableFuture&lt;String&gt; thenApply = supplyAsync.thenApply((rev) -&gt; {
+            log.info(Thread.currentThread().getName() + " - 接着执行第二个 thenApply 任务");
+            log.info("前置任务返回值：" + rev);
+            return "第二步";
+        });
+
+        CompletableFuture&lt;String&gt; thenApplyAsync = supplyAsync.thenApplyAsync((rev) -&gt; {
+            log.info(Thread.currentThread().getName() + " - 接着执行第二个 thenApplyAsync 任务");
+            log.info("前置任务返回值：" + rev);
+            return "第二步";
+        });
+        log.info("supplyAsync：{}", supplyAsync.get());
+        log.info("thenApply：{}", thenApply.get());
+        log.info("thenApplyAsync：{}", thenApplyAsync.get());
+        return "Done";
+    }			
+			
+			</pre><p></p><pre class="screen">
+			
+2023-05-10T10:39:57.913+08:00  INFO 96282 --- [onPool-worker-2] c.n.c.test.TestThreadController          : ForkJoinPool.commonPool-worker-2 - CompletableFuture 前置任务
+2023-05-10T10:40:02.917+08:00  INFO 96282 --- [  XNIO-1 task-2] c.n.c.test.TestThreadController          : XNIO-1 task-2 - 接着执行第二个 thenApply 任务
+2023-05-10T10:40:02.917+08:00  INFO 96282 --- [onPool-worker-2] c.n.c.test.TestThreadController          : ForkJoinPool.commonPool-worker-2 - 接着执行第二个 thenApplyAsync 任务
+2023-05-10T10:40:02.918+08:00  INFO 96282 --- [  XNIO-1 task-2] c.n.c.test.TestThreadController          : 前置任务返回值：第一步
+2023-05-10T10:40:02.918+08:00  INFO 96282 --- [onPool-worker-2] c.n.c.test.TestThreadController          : 前置任务返回值：第一步
+2023-05-10T10:40:02.918+08:00  INFO 96282 --- [  XNIO-1 task-2] c.n.c.test.TestThreadController          : supplyAsync：第一步
+2023-05-10T10:40:02.918+08:00  INFO 96282 --- [  XNIO-1 task-2] c.n.c.test.TestThreadController          : thenApply：第二步
+2023-05-10T10:40:02.919+08:00  INFO 96282 --- [  XNIO-1 task-2] c.n.c.test.TestThreadController          : thenApplyAsync：第二步
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="runAsync"></a>10.7.7. runAsync / thenAccept / thenApply 区别</h3></div></div></div><p>runAsync 配合 thenRun/thenRunAsync 使用</p><p>supplyAsync 配合 thenAccept/thenAcceptAsync 使用</p><pre class="screen">
+			
+supplyAsync -- 返回值 --&gt; thenAccept/thenAcceptAsync --&gt; 无返回值
+			
+			</pre><p>supplyAsync 配合 thenApply/thenApplyAsync 使用</p><pre class="screen">
+			
+supplyAsync -- 返回值 --&gt; thenApply/thenApplyAsync -- 返回值 --&gt;			
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="whenComplete"></a>10.7.8. whenComplete</h3></div></div></div><p>whenComplete 与 runAsync / thenAccept / thenApply 区别是能处理
+				Throwable
+			</p><pre class="programlisting">
+			
+    @GetMapping("/completableFutureWhenComplete")
+    public String completableFutureWhenComplete() throws ExecutionException, InterruptedException {
+
+        CompletableFuture&lt;String&gt; completableFuture = CompletableFuture.supplyAsync(() -&gt; {
+            System.out.println("当前线程名称：" + Thread.currentThread().getName());
+            return "前置任务完成";
+        }).whenComplete((result, throwable) -&gt; {
+            System.out.println("前置任务返回值：" + result);
+        });
+        System.out.println(completableFuture.get());
+        return "Done";
+    }			
+			
+			</pre><p>运行结果</p><pre class="screen">
+			
+当前线程名称：ForkJoinPool.commonPool-worker-1
+前置任务返回值：前置任务完成
+前置任务完成			
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="completeOnTimeout"></a>10.7.9. 超时处理</h3></div></div></div><pre class="programlisting">
+			
+		CompletableFuture&lt;String&gt; future = CompletableFuture.supplyAsync(() -&gt; {
+            try {
+                Thread.sleep(5 * 1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            return "hello";
+        });
+
+        future.completeOnTimeout("default timeout result", 3 * 1000, TimeUnit.MILLISECONDS);			
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="thenCompose"></a>10.7.10. 按顺序执行</h3></div></div></div><pre class="programlisting">
+			
+@Service
+public class MyService {
+
+    @Async("threadPoolTaskExecutor")
+    public CompletableFuture&lt;String&gt; asyncMethod1() {
+        // 异步方法1逻辑...
+        return CompletableFuture.completedFuture("Result1");
+    }
+
+    @Async("threadPoolTaskExecutor")
+    public CompletableFuture&lt;String&gt; asyncMethod2() {
+        // 异步方法2逻辑...
+        return CompletableFuture.completedFuture("Result2");
+    }
+}
+
+// 调用异步方法并处理结果顺序 
+CompletableFuture&lt;String&gt; future1 = myService.asyncMethod1(); 
+CompletableFuture&lt;String&gt; future2 = future1.thenCompose(result1 -&gt; myService.asyncMethod2());
+
+String finalResult = future2.get(); // 阻塞等待最终结果	
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="thenCombine"></a>10.7.11. thenCombine、thenAcceptBoth 和runAfterBoth</h3></div></div></div><p>thenCombine会将两个任务的执行结果作为所提供函数的参数，且该方法有返回值。</p><p>thenAcceptBoth同样将两个任务的执行结果作为方法入参，但是无返回值。</p><p>runAfterBoth没有入参，也没有返回值。注意两个任务中只要有一个执行异常，则将该异常信息作为指定任务的执行结果。
+			</p><pre class="programlisting">
+			
+public static void main(String[] args) throws ExecutionException, InterruptedException {
+        CompletableFuture&lt;Integer&gt; completableFuture1 = CompletableFuture.supplyAsync(() -&gt; {
+            System.out.println(Thread.currentThread() + " completableFuture1 do something....");
+            return 1;
+        });
+
+        CompletableFuture&lt;Integer&gt; completableFuture2 = CompletableFuture.supplyAsync(() -&gt; {
+            System.out.println(Thread.currentThread() + " completableFuture2 do something....");
+            return 2;
+        });
+
+        CompletableFuture&lt;Integer&gt; completableFuture3 = completableFuture1.thenCombine(completableFuture2, (a, b) -&gt; {
+            System.out.println(Thread.currentThread() + " completableFuture3 do something....");
+            return a + b;
+        });
+
+        System.out.println("completableFuture3结果-&gt;" + completableFuture3.get());
+}
+
+ public static void main(String[] args) throws ExecutionException, InterruptedException {
+        CompletableFuture&lt;Integer&gt; completableFuture1 = CompletableFuture.supplyAsync(() -&gt; {
+            System.out.println(Thread.currentThread() + " completableFuture1 do something....");
+            return 1;
+        });
+
+        CompletableFuture&lt;Integer&gt; completableFuture2 = CompletableFuture.supplyAsync(() -&gt; {
+            System.out.println(Thread.currentThread() + " completableFuture2 do something....");
+            return 2;
+        });
+        
+        CompletableFuture&lt;Void&gt; completableFuture3 = completableFuture1.thenAcceptBoth(completableFuture2, (a, b) -&gt; {
+            System.out.println(Thread.currentThread() + " completableFuture3 do something....");
+            System.out.println(a + b);
+        });
+
+        System.out.println("completableFuture3结果-&gt;" + completableFuture3.get());
+}
+
+public static void main(String[] args) throws ExecutionException, InterruptedException {
+        CompletableFuture&lt;Integer&gt; completableFuture1 = CompletableFuture.supplyAsync(() -&gt; {
+            System.out.println(Thread.currentThread() + " completableFuture1 do something....");
+            return 1;
+        });
+
+        CompletableFuture&lt;Integer&gt; completableFuture2 = CompletableFuture.supplyAsync(() -&gt; {
+            System.out.println(Thread.currentThread() + " completableFuture2 do something....");
+            return 2;
+        });
+
+        CompletableFuture&lt;Void&gt; completableFuture3 = completableFuture1.runAfterBoth(completableFuture2, () -&gt; {
+            System.out.println(Thread.currentThread() + " completableFuture3 do something....");
+        });
+
+        System.out.println("completableFuture3结果-&gt;" + completableFuture3.get());
+}
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="applyToEither"></a>10.7.12. applyToEither、acceptEither和runAfterEither</h3></div></div></div><p>这三个方法和上面一样也是将两个CompletableFuture组合起来处理，当有一个任务正常完成时，就会进行下阶段任务。
+			</p><p>applyToEither会将已经完成任务的执行结果作为所提供函数的参数，且该方法有返回值；</p><p>acceptEither同样将已经完成任务的执行结果作为方法入参，但是无返回值；</p><p>runAfterEither没有入参，也没有返回值。</p><pre class="programlisting">
+				
+public static void main(String[] args) throws ExecutionException, InterruptedException {
+        CompletableFuture&lt;String&gt; completableFuture1 = CompletableFuture.supplyAsync(() -&gt; {
+            try {
+                System.out.println(Thread.currentThread() + " completableFuture1 do something....");
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            return "completableFuture1 任务完成";
+        });
+
+        CompletableFuture&lt;String&gt; completableFuture2 = CompletableFuture.supplyAsync(() -&gt; {
+            try {
+                System.out.println(Thread.currentThread() + " completableFuture2 do something....");
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            return "completableFuture2 任务完成";
+        });
+
+        CompletableFuture&lt;String&gt; completableFuture3 = completableFuture1.applyToEither(completableFuture2, (result) -&gt; {
+            System.out.println("接收到" + result);
+            System.out.println(Thread.currentThread() + " completableFuture3 do something....");
+            return "completableFuture3 任务完成";
+        });
+
+        System.out.println("completableFuture3结果-&gt;" + completableFuture3.get());
+}
+public static void main(String[] args) throws ExecutionException, InterruptedException {
+        CompletableFuture&lt;String&gt; completableFuture1 = CompletableFuture.supplyAsync(() -&gt; {
+            try {
+                System.out.println(Thread.currentThread() + " completableFuture1 do something....");
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            return "completableFuture1 任务完成";
+        });
+
+        CompletableFuture&lt;String&gt; completableFuture2 = CompletableFuture.supplyAsync(() -&gt; {
+            try {
+                System.out.println(Thread.currentThread() + " completableFuture2 do something....");
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            return "completableFuture2 任务完成";
+        });
+
+        CompletableFuture&lt;Void&gt; completableFuture3 = completableFuture1.acceptEither(completableFuture2, (result) -&gt; {
+            System.out.println("接收到" + result);
+            System.out.println(Thread.currentThread() + " completableFuture3 do something....");
+        });
+
+        System.out.println("completableFuture3结果-&gt;" + completableFuture3.get());
+}
+
+public static void main(String[] args) throws ExecutionException, InterruptedException {
+        CompletableFuture&lt;String&gt; completableFuture1 = CompletableFuture.supplyAsync(() -&gt; {
+            try {
+                System.out.println(Thread.currentThread() + " completableFuture1 do something....");
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            System.out.println("completableFuture1 任务完成");
+            return "completableFuture1 任务完成";
+        });
+
+        CompletableFuture&lt;String&gt; completableFuture2 = CompletableFuture.supplyAsync(() -&gt; {
+            try {
+                System.out.println(Thread.currentThread() + " completableFuture2 do something....");
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            System.out.println("completableFuture2 任务完成");
+            return "completableFuture2 任务完成";
+        });
+
+        CompletableFuture&lt;Void&gt; completableFuture3 = completableFuture1.runAfterEither(completableFuture2, () -&gt; {
+            System.out.println(Thread.currentThread() + " completableFuture3 do something....");
+            System.out.println("completableFuture3 任务完成");
+        });
+
+        System.out.println("completableFuture3结果-&gt;" + completableFuture3.get());
+}
+				
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="allOf"></a>10.7.13. allOf / anyOf</h3></div></div></div><p>allOf：CompletableFuture是多个任务都执行完成后才会执行，只有有一个任务执行异常，则返回的CompletableFuture执行get方法时会抛出异常，如果都是正常执行，则get返回null。
+			</p><pre class="programlisting">
+			
+        CompletableFuture&lt;String&gt; future1 = CompletableFuture.supplyAsync(() -&gt; "AAA").whenComplete((value, throwable) -&gt; {
+            System.out.println(value);
+        });
+        CompletableFuture&lt;String&gt; future2 = CompletableFuture.supplyAsync(() -&gt; "BBB").whenComplete((value, throwable) -&gt; {
+            System.out.println(value);
+        });
+        CompletableFuture&lt;String&gt; future3 = CompletableFuture.supplyAsync(() -&gt; "CCC").whenComplete((value, throwable) -&gt; {
+            System.out.println(value);
+        });
+        CompletableFuture.allOf(new CompletableFuture[]{future1, future2, future3}).join();			
+			
+			</pre><pre class="programlisting">
+			
+        CompletableFuture&lt;String&gt; future1 = CompletableFuture.supplyAsync(() -&gt; "AAA").whenComplete((value, throwable) -&gt; {
+            System.out.println(value);
+        });
+        CompletableFuture&lt;String&gt; future2 = CompletableFuture.supplyAsync(() -&gt; "BBB").whenComplete((value, throwable) -&gt; {
+            System.out.println(value);
+        });
+        CompletableFuture&lt;String&gt; future3 = CompletableFuture.supplyAsync(() -&gt; "CCC").whenComplete((value, throwable) -&gt; {
+            System.out.println(value);
+        });
+        CompletableFuture.allOf(future1, future2, future3).join();			
+			
+			</pre><pre class="programlisting">
+				
+        CompletableFuture&lt;String&gt; future1 = CompletableFuture.supplyAsync(() -&gt; "AAA").whenComplete((value, throwable) -&gt; {
+            System.out.println(value);
+        });
+        CompletableFuture&lt;String&gt; future2 = CompletableFuture.supplyAsync(() -&gt; "BBB").whenComplete((value, throwable) -&gt; {
+            System.out.println(value);
+        });
+        CompletableFuture&lt;String&gt; future3 = CompletableFuture.supplyAsync(() -&gt; "CCC").whenComplete((value, throwable) -&gt; {
+            System.out.println(value);
+        });
+        List&lt;CompletableFuture&lt;String&gt;&gt; completableFutures = Stream.of(future1, future2, future3).toList();
+        var completableFutureArray = completableFutures.toArray(CompletableFuture[]::new);
+        CompletableFuture.allOf(completableFutureArray).join();
+				
+			</pre><p>anyOf：CompletableFuture是多个任务只要有一个任务执行完成，则返回的CompletableFuture执行get方法时会抛出异常，如果都是正常执行，则get返回执行完成任务的结果。
+			</p><pre class="programlisting">
+			
+        CompletableFuture&lt;String&gt; future1 = CompletableFuture.supplyAsync(() -&gt; "AAA").whenComplete((value, throwable) -&gt; {
+            System.out.println(value);
+        });
+        CompletableFuture&lt;String&gt; future2 = CompletableFuture.supplyAsync(() -&gt; "BBB").whenComplete((value, throwable) -&gt; {
+            System.out.println(value);
+        });
+        CompletableFuture&lt;String&gt; future3 = CompletableFuture.supplyAsync(() -&gt; "CCC").whenComplete((value, throwable) -&gt; {
+            System.out.println(value);
+        });
+
+        CompletableFuture&lt;Object&gt; completableFuture = CompletableFuture.anyOf(future1, future2, future3);
+        System.out.println(completableFuture.get());
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="CompletableFuture.Parallel"></a>10.7.14. 并行执行 CompletableFuture</h3></div></div></div><pre class="programlisting">
+			
+package cn.netkiller.test;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
+
+public class Test {
+    public static void main(String[] args) throws ExecutionException, InterruptedException {
+        System.out.println(Thread.currentThread());
+
+
+        Parallel parallel = new Parallel();
+
+        parallel.addAsyncTask(() -&gt; {
+                    System.out.println(Thread.currentThread().getName());
+                    return "task1";
+                })
+                .addAsyncTask(() -&gt; {
+                    System.out.println(Thread.currentThread().getName());
+                    return "task2";
+                })
+                .addAsyncTask(() -&gt; {
+                    System.out.println(Thread.currentThread().getName());
+                    return "task3";
+                })
+                .addAsyncTask(() -&gt; {
+                    System.out.println(Thread.currentThread().getName());
+                    try {
+                        TimeUnit.SECONDS.sleep(2);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    return "finally";
+                }).join();
+
+        List&lt;CompletableFuture&lt;String&gt;&gt; futures = parallel.get();
+
+        futures.stream().forEach(item -&gt; {
+            System.out.println(item.getNow("no result"));
+        });
+
+    }
+
+    public static class Parallel&lt;T&gt; {
+
+        private final List&lt;CompletableFuture&lt;T&gt;&gt; futures;
+
+        Parallel() {
+            this(10);
+        }
+
+        Parallel(int size) {
+            futures = new ArrayList&lt;&gt;(size);
+        }
+
+        public Parallel addAsyncTask(Supplier&lt;T&gt; supplier) {
+            futures.add(CompletableFuture.supplyAsync(supplier));
+            return this;
+        }
+
+        public List&lt;CompletableFuture&lt;T&gt;&gt; get() {
+            return futures;
+        }
+
+        public void join() {
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[]{})).join();
+        }
+
+        public void clear() {
+            futures.clear();
+        }
+    }
+}
+
+			
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="exceptionally"></a>10.7.15. 异常处理</h3></div></div></div><pre class="programlisting">
+			
+@Service
+public class MyService {
+
+    @Async
+    public CompletableFuture&lt;String&gt; asyncMethod() {
+        try {
+            // 异步方法逻辑...
+            return CompletableFuture.completedFuture("Success");
+        } catch (Exception e) {
+            // 处理异常...
+            return CompletableFuture.failedFuture(e);
+        }
+    }
+}
+
+// 调用异步方法并处理异常
+CompletableFuture&lt;String&gt; future = myService.asyncMethod();
+future.exceptionally(e -&gt; {
+    // 异常处理逻辑...
+    return "Error";
+});
+
+			
+			</pre><pre class="programlisting">
+			
+    @GetMapping("/completableFutureExceptionally")
+    public String completableFutureExceptionally() throws ExecutionException, InterruptedException {
+
+        CompletableFuture.supplyAsync(() -&gt; {
+            System.out.println("当前线程名称：" + Thread.currentThread().getName());
+            throw new RuntimeException();
+        }).exceptionally((e) -&gt; {
+            System.out.println(e.getMessage());
+            return "程序出现异常";
+        });
+
+//        CompletableFuture&lt;String&gt; completableFuture = CompletableFuture.supplyAsync(() -&gt; {
+////            throw new RuntimeException();
+//            return "程序出现异常";
+//        }).exceptionally((e) -&gt; {
+//            System.out.println("程序出现异常");
+//            return "程序出现异常";
+//        });
+//        System.out.println(completableFuture.get());
+
+        return "Done";
+    }			
+			
+			</pre><p>输出结果</p><pre class="screen">
+			
+当前线程名称：ForkJoinPool.commonPool-worker-1
+java.lang.RuntimeException			
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="CompletableFuturePipeline"></a>10.7.16. CompletableFuture 实现 Pipeline 流水线</h3></div></div></div><pre class="programlisting">
+			
+package cn.netkiller.test;
+
+import lombok.SneakyThrows;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
+
+public class CompletableFuturePipeline {
+
+    private final Parallel parallel = new Parallel();
+
+    public CompletableFuturePipeline() {
+
+    }
+
+    public static void main(String[] args) throws ExecutionException, InterruptedException {
+        System.out.println(Thread.currentThread().getName());
+
+        CompletableFuturePipeline test = new CompletableFuturePipeline();
+        test.begin().batch().run().end();
+        test.parallel().supplyAsync(() -&gt; {
+            System.out.println(Thread.currentThread().getName() + ": parallel1");
+            return "parallel1";
+        }).supplyAsync(() -&gt; {
+            System.out.println(Thread.currentThread().getName() + ": parallel2");
+            return "parallel2";
+        }).join();
+
+
+    }
+
+    @SneakyThrows
+    public CompletableFuturePipeline begin() {
+        String method = Thread.currentThread().getStackTrace()[1].getMethodName();
+
+        parallel.runAsync(() -&gt; {
+            String thread = Thread.currentThread().getName();
+            System.out.printf("%s - %s\n", thread, method);
+        });
+        return this;
+    }
+
+    public CompletableFuturePipeline run() throws ExecutionException, InterruptedException {
+        String method = Thread.currentThread().getStackTrace()[1].getMethodName();
+        parallel.supplyAsync(() -&gt; {
+            System.out.printf("%s - %s\n", Thread.currentThread().getName(), method);
+            return "OK";
+        });
+        System.out.println(this.asyncMethod1().get());
+        return this;
+    }
+
+    public CompletableFuturePipeline batch() {
+        String method = Thread.currentThread().getStackTrace()[1].getMethodName();
+        Parallel batchs = this.parallel();
+
+        batchs.runAsync(() -&gt; {
+                    String thread = Thread.currentThread().getName();
+                    System.out.printf("%s - %s - task1\n", thread, method);
+                })
+                .runAsync(() -&gt; {
+                    try {
+                        TimeUnit.SECONDS.sleep(5);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    String thread = Thread.currentThread().getName();
+                    System.out.printf("%s - %s - task2\n", thread, method);
+
+                })
+                .runAsync(() -&gt; {
+                    String thread = Thread.currentThread().getName();
+                    System.out.printf("%s - %s - task3\n", thread, method);
+                })
+                .supplyAsync(() -&gt; {
+                    String thread = Thread.currentThread().getName();
+                    System.out.printf("%s - %s - finally\n", thread, method);
+                    return "finally";
+                }).join();
+        System.out.println(batchs.futures.size());
+
+        return this;
+    }
+
+    @SneakyThrows
+    public CompletableFuturePipeline end() {
+        String method = Thread.currentThread().getStackTrace()[1].getMethodName();
+        parallel.supplyAsync(() -&gt; {
+            System.out.printf("%s - %s\n", Thread.currentThread().getName(), method);
+            return "End";
+        });
+
+        parallel.join();
+
+        List&lt;CompletableFuture&lt;String&gt;&gt; futures = parallel.get();
+
+        futures.stream().forEach(item -&gt; {
+            System.out.println(item.getNow("no result"));
+        });
+
+        System.out.println(parallel.futures.size());
+        return this;
+    }
+
+    public Parallel parallel() {
+        return new Parallel();
+    }
+
+    public Parallel parallel(int size) {
+        return new Parallel(size);
+    }
+
+    public CompletableFuture&lt;String&gt; asyncMethod1() {
+//        Thread.currentThread().setName(Thread.currentThread().getName() + "-" + this.getClass().getSimpleName());
+        System.out.println(Thread.currentThread().getName() + ": asyncMethod1");
+        return CompletableFuture.completedFuture("Result1");
+    }
+
+    public static class Parallel&lt;T&gt; {
+
+        private final List&lt;CompletableFuture&gt; futures;
+//        private final List&lt;CompletableFuture&lt;Void&gt;&gt; voids = new ArrayList&lt;&gt;();
+
+        Parallel() {
+            this(10);
+        }
+
+        Parallel(int size) {
+            futures = new ArrayList&lt;&gt;(size);
+        }
+
+        public Parallel runAsync(Runnable runnable) {
+            futures.add(CompletableFuture.runAsync(runnable));
+            return this;
+        }
+
+        public Parallel runAsync(Runnable runnable, Executor executor) {
+            futures.add(CompletableFuture.runAsync(runnable, executor));
+            return this;
+        }
+
+        public Parallel supplyAsync(Supplier&lt;T&gt; supplier) {
+            futures.add(CompletableFuture.supplyAsync(supplier));
+            return this;
+        }
+
+        public Parallel supplyAsync(Supplier&lt;T&gt; supplier, Executor executor) {
+            futures.add(CompletableFuture.supplyAsync(supplier, executor));
+            return this;
+        }
+
+        public List&lt;CompletableFuture&gt; get() {
+            return futures;
+        }
+
+        public void join() {
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[]{})).join();
+        }
+
+        public void clear() {
+            futures.clear();
+        }
+    }
+}
+			
+			
+			</pre></div></div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
+			window.changyan.api.config({
+			appid: 'cyvwjQUG3',
+			conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
+			});
+</script><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="FutureTask.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ThreadPool.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">10.6. FutureTask </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 10.8. java 线程池</td></tr></table></div><script xmlns="">
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+			ga('create', 'UA-11694057-1', 'auto');
+			ga('send', 'pageview');
+
+		</script><script xmlns="" async="async">
+			var _hmt = _hmt || [];
+			(function() {
+			var hm = document.createElement("script");
+			hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(hm, s);
+			})();
+</script><script xmlns="" async="async">
+			(function(){
+			var bp = document.createElement('script');
+			var curProtocol = window.location.protocol.split(':')[0];
+			if (curProtocol === 'https') {
+			bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+			}
+			else {
+			bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+			}
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(bp, s);
+			})();
+</script></body></html>

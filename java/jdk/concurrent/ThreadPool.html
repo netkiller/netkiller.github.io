@@ -1,0 +1,361 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>10.8. java 线程池</title><link rel="stylesheet" type="text/css" href="../../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><link rel="home" href="../../index.html" title="Netkiller Java 手札（版）" /><link rel="up" href="index.html" title="第 10 章 Java 并发编程" /><link rel="prev" href="CompletableFuture.html" title="10.7. CompletableFuture" /><link rel="next" href="Flow.html" title="10.9. Flow" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
+		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">10.8. java 线程池</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="CompletableFuture.html">上一页</a> </td><th width="60%" align="center">第 10 章 Java 并发编程</th><td width="20%" align="right"> <a accesskey="n" href="Flow.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="ThreadPool"></a>10.8. java 线程池</h2></div></div></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="Executors.newCachedThreadPool"></a>10.8.1. newCachedThreadPool</h3></div></div></div><p>newCachedThreadPool 线程池尺寸没有固定上线</p><pre class="programlisting">
+			
+	private void startTask(List&lt;String&gt; usersList){
+        ExecutorService executor = Executors.newCachedThreadPool();
+        executor.submit(()-&gt;{
+			//do someting
+        });
+    }
+			
+			
+			</pre><pre class="programlisting">
+			
+        ExecutorService executor = Executors.newCachedThreadPool();
+        for (int i = 0; i &lt; 100; i++) {
+            executor.execute(() -&gt; {
+                try {
+                    TimeUnit.SECONDS.sleep(5);
+                    System.out.println(Thread.currentThread().getName());
+
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        }
+        executor.shutdown();			
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="newFixedThreadPool"></a>10.8.2. 固定线程池(newFixedThreadPool)</h3></div></div></div><pre class="programlisting">
+			
+package cn.netkiller.test.grey;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+public class GreyTest {
+
+	public GreyTest() {
+		// TODO Auto-generated constructor stub
+	}
+
+	static class MyThread implements Runnable {
+		public void run() {
+			System.out.println("Thread Name:" + Thread.currentThread().getName());
+		}
+	}
+
+	public static void main(String[] args) {
+		// 创建五个线程池
+		int nThreads = 5;
+		ExecutorService pool = Executors.newFixedThreadPool(nThreads);
+		// 创建实现了Runnable接口对象
+		MyThread t1 = new MyThread();
+		MyThread t2 = new MyThread();
+		MyThread t3 = new MyThread();
+		MyThread t4 = new MyThread();
+		MyThread t5 = new MyThread();
+		// 将线程放入池中进行执行
+		pool.execute(t1);
+		pool.execute(t2);
+		pool.execute(t3);
+		pool.execute(t4);
+		pool.execute(t5);
+		// 关闭线程池
+		pool.shutdown();
+	}
+
+}
+			
+			</pre><p>提交线程数大于线程池尺寸时会同步等待，然后复用已经处理完的空间线程。</p><pre class="programlisting">
+			
+        System.out.println(Thread.currentThread());
+        AtomicInteger count = new AtomicInteger(1);
+        int nThread = Runtime.getRuntime().availableProcessors();
+        ExecutorService executor = Executors.newFixedThreadPool(nThread);
+        for (int i = 0; i &lt; 100; i++) {
+            executor.execute(() -&gt; {
+                try {
+                    TimeUnit.SECONDS.sleep(2);
+                    System.out.println(count.getAndIncrement() + " [" + Thread.currentThread().getName() + "] " + System.currentTimeMillis());
+
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        }
+        executor.shutdown();			
+			
+			</pre><p>CompletableFuture 线程池</p><pre class="programlisting">
+			
+package cn.netkiller.test;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.*;
+import java.util.function.Supplier;
+
+public class Test {
+    public static void main(String[] args) throws ExecutionException, InterruptedException {
+        System.out.println(Thread.currentThread());
+        ExecutorService executor = Executors.newFixedThreadPool(10);
+
+
+        Parallel parallel = new Parallel();
+
+        parallel.addAsyncTask(() -&gt; {
+                    System.out.println(Thread.currentThread().getName());
+                    return "task1";
+                }, executor)
+                .addAsyncTask(() -&gt; {
+                    System.out.println(Thread.currentThread().getName());
+                    return "task2";
+                }, executor)
+                .addAsyncTask(() -&gt; {
+                    System.out.println(Thread.currentThread().getName());
+                    return "task3";
+                }, executor)
+                .addAsyncTask(() -&gt; {
+                    System.out.println(Thread.currentThread().getName());
+                    try {
+                        TimeUnit.SECONDS.sleep(2);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    return "finally";
+                }, executor);
+        parallel.join();
+        List&lt;CompletableFuture&lt;String&gt;&gt; futures = parallel.get();
+
+        futures.stream().forEach(item -&gt; {
+            System.out.println(item.getNow("no result"));
+        });
+
+        executor.shutdown();
+    }
+
+    public static class Parallel&lt;T&gt; {
+
+        private final List&lt;CompletableFuture&lt;T&gt;&gt; futures;
+
+        Parallel() {
+            this(10);
+        }
+
+        Parallel(int size) {
+            futures = new ArrayList&lt;&gt;(size);
+        }
+
+        public Parallel addAsyncTask(Supplier&lt;T&gt; supplier) {
+            futures.add(CompletableFuture.supplyAsync(supplier));
+            return this;
+        }
+
+        public Parallel addAsyncTask(Supplier&lt;T&gt; supplier, Executor executor) {
+            futures.add(CompletableFuture.supplyAsync(supplier, executor));
+            return this;
+        }
+
+        public List&lt;CompletableFuture&lt;T&gt;&gt; get() {
+            return futures;
+        }
+
+        public void join() {
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[]{})).join();
+        }
+
+        public void clear() {
+            futures.clear();
+        }
+    }
+}
+
+
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="newScheduledThreadPool"></a>10.8.3. Executors.newScheduledThreadPool</h3></div></div></div><pre class="programlisting">
+			
+
+@Configuration
+public class ScheduleConfig implements SchedulingConfigurer {
+
+    @Override
+    public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
+        //当然了，这里设置的线程池是corePoolSize也是很关键了，自己根据业务需求设定
+        taskRegistrar.setScheduler(Executors.newScheduledThreadPool(10));
+    }
+
+}			
+			
+			</pre><pre class="programlisting">
+			
+ScheduledExecutorService service = Executors.newScheduledThreadPool(10);
+
+service.schedule(new Task(), 10, TimeUnit.SECONDS);
+
+service.scheduleAtFixedRate(new Task(), 10, 10, TimeUnit.SECONDS);
+
+service.scheduleWithFixedDelay(new Task(), 10, 10, TimeUnit.SECONDS);
+			
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="SingleThreadExecutor"></a>10.8.4. SingleThreadExecutor</h3></div></div></div><p>可以理解为 SingleThreadExecutor = Executors.newFixedThreadPool(1);
+			</p><pre class="programlisting">
+			
+ExecutorService executor = Executors.newSingleThreadExecutor();
+ExecutorService executor = Executors.newSingleThreadScheduledExecutor();			
+			
+			</pre><pre class="programlisting">
+			
+        System.out.println(Thread.currentThread());
+        AtomicInteger count = new AtomicInteger(1);
+        int nThread = Runtime.getRuntime().availableProcessors();
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        for (int i = 0; i &lt; 100; i++) {
+            executor.execute(() -&gt; {
+                try {
+                    TimeUnit.SECONDS.sleep(2);
+                    System.out.println(count.getAndIncrement() + " [" + Thread.currentThread().getName() + "] " + System.currentTimeMillis());
+
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        }
+        executor.shutdown();			
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="ExecutorService"></a>10.8.5. ExecutorService 正确关闭方法</h3></div></div></div><p>ExecutorService 功能包括，提交任务、执行任务、关闭线程池。</p><p>首先通过 executor.shutdown(); 发送关闭信号，然后再通过
+				executor.awaitTermination(10, TimeUnit.SECONDS) 设置超时时间，超时抛出异常，最后通过
+				executor.shutdownNow(); 强制关闭。
+			</p><pre class="programlisting">
+			
+package cn.netkiller.test;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.*;
+import java.util.function.Supplier;
+
+public class Test {
+    public static void main(String[] args) throws ExecutionException, InterruptedException {
+        System.out.println(Thread.currentThread());
+        ExecutorService executor = Executors.newFixedThreadPool(10);
+
+
+        Parallel parallel = new Parallel();
+
+        parallel.addAsyncTask(() -&gt; {
+                    System.out.println(Thread.currentThread().getName());
+                    return "task1";
+                }, executor)
+                .addAsyncTask(() -&gt; {
+                    System.out.println(Thread.currentThread().getName());
+                    return "task2";
+                }, executor)
+                .addAsyncTask(() -&gt; {
+                    System.out.println(Thread.currentThread().getName());
+                    return "task3";
+                }, executor)
+                .addAsyncTask(() -&gt; {
+                    System.out.println(Thread.currentThread().getName());
+                    try {
+                        TimeUnit.SECONDS.sleep(2);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    return "finally";
+                }, executor);
+        parallel.join();
+        List&lt;CompletableFuture&lt;String&gt;&gt; futures = parallel.get();
+
+        futures.stream().forEach(item -&gt; {
+            System.out.println(item.getNow("no result"));
+        });
+
+        executor.shutdown();
+
+        try {
+            executor.shutdown();
+            if (!executor.awaitTermination(10, TimeUnit.SECONDS)) {
+                // 超时的时候向线程池中所有的线程发出中断(interrupted)。
+                executor.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            // awaitTermination方法被中断的时候也中止线程池中全部的线程的执行。
+            System.out.println("awaitTermination interrupted: " + e);
+            executor.shutdownNow();
+        }
+    }
+
+    public static class Parallel&lt;T&gt; {
+
+        private final List&lt;CompletableFuture&lt;T&gt;&gt; futures;
+
+        Parallel() {
+            this(10);
+        }
+
+        Parallel(int size) {
+            futures = new ArrayList&lt;&gt;(size);
+        }
+
+        public Parallel addAsyncTask(Supplier&lt;T&gt; supplier) {
+            futures.add(CompletableFuture.supplyAsync(supplier));
+            return this;
+        }
+
+        public Parallel addAsyncTask(Supplier&lt;T&gt; supplier, Executor executor) {
+            futures.add(CompletableFuture.supplyAsync(supplier, executor));
+            return this;
+        }
+
+        public List&lt;CompletableFuture&lt;T&gt;&gt; get() {
+            return futures;
+        }
+
+        public void join() {
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[]{})).join();
+        }
+
+        public void clear() {
+            futures.clear();
+        }
+    }
+}
+
+			
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="ForkJoinPool"></a>10.8.6. ForkJoinPool / ForkJoinTask</h3></div></div></div></div></div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
+			window.changyan.api.config({
+			appid: 'cyvwjQUG3',
+			conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
+			});
+</script><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="CompletableFuture.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="Flow.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">10.7. CompletableFuture </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 10.9. Flow</td></tr></table></div><script xmlns="">
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+			ga('create', 'UA-11694057-1', 'auto');
+			ga('send', 'pageview');
+
+		</script><script xmlns="" async="async">
+			var _hmt = _hmt || [];
+			(function() {
+			var hm = document.createElement("script");
+			hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(hm, s);
+			})();
+</script><script xmlns="" async="async">
+			(function(){
+			var bp = document.createElement('script');
+			var curProtocol = window.location.protocol.split(':')[0];
+			if (curProtocol === 'https') {
+			bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+			}
+			else {
+			bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+			}
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(bp, s);
+			})();
+</script></body></html>

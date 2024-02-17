@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>10.9. Flow</title><link rel="stylesheet" type="text/css" href="../../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><link rel="home" href="../../index.html" title="Netkiller Java 手札（版）" /><link rel="up" href="index.html" title="第 10 章 Java 并发编程" /><link rel="prev" href="ThreadPool.html" title="10.8. java 线程池" /><link rel="next" href="VirtualThreads.html" title="10.10. Java 协程" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
+		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">10.9. Flow</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ThreadPool.html">上一页</a> </td><th width="60%" align="center">第 10 章 Java 并发编程</th><td width="20%" align="right"> <a accesskey="n" href="VirtualThreads.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="Flow"></a>10.9. Flow</h2></div></div></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id836"></a>10.9.1. 自定义 Publisher / Subscriber</h3></div></div></div><pre class="programlisting">
+			
+package cn.netkiller.test;
+
+import java.util.concurrent.Flow;
+
+public class Test {
+    public static void main(String[] args) {
+
+        IntPublisher intPublisher = new IntPublisher();
+        IntSubscriber intSubscriber = new IntSubscriber();
+        intPublisher.subscribe(intSubscriber);
+    }
+
+    public static class IntPublisher implements Flow.Publisher&lt;Integer&gt; {
+
+        @Override
+        public void subscribe(Flow.Subscriber&lt;? super Integer&gt; subscriber) {
+            for (int i = 1; i &lt;= 5; i++) {
+                System.out.println("Publishing = " + i);
+                // 将数据发给订阅者
+                subscriber.onNext(i);
+            }
+            // 发出完成信号
+            subscriber.onComplete();
+        }
+    }
+
+    public static class IntSubscriber implements Flow.Subscriber&lt;Integer&gt; {
+        private Flow.Subscription subscription;
+
+        @Override
+        public void onSubscribe(Flow.Subscription subscription) {
+            System.out.println("onSubscribe");
+        }
+
+        @Override
+        public void onNext(Integer item) {
+            System.out.println("onNext: " + item);
+        }
+
+        @Override
+        public void onError(Throwable throwable) {
+            System.out.println("onError：" + throwable);
+        }
+
+        @Override
+        public void onComplete() {
+            System.out.println("onComplete");
+        }
+    }
+}			
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="SubmissionPublisher"></a>10.9.2. SubmissionPublisher</h3></div></div></div><pre class="programlisting">
+		
+package cn.netkiller.test;
+
+import java.util.concurrent.Flow;
+import java.util.concurrent.SubmissionPublisher;
+import java.util.stream.IntStream;
+
+public class SubmissionPublisherTest {
+    public static void main(String[] args) throws InterruptedException {
+        System.out.println(Thread.currentThread().getName());
+
+        // 1. 定义 String 类型的数据发布者，SubmissionPublisher 实现了 Publisher
+        SubmissionPublisher&lt;String&gt; publisher = new SubmissionPublisher&lt;&gt;();
+
+        // 2. 创建一个订阅者，用于接收发布者的消息
+        Flow.Subscriber&lt;String&gt; subscriber = new Flow.Subscriber&lt;&gt;() {
+            private Flow.Subscription subscription;
+
+            @Override
+            public void onSubscribe(Flow.Subscription subscription) {
+                this.subscription = subscription;
+                System.out.println("onSubscribe");
+                this.subscription.request(1);
+            }
+
+            @Override
+            public void onNext(String item) {
+                System.out.println("onNext: " + item);
+                this.subscription.request(1);
+            }
+
+            @Override
+            public void onError(Throwable throwable) {
+                System.out.println("Throwable: " + throwable.getMessage());
+                this.subscription.cancel();
+            }
+
+            @Override
+            public void onComplete() {
+                System.out.println("onComplete");
+            }
+        };
+
+        // 3. 发布者和订阅者需要建立关系
+        publisher.subscribe(subscriber);
+        publisher.submit("https://www.netkiller.cn");
+
+        // 4. 发布者开始发布数据
+        IntStream.range(0, 11).mapToObj(i -&gt; "publisher -----&gt; message " + i).peek(message -&gt; publisher.submit(message)).forEach(System.out::println);
+
+        // 5. 发布结束后，关闭发布者
+        publisher.close();
+
+        // main线程延迟关闭，不然订阅者还没接收完消息，线程就被关闭了
+        Thread.currentThread().join(1000);
+    }
+
+}
+		
+			</pre><pre class="screen">
+			
+main
+onSubscribe
+onNext: https://www.netkiller.cn
+publisher -----&gt; message 0
+publisher -----&gt; message 1
+publisher -----&gt; message 2
+publisher -----&gt; message 3
+publisher -----&gt; message 4
+onNext: publisher -----&gt; message 0
+onNext: publisher -----&gt; message 1
+onNext: publisher -----&gt; message 2
+onNext: publisher -----&gt; message 3
+onNext: publisher -----&gt; message 4
+onNext: publisher -----&gt; message 5
+publisher -----&gt; message 5
+publisher -----&gt; message 6
+publisher -----&gt; message 7
+publisher -----&gt; message 8
+publisher -----&gt; message 9
+publisher -----&gt; message 10
+onNext: publisher -----&gt; message 6
+onNext: publisher -----&gt; message 7
+onNext: publisher -----&gt; message 8
+onNext: publisher -----&gt; message 9
+onNext: publisher -----&gt; message 10
+onComplete			
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="Flow.Processor"></a>10.9.3. Flow.Processor</h3></div></div></div><pre class="programlisting">
+			
+package cn.netkiller.test;
+
+
+import lombok.SneakyThrows;
+
+import java.util.concurrent.Flow;
+import java.util.concurrent.SubmissionPublisher;
+
+public class Test {
+    @SneakyThrows
+    public static void main(String[] args) {
+        Test test = new Test();
+        try (final var publisher = new SubmissionPublisher&lt;String&gt;()) {
+
+            final var processor = new UpperCaseProcessor();
+            publisher.subscribe(processor);
+
+            processor.subscribe(new Flow.Subscriber&lt;String&gt;() {
+                                    private Flow.Subscription subscription;
+
+                                    @Override
+                                    public void onSubscribe(Flow.Subscription subscription) {
+                                        this.subscription = subscription;
+                                        System.out.println("Subscriber.onSubscribe");
+                                        subscription.request(1);
+                                    }
+
+                                    @Override
+                                    public void onNext(String item) {
+                                        System.out.println("Subscriber.onNext: " + item);
+                                        this.subscription.request(1);
+                                    }
+
+                                    @Override
+                                    public void onError(Throwable throwable) {
+                                        System.out.println("Subscriber.onError: " + throwable);
+                                    }
+
+                                    @Override
+                                    public void onComplete() {
+                                        System.out.println("Subscriber.onComplete");
+                                    }
+                                }
+            );
+
+            publisher.submit("abc");
+            publisher.submit("xyz");
+            publisher.submit("neo");
+            publisher.submit("netkiller");
+        }
+        Thread.currentThread().join(1000);
+    }
+
+
+    static class UpperCaseProcessor extends SubmissionPublisher&lt;String&gt; implements Flow.Processor&lt;String, String&gt; {
+
+        private Flow.Subscription subscription;
+
+        @Override
+        public void onSubscribe(Flow.Subscription subscription) {
+            this.subscription = subscription;
+            System.out.println("Processor.onSubscribe");
+            subscription.request(1);
+        }
+
+        @Override
+        public void onNext(String item) {
+            System.out.println("Processor.onNext: " + item);
+            submit(item.toUpperCase());
+            this.subscription.request(1);
+        }
+
+        @Override
+        public void onError(Throwable throwable) {
+            System.out.println("Processor.onError: " + throwable.getMessage());
+            closeExceptionally(throwable);
+        }
+
+        @Override
+        public void onComplete() {
+            System.out.println("Processor.onComplete");
+            close();
+        }
+    }
+}
+			
+			
+			</pre><pre class="screen">
+			
+Processor.onSubscribe
+Subscriber.onSubscribe
+Processor.onNext: abc
+Processor.onNext: xyz
+Processor.onNext: neo
+Processor.onNext: netkiller
+Processor.onComplete
+Subscriber.onNext: ABC
+Subscriber.onNext: XYZ
+Subscriber.onNext: NEO
+Subscriber.onNext: NETKILLER
+Subscriber.onComplete			
+			
+			</pre></div></div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
+			window.changyan.api.config({
+			appid: 'cyvwjQUG3',
+			conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
+			});
+</script><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ThreadPool.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="VirtualThreads.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">10.8. java 线程池 </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 10.10. Java 协程</td></tr></table></div><script xmlns="">
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+			ga('create', 'UA-11694057-1', 'auto');
+			ga('send', 'pageview');
+
+		</script><script xmlns="" async="async">
+			var _hmt = _hmt || [];
+			(function() {
+			var hm = document.createElement("script");
+			hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(hm, s);
+			})();
+</script><script xmlns="" async="async">
+			(function(){
+			var bp = document.createElement('script');
+			var curProtocol = window.location.protocol.split(':')[0];
+			if (curProtocol === 'https') {
+			bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+			}
+			else {
+			bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+			}
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(bp, s);
+			})();
+</script></body></html>
