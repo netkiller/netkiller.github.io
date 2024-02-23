@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>43.2. 多数据源配置</title><link rel="stylesheet" type="text/css" href="../../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><link rel="home" href="../../index.html" title="Netkiller Java 手札（版）" /><link rel="up" href="index.html" title="第 43 章 Spring boot with Datasource" /><link rel="prev" href="index.html" title="第 43 章 Spring boot with Datasource" /><link rel="next" href="ch43s03.html" title="43.3. JPA 多数据源" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
+		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">43.2. 多数据源配置</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><th width="60%" align="center">第 43 章 Spring boot with Datasource</th><td width="20%" align="right"> <a accesskey="n" href="ch43s03.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1949"></a>43.2. 多数据源配置</h3></div></div></div><pre class="programlisting">
+		
+package cn.netkiller.project.config;
+
+import javax.sql.DataSource;
+
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.jdbc.DataSourceBuilder;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.transaction.PlatformTransactionManager;
+
+@Configuration
+public class DataSourceConfig {
+
+	@Bean
+	@Primary
+	@ConfigurationProperties("spring.datasource")
+	public DataSourceProperties defaultDataSourceProperties() {
+		return new DataSourceProperties();
+	}
+
+	@Bean
+	@Primary
+	@ConfigurationProperties("spring.datasource")
+	public DataSource defaultDataSource() {
+		return defaultDataSourceProperties().initializeDataSourceBuilder().build();
+	}
+
+	@Bean("JdbcTemplate")
+	@Primary
+	public JdbcTemplate defaultJdbcTemplate(@Qualifier("defaultDataSource") DataSource Master) {
+		return new JdbcTemplate(Master);
+	}
+
+	@Bean
+	// @Primary
+	@ConfigurationProperties("spring.datasource.master")
+	public DataSourceProperties masterDataSourceProperties() {
+		return new DataSourceProperties();
+	}
+
+	@Bean("Master")
+	// @Primary
+	@ConfigurationProperties("spring.datasource.master")
+	public DataSource masterDataSource() {
+		return masterDataSourceProperties().initializeDataSourceBuilder().build();
+	}
+
+	@Bean("masterJdbcTemplate")
+	// @Primary
+	public JdbcTemplate masterJdbcTemplate(@Qualifier("Master") DataSource Master) {
+		return new JdbcTemplate(Master);
+	}
+
+	@Bean
+	@ConfigurationProperties("spring.datasource.slave")
+	public DataSourceProperties slaveDataSourceProperties() {
+		return new DataSourceProperties();
+	}
+
+	@Bean(name = "Slave")
+	@ConfigurationProperties("spring.datasource.slave")
+	public DataSource slaveDataSource() {
+		return slaveDataSourceProperties().initializeDataSourceBuilder().build();
+	}
+
+	@Bean("slaveJdbcTemplate")
+	public JdbcTemplate slaveJdbcTemplate(@Qualifier("Slave") DataSource Master) {
+		return new JdbcTemplate(Master);
+	}
+	
+	@Bean(name = "wwwDataSource")
+	@Qualifier("wwwDataSource")
+	@ConfigurationProperties(prefix = "spring.datasource.www")
+	public DataSource wwwDataSource() {
+		return DataSourceBuilder.create().build();
+	}
+	
+	@Bean(name = "apiDataSource")
+	@Qualifier("apiDataSource")
+	@ConfigurationProperties(prefix = "spring.datasource.api")
+	public DataSource apiDataSource() {
+		return DataSourceBuilder.create().build();
+	}
+
+	@Bean(name = "cmsDataSource")
+	@Qualifier("cmsDataSource")
+	//@Primary
+	@ConfigurationProperties(prefix = "spring.datasource.cms")
+	public DataSource cmsDataSource() {
+		return DataSourceBuilder.create().build();
+	}
+
+	@Bean 
+	PlatformTransactionManager transactionManager() {
+		return new DataSourceTransactionManager(apiDataSource());
+	}
+
+	@Bean(name = "wwwJdbcTemplate")
+	public JdbcTemplate wwwJdbcTemplate(@Qualifier("wwwDataSource") DataSource dataSource) {
+		return new JdbcTemplate(dataSource);
+	}	
+	
+	@Bean(name = "appJdbcTemplate")
+	public JdbcTemplate appJdbcTemplate(@Qualifier("apiDataSource") DataSource dataSource) {
+		return new JdbcTemplate(dataSource);
+	}
+
+	@Bean(name = "cmsJdbcTemplate")
+	public JdbcTemplate cmsJdbcTemplate(@Qualifier("cmsDataSource") DataSource dataSource) {
+		return new JdbcTemplate(dataSource);
+	}
+}
+		
+		</pre><p>对应 application.properties 的配置方法</p><pre class="screen">
+		
+spring.datasource.www.driver-class-name=com.mysql.jdbc.Driver
+spring.datasource.www.url=jdbc:mysql://localhost:3306/www?useUnicode=true&amp;characterEncoding=UTF-8&amp;serverTimezone=UTC&amp;useSSL=false
+spring.datasource.www.username=www
+spring.datasource.www.password=passw0rd
+spring.datasource.www.max-idle=10
+spring.datasource.www.max-wait=10000
+spring.datasource.www.min-idle=5
+spring.datasource.www.initial-size=5
+spring.datasource.www.validation-query=SELECT 1
+spring.datasource.www.test-on-borrow=false
+spring.datasource.www.test-while-idle=true
+spring.datasource.www.time-between-eviction-runs-millis=18800
+spring.datasource.www.jdbc-interceptors=ConnectionState;SlowQueryReport(threshold=0)
+
+spring.datasource.api.driver-class-name=com.mysql.jdbc.Driver
+spring.datasource.api.url=jdbc:mysql://localhost:3306/api?useUnicode=true&amp;characterEncoding=UTF-8&amp;serverTimezone=UTC&amp;useSSL=false
+spring.datasource.api.username=api
+spring.datasource.api.password=passw0rd
+spring.datasource.api.max-idle=10
+spring.datasource.api.max-wait=10000
+spring.datasource.api.min-idle=5
+spring.datasource.api.initial-size=5
+spring.datasource.api.validation-query=SELECT 1
+spring.datasource.api.test-on-borrow=false
+spring.datasource.api.test-while-idle=true
+spring.datasource.api.time-between-eviction-runs-millis=18800
+spring.datasource.api.jdbc-interceptors=ConnectionState;SlowQueryReport(threshold=0)		
+		
+		</pre><p>选择数据库</p><pre class="programlisting">
+		
+	@Autowired
+	@Qualifier("apiJdbcTemplate")
+	JdbcTemplate jdbcTempalte;		
+		
+		</pre></div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
+			window.changyan.api.config({
+			appid: 'cyvwjQUG3',
+			conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
+			});
+</script><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ch43s03.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 43 章 Spring boot with Datasource </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 43.3. JPA 多数据源</td></tr></table></div><script xmlns="">
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+			ga('create', 'UA-11694057-1', 'auto');
+			ga('send', 'pageview');
+
+		</script><script xmlns="" async="async">
+			var _hmt = _hmt || [];
+			(function() {
+			var hm = document.createElement("script");
+			hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(hm, s);
+			})();
+</script><script xmlns="" async="async">
+			(function(){
+			var bp = document.createElement('script');
+			var curProtocol = window.location.protocol.split(':')[0];
+			if (curProtocol === 'https') {
+			bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+			}
+			else {
+			bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+			}
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(bp, s);
+			})();
+</script></body></html>
