@@ -429,6 +429,212 @@ public interface MemberRepository extends JpaRepository&lt;User, Integer&gt;, Us
     ...
 }			
 			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1136"></a>52.3.13. 自定义返回字段</h3></div></div></div><p>我们并不希望每次返回所有字段，JPA默认查询等价 “SELECT * FROM TABLE”</p><pre class="programlisting">
+			
+package cn.netkiller.domain;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import lombok.Data;
+import org.hibernate.annotations.Comment;
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
+
+import java.io.Serializable;
+
+@Entity
+@Table(uniqueConstraints = {@UniqueConstraint(name = "UK_device_hobby", columnNames = {"device_id", "hobby"})})
+@DynamicUpdate
+@DynamicInsert
+@Data
+@Comment("用户画像")
+public class UserPersona implements Serializable {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", unique = true, nullable = false, insertable = false, updatable = false, columnDefinition = "int unsigned")
+    @Comment("主键")
+    private Integer id;
+
+    @ManyToOne
+    @Comment("设备")
+    @JoinColumn(name = "device_id", unique = false, nullable = false, insertable = true, updatable = false)
+    @JsonIgnore
+    private Device device;
+
+    @Comment("兴趣爱好")
+    private String hobby;
+
+    @Comment("权重")
+    private Integer weight;
+
+    public interface UserPersonaNativeQuery {
+        // String getId();
+
+        String getHobby();
+
+        String getWeight();
+    }
+}
+			
+			
+			</pre><p>解放方法是，定一个接口 UserPersonaNativeQuery</p><pre class="programlisting">
+			
+package cn.netkiller.repository;
+
+import cn.netkiller.domain.UserPersona;
+import jakarta.transaction.Transactional;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface UserPersonaRepository extends CrudRepository&lt;UserPersona, Integer&gt; {
+    @Transactional
+    @Modifying
+    @Query(nativeQuery = true, value = "INSERT INTO user_persona (device_id, hobby,weight) VALUES ((SELECT id FROM device where sn=:device) , :hobby, 1) ON DUPLICATE KEY UPDATE weight = weight + 1;")
+    int updateUserPersona(@Param("device") String device, @Param("hobby") String hobby);
+
+    List&lt;UserPersona.UserPersonaNativeQuery&gt; findByDeviceId(Integer id);
+}
+			
+			</pre><p>在仓库中指定该接口</p><pre class="programlisting">
+			
+[
+    {
+      "weight": "10",
+      "hobby": "小朋友"
+    },
+    {
+      "weight": "10",
+      "hobby": "妈妈"
+    },
+    {
+      "weight": "10",
+      "hobby": "自行车"
+    },
+    {
+      "weight": "5",
+      "hobby": "校园"
+    },
+    {
+      "weight": "5",
+      "hobby": "欢声笑语"
+    },
+    {
+      "weight": "6",
+      "hobby": "雪景"
+    },
+    {
+      "weight": "4",
+      "hobby": "皮筋"
+    },
+    {
+      "weight": "4",
+      "hobby": "同学们"
+    },
+    {
+      "weight": "4",
+      "hobby": "爬杆"
+    },
+    {
+      "weight": "4",
+      "hobby": "女同学"
+    },
+    {
+      "weight": "4",
+      "hobby": "羽毛球"
+    },
+    {
+      "weight": "4",
+      "hobby": "歌曲"
+    },
+    {
+      "weight": "1",
+      "hobby": "冰雪"
+    },
+    {
+      "weight": "1",
+      "hobby": "包饺子"
+    },
+    {
+      "weight": "1",
+      "hobby": "哈尔滨"
+    },
+    {
+      "weight": "1",
+      "hobby": "冻梨"
+    },
+    {
+      "weight": "1",
+      "hobby": "冰雕"
+    }
+  ]			
+			
+			</pre><p>@ManyToOne 字段的巧妙处理，正常情况 @ManyToOne
+				会返回一个对象，如果我们返回List列表，这个对象就会重复出现，首先使用 @JsonIgnore 将其屏蔽，然后创建两个方法
+				private void setDeviceId(Integer deviceId) 和 private Integer
+				getDeviceId()
+			</p><pre class="programlisting">
+			
+package cn.netkiller.domain;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import lombok.Data;
+import org.hibernate.annotations.Comment;
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
+
+import java.io.Serializable;
+
+@Entity
+@Table(uniqueConstraints = {@UniqueConstraint(name = "UK_device_hobby", columnNames = {"device_id", "hobby"})})
+@DynamicUpdate
+@DynamicInsert
+@Data
+@Comment("用户画像")
+public class UserPersona implements Serializable {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", unique = true, nullable = false, insertable = false, updatable = false, columnDefinition = "int unsigned")
+    @Comment("主键")
+    private Integer id;
+
+    @ManyToOne
+    @Comment("设备")
+    @JoinColumn(name = "device_id", unique = false, nullable = false, insertable = true, updatable = false)
+    @JsonIgnore
+    private Device device;
+
+    @Comment("兴趣爱好")
+    private String hobby;
+
+    @Comment("权重")
+    private Integer weight;
+
+    private void setDeviceId(Integer deviceId) {
+        this.setDevice(Device.builder().id(deviceId).build());
+    }
+
+    private Integer getDeviceId() {
+        return this.getDevice().getId();
+    }
+
+    public interface UserPersonaNativeQuery {
+        String getId();
+
+        String getHobby();
+
+        Integer getWeight();
+
+        Integer getDeviceId();
+    }
+}
+			
 			</pre></div></div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
 			window.changyan.api.config({
 			appid: 'cyvwjQUG3',
