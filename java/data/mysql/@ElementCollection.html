@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>76.3. 映射集合属性</title><link rel="stylesheet" type="text/css" href="../../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><link rel="home" href="../../index.html" title="Netkiller Java 手札（版）" /><link rel="up" href="index.html" title="第 76 章 Spring Data with MySQL" /><link rel="prev" href="@Entity.html" title="76.2. 声明实体" /><link rel="next" href="ForeignKey.html" title="76.4. 外键" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
+		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">76.3. 映射集合属性</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="@Entity.html">上一页</a> </td><th width="60%" align="center">第 76 章 Spring Data with MySQL</th><td width="20%" align="right"> <a accesskey="n" href="ForeignKey.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="@ElementCollection"></a>76.3. 映射集合属性</h2></div></div></div><p>@ElementCollection 很像
+			@OneToMany，甚至有些场景可以相互替代，@ElementCollection
+			更适合 List/Set/Map/Array
+			等数据类型，而 @OneToMany 是对应一个实体。
+		</p><p>ElementCollection 缺点是，不能对集合表进行 CURD操作</p><pre class="programlisting">
+			
+import javax.persistence.*;
+import java.util.*;
+import javax.persistence.*;
+
+@Entity
+public class Employee {
+     @Id
+     @GeneratedValue(strategy = GenerationType.AUTO)
+     private int id;
+     private String name;
+     
+     @ElementCollection
+     private Set&lt;Address&gt; address = new HashSet&lt;Address&gt;();
+}			
+			
+		</pre><pre class="programlisting">
+			
+import javax.persistence.*;
+
+@Embeddable
+public class Address {
+     private String province;
+     private String city;
+     private String state;
+}
+			
+		</pre><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1303"></a>76.3.1. List 集合</h3></div></div></div><p>List 集合</p><pre class="programlisting">
+			
+	@ElementCollection(targetClass = String.class) //指定集合中元素的类型
+	@CollectionTable(name = "school_inf", joinColumns = @JoinColumn(name="pid",nullable = false)) //表示外键不能为空
+	@Column(name = "school_name") 		//指定表中保存集合元素的列名
+	@OrderColumn(name = "list_order") 	//索引列
+	private List&lt;String&gt; schools = new ArrayList&lt;String&gt;();		
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1304"></a>76.3.2. 数组集合</h3></div></div></div><p>数组集合</p><pre class="programlisting">
+			
+@Entity
+@Table
+public class Student {
+
+	@Id @Column
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Integer sid;
+	private String name;
+	private Integer age;
+	@ElementCollection(targetClass=String.class) //集合中元素的类型
+	@CollectionTable(name = "school", joinColumns = @JoinColumn(name="sid",nullable = false))//指定外键的名称为sid,并且不能为空
+	@Column(name = "school_name") //指定schools属性，在表中的列名
+	@OrderColumn(name = "array_order")
+	private String[] schools = new String[3];
+	
+}
+		
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1305"></a>76.3.3. Map 集合</h3></div></div></div><p>Map 集合</p><pre class="programlisting">
+			
+@Entity
+@Table(name = "student")
+public class Student {
+
+	@Id @Column
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Integer sid;
+	private String name;
+	private Integer age;
+	@ElementCollection(targetClass = Float.class) //对于Map类型的属性：指定的是Value的类型
+	@CollectionTable(name = "score_info", joinColumns = @JoinColumn(name="sid", nullable = false))
+	@MapKeyClass(String.class) 		// 指定Map中key的类型
+	@MapKeyColumn(name="suject") 	//指定索引列，也就是key的列名
+	@Column(name = "score") //映射保存Map, Value的列名
+	private Map&lt;String, Float&gt; scores = new HashMap&lt;String, Float&gt;(); //科目和成绩
+
+}			
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id=""></a>76.3.4. Set 集合</h3></div></div></div><p>Set 集合</p><pre class="programlisting">
+			
+	@ElementCollection
+    private final Set&lt;String&gt; address = new HashSet&lt;String&gt;();			
+			
+			</pre><pre class="programlisting">
+				
+    @ElementCollection
+    @CollectionTable(joinColumns = @JoinColumn(name = "pid", nullable = false))
+    private Set&lt;Status&gt; address = new HashSet&lt;Status&gt;();
+				
+			</pre><pre class="programlisting">
+				
+package cn.netkiller.domain;
+
+import jakarta.persistence.*;
+import lombok.Data;
+import org.hibernate.annotations.Comment;
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
+
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
+
+@Entity
+@Table
+@DynamicUpdate
+@DynamicInsert
+@Data
+@Comment("Stable Diffusion Lora 表")
+public class Lora implements Serializable {
+    @Serial
+    public static final long serialVersionUID = 1L;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", unique = true, nullable = false, insertable = false, updatable = false, columnDefinition = "int unsigned")
+    @Comment("主键")
+    private Long id;
+
+    @Column(unique = true, nullable = false, insertable = true, updatable = true)
+    @Comment("模型名称")
+    private String name;
+
+    @Comment("模型描述")
+    private String description;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    private Set&lt;String&gt; keyword = new HashSet&lt;String&gt;();
+
+    @Comment("状态")
+    private boolean status;
+
+    @Column(insertable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    @Comment("创建时间")
+    private Date ctime;
+
+    @Column(nullable = true, insertable = false, updatable = false, columnDefinition = "TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP")
+    @Comment("修改时间")
+    private Date mtime;
+}
+		
+				
+			</pre><pre class="programlisting">
+				
+package cn.netkiller.repository;
+
+
+import cn.netkiller.domain.Lora;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+import java.util.Set;
+
+@Repository
+public interface LoraRepository extends CrudRepository&lt;Lora, Integer&gt; {
+
+}		
+				
+			</pre><pre class="programlisting">
+				
+package cn.netkiller.controller;
+
+import cn.netkiller.domain.Lora;
+import cn.netkiller.repository.LoraRepository;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Optional;
+import java.util.Set;
+
+@RestController
+@Slf4j
+@RequestMapping("/lora")
+public class LoraController {
+    @Autowired
+    private LoraRepository loraRepository;
+
+    @GetMapping("test")
+    public Lora test() {
+        Lora lora = new Lora();
+        lora.setName("中国风");
+        lora.setDescription("中国风格图片");
+        lora.setKeyword(Set.of("茶", "武术", "剪纸"));
+        loraRepository.save(lora);
+
+        lora = new Lora();
+        lora.setName("二次元");
+        lora.setDescription("二次元风格图片");
+        lora.setKeyword(Set.of("日本", "机甲", "手办"));
+        loraRepository.save(lora);
+        return lora;
+    }
+
+    @GetMapping("query")
+    public Iterable&lt;Lora&gt; query() {
+        Iterable&lt;Lora&gt; lora = loraRepository.findAll();
+        return lora;
+    }
+
+}		
+				
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1306"></a>76.3.5. 外键名称</h3></div></div></div><pre class="programlisting">
+				
+    @ElementCollection
+    @CollectionTable(joinColumns = @JoinColumn(name = "pid", nullable = false))
+    private Set&lt;Status&gt; address = new HashSet&lt;Status&gt;();
+				
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1307"></a>76.3.6. 集合表子查询</h3></div></div></div><p>集合表子查询，以Set为例</p><pre class="programlisting">
+		
+package cn.aigcsst.repository;
+
+
+import cn.aigcsst.domain.Lora;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+import java.util.Set;
+
+@Repository
+public interface LoraRepository extends CrudRepository&lt;Lora, Integer&gt; {
+    Optional&lt;Lora&gt; findByKeywordIn(Set keyword);
+}
+		
+			</pre><p>查询接口</p><pre class="programlisting">
+		
+	@GetMapping("keyword")
+    public Optional&lt;Lora&gt; keywordTest(@RequestParam("key") Set&lt;String&gt; keyword) {
+
+        Optional&lt;Lora&gt; lora = loraRepository.findByKeywordIn(keyword);
+        return lora;
+    }
+		
+			</pre><p>GET 传递 Set 参数的方法如下</p><pre class="programlisting">
+		
+curl -X 'GET' \
+  'http://localhost:8080/lora/keyword?key=%E8%8C%B6&amp;key=%E6%AD%A6%E6%9C%AF&amp;key=%E9%80%A0%E7%BA%B8' \
+  -H 'accept: */*'
+		
+			</pre></div></div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
+			window.changyan.api.config({
+			appid: 'cyvwjQUG3',
+			conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
+			});
+</script><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="@Entity.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ForeignKey.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">76.2. 声明实体 </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 76.4. 外键</td></tr></table></div><script xmlns="">
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+			ga('create', 'UA-11694057-1', 'auto');
+			ga('send', 'pageview');
+
+		</script><script xmlns="" async="async">
+			var _hmt = _hmt || [];
+			(function() {
+			var hm = document.createElement("script");
+			hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(hm, s);
+			})();
+</script><script xmlns="" async="async">
+			(function(){
+			var bp = document.createElement('script');
+			var curProtocol = window.location.protocol.split(':')[0];
+			if (curProtocol === 'https') {
+			bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+			}
+			else {
+			bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+			}
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(bp, s);
+			})();
+</script></body></html>

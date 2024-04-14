@@ -77,7 +77,7 @@ neo@MacBook-Pro ~/AndroidStudioProjects/okhttp % cat app/src/main/AndroidManifes
 
 &lt;/manifest&gt;		
 		
-		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="okhttp.http"></a>121.2.3. okhttp 默认是 HTTPS 开启 HTTP</h3></div></div></div><p>如果你尝试使用 http 链接 OkHttp3 就抛出异常: CLEARTEXT communication to " +
+		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="okhttp.https"></a>121.2.3. okhttp 默认是 HTTPS 开启 HTTP</h3></div></div></div><p>如果你尝试使用 http 链接 OkHttp3 就抛出异常: CLEARTEXT communication to " +
 			host + " not permitted by network security policy
 		</p><p>开发过程中由于 https ssl 需要购买证书，费用较高，通常测试环境我们仍然使用 http 下面方法是开启 http 模式，
 		</p><p>创建文件 res/xml/network_security_config.xml 内容如下</p><pre class="screen">
@@ -120,7 +120,22 @@ neo@MacBook-Pro ~/AndroidStudioProjects/okhttp % cat app/src/main/res/xml/networ
     &lt;uses-permission android:name="android.permission.INTERNET" /&gt;
 &lt;/manifest&gt;		
 		
-		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="okhttp.get"></a>121.2.4. GET</h3></div></div></div><pre class="programlisting">
+		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1789"></a>121.2.4. 连接池</h3></div></div></div><pre class="programlisting">
+		
+      ConnectionPool connectionPool = new ConnectionPool(10, 5, TimeUnit.MINUTES);
+
+        OkHttpClient client = new OkHttpClient.Builder()
+                .connectionPool(connectionPool)
+                .retryOnConnectionFailure(true)
+                .connectTimeout(5, TimeUnit.MINUTES)
+                .readTimeout(5, TimeUnit.MINUTES)
+                .writeTimeout(Duration.ofSeconds(90))
+                .callTimeout(Duration.ofSeconds(90))
+                .build();
+        client.dispatcher().setMaxRequestsPerHost(200);
+        client.dispatcher().setMaxRequests(200);		
+		
+		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="okhttp.get"></a>121.2.5. GET</h3></div></div></div><pre class="programlisting">
 		
 	OkHttpClient client = new OkHttpClient();
  
@@ -140,7 +155,7 @@ neo@MacBook-Pro ~/AndroidStudioProjects/okhttp % cat app/src/main/res/xml/networ
  
     System.out.println(response.body().string());		
 		
-		</pre><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1778"></a>121.2.4.1. URL 组装</h4></div></div></div><pre class="programlisting">
+		</pre><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1790"></a>121.2.5.1. URL 组装</h4></div></div></div><pre class="programlisting">
 			
 		HttpUrl.Builder urlBuilder = HttpUrl.parse("https://www.netkiller.cn").newBuilder();
 		urlBuilder.addPathSegments("search/cache_vector_chatgpt");
@@ -163,7 +178,7 @@ neo@MacBook-Pro ~/AndroidStudioProjects/okhttp % cat app/src/main/res/xml/networ
 			
 https://www.netkiller.cn/search/cache_vector_chatgpt?question=Helloworld%21%21%21
 			
-			</pre></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1779"></a>121.2.4.2. Get 异步调用</h4></div></div></div><pre class="programlisting">
+			</pre></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1791"></a>121.2.5.2. Get 异步调用</h4></div></div></div><pre class="programlisting">
 			
         OkHttpClient client = new OkHttpClient();
 
@@ -183,7 +198,7 @@ https://www.netkiller.cn/search/cache_vector_chatgpt?question=Helloworld%21%21%2
             }
         });			
 			
-			</pre></div></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="okhttp.post"></a>121.2.5. POST</h3></div></div></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1780"></a>121.2.5.1. POST Form Data</h4></div></div></div><p>from 数据如下</p><pre class="screen">
+			</pre></div></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="okhttp.post"></a>121.2.6. POST</h3></div></div></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1792"></a>121.2.6.1. POST Form Data</h4></div></div></div><p>from 数据如下</p><pre class="screen">
 			
 key=value&amp;other=data			
 			
@@ -209,7 +224,7 @@ key=value&amp;other=data
             throw new IOException("服务器端错误: " + response);
         }
 			
-			</pre></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1781"></a>121.2.5.2. POST RAW JSON</h4></div></div></div><p>POST RAW Json 数据，数据的形态这样的</p><pre class="screen">
+			</pre></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1793"></a>121.2.6.2. POST RAW JSON</h4></div></div></div><p>POST RAW Json 数据，数据的形态这样的</p><pre class="screen">
 			
 {"key":"value"}
 			
@@ -229,7 +244,7 @@ String post(String url, String json) throws IOException {
   return response.body().string();
 }		
 			
-			</pre></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1782"></a>121.2.5.3. 数据流提交</h4></div></div></div><pre class="programlisting">
+			</pre></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1794"></a>121.2.6.3. 数据流提交</h4></div></div></div><pre class="programlisting">
 			
 OkHttpClient client = new OkHttpClient();
 final MediaType MEDIA_TYPE_TEXT = MediaType.parse("text/plain");
@@ -260,7 +275,7 @@ if (!response.isSuccessful()) {
 }
 System.out.println(response.body().string());			
 			
-			</pre></div></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="okhttp.put"></a>121.2.6. HTTP PUT 请求</h3></div></div></div><pre class="programlisting">
+			</pre></div></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="okhttp.put"></a>121.2.7. HTTP PUT 请求</h3></div></div></div><pre class="programlisting">
 		
 import java.util.concurrent.TimeUnit;
 
@@ -290,7 +305,7 @@ public class Test {
 }
 		
 		
-		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="okhttp.addheader"></a>121.2.7. http header 相关设置</h3></div></div></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id=""></a>121.2.7.1. 设置 HTTP 头</h4></div></div></div><p>添加Http头</p><pre class="programlisting">
+		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="okhttp.addheader"></a>121.2.8. http header 相关设置</h3></div></div></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id=""></a>121.2.8.1. 设置 HTTP 头</h4></div></div></div><p>添加Http头</p><pre class="programlisting">
 			
 Request request = new Request.Builder()
         .url(url)
@@ -327,7 +342,7 @@ public class Headers {
    }
 }		
 			
-			</pre></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1783"></a>121.2.7.2. Cookie 管理</h4></div></div></div><pre class="programlisting">
+			</pre></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1795"></a>121.2.8.2. Cookie 管理</h4></div></div></div><pre class="programlisting">
 			
 OkHttpClient mHttpClient = new OkHttpClient.Builder().cookieJar(new CookieJar() {
     private final HashMap&lt;String, List&lt;Cookie&gt;&gt; cookieStore = new HashMap&lt;&gt;();
@@ -342,14 +357,14 @@ OkHttpClient mHttpClient = new OkHttpClient.Builder().cookieJar(new CookieJar() 
     }
 }).build();			
 			
-			</pre></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1784"></a>121.2.7.3. 禁用缓存</h4></div></div></div><pre class="programlisting">
+			</pre></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1796"></a>121.2.8.3. 禁用缓存</h4></div></div></div><pre class="programlisting">
 			
 Request request = new Request.Builder()
     .cacheControl(new CacheControl.Builder().noCache().build())
     .url(url)
     .build();			
 			
-			</pre></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id=""></a>121.2.7.4. 设置缓存 max-age</h4></div></div></div><pre class="programlisting">
+			</pre></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id=""></a>121.2.8.4. 设置缓存 max-age</h4></div></div></div><pre class="programlisting">
 			
 // 等同于 nocache			
 Request request = new Request.Builder()
@@ -367,7 +382,7 @@ Request request = new Request.Builder()
     .url("https://www.netkiller.cn")
     .build();    	
 			
-			</pre></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1785"></a>121.2.7.5. 强制缓存</h4></div></div></div><pre class="programlisting">
+			</pre></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1797"></a>121.2.8.5. 强制缓存</h4></div></div></div><pre class="programlisting">
 			
 Request request = new Request.Builder()
     .cacheControl(new CacheControl.Builder()
@@ -382,7 +397,7 @@ if (forceCacheResponse.code() != 504) {
   // The resource was not cached.
 }			
 			
-			</pre></div></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="okhttp.auth"></a>121.2.8. HTTP Base Auth</h3></div></div></div><pre class="programlisting">
+			</pre></div></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="okhttp.auth"></a>121.2.9. HTTP Base Auth</h3></div></div></div><pre class="programlisting">
 		
         OkHttpClient client = new OkHttpClient.Builder().authenticator(
                 new Authenticator(){
@@ -393,7 +408,7 @@ if (forceCacheResponse.code() != 504) {
                 }
         ).build();		
 		
-		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="HttpUrl.Builder"></a>121.2.9. HttpUrl.Builder 组装 URL 地址参数</h3></div></div></div><p>使用字符串拼接 URL地址特别容易出错</p><pre class="programlisting">
+		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="HttpUrl.Builder"></a>121.2.10. HttpUrl.Builder 组装 URL 地址参数</h3></div></div></div><p>使用字符串拼接 URL地址特别容易出错</p><pre class="programlisting">
 		
 String url = "https://www.netkiller.cn/article?username="+ username + "&amp;category="+ category;		
 		
@@ -410,7 +425,7 @@ String url = "https://www.netkiller.cn/article?username="+ username + "&amp;cate
 		
 https://www.netkiller.cn/article?username=netkiller&amp;category=android		
 		
-		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="okhttp.Activity"></a>121.2.10. Android Activity Example</h3></div></div></div><pre class="programlisting">
+		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="okhttp.Activity"></a>121.2.11. Android Activity Example</h3></div></div></div><pre class="programlisting">
 		
 package cn.netkiller.okhttp;
 
@@ -473,7 +488,7 @@ public class HttpActivity extends AppCompatActivity {
     }
 }
 		
-		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="oauth2.android"></a>121.2.11. Android Oauth2 + Jwt example</h3></div></div></div><p>Oauth 返回数据，通过 Gson 的 fromJson 存储到下面类中。</p><pre class="programlisting">
+		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="oauth2.android"></a>121.2.12. Android Oauth2 + Jwt example</h3></div></div></div><p>Oauth 返回数据，通过 Gson 的 fromJson 存储到下面类中。</p><pre class="programlisting">
 		
 package cn.netkiller.okhttp.pojo;
 
@@ -726,7 +741,7 @@ public class Oauth2jwtActivity extends AppCompatActivity {
 		
 		</pre><p>上面的例子演示了，怎样获取 access token 以及 HTTP 基本操作 GET 和
 			POST，再Restful接口中还可能会用到 PUT, DELETE 等等，原来相同，这里就不在演示。
-		</p></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="okhttp.h2"></a>121.2.12. HTTP/2</h3></div></div></div><p>首先确认你的服务器是支持 HTTP2，HTTP2配置方法可以参考 《Netkiller Web 手札》</p><p>下面是我的例子仅供参考，Nginx 开启 http2 代理后面的 Spring Cloud 接口。</p><pre class="screen">
+		</p></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="okhttp.h2"></a>121.2.13. HTTP/2</h3></div></div></div><p>首先确认你的服务器是支持 HTTP2，HTTP2配置方法可以参考 《Netkiller Web 手札》</p><p>下面是我的例子仅供参考，Nginx 开启 http2 代理后面的 Spring Cloud 接口。</p><pre class="screen">
 		
 server {
     listen       80;
@@ -796,7 +811,7 @@ server {
 D/okhttp: HTTP Code 200 TEXT {"status":false,"reason":"","code":0,"data":{"id":null,"username":"12322228888","mobile":"12322228888","password":"123456","wechat":"微信ID","role":"Organization","captcha":null,"createDate":"2018-10-25 09:25:23","updateDate":null}}
     Protocol: h2
 		
-		</pre><p>输出 h2 表示当前接口与服务器连接是通过 http2 完成。</p></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="okhttp3.async"></a>121.2.13. 异步更新 UI</h3></div></div></div><pre class="programlisting">
+		</pre><p>输出 h2 表示当前接口与服务器连接是通过 http2 完成。</p></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="okhttp3.async"></a>121.2.14. 异步更新 UI</h3></div></div></div><pre class="programlisting">
 		
  		buttonSend.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -889,7 +904,106 @@ D/okhttp: HTTP Code 200 TEXT {"status":false,"reason":"","code":0,"data":{"id":n
             }
         });		
 		
-		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1786"></a>121.2.14. WebSocket Client</h3></div></div></div><pre class="programlisting">
+		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="okhttp.sse"></a>121.2.15. SSE 客户端</h3></div></div></div><pre class="programlisting">
+		
+ public void postStream(String function, LinkedHashMap&lt;String, String&gt; params, String json) throws InterruptedException {
+
+        HttpUrl.Builder urlBuilder = HttpUrl.parse(address).newBuilder();
+        urlBuilder.addPathSegments(function);
+        if (params != null) {
+            for (Map.Entry&lt;String, String&gt; entry : params.entrySet()) {
+                String key = entry.getKey();
+                String value = entry.getValue();
+                urlBuilder.addQueryParameter(key, value);
+            }
+        }
+        String url = urlBuilder.build().toString();
+        Log.d(TAG, "Post URL: " + url + " Json: " + json);
+
+        MediaType mediaType = MediaType.parse("application/json; charset=utf-8");
+        RequestBody body = RequestBody.create(json, mediaType);
+        Request request = new Request.Builder()
+                .url(url)
+//                .addHeader("Authorization", "Bearer " + token)
+                .addHeader("Accept", "text/event-stream")
+//                .addHeader("accept-encoding", "gzip, deflate")
+                .addHeader("token", this.token)
+                .post(body).build();
+
+        OkHttpClient client = this.client();
+
+        RealEventSource realEventSource = new RealEventSource(request, new EventSourceListener() {
+            @Override
+            public void onOpen(EventSource eventSource, Response response) {
+                Log.d(TAG, "onOpen");
+            }
+
+            @Override
+            public void onEvent(EventSource eventSource, String id, String type, String data) {
+
+                Log.d(TAG, "Stream Id: " + id + " Type: " + type + " Data: " + data);   // 请求到的数据
+
+            }
+
+            @Override
+            public void onClosed(EventSource eventSource) {
+                Log.d(TAG, "onClosed");
+            }
+
+            @Override
+            public void onFailure(EventSource eventSource, Throwable throwable, Response response) {
+                Log.d(TAG, "onFailure");//这边可以监听并重新打开
+                Log.d(TAG, response.toString());
+                Log.d(TAG, throwable.toString());
+            }
+
+        });
+        realEventSource.connect(client);
+    }		
+		
+		</pre><pre class="programlisting">
+		
+ public void getStream(String function, LinkedHashMap&lt;String, String&gt; params, EventSourceListener listener) throws InterruptedException {
+
+        HttpUrl.Builder urlBuilder = HttpUrl.parse(address).newBuilder();
+        urlBuilder.addPathSegments(function);
+        if (params != null) {
+            for (Map.Entry&lt;String, String&gt; entry : params.entrySet()) {
+                String key = entry.getKey();
+                String value = entry.getValue();
+                urlBuilder.addQueryParameter(key, value);
+            }
+
+        }
+        String url = urlBuilder.build().toString();
+//        Log.d(TAG, "Post URL: " + url + " params: " + params.toString());
+        Request request = new Request.Builder()
+                .url(url)
+//                .addHeader("Authorization", "Bearer " + token)
+                .addHeader("Accept", "text/event-stream; charset=utf-8")
+//                .addHeader("accept-encoding", "gzip, deflate")
+                .addHeader("token", this.token)
+                .get().build();
+
+        OkHttpClient client = this.client();
+        EventSource.Factory createFactory = EventSources.createFactory(client);
+//        EventSourceListener eventSourceListener = new EventSourceListener() {
+//            @Override
+//            public void onEvent(EventSource eventSource, String id, String type, String data) {
+//
+//                Log.d(TAG, "Stream Id: " + id + " Type: " + type + " Data: " + data);   // 请求到的数据
+//            }
+//
+//            public void onFailure(EventSource eventSource, Throwable throwable, Response response) {
+//                super.onFailure(eventSource, throwable, response);
+//                Log.d(TAG, response.toString());
+//                Log.d(TAG, throwable.toString());
+//            }
+//        };
+        createFactory.newEventSource(request, listener);
+    }		
+		
+		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="okhttp.websocket"></a>121.2.16. WebSocket Client</h3></div></div></div><pre class="programlisting">
 		
 package cn.netkiller.service;
 

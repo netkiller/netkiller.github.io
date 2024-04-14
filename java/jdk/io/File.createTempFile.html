@@ -28,7 +28,36 @@ public class CreateTempFileExample
     }
 }
 		
-		</pre><p>Temp file : C:\Users\mkyong\AppData\Local\Temp\temp-file-name623426.tmp</p></div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
+		</pre><p>Temp file : C:\Users\neo\AppData\Local\Temp\temp-file-name623426.tmp</p><p>指定目录创建临时文件，运行之后将会在 /tmp/convert 目录中创建文件</p><pre class="programlisting">
+		
+	@SneakyThrows
+    public InputStream convertInputStreamAmrToPcm(InputStream inputStreamAmr) {
+//        UUID uuid = UUID.randomUUID();
+//        String filename = uuid.toString();
+        String filename = "convert-";
+
+        File source = File.createTempFile(filename, ".amr", new File("/tmp/convert"));
+        File target = File.createTempFile(filename, ".pcm", new File("/tmp/convert"));
+
+        if (!target.getParentFile().isDirectory()) {
+            boolean directory = target.getParentFile().mkdirs();
+        }
+
+        log.info("Source: {}, Target: {}", source.getAbsolutePath(), target.getAbsolutePath());
+        source.deleteOnExit();
+        target.deleteOnExit();
+        inputStreamAmr.transferTo(new FileOutputStream(source));
+        boolean status = audioFormatConversion(source, target);
+        log.info("Amr To Pcm: {}", status);
+        if (!status) {
+            return null;
+        }
+        InputStream inputStream = new FileInputStream(target);
+
+        return inputStream;
+    }		
+		
+		</pre></div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
 			window.changyan.api.config({
 			appid: 'cyvwjQUG3',
 			conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
