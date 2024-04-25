@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>117.5. TimerTask 实现循环播放</title><link rel="stylesheet" type="text/css" href="../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><link rel="home" href="../index.html" title="Netkiller Java 手札（版）" /><link rel="up" href="android.schedule.html" title="第 117 章 Schedule 计划任务" /><link rel="prev" href="ch117s04.html" title="117.4. 循环执行" /><link rel="next" href="ch117s06.html" title="117.6. TimerTask 更新 UI" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
+		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">117.5. TimerTask 实现循环播放</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ch117s04.html">上一页</a> </td><th width="60%" align="center">第 117 章 Schedule 计划任务</th><td width="20%" align="right"> <a accesskey="n" href="ch117s06.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id11317"></a>117.5. TimerTask 实现循环播放</h2></div></div></div><pre class="programlisting">
+		
+
+    static class LoopPlayer {
+        private static Timer timer;
+        private static LoopPlayer loopPlayer;
+
+        public synchronized static LoopPlayer getInstance() {
+            if (loopPlayer == null) {
+                loopPlayer = new LoopPlayer();
+            }
+            return loopPlayer;
+        }
+
+        public void schedule(TimerTask timerTask) {
+            if (timer == null) {
+                timer = new Timer();
+            }
+            timer.schedule(timerTask, 1000, 30000);
+        }
+
+        public void cannel() {
+            if (timer != null) {
+                timer.cancel();
+                timer = null;
+            }
+        }
+    }		
+		
+		</pre><div class="example"><a id="id1868"></a><p class="title"><strong>例 117.1. </strong></p><div class="example-contents"><pre class="programlisting">
+			
+package cn.netkiller.album.skill;
+
+import android.content.Context;
+import android.content.Intent;
+import android.util.Log;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
+
+import cn.netkiller.album.R;
+
+public class AlbumSkillComponent {
+    private static final String TAG = AlbumSkillComponent.class.getSimpleName();
+    private final Timer timer = new Timer();
+    boolean status = false;
+    Context context;
+    Map&lt;Integer, String&gt; map = new HashMap&lt;Integer, String&gt;() {{
+        put(R.drawable.kouhong, "娇兰KissKiss系列口红：这款口红以其立方形的金色包装而闻名，提供多种饱满且持久的颜色。其配方含有透明度调节剂和金色反射颗粒，可以为嘴唇带来光滑且饱满的效果。");
+        put(R.drawable.xiangshui, "Miss Dior是Dior的另一款经典香水，首次推出是在1947年，与Dior的第一款时装系列同时推出。这款香水的香调包括粉红胡椒、柑橘、玫瑰、茉莉、香根草等，散发出一种浪漫、活力的气息。");
+        put(R.drawable.xiezhuangshui, "美宝莲的卸妆水能有效地去除脸部和眼部的彩妆，包括防水和长效彩妆。它的配方温和，不会对皮肤造成刺激。");
+        put(R.drawable.fendi, "这是香奈儿的一款经典粉底，以其轻薄的质地和自然的妆效而受到喜爱。Vitalumiere粉底能提供中等的遮瑕力，同时给肌肤带来光泽感，使肌肤看起来更加健康。");
+        put(R.drawable.sfs, "说神仙水是最适合油皮痘肌的爽肤水绝对不夸大！主要在于它的神奇成分Pitera，专业术语是半乳糖酵母样菌发酵产物滤液，含有维生素、氨基酸、矿物质、有机酸这些对皮肤有益的成分，可以很好地帮助皮肤调整水油平衡，改善肤质。如果是因为出油长痘的话，一定要试试它！");
+    }};
+
+    private TimerTask timerTask;
+
+    public AlbumSkillComponent(Context context, String question) {
+        this.context = context;
+        LoopPlayer loopPlayer = LoopPlayer.getInstance();
+        if (question.contains("口红")) {
+            this.play(R.drawable.kouhong, "娇兰KissKiss系列口红：这款口红以其立方形的金色包装而闻名，提供多种饱满且持久的颜色。其配方含有透明度调节剂和金色反射颗粒，可以为嘴唇带来光滑且饱满的效果。\n");
+            this.status = true;
+        } else if (question.contains("香水")) {
+            this.play(R.drawable.xiangshui, "Miss Dior是Dior的另一款经典香水，首次推出是在1947年，与Dior的第一款时装系列同时推出。这款香水的香调包括粉红胡椒、柑橘、玫瑰、茉莉、香根草等，散发出一种浪漫、活力的气息。\n");
+            this.status = true;
+        } else if (question.contains("卸妆水")) {
+            this.play(R.drawable.xiezhuangshui, "美宝莲的卸妆水能有效地去除脸部和眼部的彩妆，包括防水和长效彩妆。它的配方温和，不会对皮肤造成刺激。\n");
+            this.status = true;
+        } else if (question.contains("粉底")) {
+            this.play(R.drawable.fendi, "这是香奈儿的一款经典粉底，以其轻薄的质地和自然的妆效而受到喜爱。Vitalumiere粉底能提供中等的遮瑕力，同时给肌肤带来光泽感，使肌肤看起来更加健康。\n");
+            this.status = true;
+        } else if (question.contains("爽肤水")) {
+            this.play(R.drawable.sfs, "说神仙水是最适合油皮痘肌的爽肤水绝对不夸大！主要在于它的神奇成分Pitera，专业术语是半乳糖酵母样菌发酵产物滤液，含有维生素、氨基酸、矿物质、有机酸这些对皮肤有益的成分，可以很好地帮助皮肤调整水油平衡，改善肤质。如果是因为出油长痘的话，一定要试试它！");
+            this.status = true;
+        } else if (question.contains("停止")) {
+            loopPlayer.cannel();
+        } else if (question.contains("轮播")) {
+            timerTask = new TimerTask() {
+                final Integer[] keys = map.keySet().toArray(new Integer[0]);
+                final Random random = new Random();
+
+                @Override
+                public void run() {
+
+                    Integer randomKey = keys[random.nextInt(keys.length)];
+                    String value = map.get(randomKey);
+                    play(randomKey, value);
+                    Log.d(TAG, value);
+
+                }
+            };
+            loopPlayer.schedule(timerTask);
+            this.status = true;
+        } else {
+
+            loopPlayer.cannel();
+            this.play(R.drawable.logo, "没有找到产品，你可以这样对我说，小美小美，介绍一下口红");
+            this.status = true;
+        }
+    }
+
+    public boolean hit() {
+        return this.status;
+    }
+
+    public boolean play(int resource, String message) {
+        Intent intent = new Intent();
+        intent.setAction("album.broadcast.change");
+        intent.putExtra("image", resource);
+        intent.putExtra("message", message);
+        context.sendBroadcast(intent);
+        SkillMatching.say(message);
+        return this.status;
+    }
+
+    static class LoopPlayer {
+        private static Timer timer;
+        private static LoopPlayer loopPlayer;
+
+        public synchronized static LoopPlayer getInstance() {
+            if (loopPlayer == null) {
+                loopPlayer = new LoopPlayer();
+            }
+            return loopPlayer;
+        }
+
+        public void schedule(TimerTask timerTask) {
+            if (timer == null) {
+                timer = new Timer();
+            }
+            timer.schedule(timerTask, 1000, 30000);
+        }
+
+        public void cannel() {
+            if (timer != null) {
+                timer.cancel();
+                timer = null;
+            }
+        }
+    }
+}			
+			
+			</pre></div></div><br class="example-break" /></div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
+			window.changyan.api.config({
+			appid: 'cyvwjQUG3',
+			conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
+			});
+</script><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ch117s04.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="android.schedule.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ch117s06.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">117.4. 循环执行 </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 117.6. TimerTask 更新 UI</td></tr></table></div><script xmlns="">
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+			ga('create', 'UA-11694057-1', 'auto');
+			ga('send', 'pageview');
+
+		</script><script xmlns="" async="async">
+			var _hmt = _hmt || [];
+			(function() {
+			var hm = document.createElement("script");
+			hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(hm, s);
+			})();
+</script><script xmlns="" async="async">
+			(function(){
+			var bp = document.createElement('script');
+			var curProtocol = window.location.protocol.split(':')[0];
+			if (curProtocol === 'https') {
+			bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+			}
+			else {
+			bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+			}
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(bp, s);
+			})();
+</script></body></html>
