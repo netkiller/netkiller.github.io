@@ -7,7 +7,7 @@
     &lt;artifactId&gt;spring-boot-starter-webflux&lt;/artifactId&gt;
 &lt;/dependency&gt;	
 	
-	</pre><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1084"></a>43.12.1. 配置 WebClient</h3></div></div></div><pre class="programlisting">
+	</pre><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1090"></a>43.12.1. 配置 WebClient</h3></div></div></div><pre class="programlisting">
 			
 @Configuration
 public class WebConfig {
@@ -23,7 +23,21 @@ public class WebConfig {
   }
 }			
 			
-		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1085"></a>43.12.2. @Controller/@RestController 实例</h3></div></div></div><pre class="programlisting">
+		</pre><p>超时设置</p><pre class="programlisting">
+		
+HttpClient httpClient = HttpClient.create()
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 60000)
+                .responseTimeout(Duration.ofSeconds(60))
+                .doOnConnected(conn -&gt; conn
+                        .addHandler(new ReadTimeoutHandler(60, TimeUnit.SECONDS))
+                        .addHandler(new WriteTimeoutHandler(60, TimeUnit.SECONDS))
+                );
+        WebClient client = WebClient.builder()
+                .clientConnector(new ReactorClientHttpConnector(httpClient))
+                .baseUrl(url)
+                .build();
+		
+		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1091"></a>43.12.2. @Controller/@RestController 实例</h3></div></div></div><pre class="programlisting">
 		
     @GetMapping("webclient")
     public Mono&lt;String&gt; webclient() {
@@ -596,6 +610,12 @@ webClient.get()
                 .headers(httpHeaders -&gt; httpHeaders.setBasicAuth(username, password))
                 .retrieve()
                 .bodyToFlux(String.class).log();
+		
+		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1092"></a>43.12.18. org.springframework.web.context.request.async.AsyncRequestNotUsableException:
+			ServletOutputStream failed to flush: java.io.IOException: Broken pipe
+		</h3></div></div></div><pre class="programlisting">
+		
+
 		
 		</pre></div></div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
 			window.changyan.api.config({
