@@ -1,0 +1,513 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>73.9. 事务 @Transactional</title><link rel="stylesheet" type="text/css" href="../../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><link rel="home" href="../../index.html" title="Netkiller Java 手札（版）" /><link rel="up" href="index.html" title="第 73 章 Spring Data with MySQL" /><link rel="prev" href="JPQL.html" title="73.8. JPQL @Query" /><link rel="next" href="jpa.mysql.faq.html" title="73.10. FAQ 常见问题" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
+		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">73.9. 事务 @Transactional</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="JPQL.html">上一页</a> </td><th width="60%" align="center">第 73 章 Spring Data with MySQL</th><td width="20%" align="right"> <a accesskey="n" href="jpa.mysql.faq.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="@Transactional"></a>73.9. 事务 @Transactional</h2></div></div></div><div class="literallayout"><p><br />
+			<br />
+下面介绍一下@Transactional注解的参数以及使用：<br />
+<br />
+事物传播行为介绍:<br />
+<br />
+@Transactional(propagation=Propagation.REQUIRED) ：如果有事务, 那么加入事务, 没有的话新建一个(默认情况下)<br />
+@Transactional(propagation=Propagation.NOT_SUPPORTED) ：容器不为这个方法开启事务<br />
+@Transactional(propagation=Propagation.REQUIRES_NEW) ：不管是否存在事务,都创建一个新的事务,原来的挂起,新的执行完毕,继续执行老的事务<br />
+@Transactional(propagation=Propagation.MANDATORY) ：必须在一个已有的事务中执行,否则抛出异常<br />
+@Transactional(propagation=Propagation.NEVER) ：必须在一个没有的事务中执行,否则抛出异常(与Propagation.MANDATORY相反)<br />
+@Transactional(propagation=Propagation.SUPPORTS) ：如果其他bean调用这个方法,在其他bean中声明事务,那就用事务.如果其他bean没有声明事务,那就不用事务.<br />
+事物超时设置:<br />
+<br />
+@Transactional(timeout=30) //默认是30秒<br />
+事务隔离级别:<br />
+<br />
+@Transactional(isolation = Isolation.READ_UNCOMMITTED)：读取未提交数据(会出现脏读, 不可重复读) 基本不使用<br />
+@Transactional(isolation = Isolation.READ_COMMITTED)：读取已提交数据(会出现不可重复读和幻读)<br />
+@Transactional(isolation = Isolation.REPEATABLE_READ)：可重复读(会出现幻读)<br />
+@Transactional(isolation = Isolation.SERIALIZABLE)：串行化 　MYSQL: 默认为REPEATABLE_READ级别 　SQLSERVER: 默认为READ_COMMITTED<br />
+@Transactional注解中常用参数说明<br />
+<br />
+注意的几点:<br />
+<br />
+@Transactional 只能被应用到public方法上, 对于其它非public的方法,如果标记了@Transactional也不会报错,但方法没有事务功能.<br />
+用 spring 事务管理器,由spring来负责数据库的打开,提交,回滚.默认遇到运行期例外(throw new RuntimeException("注释");)会回滚，即遇到不受检查（unchecked）的例外时回滚；而遇到需要捕获的例外(throw new Exception("注释");)不会回滚,即遇到受检查的例外（就是非运行时抛出的异常，编译器会检查到的异常叫受检查例外或说受检查异常）时，需我们指定方式来让事务回滚要想所有异常都回滚,要加上 @Transactional( rollbackFor={Exception.class,其它异常}) .如果让unchecked例外不回滚： @Transactional(notRollbackFor=RunTimeException.class)<br />
+@Transactional 注解应该只被应用到 public 可见度的方法上。 如果你在 protected、private 或者 package-visible 的方法上使用 @Transactional 注解，它也不会报错， 但是这个被注解的方法将不会展示已配置的事务设置。<br />
+@Transactional 注解可以被应用于接口定义和接口方法、类定义和类的 public 方法上。然而，请注意仅仅 @Transactional 注解的出现不足于开启事务行为，它仅仅 是一种元数据，能够被可以识别 @Transactional 注解和上述的配置适当的具有事务行为的beans所使用。上面的例子中，其实正是 元素的出现 开启 了事务行为。<br />
+Spring团队的建议是你在具体的类（或类的方法）上使用 @Transactional 注解，而不要使用在类所要实现的任何接口上。你当然可以在接口上使用 @Transactional 注解，但是这将只能当你设置了基于接口的代理时它才生效。因为注解是不能继承的，这就意味着如果你正在使用基于类的代理时，那么事务的设置将不能被基于类的代理所识别，而且对象也将不会被事务代理所包装（将被确认为严重的）。因此，请接受Spring团队的建议并且在具体的类上使用 @Transactional 注解。			<br />
+<br />
+			<br />
+			</p></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1350"></a>73.9.1. save() 不需要开启 @Transactional </h3></div></div></div><p>在SimpleJpaRepository中save()已经帮我们实现</p><pre class="programlisting">
+					
+@Repository
+@Transactional(readOnly = true)
+public class SimpleJpaRepository&lt;T, ID&gt; implements JpaRepositoryImplementation&lt;T, ID&gt; {
+​
+    private static final String ID_MUST_NOT_BE_NULL = "The given id must not be null!";
+​
+    private final JpaEntityInformation&lt;T, ?&gt; entityInformation;
+    private final EntityManager em;
+    private final PersistenceProvider provider;
+​
+    private @Nullable CrudMethodMetadata metadata;
+​
+    /**
+     * Creates a new {@link SimpleJpaRepository} to manage objects of the given {@link JpaEntityInformation}.
+     *
+     * @param entityInformation must not be {@literal null}.
+     * @param entityManager must not be {@literal null}.
+     */
+    public SimpleJpaRepository(JpaEntityInformation&lt;T, ?&gt; entityInformation, EntityManager entityManager) {
+​
+        Assert.notNull(entityInformation, "JpaEntityInformation must not be null!");
+        Assert.notNull(entityManager, "EntityManager must not be null!");
+​
+        this.entityInformation = entityInformation;
+        this.em = entityManager;
+        this.provider = PersistenceProvider.fromEntityManager(entityManager);
+    }
+​
+    /**
+     * Creates a new {@link SimpleJpaRepository} to manage objects of the given domain type.
+     *
+     * @param domainClass must not be {@literal null}.
+     * @param em must not be {@literal null}.
+     */
+    public SimpleJpaRepository(Class&lt;T&gt; domainClass, EntityManager em) {
+        this(JpaEntityInformationSupport.getEntityInformation(domainClass, em), em);
+    }
+​
+    /**
+     * Configures a custom {@link CrudMethodMetadata} to be used to detect {@link LockModeType}s and query hints to be
+     * applied to queries.
+     *
+     * @param crudMethodMetadata
+     */
+    public void setRepositoryMethodMetadata(CrudMethodMetadata crudMethodMetadata) {
+        this.metadata = crudMethodMetadata;
+    }
+​
+    @Nullable
+    protected CrudMethodMetadata getRepositoryMethodMetadata() {
+        return metadata;
+    }
+​
+    //......
+​
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.repository.CrudRepository#delete(java.io.Serializable)
+     */
+    @Transactional
+    public void deleteById(ID id) {
+​
+        Assert.notNull(id, ID_MUST_NOT_BE_NULL);
+​
+        delete(findById(id).orElseThrow(() -&gt; new EmptyResultDataAccessException(
+                String.format("No %s entity with id %s exists!", entityInformation.getJavaType(), id), 1)));
+    }
+​
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.repository.CrudRepository#delete(java.lang.Object)
+     */
+    @Transactional
+    public void delete(T entity) {
+​
+        Assert.notNull(entity, "The entity must not be null!");
+        em.remove(em.contains(entity) ? entity : em.merge(entity));
+    }
+​
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.repository.CrudRepository#delete(java.lang.Iterable)
+     */
+    @Transactional
+    public void deleteAll(Iterable&lt;? extends T&gt; entities) {
+​
+        Assert.notNull(entities, "The given Iterable of entities not be null!");
+​
+        for (T entity : entities) {
+            delete(entity);
+        }
+    }
+​
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.jpa.repository.JpaRepository#deleteInBatch(java.lang.Iterable)
+     */
+    @Transactional
+    public void deleteInBatch(Iterable&lt;T&gt; entities) {
+​
+        Assert.notNull(entities, "The given Iterable of entities not be null!");
+​
+        if (!entities.iterator().hasNext()) {
+            return;
+        }
+​
+        applyAndBind(getQueryString(DELETE_ALL_QUERY_STRING, entityInformation.getEntityName()), entities, em)
+                .executeUpdate();
+    }
+​
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.repository.Repository#deleteAll()
+     */
+    @Transactional
+    public void deleteAll() {
+​
+        for (T element : findAll()) {
+            delete(element);
+        }
+    }
+​
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.jpa.repository.JpaRepository#deleteAllInBatch()
+     */
+    @Transactional
+    public void deleteAllInBatch() {
+        em.createQuery(getDeleteAllQueryString()).executeUpdate();
+    }
+​
+    //......
+​
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.repository.CrudRepository#save(java.lang.Object)
+     */
+    @Transactional
+    public &lt;S extends T&gt; S save(S entity) {
+​
+        if (entityInformation.isNew(entity)) {
+            em.persist(entity);
+            return entity;
+        } else {
+            return em.merge(entity);
+        }
+    }
+​
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.jpa.repository.JpaRepository#saveAndFlush(java.lang.Object)
+     */
+    @Transactional
+    public &lt;S extends T&gt; S saveAndFlush(S entity) {
+​
+        S result = save(entity);
+        flush();
+​
+        return result;
+    }
+​
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.jpa.repository.JpaRepository#save(java.lang.Iterable)
+     */
+    @Transactional
+    public &lt;S extends T&gt; List&lt;S&gt; saveAll(Iterable&lt;S&gt; entities) {
+​
+        Assert.notNull(entities, "The given Iterable of entities not be null!");
+​
+        List&lt;S&gt; result = new ArrayList&lt;S&gt;();
+​
+        for (S entity : entities) {
+            result.add(save(entity));
+        }
+​
+        return result;
+    }
+​
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.jpa.repository.JpaRepository#flush()
+     */
+    @Transactional
+    public void flush() {
+        em.flush();
+    }
+​
+    //......
+​
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.repository.CrudRepository#findById(java.io.Serializable)
+     */
+    public Optional&lt;T&gt; findById(ID id) {
+​
+        Assert.notNull(id, ID_MUST_NOT_BE_NULL);
+​
+        Class&lt;T&gt; domainType = getDomainClass();
+​
+        if (metadata == null) {
+            return Optional.ofNullable(em.find(domainType, id));
+        }
+​
+        LockModeType type = metadata.getLockModeType();
+​
+        Map&lt;String, Object&gt; hints = getQueryHints().withFetchGraphs(em).asMap();
+​
+        return Optional.ofNullable(type == null ? em.find(domainType, id, hints) : em.find(domainType, id, type, hints));
+    }
+​
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.jpa.repository.JpaRepository#getOne(java.io.Serializable)
+     */
+    @Override
+    public T getOne(ID id) {
+​
+        Assert.notNull(id, ID_MUST_NOT_BE_NULL);
+        return em.getReference(getDomainClass(), id);
+    }
+​
+    /**
+     * Applies the given {@link Specification} to the given {@link CriteriaQuery}.
+     *
+     * @param spec can be {@literal null}.
+     * @param domainClass must not be {@literal null}.
+     * @param query must not be {@literal null}.
+     * @return
+     */
+    private &lt;S, U extends T&gt; Root&lt;U&gt; applySpecificationToCriteria(@Nullable Specification&lt;U&gt; spec, Class&lt;U&gt; domainClass,
+            CriteriaQuery&lt;S&gt; query) {
+​
+        Assert.notNull(domainClass, "Domain class must not be null!");
+        Assert.notNull(query, "CriteriaQuery must not be null!");
+​
+        Root&lt;U&gt; root = query.from(domainClass);
+​
+        if (spec == null) {
+            return root;
+        }
+​
+        CriteriaBuilder builder = em.getCriteriaBuilder();
+        Predicate predicate = spec.toPredicate(root, query, builder);
+​
+        if (predicate != null) {
+            query.where(predicate);
+        }
+​
+        return root;
+    }
+    //......
+}			
+					
+					</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1351"></a>73.9.2. SERIALIZABLE</h3></div></div></div><pre class="programlisting">
+					
+@Transactional(isolation = Isolation.SERIALIZABLE)					
+					
+					</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1352"></a>73.9.3. readOnly</h3></div></div></div><pre class="programlisting">
+					
+@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)			
+					
+					</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1353"></a>73.9.4. 删除更新需要 @Transactional 注解</h3></div></div></div><pre class="programlisting">
+				
+package cn.netkiller.api.repository;
+
+import javax.transaction.Transactional;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import cn.netkiller.api.domain.RecentRead;
+
+@Repository
+public interface RecentReadRepostitory extends CrudRepository&lt;RecentRead, Integer&gt; {
+
+	Page&lt;RecentRead&gt; findByMemberIdOrderByIdDesc(int memberId, Pageable pageable);
+
+	int countByMemberId(int memberId);
+	
+	@Transactional
+	@Modifying
+	@Query("DELETE FROM RecentRead r WHERE r.memberId = ?1 AND r.articleId = ?2")
+	void deleteByMemberIdAndArticleId(int memberId, int articleId);
+	
+	@Transactional
+	@Modifying
+	@Query("delete from RecentRead where member_id = :member_id")
+	public void deleteByMemberId(@Param("member_id") int memberId);
+
+	int countByMemberIdAndArticleId(int memberId, int articleId);
+
+}				
+				
+				</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1354"></a>73.9.5. 回滚操作</h3></div></div></div><pre class="programlisting">
+				
+	// 指定Exception回滚
+	@Transactional(rollbackFor=Exception.class)
+    public void methodName() {
+       // 不会回滚
+       throw new Exception("...");
+    }
+
+	//指定Exception回滚，但其他异常不回滚
+	@Transactional(noRollbackFor=Exception.class)
+    public ItimDaoImpl getItemDaoImpl() {
+        // 会回滚
+        throw new RuntimeException("注释");
+    }
+				
+				</pre><pre class="programlisting">
+				
+@Service
+public class UserService {
+    @Autowired
+    private UserRepostitory userRepostitory;
+    
+    @Transactional
+    public void add(User user) {
+        try {
+            userRepostitory.save(user);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        }
+        // 不会回滚
+    }
+    @Transactional
+    public void add(User user) throws Exception {
+        try {
+             userRepostitory.delete(user);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            // 抛出异常才会回滚
+            throw new Exception(e);
+        }
+    }
+}
+				
+				
+				</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1355"></a>73.9.6. private、default、protected 和 final 不支持事物 </h3></div></div></div><p>@Transactional 必须与 public 一起使用，不能定义为 private、default、protected
+				</p><pre class="programlisting">
+				
+@Service
+public class UserService {
+    @Transactional
+    private void add(User user) {
+         save(user);
+    }
+}
+				
+				</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1356"></a>73.9.7. Service 注意事项</h3></div></div></div><p>this 调用不支持事物</p><pre class="programlisting">
+				
+@Service
+public class UserService {
+
+    @Autowired
+    private UserRepostitory userRepostitory;
+
+    @Transactional
+    public void add(User user) {
+        userRepostitory.save(user);
+        this.update(user);
+    }
+
+    @Transactional
+    public void update(User user) {
+        userRepostitory.update(user);
+    }
+}				
+				
+				</pre><p>解决方案</p><pre class="programlisting">
+				
+@Servcie
+public class UserService {
+   @Autowired
+   prvate ProfileService profileService;
+
+   public void save(User user) {
+         profileService.save(user);
+   }
+}
+
+ @Servcie
+ public class ProfileService {
+
+    @Transactional(rollbackFor=Exception.class)
+    public void save(User user) {
+
+    }
+
+}				
+				
+				</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1357"></a>73.9.8. 需要 @Service 注解配合使用</h3></div></div></div><p>@Transactional 需要在 @Controller、@Service、@Component、@Repository
+					等注解下才能使用
+				</p><pre class="programlisting">
+				
+// @Servcie
+public class UserService {
+	@Autowired
+	prvate ProfileService profileService;
+   
+	@Transactional
+	public void save(User user) {
+         profileService.save(user);
+	}
+}				
+				
+				</pre><p>屏蔽 @Servcie 后观察 save 的 @Transactional 是不生效的。</p></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1358"></a>73.9.9. </h3></div></div></div><pre class="programlisting">
+				
+@Service
+public class UserService {
+
+    @Autowired
+    private UserRepostitory userRepostitory;
+    @Autowired
+    private RoleService roleService;
+
+    @Transactional
+    public void add(User user) throws Exception {
+        userRepostitory.save(user);
+        new Thread(() -&gt; {
+            roleService.doOtherThing();
+        }).start();
+    }
+}
+
+@Service
+public class RoleService {
+
+    @Transactional
+    public void doOtherThing() {
+        ...
+        ...
+    }
+}				
+				
+				</pre></div></div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
+			window.changyan.api.config({
+			appid: 'cyvwjQUG3',
+			conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
+			});
+</script><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="JPQL.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="jpa.mysql.faq.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">73.8. JPQL @Query </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 73.10. FAQ 常见问题</td></tr></table></div><script xmlns="">
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+			ga('create', 'UA-11694057-1', 'auto');
+			ga('send', 'pageview');
+
+		</script><script xmlns="" async="async">
+			var _hmt = _hmt || [];
+			(function() {
+			var hm = document.createElement("script");
+			hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(hm, s);
+			})();
+</script><script xmlns="" async="async">
+			(function(){
+			var bp = document.createElement('script');
+			var curProtocol = window.location.protocol.split(':')[0];
+			if (curProtocol === 'https') {
+			bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+			}
+			else {
+			bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+			}
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(bp, s);
+			})();
+</script></body></html>
