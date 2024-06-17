@@ -1,0 +1,461 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>第 121 章 定位</title><link rel="stylesheet" type="text/css" href="../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><link rel="home" href="../index.html" title="Netkiller Java 手札（版）" /><link rel="up" href="index.html" title="部分 IX. Android" /><link rel="prev" href="media/Vitamio.html" title="120.6. Vitamio" /><link rel="next" href="ch121s02.html" title="121.2. 只从 GPS 获取定位" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
+		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">第 121 章 定位</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="media/Vitamio.html">上一页</a> </td><th width="60%" align="center">部分 IX. Android</th><td width="20%" align="right"> <a accesskey="n" href="ch121s02.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="chapter"><div class="titlepage"><div><div><h2 class="title"><a id="android.location"></a>第 121 章 定位</h2></div></div></div><div class="toc"><p><strong>目录</strong></p><dl class="toc"><dt><span class="section"><a href="android.location.html#id1859">121.1. GPS + 网络 定位</a></span></dt><dd><dl><dt><span class="section"><a href="android.location.html#location.manifest">121.1.1. manifest 权限配置</a></span></dt><dt><span class="section"><a href="android.location.html#location.layout">121.1.2. layout</a></span></dt><dt><span class="section"><a href="android.location.html#location.Activity">121.1.3. Activity</a></span></dt></dl></dd><dt><span class="section"><a href="ch121s02.html">121.2. 只从 GPS 获取定位</a></span></dt></dl></div><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id1859"></a>121.1. GPS + 网络 定位</h2></div></div></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="location.manifest"></a>121.1.1. manifest 权限配置</h3></div></div></div><pre class="programlisting">
+		
+&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="cn.netkiller.location"&gt;
+
+    &lt;uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" /&gt;
+    &lt;uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" /&gt;
+    &lt;uses-permission android:name="android.permission.ACCESS_WIFI_STATE" /&gt;
+    &lt;uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" /&gt;
+    &lt;uses-permission android:name="android.permission.CHANGE_WIFI_STATE" /&gt;
+    &lt;uses-permission android:name="android.permission.INTERNET" /&gt;
+
+    &lt;application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme"&gt;
+        &lt;activity android:name=".MainActivity"&gt;
+            &lt;intent-filter&gt;
+                &lt;action android:name="android.intent.action.MAIN" /&gt;
+                &lt;category android:name="android.intent.category.LAUNCHER" /&gt;
+            &lt;/intent-filter&gt;
+        &lt;/activity&gt;
+    &lt;/application&gt;
+
+&lt;/manifest&gt;		
+		
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="location.layout"></a>121.1.2. layout</h3></div></div></div><pre class="programlisting">
+		
+&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity"&gt;
+
+    &lt;TableLayout
+        android:id="@+id/tableLayout"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"&gt;
+
+        &lt;TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"&gt;
+
+            &lt;TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="状态: " /&gt;
+
+            &lt;TextView
+                android:id="@+id/status"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="TextView" /&gt;
+        &lt;/TableRow&gt;
+
+        &lt;TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"&gt;
+
+            &lt;TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="经度: " /&gt;
+
+            &lt;TextView
+                android:id="@+id/textViewLatitude"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="TextView" /&gt;
+        &lt;/TableRow&gt;
+
+        &lt;TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"&gt;
+
+            &lt;TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="纬度: " /&gt;
+
+            &lt;TextView
+                android:id="@+id/textViewLongitude"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="TextView" /&gt;
+        &lt;/TableRow&gt;
+
+        &lt;TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"&gt;
+
+            &lt;TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="海拔: " /&gt;
+
+            &lt;TextView
+                android:id="@+id/textViewAltitude"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="TextView" /&gt;
+        &lt;/TableRow&gt;
+
+        &lt;TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"&gt;
+
+            &lt;TextView
+                android:id="@+id/textView4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="速度" /&gt;
+
+            &lt;TextView
+                android:id="@+id/textViewSpeed"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="TextView" /&gt;
+        &lt;/TableRow&gt;
+
+        &lt;TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"&gt;
+
+            &lt;TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="时间: " /&gt;
+
+            &lt;TextView
+                android:id="@+id/textViewTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="TextView" /&gt;
+        &lt;/TableRow&gt;
+    &lt;/TableLayout&gt;
+
+    &lt;ListView
+        android:id="@+id/listViewAddress"
+        android:layout_width="368dp"
+        android:layout_height="358dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tableLayout" /&gt;
+&lt;/android.support.constraint.ConstraintLayout&gt;		
+		
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="location.Activity"></a>121.1.3. Activity</h3></div></div></div><pre class="programlisting">
+		
+package cn.netkiller.location;
+
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Criteria;
+import android.location.Geocoder;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.location.LocationProvider;
+import android.support.v4.app.ActivityCompat;
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+
+public class MainActivity extends AppCompatActivity {
+
+    private static final int REQUEST_PERMISSION_CODE = 12;
+    private TextView textViewLatitude;
+    private TextView textViewLongitude;
+    private TextView textViewAltitude;
+    private TextView textViewSpeed;
+    private TextView textViewTime;
+    private TextView status;
+
+    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private ListView listViewAddress;
+    private ArrayAdapter&lt;String&gt; adapter;
+    private ArrayList&lt;String&gt; list;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        textViewLatitude = (TextView) findViewById(R.id.textViewLatitude);
+        textViewLongitude = (TextView) findViewById(R.id.textViewLongitude);
+        textViewAltitude = (TextView) findViewById(R.id.textViewAltitude);
+        textViewSpeed = (TextView) findViewById(R.id.textViewSpeed);
+        textViewTime = (TextView) findViewById(R.id.textViewTime);
+        status = (TextView) findViewById(R.id.status);
+
+        list = new ArrayList&lt;String&gt;();
+        adapter = new ArrayAdapter&lt;String&gt;(MainActivity.this, android.R.layout.simple_list_item_1, list);
+        listViewAddress = (ListView) findViewById(R.id.listViewAddress);
+        listViewAddress.setAdapter(adapter);
+
+        this.location();
+    }
+
+    private void loop() {
+
+    }
+
+    public void location() {
+
+        //获取LocationManager对象
+        LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+
+        boolean gpsStatus = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+        Log.d("Location", "GPS Status: " + gpsStatus);
+
+        boolean networkStatus = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+        Log.d("Location", "Network Status: " + networkStatus);
+
+        //创建一个Criteria对象
+        Criteria criteria = new Criteria();
+        //设置粗略精确度
+        criteria.setAccuracy(Criteria.ACCURACY_COARSE);
+        //设置是否需要返回海拔信息
+        criteria.setAltitudeRequired(true);
+        //设置是否需要返回方位信息
+        criteria.setBearingRequired(true);
+        //设置是否允许付费服务
+        criteria.setCostAllowed(false);
+        //设置电量消耗等级
+        criteria.setPowerRequirement(Criteria.POWER_HIGH);
+        //设置是否需要返回速度信息
+        criteria.setSpeedRequired(true);
+
+        Log.d("Location", "Criteria: " + criteria.toString());
+
+        //获取最符合此标准的provider对象
+//        String currentProvider = locationManager.getProvider(LocationManager.GPS_PROVIDER).getName();
+
+
+        //根据设置的Criteria对象，获取最符合此标准的provider对象
+        String currentProvider = locationManager.getBestProvider(criteria, true);
+
+        Log.d("Location", "currentProvider: " + currentProvider);
+        status.setText(currentProvider);
+
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &amp;&amp; ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, REQUEST_PERMISSION_CODE);
+            return;
+        } else {
+            status.setText("正在获取GPS坐标请稍候...");
+        }
+
+        locationManager.requestLocationUpdates(currentProvider, 0, 0, locationListener);
+        //根据当前provider对象获取最后一次位置信息
+        Location location = locationManager.getLastKnownLocation(currentProvider);
+
+        //如果位置信息不为null，则请求更新位置信息
+        if (location != null) {
+
+            textViewLatitude.setText(location.getLatitude() + "");
+            textViewLongitude.setText(location.getLongitude() + "");
+            textViewAltitude.setText(location.getAltitude() + "");
+            textViewSpeed.setText(location.getSpeed() + "");
+            textViewTime.setText(location.getTime() + "");
+
+            Log.d("Location", "Latitude: " + location.getLatitude());
+            Log.d("Location", "location: " + location.getLongitude());
+
+        } else {
+
+            Log.d("Location", "Latitude: " + 0);
+            Log.d("Location", "location: " + 0);
+
+        }
+
+    }
+
+    //创建位置监听器
+    private LocationListener locationListener = new LocationListener() {
+
+        //位置发生改变时调用
+        @Override
+        public void onLocationChanged(Location location) {
+            status.setText("onLocationChanged");
+
+            //位置信息变化时触发
+            Log.e("Location", "定位方式：" + location.getProvider());
+            Log.e("Location", "纬度：" + location.getLatitude());
+            Log.e("Location", "经度：" + location.getLongitude());
+            Log.e("Location", "海拔：" + location.getAltitude());
+            Log.e("Location", "时间：" + location.getTime());
+
+
+            textViewLatitude.setText(location.getLatitude() + "");
+            textViewLongitude.setText(location.getLongitude() + "");
+            textViewAltitude.setText(location.getAltitude() + "");
+            textViewSpeed.setText(location.getSpeed() + "");
+            textViewTime.setText(dateFormat.format(new Date(location.getTime())) + "");
+
+            //解析地址
+            Geocoder geoCoder = new Geocoder(MainActivity.this, Locale.getDefault());
+
+            double latitude = location.getLatitude();
+            double longitude = location.getLongitude();
+
+            List&lt;Address&gt; locationList = null;
+            try {
+                locationList = geoCoder.getFromLocation(latitude, longitude, 5);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+//            Address address = locationList.get(0);//得到Address实例第一个地址
+//            status.setText(address.toString());
+//            String countryName = address.getCountryName();//得到国家名称，比如：中国
+//            String locality = address.getLocality();//得到城市名称，比如：北京市
+
+            list.clear();
+
+            for (Address address : locationList) {
+
+                for (int n = 0; address.getAddressLine(n) != null; n++) {
+                    String addressLine = address.getAddressLine(n);//得到周边信息，包括街道等，i=0，得到街道名称
+                    list.add(addressLine);
+                    Log.i("Location", "addressLine = " + addressLine);
+                    Log.d("Location", address.getCountryName() + address.getAdminArea() + address.getFeatureName());
+                }
+            }
+
+            adapter.notifyDataSetChanged();
+
+        }
+
+        //provider失效时调用
+        @Override
+        public void onProviderDisabled(String provider) {
+
+            Log.d("Location", "onProviderDisabled");
+            status.setText("onProviderDisabled");
+
+        }
+
+        //provider启用时调用
+        @Override
+        public void onProviderEnabled(String provider) {
+
+            Log.d("Location", "onProviderEnabled");
+            status.setText("onProviderEnabled");
+
+        }
+
+        //状态改变时调用
+        @Override
+        public void onStatusChanged(String provider, int status, Bundle extras) {
+
+            Log.d("Location", "onStatusChanged");
+            //GPS状态变化时触发
+            switch (status) {
+                case LocationProvider.AVAILABLE:
+                    Log.e("Location", "当前GPS状态为可见状态");
+                    break;
+                case LocationProvider.OUT_OF_SERVICE:
+                    Log.e("Location", "当前GPS状态为服务区外状态");
+                    break;
+                case LocationProvider.TEMPORARILY_UNAVAILABLE:
+                    Log.e("Location", "当前GPS状态为暂停服务状态");
+                    break;
+            }
+
+        }
+
+    };
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        switch (requestCode) {
+            case REQUEST_PERMISSION_CODE: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length &gt; 0 &amp;&amp; grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                } else {
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                }
+                return;
+            }
+
+        }
+    }
+
+
+}
+		
+		
+			</pre></div></div></div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
+			window.changyan.api.config({
+			appid: 'cyvwjQUG3',
+			conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
+			});
+</script><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="media/Vitamio.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ch121s02.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">120.6. Vitamio </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 121.2. 只从 GPS 获取定位</td></tr></table></div><script xmlns="">
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+			ga('create', 'UA-11694057-1', 'auto');
+			ga('send', 'pageview');
+
+		</script><script xmlns="" async="async">
+			var _hmt = _hmt || [];
+			(function() {
+			var hm = document.createElement("script");
+			hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(hm, s);
+			})();
+</script><script xmlns="" async="async">
+			(function(){
+			var bp = document.createElement('script');
+			var curProtocol = window.location.protocol.split(':')[0];
+			if (curProtocol === 'https') {
+			bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+			}
+			else {
+			bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+			}
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(bp, s);
+			})();
+</script></body></html>
