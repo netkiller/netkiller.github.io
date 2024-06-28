@@ -48,7 +48,7 @@ public interface PersonRepository extends JpaRepository&lt;Person, Long&gt; {
     public List&lt;Person&gt; find(@Param("lastName") String lastName);
 }
 				
-			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="Query.nativeQuery"></a>48.8.3. 原生 SQL 操作</h3></div></div></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1165"></a>48.8.3.1. 查询</h4></div></div></div><pre class="programlisting">
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="Query.nativeQuery"></a>48.8.3. 原生 SQL 操作</h3></div></div></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1164"></a>48.8.3.1. 查询</h4></div></div></div><pre class="programlisting">
 				
 public interface UserRepository extends JpaRepository&lt;User, Long&gt; {
 
@@ -56,7 +56,7 @@ public interface UserRepository extends JpaRepository&lt;User, Long&gt; {
 	User findByEmailAddress(String emailAddress);
 }
 				
-				</pre></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1166"></a>48.8.3.2. 忽略插入</h4></div></div></div><p>insert ignore</p><pre class="programlisting">
+				</pre></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1165"></a>48.8.3.2. 忽略插入</h4></div></div></div><p>insert ignore</p><pre class="programlisting">
 				
 	@Modifying
     @Query(value = "insert ignore into emp(create, modified, user_id, user_name, user_nickname, user_mail) values(?1, ?2, ?3, ?4, ?5, ?6)", nativeQuery = true)
@@ -281,7 +281,7 @@ public class MyModel implements Serializable {
 @Query(value = "select new cn.netkiller.model.MyModel(u.userName, ui.name, ui.gender, ui.description) from UserInfo ui, User u where u.id = ui.userId")
 public List&lt;MyModel&gt; getAllRecord();
 				
-			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1167"></a>48.8.7. @Query 与 @ManyToOne</h3></div></div></div><pre class="programlisting">
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1166"></a>48.8.7. @Query 与 @ManyToOne</h3></div></div></div><pre class="programlisting">
 			
 package cn.netkiller.domain;
 
@@ -537,7 +537,8 @@ public interface FollowRepository extends CrudRepository&lt;Follow, Integer&gt; 
 			</pre><p>原生写法：@Query(value = "DELETE FROM Follow WHERE
 				follower=:follower and followed=:followed", nativeQuery = true)
 			</p><p>JPQL写法：@Query(value = "DELETE FROM Follow WHERE
-				follower.id=:follower and followed.id=:followed")</p><p>两种写法结果相同</p></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="Query.Collection"></a>48.8.8. Collection</h3></div></div></div><p>返回集合</p><pre class="programlisting">
+				follower.id=:follower and followed.id=:followed")
+			</p><p>两种写法结果相同</p></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="Query.Collection"></a>48.8.8. Collection</h3></div></div></div><p>返回集合</p><pre class="programlisting">
 				
 @Query("SELECT u FROM User u WHERE u.status = 1")
 Collection&lt;User&gt; findAllActiveUsers();				
@@ -552,7 +553,7 @@ List&lt;User&gt; findUserByNameList(@Param("names") Collection&lt;String&gt; nam
 	@Query(value = "SELECT u FROM User u")
 	List&lt;User&gt; findAllUsers(Sort sort);		
 		
-			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1168"></a>48.8.10. 更新数据，返回值</h3></div></div></div><p>返回 0 表示更新失败，返回 1 表示更新成功</p><pre class="programlisting">
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1167"></a>48.8.10. 更新数据，返回值</h3></div></div></div><p>返回 0 表示更新失败，返回 1 表示更新成功</p><pre class="programlisting">
 			
     @Query("UPDATE Picture SET share = :status WHERE id=:id")
     @Modifying
@@ -565,6 +566,44 @@ interface UserRepository extends Repository&lt;User, Long&gt; {
   // Plain query method
   @Lock(LockModeType.READ)
   List&lt;User&gt; findByLastname(String lastname);			
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="JPQL.SUM"></a>48.8.12. Sum 求和</h3></div></div></div><pre class="programlisting">
+			
+package cn.netkiller.repository;
+
+import cn.aigcsst.domain.PictureClick;
+import io.lettuce.core.dynamic.annotation.Param;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+
+@Repository
+public interface PictureClickRepository extends CrudRepository&lt;PictureClick, Integer&gt; {
+
+    @Query("SELECT SUM(favorites) AS favorites FROM PictureClick WHERE device.id = :deviceId")
+    Optional&lt;Integer&gt; query(@Param("deviceId") Integer deviceId);
+		
+	@Query(value = "SELECT sum(quantity) FROM Product")
+    public Long sumQuantities();
+
+	@Query(value = "SELECT sum(quantity * price) FROM Product")
+    public BigDecimal total();	
+}	
+			
+			</pre><pre class="programlisting">
+			
+    @Query("SELECT SUM(favorites) AS favorites, SUM(likes) AS likes FROM PictureClick WHERE device.id = :deviceId")
+    Optional&lt;List&lt;Integer[]&gt;&gt; query(@Param("deviceId") Integer deviceId);
+    
+    @Query("SELECT new map(SUM(favorites) AS favorites, SUM(likes) AS likes) FROM PictureClick WHERE device.id = :deviceId")
+    Optional&lt;Map&lt;String, Integer&gt;&gt; query(@Param("deviceId") Integer deviceId);
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1168"></a>48.8.13. IFNULL</h3></div></div></div><pre class="programlisting">
+			
+    @Query("SELECT new map(IFNULL(SUM(favorites),0) AS favorites, IFNULL(SUM(likes),0) AS likes) FROM PictureClick WHERE device.id = :deviceId")
+    Optional&lt;Map&lt;String, Integer&gt;&gt; query(@Param("deviceId") Integer deviceId);
 			
 			</pre></div></div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
 			window.changyan.api.config({

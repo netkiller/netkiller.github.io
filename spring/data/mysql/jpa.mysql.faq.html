@@ -13,7 +13,8 @@
 		
 			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1179"></a>48.10.2. Query did not return a unique result: 2 results were returned
 			</h3></div></div></div><p>查询 version 表中的最有一条记录，提示 Query did not return a unique result: 2
-				results were returned</p><pre class="programlisting">
+				results were returned
+			</p><pre class="programlisting">
 			
 package cn.netkiller.domain;
 
@@ -65,7 +66,8 @@ public class Version implements Serializable {
 	
 			
 			</pre><p>接口定义 findOneBy 查询 version 表中存在多条记录，我们只要最后一条，所以不能使用
-				findOneBy，需要使用 findFirstBy</p><pre class="programlisting">
+				findOneBy，需要使用 findFirstBy
+			</p><pre class="programlisting">
 			
 package cn.netkiller.repository;
 
@@ -112,7 +114,9 @@ public interface VersionRepository extends CrudRepository&lt;Version, Integer&gt
         return new AigcResponse(null);
     }
 			
-			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1180"></a>48.10.3. Executing an update/delete query</h3></div></div></div><p>org.springframework.dao.InvalidDataAccessApiUsageException: Executing an update/delete query</p><pre class="programlisting">
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1180"></a>48.10.3. Executing an update/delete query</h3></div></div></div><p>org.springframework.dao.InvalidDataAccessApiUsageException:
+				Executing an update/delete query
+			</p><pre class="programlisting">
 			
 package cn.aigcsst.repository;
 
@@ -147,6 +151,44 @@ public interface PictureRepository extends JpaRepository&lt;Picture, Long&gt; {
     public int share(Long id, boolean status) {
         return pictureRepository.updateShareStatus(id, status);
     }
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1181"></a>48.10.4. could not initialize proxy [cn.netkiller.domain.Device#16] - no Session </h3></div></div></div><p>第一种解决方法，捕捉 LazyInitializationException 异常</p><pre class="programlisting">
+			
+    @Cacheable(value = "picture:click", key = "#deviceId+'-'+#pictureId", unless = "#result == null")
+    public Optional&lt;PictureClick&gt; click(Integer deviceId, Integer pictureId) {
+        Optional&lt;PictureClick&gt; optional = pictureClickRepository.findByDeviceIdAndPictureId(deviceId, pictureId);
+        optional.ifPresent(pictureClick -&gt; {
+            try {
+                log.debug(pictureClick.toString());
+            } catch (LazyInitializationException e) {
+                log.error(e.getMessage());
+            }
+        });
+        return optional;
+    }	
+			
+			</pre><p>第二种解决方法 FetchType.EAGER</p><pre class="programlisting">
+			
+@ManyToOne(fetch = FetchType.EAGER, optional = false)	
+			
+			</pre><p>第三种解决方法 @Transactional(readOnly = true)</p><pre class="programlisting">
+			
+    @Transactional(readOnly = true)
+    public Optional&lt;PictureClick&gt; click(Integer deviceId, Integer pictureId) {
+        Optional&lt;PictureClick&gt; optional = pictureClickRepository.queryByDeviceIdAndPictureId(deviceId, pictureId);
+        optional.ifPresent(pictureClick -&gt; {
+            try {
+                log.debug(pictureClick.toString());
+            } catch (LazyInitializationException e) {
+                log.error(e.getMessage());
+            }
+        });
+        return optional;
+    }	
+			
+			</pre><p>第四种解决方法 @Proxy(lazy = false)</p><pre class="programlisting">
+			
+@Proxy(lazy = false) 的意思和FetchType.EAGER类似	
 			
 			</pre></div></div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
 			window.changyan.api.config({
