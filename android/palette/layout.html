@@ -127,48 +127,236 @@ android:layout_alignBottom="@+id/button1" 	与button1控件下边平齐
 
 &lt;/FrameLayout&gt;			
 			
-			</pre></div></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="AnimationDrawable"></a>7.2.4. 动画</h3></div></div></div><p></p><div class="itemizedlist"><p class="title"><strong>参数</strong></p><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem">android:oneshot 代表播放次数 true 只展示一遍，设置为false会不停的循环播放动画
-			</li><li class="listitem">android:duration 表示展示所用的该图片的时间长度 </li></ul></div><pre class="programlisting">
-		
+			</pre></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id830"></a>7.2.3.3. 悬浮并且可以拖动改变位置的 FrameLayout</h4></div></div></div><p>figure.xml</p><pre class="programlisting">
+			
 &lt;?xml version="1.0" encoding="utf-8"?&gt;
-&lt;animation-list xmlns:android="http://schemas.android.com/apk/res/android"
-    android:oneshot="true"&gt;
+&lt;FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"&gt;
 
-    &lt;item
-        android:drawable="@drawable/hotel1"
-        android:duration="150" /&gt;
-    &lt;item
-        android:drawable="@drawable/hotel2"
-        android:duration="150" /&gt;
-    &lt;item
-        android:drawable="@drawable/hotel3"
-        android:duration="150" /&gt;
-    &lt;item
-        android:drawable="@drawable/hotel4"
-        android:duration="150" /&gt;
-    &lt;item
-        android:drawable="@drawable/hotel5"
-        android:duration="150" /&gt;
-&lt;/animation-list&gt;
-		
-		</pre><p></p><pre class="programlisting">
-		
-	&lt;ImageView
-    android:id="@+id/load_image"
-    android:layout_width="25dp"
-    android:layout_height="25dp"
-    android:layout_gravity="center_vertical"
-    android:scaleType="centerCrop"
-    android:src="@drawable/loading_anim_image" /&gt;		
-		
-		</pre><p></p><pre class="programlisting">
-		
-    ImageView imageView = findViewById(R.id.imageView);
-    animationDrawable = (AnimationDrawable) imageView.getDrawable();
-    //直接就开始执行，性能不是最佳的。
-    animationDrawable.start();		
-		
-		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="soundwave"></a>7.2.5. 声音波形图</h3></div></div></div><pre class="programlisting">
+    &lt;ImageView
+        android:id="@+id/imageViewFigure"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        tools:ignore="MissingConstraints" /&gt;
+&lt;/FrameLayout&gt;
+			
+			</pre><p>activity_main.xml 中引用</p><pre class="programlisting">
+			
+        &lt;FrameLayout
+            android:id="@+id/frameLayoutFigure"
+            android:layout_width="400dp"
+            android:layout_height="400dp"
+            android:layout_gravity="bottom|end"
+            android:layout_marginEnd="50dp"
+            android:layout_marginBottom="80dp"
+            android:visibility="visible"&gt;
+
+            &lt;include
+                layout="@layout/figure"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" /&gt;
+        &lt;/FrameLayout&gt;
+			
+			</pre><pre class="programlisting">
+			
+package cn.netkiller.student.fragment;
+
+import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.graphics.drawable.AnimationDrawable;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
+import android.view.MotionEvent;
+import android.view.View;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+
+import androidx.annotation.DrawableRes;
+
+import cn.aigcsst.student.R;
+
+public class AnimationFigure {
+    private static final String TAG = AnimationFigure.class.getSimpleName();
+    private final ImageView imageViewFigure;
+    private final FrameLayout frameLayoutFigure;
+    private final AnimationDrawable animationDrawable;
+    private int screenWidth, screenHeight;
+    View.OnTouchListener onTouchListener = new View.OnTouchListener() {
+        private float x;
+        private float y;
+        private float rawX;
+        private float rawY;
+        private long downTime, eventTime;
+        private int figureWidth, figureHeight;
+
+        @SuppressLint("ClickableViewAccessibility")
+        @Override
+        public boolean onTouch(View view, MotionEvent motionEvent) {
+
+//                float rawX = motionEvent.getRawX();
+//                float rawY = motionEvent.getRawY();
+//                float x = motionEvent.getX();
+//                float y = motionEvent.getY();
+
+            Log.e(TAG, "getAction: " + motionEvent.getAction() +
+                    " getX: " + motionEvent.getX() +
+                    " getY: " + motionEvent.getY() +
+                    " getRawX: " + motionEvent.getRawX() +
+                    " getRawY: " + motionEvent.getRawY() +
+                    " Time: " + (motionEvent.getEventTime() - motionEvent.getDownTime())
+            );
+            switch (motionEvent.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    figureWidth = view.getWidth();
+                    figureHeight = view.getHeight();
+
+                    Log.e(TAG, "screenWidth: " + screenWidth);
+                    Log.e(TAG, "figureWidth: " + figureWidth);
+                    downTime = motionEvent.getDownTime();
+
+                    x = motionEvent.getX();
+                    y = motionEvent.getY();
+                    break;
+                case MotionEvent.ACTION_MOVE:
+
+                    rawX = motionEvent.getRawX();
+                    rawY = motionEvent.getRawY();
+
+                    float moveToX = rawX - x;
+                    float moveToY = rawY - y;
+                    Log.e(TAG, "X: " + moveToX + " Y: " + moveToY + " screen x: " + screenWidth);
+                    if (moveToX &lt; 0) {
+                        moveToX = 0;
+                    } else if (moveToX + figureWidth &gt; screenWidth) {
+                        moveToX = screenWidth - figureWidth;
+                    }
+                    if (moveToY &lt; 0) {
+                        moveToY = 0;
+                    } else if (moveToY + figureHeight &gt; screenHeight) {
+                        moveToY = screenHeight - figureHeight;
+                    }
+                    Log.e(TAG, "figureWidth: " + figureWidth + "Y: " + moveToY);
+
+                    frameLayoutFigure.setX(moveToX);
+                    frameLayoutFigure.setY(moveToY);
+                    break;
+                case MotionEvent.ACTION_UP:
+                    eventTime = motionEvent.getEventTime();
+
+                    if (eventTime - downTime &gt; 3000) {
+                        frameLayoutFigure.setVisibility(View.GONE);
+                    }
+                    break;
+            }
+
+            return false;
+        }
+    };
+
+    public AnimationFigure(Activity activity, @DrawableRes int drawableRes) {
+
+        this.screenWidth = activity.getWindowManager().getDefaultDisplay().getWidth();
+        this.screenHeight = activity.getWindowManager().getDefaultDisplay().getHeight();
+
+        this.imageViewFigure = activity.findViewById(R.id.imageViewFigure);
+        this.imageViewFigure.setImageResource(drawableRes);
+
+        this.animationDrawable = (AnimationDrawable) this.imageViewFigure.getDrawable();
+        this.frameLayoutFigure = activity.findViewById(R.id.frameLayoutFigure);
+
+        this.imageViewFigure.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+            }
+        });
+
+        this.imageViewFigure.setOnTouchListener(onTouchListener);
+
+    }
+
+    public AnimationFigure(View view, @DrawableRes int drawableRes) {
+
+
+        this.imageViewFigure = view.findViewById(R.id.imageViewFigure);
+        this.imageViewFigure.setBackgroundResource(drawableRes);
+        this.animationDrawable = (AnimationDrawable) this.imageViewFigure.getBackground();
+
+        this.frameLayoutFigure = view.findViewById(R.id.frameLayoutFigure);
+        this.imageViewFigure.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+            }
+        });
+        this.imageViewFigure.setOnTouchListener(onTouchListener);
+    }
+
+    public void start() {
+        animationDrawable.start();
+    }
+
+    public void start(int delayMillis) {
+        start();
+        new Handler(Looper.getMainLooper()).postDelayed(() -&gt; {
+            stop();
+        }, delayMillis);
+
+//        new Handler(Looper.getMainLooper()).postDelayed(this::start, delayMillis);
+    }
+
+    public void stop() {
+        animationDrawable.stop();
+
+    }
+
+    public void setVisibility(boolean staus) {
+        if (staus) {
+            this.frameLayoutFigure.setVisibility(View.VISIBLE);
+        } else {
+            this.frameLayoutFigure.setVisibility(View.INVISIBLE);
+        }
+    }
+
+    public void animationFigure() {
+
+        AnimationDrawable animationDrawable = (AnimationDrawable) imageViewFigure.getDrawable();
+
+        if (animationDrawable.isRunning()) {
+            animationDrawable.stop();
+            frameLayoutFigure.setVisibility(View.INVISIBLE);
+        } else {
+            animationDrawable.start();
+            frameLayoutFigure.setVisibility(View.VISIBLE);
+        }
+        Log.d(TAG, "animationFigure: " + animationDrawable.isRunning());
+        Log.d(TAG, "animationFigure isActivated: " + imageViewFigure.isActivated());
+    }
+
+    public void running(boolean status, int delayMillis) {
+        if (status) {
+            start(delayMillis);
+        } else {
+            start();
+        }
+    }
+
+    public enum Figure {
+        LISTENING, SPEAKING
+    }
+
+
+}
+
+			
+			</pre><p>播放逐帧动画</p><pre class="programlisting">
+			
+	AnimationFigure animationFigure = new AnimationFigure(activity, drawableRes);
+    animationFigure.setVisibility(true);
+    animationFigure.start();
+			
+			</pre></div></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="soundwave"></a>7.2.4. 声音波形图</h3></div></div></div><pre class="programlisting">
 		
 package cn.netkiller.album.view;
 
