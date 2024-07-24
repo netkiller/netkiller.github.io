@@ -1905,6 +1905,131 @@ CREATE TABLE `picture` (
   CONSTRAINT `FK8qckqvv3cl83c9ant5wx1f6eo` FOREIGN KEY (`picture_group_id`) REFERENCES `picture_group` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=5846 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='图片表'			
 			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1343"></a>73.4.11. 只要外键，不要数据结构</h3></div></div></div><p>@ManyToOne 关系 PictureGroup 加载后会出很多数据，在网上传输比较占用带宽，我们要精简 JSON
+				数据，实现的方式是讲 pictureGroup 影射给 groupId</p><pre class="programlisting">
+			
+package cn.aigcsst.domain.story;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.persistence.*;
+import lombok.Data;
+import org.hibernate.annotations.Comment;
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
+
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.Date;
+
+@Entity
+@Table
+@DynamicUpdate
+@DynamicInsert
+@Data
+@Comment("图片表")
+public class Picture implements Serializable {
+    @Serial
+    public static final long serialVersionUID = 1L;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", unique = true, nullable = false, insertable = false, updatable = false, columnDefinition = "bigint unsigned")
+    @Comment("主键")
+    private Long id;
+
+    @Comment("设备")
+    private String device;
+
+    @Column(unique = true, nullable = false, insertable = true, updatable = false, length = 36)
+    @Comment("会话")
+    private String session;
+
+    @Comment("提示词")
+    private String prompt;
+
+    @Comment("英文提示词")
+    @Column(length = 1024)
+    private String translate;
+
+    @Column(nullable = true)
+    @Comment("缩图")
+    private String thumbnail;
+
+    @Column(nullable = true)
+    @Comment("原图")
+    private String image;
+
+    @Column(nullable = true)
+    @Comment("故事音频")
+    private String audio;
+
+    @Lob
+    @Basic(fetch = FetchType.LAZY)
+    @Column(nullable = true, columnDefinition = "text")
+    @Comment("故事")
+    private String story;
+
+    @Lob
+    @Basic(fetch = FetchType.LAZY)
+    @Column(nullable = true, columnDefinition = "text")
+    @Comment("拼音")
+    private String pinyin;
+
+    @Lob
+    @Basic(fetch = FetchType.LAZY)
+    @Column(nullable = true, columnDefinition = "text")
+    @Comment("英文")
+    private String english;
+
+    @Comment("共享")
+    private boolean share;
+
+    @Column(columnDefinition = "int unsigned NOT NULL DEFAULT '0'")
+    @Comment("点赞数")
+    private Integer likes;
+
+    @Column(columnDefinition = "int unsigned NOT NULL DEFAULT '0'")
+    @Comment("收藏数")
+    private Integer favorites;
+
+    @Column(columnDefinition = "int unsigned NOT NULL DEFAULT '0'")
+    @Comment("转发数")
+    private Integer forward;
+
+    @Comment("人工审核，NULL 未审核，true 通过，false 未通过")
+    private Boolean audit;
+
+    @ManyToOne(fetch = FetchType.EAGER, optional = true)
+    @JsonIgnore
+    @JoinColumn(nullable = true)
+    private PictureGroup pictureGroup;
+
+    @Column(insertable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @Comment("创建时间")
+    private Date ctime;
+
+    @Column(nullable = true, insertable = false, updatable = false, columnDefinition = "TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @Comment("修改时间")
+    private Date mtime;
+
+    @JsonProperty
+    private Integer groupId;
+
+    private void setGroupId(Integer groupId) {
+        this.groupId = groupId;
+    }
+
+    private Integer getGroupId() {
+        groupId = pictureGroup.getId();
+        return groupId;
+    }
+
+}
+			
 			</pre></div></div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
 			window.changyan.api.config({
 			appid: 'cyvwjQUG3',
