@@ -1,107 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>2.8. 分布式计划任务</title><link rel="stylesheet" type="text/css" href="docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><link rel="home" href="index.html" title="Netkiller Architect 手札" /><link rel="up" href="多维度架构设计.html" title="第 2 章 多维度架构设计" /><link rel="prev" href="多维度架构之分库分表.html" title="2.7. 多维度架构之分库分表" /><link rel="next" href="多维度架构之安全.html" title="2.9. 多维度架构之安全" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
-		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
-	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
-	    <a xmlns="" href="/journal/index.html">杂文</a> |
-	    <a xmlns="" href="https://github.com/netkiller">Github</a> |
-	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
-   	    <a xmlns="" href="https://edu.51cto.com/lecturer/1703915.html">51CTO学院</a> |
-	    <a xmlns="" href="https://edu.csdn.net/lecturer/6423">CSDN程序员研修院</a> |
-	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
-	    <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">腾讯云社区</a> |
-	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">阿里云栖社区</a> |
-	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
-	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
-	    <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> |
-	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
-	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">2.8. 分布式计划任务</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="多维度架构之分库分表.html">上一页</a> </td><th width="60%" align="center">第 2 章 多维度架构设计</th><td width="20%" align="right"> <a accesskey="n" href="多维度架构之安全.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="分布式计划任务"></a>2.8. 分布式计划任务</h2></div></div></div>
-	
-	<p>本章主要通过分布式计划任务设计与实现。</p>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="what"></a>2.8.1. 什么是分布式计划任务</h3></div></div></div>
-		
-		<p>首先我们解释一下计划任务，计划任务是指有计划的定时运行或者周期性运行的程序，我们最常见的就是Linux “crontab”与Windows “计划任务程序”，我们也常常借助他们实现我们的计划任务，因它们的时间调度程序非常成熟，无需我们再开发一套。</p>
-	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="why"></a>2.8.2. 为什么采用分布式计划任务</h3></div></div></div>
-		
-		<p>起初，我们也跟大多数人一样采用crontab调度程序，但随着项目越来越大，系统越来越复杂，就抱漏出许多问题。</p>
-		<p>首先是高可用HA需求，当运行计划任务的服务器一旦出现故障，所有的计划任务将停止工作。</p>
-		<p>其次是性能问题，越来越多的大型计划任务程序出现，对CPU/IO密集操作，单个节点已经不能满足我们的需求。</p>
-		<p>让计划任务7*24*365不间断运行，必需有一套行之有效的方案才行，我意识到必须开发一个全新的分布式计划任务框架，这样开发人员无需关注怎样实现分布式运行，集中写任务即可。</p>
-		<p>我首先提出这个框架必需具备几个特性：</p>
-		<div class="orderedlist"><p class="title"><strong>分布式计划任务需具备以下特性</strong></p><ol class="orderedlist" type="1"><li class="listitem">
-				<p>故障转移，我们至少使用两个节点，当一个节点出现问题，通过健康状态检查程序，另一个节点会自动接管任务。</p>
-			</li><li class="listitem">
-				<p>分布式运行，一个任务可以运行在多个节点之上，能够同时运行，能够调整运行的前后顺序，能够并发互斥控制。</p>
-			</li><li class="listitem">
-				<p>节点可动态调整，最少两个节点，可以随时新增节点，卸载节点。</p>
-			</li><li class="listitem">
-				<p>状态共享，任务可能会涉及的通信，例如状态同步等等。</p>
-			</li></ol></div>
-	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="when"></a>2.8.3. 何时使用分布式计划任务</h3></div></div></div>
-		
-		<div class="orderedlist"><p class="title"><strong>何时使用分布式计划任务</strong></p><ol class="orderedlist" type="1"><li class="listitem">
-				<p>遇到性能问题，遇到性能问题你可能首先想到的是分服务器，但很多应用不具备跨服务器运行。</p>
-			</li><li class="listitem">
-				<p>高可用，一个节点出现故障，另一个节点将接管并继续运行。</p>
-			</li><li class="listitem">
-				<p>灾备，你可以将两个或两个以上的计划任务节点分别部署在两个以上的机房，通过HA特性任何一个机房出现故障，其他机房仍会继续运行。</p>
-			</li></ol></div>
-	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="where"></a>2.8.4. 分布式计划任务的部署</h3></div></div></div>
-		
-		<p>两个节点部署</p>
-		<p>两个节点可以实现“主”、“备”方案，队列（排队）运行方案与并行方案，其中并行方案又分为不同运行于异步运行，还涉及到互斥运行。</p>
-		<p>两个以上节点部署</p>
-		<p>多节点建议采用队列运行方案，并行方案，但不建议使用互斥并行方案（浪费资源）</p>
-	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="who"></a>2.8.5. 谁来写分布式计划任务</h3></div></div></div>
-		
-		<p>当我们的分布式计划任务框架一旦完成，任务的编写部分非常轻松，只需继承框架程序便具备分布式运行的特性。</p>
-	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="how"></a>2.8.6. 怎么实现分布式计划任务</h3></div></div></div>
-		
-		<p> 计划任务是一个相当复杂的一块，有操作系统计划任务，有运用程序计划任务，有基于TCP/IP的访问的，有基于命令行访问的，有定时执行的，有周期运行的，还有基于某些条件触发运行的。总之解决计划任务灾备，要比web，cache, database 复杂的多。</p>
-		<div class="figure"><a id="idm426950724608"></a><p class="title"><strong>图 2.1. 分时方案</strong></p><div class="figure-contents">
-			
-			<div><img src="images/scheduler/timesharing.png" alt="分时方案" /></div>
-		</div></div><br class="figure-break" />
-		<p>严格划分时间片，交替运行计划任务,当主系统宕机后，备用系统仍然工作，只不过处理周期拉长了。缺点：周期延长了</p>
-		<div class="figure"><a id="idm426873111744"></a><p class="title"><strong>图 2.2. HA 高可用方案</strong></p><div class="figure-contents">
-			
-			<div><img src="images/scheduler/ha.png" alt="HA 高可用方案" /></div>
-		</div></div><br class="figure-break" />
-		<p>正常情况下主系统工作，备用系统守候，心跳检测发现主系统出现故障，备用传统启动。缺点：单一系统，不能负载均衡，只能垂直扩展（硬件升级），无法水平扩展</p>
-		<div class="figure"><a id="idm426873110048"></a><p class="title"><strong>图 2.3. 多路心跳方案</strong></p><div class="figure-contents">
-			
-			<div><img src="images/scheduler/mha.png" alt="多路心跳方案" /></div>
-		</div></div><br class="figure-break" />
-		<p>上面的HA是三层的基于VIP技术实现，下面这个方案我采用多路心跳，做服务级，进程级，IP与端口级别的心跳检测，做正常情况下主系统工作，备用系统守候，心跳检测发现主系统出现故障，备用传统启动，当再次检测到主系统工作，将执行权交回主系统.缺点：开发复杂，程序健壮性要求高</p>
-		<div class="figure"><a id="idm426873107680"></a><p class="title"><strong>图 2.4. 任务抢占方案</strong></p><div class="figure-contents">
-			
-			<div><img src="images/scheduler/preemption.png" alt="任务抢占方案" /></div>
-		</div></div><br class="figure-break" />
-		<p>A,B 两台服务器同时工作，启动需要一前一后，谁先启动谁率先加锁，其他服务器只能等待，他们同时对互斥锁进行监控，一旦发现锁被释放，其他服务谁先抢到谁运行，运行前首先加排他锁。
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>2.8. 分布式计划任务</title><link rel="stylesheet" type="text/css" href="docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><link rel="home" href="index.html" title="Netkiller Architect 手札" /><link rel="up" href="多维度架构设计.html" title="第 2 章 多维度架构设计" /><link rel="prev" href="多维度架构之分库分表.html" title="2.7. 多维度架构之分库分表" /><link rel="next" href="多维度架构之安全.html" title="2.9. 多维度架构之安全" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
+		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">2.8. 分布式计划任务</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="多维度架构之分库分表.html">上一页</a> </td><th width="60%" align="center">第 2 章 多维度架构设计</th><td width="20%" align="right"> <a accesskey="n" href="多维度架构之安全.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="分布式计划任务"></a>2.8. 分布式计划任务</h2></div></div></div><p>本章主要通过分布式计划任务设计与实现。</p><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="what"></a>2.8.1. 什么是分布式计划任务</h3></div></div></div><p>首先我们解释一下计划任务，计划任务是指有计划的定时运行或者周期性运行的程序，我们最常见的就是Linux “crontab”与Windows “计划任务程序”，我们也常常借助他们实现我们的计划任务，因它们的时间调度程序非常成熟，无需我们再开发一套。</p></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="why"></a>2.8.2. 为什么采用分布式计划任务</h3></div></div></div><p>起初，我们也跟大多数人一样采用crontab调度程序，但随着项目越来越大，系统越来越复杂，就抱漏出许多问题。</p><p>首先是高可用HA需求，当运行计划任务的服务器一旦出现故障，所有的计划任务将停止工作。</p><p>其次是性能问题，越来越多的大型计划任务程序出现，对CPU/IO密集操作，单个节点已经不能满足我们的需求。</p><p>让计划任务7*24*365不间断运行，必需有一套行之有效的方案才行，我意识到必须开发一个全新的分布式计划任务框架，这样开发人员无需关注怎样实现分布式运行，集中写任务即可。</p><p>我首先提出这个框架必需具备几个特性：</p><div class="orderedlist"><p class="title"><strong>分布式计划任务需具备以下特性</strong></p><ol class="orderedlist" type="1"><li class="listitem"><p>故障转移，我们至少使用两个节点，当一个节点出现问题，通过健康状态检查程序，另一个节点会自动接管任务。</p></li><li class="listitem"><p>分布式运行，一个任务可以运行在多个节点之上，能够同时运行，能够调整运行的前后顺序，能够并发互斥控制。</p></li><li class="listitem"><p>节点可动态调整，最少两个节点，可以随时新增节点，卸载节点。</p></li><li class="listitem"><p>状态共享，任务可能会涉及的通信，例如状态同步等等。</p></li></ol></div></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="when"></a>2.8.3. 何时使用分布式计划任务</h3></div></div></div><div class="orderedlist"><p class="title"><strong>何时使用分布式计划任务</strong></p><ol class="orderedlist" type="1"><li class="listitem"><p>遇到性能问题，遇到性能问题你可能首先想到的是分服务器，但很多应用不具备跨服务器运行。</p></li><li class="listitem"><p>高可用，一个节点出现故障，另一个节点将接管并继续运行。</p></li><li class="listitem"><p>灾备，你可以将两个或两个以上的计划任务节点分别部署在两个以上的机房，通过HA特性任何一个机房出现故障，其他机房仍会继续运行。</p></li></ol></div></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="where"></a>2.8.4. 分布式计划任务的部署</h3></div></div></div><p>两个节点部署</p><p>两个节点可以实现“主”、“备”方案，队列（排队）运行方案与并行方案，其中并行方案又分为不同运行于异步运行，还涉及到互斥运行。</p><p>两个以上节点部署</p><p>多节点建议采用队列运行方案，并行方案，但不建议使用互斥并行方案（浪费资源）</p></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="who"></a>2.8.5. 谁来写分布式计划任务</h3></div></div></div><p>当我们的分布式计划任务框架一旦完成，任务的编写部分非常轻松，只需继承框架程序便具备分布式运行的特性。</p></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="how"></a>2.8.6. 怎么实现分布式计划任务</h3></div></div></div><p> 计划任务是一个相当复杂的一块，有操作系统计划任务，有运用程序计划任务，有基于TCP/IP的访问的，有基于命令行访问的，有定时执行的，有周期运行的，还有基于某些条件触发运行的。总之解决计划任务灾备，要比web，cache, database 复杂的多。</p><div class="figure"><a id="id1414"></a><p class="title"><strong>图 2.1. 分时方案</strong></p><div class="figure-contents"><div><img src="images/scheduler/timesharing.png" alt="分时方案" /></div></div></div><br class="figure-break" /><p>严格划分时间片，交替运行计划任务,当主系统宕机后，备用系统仍然工作，只不过处理周期拉长了。缺点：周期延长了</p><div class="figure"><a id="id1415"></a><p class="title"><strong>图 2.2. HA 高可用方案</strong></p><div class="figure-contents"><div><img src="images/scheduler/ha.png" alt="HA 高可用方案" /></div></div></div><br class="figure-break" /><p>正常情况下主系统工作，备用系统守候，心跳检测发现主系统出现故障，备用传统启动。缺点：单一系统，不能负载均衡，只能垂直扩展（硬件升级），无法水平扩展</p><div class="figure"><a id="id1416"></a><p class="title"><strong>图 2.3. 多路心跳方案</strong></p><div class="figure-contents"><div><img src="images/scheduler/mha.png" alt="多路心跳方案" /></div></div></div><br class="figure-break" /><p>上面的HA是三层的基于VIP技术实现，下面这个方案我采用多路心跳，做服务级，进程级，IP与端口级别的心跳检测，做正常情况下主系统工作，备用系统守候，心跳检测发现主系统出现故障，备用传统启动，当再次检测到主系统工作，将执行权交回主系统.缺点：开发复杂，程序健壮性要求高</p><div class="figure"><a id="id1417"></a><p class="title"><strong>图 2.4. 任务抢占方案</strong></p><div class="figure-contents"><div><img src="images/scheduler/preemption.png" alt="任务抢占方案" /></div></div></div><br class="figure-break" /><p>A,B 两台服务器同时工作，启动需要一前一后，谁先启动谁率先加锁，其他服务器只能等待，他们同时对互斥锁进行监控，一旦发现锁被释放，其他服务谁先抢到谁运行，运行前首先加排他锁。
 			优点：可以进一步优化实现多服务器横向扩展。
 			缺点：开发复杂，程序健壮性要求高，有时会出现不释放锁的问题。
-		</p>
-		<div class="figure"><a id="idm426873105072"></a><p class="title"><strong>图 2.5. 任务轮循或任务轮循+抢占排队方案</strong></p><div class="figure-contents">
-			
-			<div><img src="images/scheduler/queue.png" alt="任务轮循或任务轮循+抢占排队方案" /></div>
-		</div></div><br class="figure-break" />
-		<div class="orderedlist"><p class="title"><strong>任务轮循或任务轮循+抢占排队方案</strong></p><ol class="orderedlist" type="1"><li class="listitem">
-				<p>每个服务器首次启动时加入队列。</p>
-			</li><li class="listitem">
-				<p>每次任务运行首先判断自己是否是当前可运行任务，如果是便运行。</p>
-			</li><li class="listitem">
-				<p>否则检查自己是否在队列中，如果在，便推出，如果不在队列中，便加入队列。</p>
-			</li></ol></div>
-
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm426873097744"></a>2.8.6.1. 分布式互斥锁</h4></div></div></div>
-			
-			<p>互斥锁也叫排它锁，用于并发时管理多进程或多线程同一时刻只能有一个进程或者线程操作一个功能。如果你理解什么是互斥锁，便很容易理解分布式锁。</p>
-			<p>我们将进程，线程中的锁延伸到互联网上，实现对一个节点运行的进程或线程加锁，解锁操作。这样便能控制节点上进程或线程的并发。</p>
-			<pre class="screen">
+		</p><div class="figure"><a id="id1418"></a><p class="title"><strong>图 2.5. 任务轮循或任务轮循+抢占排队方案</strong></p><div class="figure-contents"><div><img src="images/scheduler/queue.png" alt="任务轮循或任务轮循+抢占排队方案" /></div></div></div><br class="figure-break" /><div class="orderedlist"><p class="title"><strong>任务轮循或任务轮循+抢占排队方案</strong></p><ol class="orderedlist" type="1"><li class="listitem"><p>每个服务器首次启动时加入队列。</p></li><li class="listitem"><p>每次任务运行首先判断自己是否是当前可运行任务，如果是便运行。</p></li><li class="listitem"><p>否则检查自己是否在队列中，如果在，便推出，如果不在队列中，便加入队列。</p></li></ol></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id874"></a>2.8.6.1. 分布式互斥锁</h4></div></div></div><p>互斥锁也叫排它锁，用于并发时管理多进程或多线程同一时刻只能有一个进程或者线程操作一个功能。如果你理解什么是互斥锁，便很容易理解分布式锁。</p><p>我们将进程，线程中的锁延伸到互联网上，实现对一个节点运行的进程或线程加锁，解锁操作。这样便能控制节点上进程或线程的并发。</p><pre class="screen">
 			
 +------------------+                             +------------------+
 | Server A         |                             | Server B         |
@@ -118,15 +20,7 @@
                           | A Thread-2    |
                           +---------------+
 			
-			</pre>
-			<p>上图中有两台服务器上运行任务，其中Server A 的 Thread-2 做了加锁操作，其他程序必须等待它释放锁才能运行。</p>
-			<p>你会问如果 Server A 宕机怎么办，是否会一直处于被锁状态？我的答案是每个锁都有一个超时阀值，一旦超时便自动解锁。</p>
-			<p>另外我们还要考虑“域”的问题，你也可以叫它命令空间，主要是防止锁出现同名被覆盖。</p>
-		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm426873092896"></a>2.8.6.2. 队列</h4></div></div></div>
-			
-			<p>排队运行</p>
-			<pre class="screen">
+			</pre><p>上图中有两台服务器上运行任务，其中Server A 的 Thread-2 做了加锁操作，其他程序必须等待它释放锁才能运行。</p><p>你会问如果 Server A 宕机怎么办，是否会一直处于被锁状态？我的答案是每个锁都有一个超时阀值，一旦超时便自动解锁。</p><p>另外我们还要考虑“域”的问题，你也可以叫它命令空间，主要是防止锁出现同名被覆盖。</p></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id875"></a>2.8.6.2. 队列</h4></div></div></div><p>排队运行</p><pre class="screen">
 			
 			
 			
@@ -152,23 +46,11 @@
                           | A Thread-3    |
                           +---------------+
 			
-			</pre>
-			<p>从上图中我可以看到Task Queue中排队情况，运行是自上而下的。</p>
-			<p>注意Task Queue 需要两个节点，它们是主从结构，A 节点实时向 B 节点同步sh状态。如果 A 节点出现故障， B 节点立即取代 A 节点。</p>
-		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm426873090208"></a>2.8.6.3. 其他</h4></div></div></div>
-			
-			<p>计划任务可以分布式运行了，但并不能保证万无一失，配套其他服务器也要做调整。例如数据库，缓存等等。</p>
-		</div>
-	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm426950726112"></a>2.8.7. 每隔0.5秒执行一次</h3></div></div></div>
-		
-		<pre class="screen">
+			</pre><p>从上图中我可以看到Task Queue中排队情况，运行是自上而下的。</p><p>注意Task Queue 需要两个节点，它们是主从结构，A 节点实时向 B 节点同步sh状态。如果 A 节点出现故障， B 节点立即取代 A 节点。</p></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id876"></a>2.8.6.3. 其他</h4></div></div></div><p>计划任务可以分布式运行了，但并不能保证万无一失，配套其他服务器也要做调整。例如数据库，缓存等等。</p></div></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id877"></a>2.8.7. 每隔0.5秒执行一次</h3></div></div></div><pre class="screen">
 		
 * * * * * for i in `seq 120`; do awesome_scripts&amp; sleep 0.5; done		
 		
-		</pre>
-		<pre class="screen">
+		</pre><pre class="screen">
 		
 #!/bin/bash
 for i in {1..120}
@@ -177,42 +59,39 @@ do
   RUN_YOUR_TASK
 done		
 		
-		</pre>
-	</div>
-	
-</div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
-window.changyan.api.config({
-appid: 'cyvwjQUG3',
-conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
-});
+		</pre></div></div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
+			window.changyan.api.config({
+			appid: 'cyvwjQUG3',
+			conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
+			});
 </script><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="多维度架构之分库分表.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="多维度架构设计.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="多维度架构之安全.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">2.7. 多维度架构之分库分表 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 2.9. 多维度架构之安全</td></tr></table></div><script xmlns="">
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
 
-  ga('create', 'UA-11694057-1', 'auto');
-  ga('send', 'pageview');
+			ga('create', 'UA-11694057-1', 'auto');
+			ga('send', 'pageview');
 
+		</script><script xmlns="" async="async">
+			var _hmt = _hmt || [];
+			(function() {
+			var hm = document.createElement("script");
+			hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(hm, s);
+			})();
 </script><script xmlns="" async="async">
-var _hmt = _hmt || [];
-(function() {
-  var hm = document.createElement("script");
-  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
-  var s = document.getElementsByTagName("script")[0]; 
-  s.parentNode.insertBefore(hm, s);
-})();
-</script><script xmlns="" async="async">
-(function(){
-    var bp = document.createElement('script');
-    var curProtocol = window.location.protocol.split(':')[0];
-    if (curProtocol === 'https') {
-        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
-    }
-    else {
-        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
-    }
-    var s = document.getElementsByTagName("script")[0];
-    s.parentNode.insertBefore(bp, s);
-})();
+			(function(){
+			var bp = document.createElement('script');
+			var curProtocol = window.location.protocol.split(':')[0];
+			if (curProtocol === 'https') {
+			bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+			}
+			else {
+			bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+			}
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(bp, s);
+			})();
 </script></body></html>
