@@ -90,7 +90,7 @@ void delete(T entity);							//删除一个实体
 void delete(Iterable&lt;? extends T&gt; entities);		//删除一个实体的集合         
 void deleteAll();								//删除所有实体,不用或慎用! 		
 			
-			</pre><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1348"></a>73.6.2.1. 批量保存</h4></div></div></div><pre class="programlisting">
+			</pre><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1353"></a>73.6.2.1. 批量保存</h4></div></div></div><pre class="programlisting">
 				
         List&lt;Book&gt; books = new ArrayList&lt;&gt;();
         books.add(new Book("Book A", new BookDetail(1)));
@@ -98,7 +98,7 @@ void deleteAll();								//删除所有实体,不用或慎用!
         books.add(new Book("Book C", new BookDetail(3)));
         bookRepository.save(books);				
 				
-				</pre></div></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="PagingAndSortingRepository"></a>73.6.3. PagingAndSortingRepository</h3></div></div></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1349"></a>73.6.3.1. Pageable</h4></div></div></div><p>接口实现 PagingAndSortingRepository</p><pre class="programlisting">
+				</pre></div></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="PagingAndSortingRepository"></a>73.6.3. PagingAndSortingRepository</h3></div></div></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1354"></a>73.6.3.1. Pageable</h4></div></div></div><p>接口实现 PagingAndSortingRepository</p><pre class="programlisting">
 				
 package api.repository.h5;
 
@@ -128,7 +128,7 @@ public interface GatherRepository extends PagingAndSortingRepository&lt;User, In
 		return mv;
 	}				
 				
-				</pre></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1350"></a>73.6.3.2. 解决 PagingAndSortingRepository 没有 save 等方法的问题</h4></div></div></div><p>如果 Repository 继承了 PagingAndSortingRepository 你会发
+				</pre></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1355"></a>73.6.3.2. 解决 PagingAndSortingRepository 没有 save 等方法的问题</h4></div></div></div><p>如果 Repository 继承了 PagingAndSortingRepository 你会发
 					CrudRepository 中的 save 等方法不能使用了，我的解决方法是写两个 Repository
 				</p><p>一个 CURD 的 ChatRepository 放在 cn.netkiller.repository</p><pre class="programlisting">
 				
@@ -237,7 +237,7 @@ Spring提供了@PageableDefault帮助我们个性化的设置pageable的默认�
 		return tmp.get(0).getTitle();
 	}
 		
-			</pre><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1351"></a>73.6.4.1. 传 Boolean 参数</h4></div></div></div><pre class="programlisting">
+			</pre><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1356"></a>73.6.4.1. 传 Boolean 参数</h4></div></div></div><pre class="programlisting">
 			
 package cn.netkiller.wallet.repository.fcoin;
 
@@ -346,13 +346,68 @@ public interface LoraRepository extends CrudRepository&lt;Lora, Integer&gt; {
 			
     Page&lt;Picture&gt; findByShareTrueAndImageIsNotNullAndStoryIsNotNullAndAudioIsNotNull(Pageable pageable);
 			
-			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="OrderBy"></a>73.6.10. OrderBy</h3></div></div></div><pre class="programlisting">
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id=""></a>73.6.10. Before/After</h3></div></div></div><pre class="programlisting">
+			
+//        DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        LocalDateTime now = LocalDateTime.now();
+//        LocalDateTime lastDay = now.minusDays(1);
+        LocalDateTime start = now.minusDays(1);
+        LocalDateTime end = now.minusMinutes(5);
+        log.info("Query picture from {} to {}", start, end);
+//        iterable = pictureService.findBySrtIsNullAndCtimeAfter(end);
+        iterable = pictureService.findBySrtIsNullAndCtimeBefore(end);
+        iterable.forEach(picture -&gt; {
+            String appId = businessService.queryAppIdByDevice(picture.getDevice());
+            aigcPipeline.setAigc(Aigc.builder().appId(appId).device(picture.getDevice()).session(picture.getSession()).prompt(picture.getPrompt()).story(picture.getStory()).audio(picture.getAudio()).build());
+            aigcPipeline.subtitles(srt -&gt; {
+                pictureService.updateSrt(aigcPipeline.getAigc().getSession(), srt);
+                sessionStatusService.progress(aigcPipeline.getAigc().getSession(), "识别字幕", srt);
+            });
+        });
+			
+			</pre><pre class="programlisting">
+			
+    public Iterable&lt;Picture&gt; findBySrtIsNullAndCtimeBefore(LocalDateTime lastDay) {
+        Iterable&lt;Picture&gt; iterable = pictureRepository.findBySrtIsNullAndCtimeBefore(lastDay);
+        return iterable;
+    }
+			
+			</pre><pre class="programlisting">
+			
+package cn.netkiller.repository;
+
+
+import cn.netkiller.domain.story.Picture;
+import cn.netkiller.repository.model.PictureGroupList;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.time.LocalDateTime;
+import java.util.Optional;
+
+@Repository
+public interface PictureRepository extends CrudRepository&lt;Picture, Long&gt; {
+    Picture findAllBySession(String session);
+
+    Optional&lt;Picture&gt; findBySession(String session);
+
+    Page&lt;Picture&gt; findAll(Pageable pageable);
+
+    Iterable&lt;Picture&gt; findBySrtIsNullAndCtimeBefore(LocalDateTime lastDay);
+}		
+			
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="OrderBy"></a>73.6.11. OrderBy</h3></div></div></div><pre class="programlisting">
 			
 public List&lt;StudentEntity&gt; findAllByOrderByIdAsc();
 public List&lt;StudentEntity&gt; findAllByOrderByIdDesc();
 List&lt;RecentRead&gt; findByMemberIdOrderByIdDesc(int memberId, Pageable pageable);
 			
-			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="GreaterThan"></a>73.6.11. GreaterThan</h3></div></div></div><pre class="programlisting">
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="GreaterThan"></a>73.6.12. GreaterThan</h3></div></div></div><pre class="programlisting">
 			
 package schedule.repository;
 
@@ -382,7 +437,7 @@ public interface CmsTrashRepository extends CrudRepository&lt;CmsTrash, Integer&
         return pictureRepository.findFirstByShareTrueAndImageIsNotNullAndStoryIsNotNullAndAudioIsNotNullAndIdLessThanOrderByIdDesc(cursor);
     }			
 			
-			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="sort"></a>73.6.12. Sort 排序操作操作</h3></div></div></div><pre class="programlisting">
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="sort"></a>73.6.13. Sort 排序操作操作</h3></div></div></div><pre class="programlisting">
 			
 List&lt;UserModel&gt; findByName(String name, Sort sort);
 			
@@ -403,7 +458,7 @@ userRepository.findAll(Sort.by(Sort.Direction.ASC, "name"));
 userRepository.findAll(Sort.by("LENGTH(name)"));
 
 			
-			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="pageable"></a>73.6.13. Pageable 翻页操作</h3></div></div></div><p>Page 返回数据和页码等数据</p><pre class="screen">
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="pageable"></a>73.6.14. Pageable 翻页操作</h3></div></div></div><p>Page 返回数据和页码等数据</p><pre class="screen">
 			
 PageRequest(int page, int size, Sort sort)  Deprecated. 
 use PageRequest.of(int, int, Sort) instead.			
@@ -457,7 +512,7 @@ curl -X 'GET' \
   'http://localhost:8080/picture/test/page?page=0&amp;size=1&amp;sort=id' \
   -H 'accept: */*'
 				
-			</pre><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1352"></a>73.6.13.1. PageRequest.of</h4></div></div></div><pre class="programlisting">
+			</pre><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1357"></a>73.6.14.1. PageRequest.of</h4></div></div></div><pre class="programlisting">
 				
 package cn.netkiller.api.repository;
 
@@ -490,13 +545,13 @@ public interface RecentReadRepostitory extends CrudRepository&lt;RecentRead, Lon
 				
 List&lt;Fcoin&gt; fcoins = fcoinRepository.findByAirdrop(false, PageRequest.of(0, size));
 				
-				</pre></div></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="@DynamicInsert"></a>73.6.14. @DynamicInsert 与 @DynamicUpdate</h3></div></div></div><p>@DynamicUpdate 只更新修改的字段</p></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1353"></a>73.6.15. 继承已存在的 Repository</h3></div></div></div><pre class="programlisting">
+				</pre></div></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="@DynamicInsert"></a>73.6.15. @DynamicInsert 与 @DynamicUpdate</h3></div></div></div><p>@DynamicUpdate 只更新修改的字段</p></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1358"></a>73.6.16. 继承已存在的 Repository</h3></div></div></div><pre class="programlisting">
 			
 public interface MemberRepository extends JpaRepository&lt;User, Integer&gt;, UserRepository {
     ...
 }			
 			
-			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1354"></a>73.6.16. 自定义返回字段</h3></div></div></div><p>我们并不希望每次返回所有字段，JPA默认查询等价 “SELECT * FROM TABLE”</p><pre class="programlisting">
+			</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1359"></a>73.6.17. 自定义返回字段</h3></div></div></div><p>我们并不希望每次返回所有字段，JPA默认查询等价 “SELECT * FROM TABLE”</p><pre class="programlisting">
 			
 package cn.netkiller.repository.model;
 
@@ -722,12 +777,7 @@ public class UserPersona implements Serializable {
     }
 }
 			
-			</pre></div></div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
-			window.changyan.api.config({
-			appid: 'cyvwjQUG3',
-			conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
-			});
-</script><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="indexes.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="TransactionTemplate.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">73.5. 索引 </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 73.7. TransactionTemplate</td></tr></table></div><script xmlns="">
+			</pre></div></div><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="indexes.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="TransactionTemplate.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">73.5. 索引 </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 73.7. TransactionTemplate</td></tr></table></div><script xmlns="">
 			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
 		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
 		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
