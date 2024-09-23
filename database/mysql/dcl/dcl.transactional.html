@@ -1,26 +1,20 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>26.2. 事务处理和锁定语句</title><link rel="stylesheet" type="text/css" href="../../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="MySQL, PostgreSQL, Oracle, NoSQL, ER, TokyoCabinet/Tyrant, Memcache, Membase, Redis, Flare, Voldemort, LevelDB, MongoDB, GreenSQL, RDBMS, ORDBMS" /><link rel="home" href="../../index.html" title="Netkiller Database 手札" /><link rel="up" href="index.html" title="第 26 章 DCL (Data Control Language)" /><link rel="prev" href="index.html" title="第 26 章 DCL (Data Control Language)" /><link rel="next" href="../optimization/index.html" title="第 27 章 Optimization" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> |
-		<a xmlns="" href="//netkiller.github.io/">简体中文</a> |
-	    <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> |
-	    <a xmlns="" href="/journal/index.html">杂文</a> |
-	    <a xmlns="" href="https://github.com/netkiller">Github</a> |
-	    <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> |
-   	    <a xmlns="" href="https://edu.51cto.com/lecturer/1703915.html">51CTO学院</a> |
-	    <a xmlns="" href="https://edu.csdn.net/lecturer/6423">CSDN程序员研修院</a> |
-	    <a xmlns="" href="http://my.oschina.net/neochen/">OSChina 博客</a> |
-	    <a xmlns="" href="https://cloud.tencent.com/developer/column/2078">腾讯云社区</a> |
-	    <a xmlns="" href="https://yq.aliyun.com/u/netkiller/">阿里云栖社区</a> |
-	    <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> |
-	    <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> |
-	    <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> |
-	    <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> |
-	    <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">26.2. 事务处理和锁定语句</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><th width="60%" align="center">第 26 章 DCL (Data Control Language)</th><td width="20%" align="right"> <a accesskey="n" href="../optimization/index.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> ｜ <a href="https://www.zhihu.com/club/1241768772601950208">多维度架构</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="dcl.transactional"></a>26.2. 事务处理和锁定语句</h2></div><div><h3 class="subtitle">Transactional and Locking Statements</h3></div></div></div><p>开始事务 begin、start transaction 或者 set autocommit=0</p><pre class="screen">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>26.2. 事务处理和锁定语句</title><link rel="stylesheet" type="text/css" href="../../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="MySQL, PostgreSQL, Oracle, NoSQL, ER, TokyoCabinet/Tyrant, Memcache, Membase, Redis, Flare, Voldemort, LevelDB, MongoDB, GreenSQL, RDBMS, ORDBMS" /><link rel="home" href="../../index.html" title="Netkiller Database 手札" /><link rel="up" href="index.html" title="第 26 章 DCL (Data Control Language)" /><link rel="prev" href="index.html" title="第 26 章 DCL (Data Control Language)" /><link rel="next" href="../optimization/index.html" title="第 27 章 Optimization" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
+		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">26.2. 事务处理和锁定语句</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><th width="60%" align="center">第 26 章 DCL (Data Control Language)</th><td width="20%" align="right"> <a accesskey="n" href="../optimization/index.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="dcl.transactional"></a>26.2. 事务处理和锁定语句</h2></div><div><h3 class="subtitle">Transactional and Locking Statements</h3></div></div></div>
+	
+	
+	<p>开始事务 begin、start transaction 或者 set autocommit=0</p>
+	<pre class="screen">
 事务的特征：原子性（Atomiocity）、一致性（Consistency）、隔离性（Isolation）和持久性（Durability），这四个特性简称ACID特性。
     原子性：事务是数据库的逻辑工作单位，事务中包括的所有操作要么都做，要么都不做。
     一致性：事务执行的结果必须是使数据库从一个一致性的状态变到另外一个一致性状态。
     隔离性：一个事务的执行不能被其他事务干扰。即一个事务内部的操作及使用的数据对其他事务是隔离的，并发执行的各个事务之间互相不干扰。
     持久性：一个事务一旦成功提交，对数据库中数据的修改就是持久性的。接下来其他的其他操作或故障不应该对其执行结果有任何影响。
-	</pre><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="level"></a>26.2.1. 事务隔离级别</h3></div></div></div><p>事务隔离模式</p><pre class="screen">
+	</pre>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="level"></a>26.2.1. 事务隔离级别</h3></div></div></div>
+		
+		<p>事务隔离模式</p>
+		<pre class="screen">
 1) READ UNCOMMITED
 SELECT的时候允许脏读，即SELECT会读取其他事务修改而还没有提交的数据。
 
@@ -34,10 +28,13 @@ SELECT的时候可以重复读，即同一个事务中两次执行同样的查�
 4)SERIALIZABLE
 与可重复读的唯一区别是，默认把普通的SELECT语句改成SELECT …. LOCK IN SHARE MODE。即为查询语句涉及到的数据加上共享琐，阻塞其他事务修改真实数据。
 serializable模式中，事务被强制为依次执行。这是SQL标准建议的默认行为。
-		</pre><p>可以通过下列语句查询全局和当前会话的事务隔离级别：</p><pre class="screen">
+		</pre>
+		<p>可以通过下列语句查询全局和当前会话的事务隔离级别：</p>
+		<pre class="screen">
 SELECT @@global.tx_isolation;
 SELECT @@tx_isolation;
-		</pre><pre class="screen">
+		</pre>
+		<pre class="screen">
 查看InnoDB系统级别的事务隔离级别：
 mysql&gt; SELECT @@global.tx_isolation;
 
@@ -49,13 +46,22 @@ mysql&gt; set global transaction isolation level read committed;
 
 修改InnoDB会话级别的事务隔离级别：
 mysql&gt; set session transaction isolation level read committed;
-		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="information_schema"></a>26.2.2. 事务所用到的表</h3></div></div></div><p>information_schema</p><pre class="screen">
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="information_schema"></a>26.2.2. 事务所用到的表</h3></div></div></div>
+		
+		<p>information_schema</p>
+		<pre class="screen">
 		
 select * from innodb_trx;
 select * from innodb_lock_waits;
 select * from innodb_locks;
 		
-		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="transaction.update"></a>26.2.3. 解决更新冲突</h3></div></div></div><pre class="programlisting">
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="transaction.update"></a>26.2.3. 解决更新冲突</h3></div></div></div>
+		
+		<pre class="programlisting">
 CREATE TABLE `account` (
 	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
 	`user` VARCHAR(50) NOT NULL DEFAULT '0',
@@ -66,9 +72,14 @@ CREATE TABLE `account` (
 )
 COLLATE='utf8_general_ci'
 ENGINE=InnoDB;
-		</pre><pre class="programlisting">
+		</pre>
+		<pre class="programlisting">
 INSERT INTO `test`.`account` (`user`, `cash`,`point`) VALUES ('neo', 10,10);
-		</pre><p>下面通过account表，我来模拟一个返点场景，例如电商网站经常会用到“返点”，购买一定数量的商品赠送一定的点数，可以通过点数买东西，这样涉及到点的加于减操作。</p><div class="table"><a id="idm298592967936"></a><p class="title"><strong>表 26.1. 更新丢失演示</strong></p><div class="table-contents"><table class="table" summary="更新丢失演示" border="1"><colgroup><col /><col /></colgroup><thead><tr><th>Session A</th><th>Session B</th></tr></thead><tbody><tr><td>
+		</pre>
+		<p>下面通过account表，我来模拟一个返点场景，例如电商网站经常会用到“返点”，购买一定数量的商品赠送一定的点数，可以通过点数买东西，这样涉及到点的加于减操作。</p>
+		<div class="table"><a id="id1305"></a><p class="title"><strong>表 26.1. 更新丢失演示</strong></p><div class="table-contents">
+		   
+		   <table class="table" summary="更新丢失演示" border="1"><colgroup><col /><col /></colgroup><thead><tr><th>Session A</th><th>Session B</th></tr></thead><tbody><tr><td>
 					<pre class="programlisting">
 select point into @point from account where user='neo';
 					</pre>
@@ -92,7 +103,10 @@ update account set point=@point+20 where user='neo';
 					<pre class="programlisting">
 update account set point=@point+50 where user='neo';
 					</pre>
-		        </td></tr></tbody></table></div></div><br class="table-break" /><p>看看最后用户有多少点？</p><pre class="screen">
+		        </td></tr></tbody></table>
+		</div></div><br class="table-break" />
+		<p>看看最后用户有多少点？</p>
+		<pre class="screen">
 		
 mysql&gt; select point from account where user='neo';
 +-------+
@@ -102,7 +116,12 @@ mysql&gt; select point from account where user='neo';
 +-------+
 1 row in set (0.00 sec)
 		
-		</pre><p>傻了吧，老板发火，测试不能重现，运维说这是程序计算错误，程序员说程序没有错误，这样的场景国内很多公司都出现过吧？</p><p>问题出在哪里呢？出在并发上，很多web程序员很少考虑并发是产生的问题，怎么解决？很多方案，在我的职业生涯过程就见过很多奇葩方案，都能解决问题但不太完美。</p><p>如果更新语句改为 update account set point=@point+50 where user='neo' and point=@point; 会更保险,但仍然不能解决同意时间所产生的更新操作</p><p>下面是通过事务与锁彻底解决上面的问题。</p><pre class="screen">
+		</pre>
+		<p>傻了吧，老板发火，测试不能重现，运维说这是程序计算错误，程序员说程序没有错误，这样的场景国内很多公司都出现过吧？</p>
+		<p>问题出在哪里呢？出在并发上，很多web程序员很少考虑并发是产生的问题，怎么解决？很多方案，在我的职业生涯过程就见过很多奇葩方案，都能解决问题但不太完美。</p>
+		<p>如果更新语句改为 update account set point=@point+50 where user='neo' and point=@point; 会更保险,但仍然不能解决同意时间所产生的更新操作</p>
+		<p>下面是通过事务与锁彻底解决上面的问题。</p>
+		<pre class="screen">
 		
 mysql&gt; SELECT @@tx_isolation;
 +-----------------+
@@ -112,7 +131,11 @@ mysql&gt; SELECT @@tx_isolation;
 +-----------------+
 1 row in set (0.00 sec)		
 		
-		</pre><p>检查事务隔离级别为：REPEATABLE-READ</p><div class="table"><a id="idm298592958304"></a><p class="title"><strong>表 26.2. 防止更新丢失加锁演示</strong></p><div class="table-contents"><table class="table" summary="防止更新丢失加锁演示" border="1"><colgroup><col /><col /></colgroup><thead><tr><th>Session A</th><th>Session B</th></tr></thead><tbody><tr><td>
+		</pre>
+		<p>检查事务隔离级别为：REPEATABLE-READ</p>
+		<div class="table"><a id="id1306"></a><p class="title"><strong>表 26.2. 防止更新丢失加锁演示</strong></p><div class="table-contents">
+		   
+		   <table class="table" summary="防止更新丢失加锁演示" border="1"><colgroup><col /><col /></colgroup><thead><tr><th>Session A</th><th>Session B</th></tr></thead><tbody><tr><td>
 					<pre class="programlisting">
 begin;
 select point into @point from account where user='neo' for update;
@@ -141,7 +164,10 @@ commit;
 update account set point=@point+50 where user='neo';
 commit;
 					</pre>
-		        </td></tr></tbody></table></div></div><br class="table-break" /><p>上面解决更新覆盖问题，但从数据库设计角度是不应该这样设计表的。仅供参考</p><pre class="programlisting">
+		        </td></tr></tbody></table>
+		</div></div><br class="table-break" />
+		<p>上面解决更新覆盖问题，但从数据库设计角度是不应该这样设计表的。仅供参考</p>
+		<pre class="programlisting">
 CREATE TABLE `account` (
 	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
 	`user` VARCHAR(50) NOT NULL DEFAULT '0',
@@ -151,27 +177,43 @@ CREATE TABLE `account` (
 )
 COLLATE='utf8_general_ci'
 ENGINE=InnoDB;
-		</pre><p>每一次数据变化新增一条数据</p><pre class="programlisting">
+		</pre>
+		<p>每一次数据变化新增一条数据</p>
+		<pre class="programlisting">
 INSERT INTO `test`.`account` (`user`, `point`) VALUES ('neo', -10);
 INSERT INTO `test`.`account` (`user`, `point`) VALUES ('neo', -5);
 INSERT INTO `test`.`account` (`user`, `point`) VALUES ('neo', 30);
 INSERT INTO `test`.`account` (`user`, `point`) VALUES ('neo', -20);
-		</pre><p>计算剩余点数</p><pre class="programlisting">
+		</pre>
+		<p>计算剩余点数</p>
+		<pre class="programlisting">
 select sum(point) as point from account where user='neo';
-		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm298592969760"></a>26.2.4. 共享锁</h3></div></div></div><p>先加上共享锁，此时也会对mytable表加上IS锁</p><pre class="programlisting">
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1049"></a>26.2.4. 共享锁</h3></div></div></div>
+		
+		<p>先加上共享锁，此时也会对mytable表加上IS锁</p>
+		<pre class="programlisting">
 		
 begin;
 select * from mytable where id=1 for share; 		
 		
-		</pre><p>观察IS锁</p><pre class="programlisting">
+		</pre>
+		<p>观察IS锁</p>
+		<pre class="programlisting">
 		
 select * from performance_schema.data_locks;	
 		
-		</pre><pre class="programlisting">
+		</pre>
+		<pre class="programlisting">
 		
 		
 		
-		</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="savepoint"></a>26.2.5. SAVEPOINT</h3></div></div></div><pre class="programlisting">
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="savepoint"></a>26.2.5. SAVEPOINT</h3></div></div></div>
+		
+		<pre class="programlisting">
 DROP PROCEDURE IF EXISTS doOrder;
 
 DELIMITER $$
@@ -190,39 +232,36 @@ CREATE PROCEDURE doOrder(IN orderUUID VARCHAR(40))
   END $$
 
 DELIMITER ;
-		</pre></div></div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
-window.changyan.api.config({
-appid: 'cyvwjQUG3',
-conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
-});
-</script><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="../optimization/index.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 26 章 DCL (Data Control Language) </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 27 章 Optimization</td></tr></table></div><script xmlns="">
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+		</pre>
+	</div>
+</div><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="../optimization/index.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 26 章 DCL (Data Control Language) </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 27 章 Optimization</td></tr></table></div><script xmlns="">
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
 
-  ga('create', 'UA-11694057-1', 'auto');
-  ga('send', 'pageview');
+			ga('create', 'UA-11694057-1', 'auto');
+			ga('send', 'pageview');
 
+		</script><script xmlns="" async="async">
+			var _hmt = _hmt || [];
+			(function() {
+			var hm = document.createElement("script");
+			hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(hm, s);
+			})();
 </script><script xmlns="" async="async">
-var _hmt = _hmt || [];
-(function() {
-  var hm = document.createElement("script");
-  hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
-  var s = document.getElementsByTagName("script")[0]; 
-  s.parentNode.insertBefore(hm, s);
-})();
-</script><script xmlns="" async="async">
-(function(){
-    var bp = document.createElement('script');
-    var curProtocol = window.location.protocol.split(':')[0];
-    if (curProtocol === 'https') {
-        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
-    }
-    else {
-        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
-    }
-    var s = document.getElementsByTagName("script")[0];
-    s.parentNode.insertBefore(bp, s);
-})();
+			(function(){
+			var bp = document.createElement('script');
+			var curProtocol = window.location.protocol.split(':')[0];
+			if (curProtocol === 'https') {
+			bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+			}
+			else {
+			bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+			}
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(bp, s);
+			})();
 </script></body></html>

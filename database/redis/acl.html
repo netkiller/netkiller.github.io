@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>34.5. ACL 用户/密码认证</title><link rel="stylesheet" type="text/css" href="../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="MySQL, PostgreSQL, Oracle, NoSQL, ER, TokyoCabinet/Tyrant, Memcache, Membase, Redis, Flare, Voldemort, LevelDB, MongoDB, GreenSQL, RDBMS, ORDBMS" /><link rel="home" href="../index.html" title="Netkiller Database 手札" /><link rel="up" href="redis-cli.html" title="第 34 章 redis-cli - Command-line client to redis-server" /><link rel="prev" href="auth.html" title="34.4. 用户认证" /><link rel="next" href="monitor.html" title="34.6. MONITOR" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
+		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">34.5. ACL 用户/密码认证</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="auth.html">上一页</a> </td><th width="60%" align="center">第 34 章 redis-cli - Command-line client to redis-server</th><td width="20%" align="right"> <a accesskey="n" href="monitor.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="acl"></a>34.5. ACL 用户/密码认证</h2></div></div></div>
+			
+			<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1061"></a>34.5.1. 查看用户列表</h3></div></div></div>
+				
+				<pre class="screen">
+				
+127.0.0.1:6379&gt; acl users
+1) "default"
+2) "dev"
+3) "neo"
+4) "netkiller"				
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1062"></a>34.5.2. 用户删除</h3></div></div></div>
+				
+				<pre class="screen">
+				
+127.0.0.1:6379&gt; acl users
+1) "default"
+2) "neo"
+3) "netkiller"
+127.0.0.1:6379&gt; acl deluser netkiller
+(integer) 1
+127.0.0.1:6379&gt; acl users
+1) "default"
+2) "neo"				
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1063"></a>34.5.3. 设置默认密码</h3></div></div></div>
+				
+				<pre class="screen">
+				
+127.0.0.1:6379&gt; config set requirepass 123456
+OK
+127.0.0.1:6379&gt; auth 123456
+OK
+127.0.0.1:6379&gt; save
+OK				
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1064"></a>34.5.4. 创建用户</h3></div></div></div>
+				
+				<pre class="screen">
+				
+127.0.0.1:6379&gt; ACL SETUSER netkiller &gt;chen ~* &amp;* +@all
+OK
+127.0.0.1:6379&gt; acl getuser netkiller
+ 1) "flags"
+ 2) 1) "off"
+    2) "sanitize-payload"
+ 3) "passwords"
+ 4) 1) "3abd72ec6352d6085d85e34f0478dca7d14ef8048f3c1986e28106d654713946"
+ 5) "commands"
+ 6) "+@all"
+ 7) "keys"
+ 8) "~*"
+ 9) "channels"
+10) "&amp;*"
+11) "selectors"
+12) (empty array)
+127.0.0.1:6379&gt; save				
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1065"></a>34.5.5. 查看 ACL 列表</h3></div></div></div>
+				
+				<pre class="screen">
+				
+127.0.0.1:6379&gt; acl list
+1) "user default on sanitize-payload #8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92 ~* &amp;* +@all"
+2) "user neo on sanitize-payload ~* resetchannels -@all"
+3) "user netkiller off sanitize-payload #3abd72ec6352d6085d85e34f0478dca7d14ef8048f3c1986e28106d654713946 ~* &amp;* +@all"				
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1066"></a>34.5.6. 检验用户名和密码</h3></div></div></div>
+				
+				<pre class="screen">
+				
+127.0.0.1:6379&gt; ACL SETUSER neo on &gt;netkiller ~* &amp;* +@all
+OK
+127.0.0.1:6379&gt; auth neo netkiller
+OK				
+				
+				</pre>
+			</div>
+			
+		</div><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="auth.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="redis-cli.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="monitor.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">34.4. 用户认证 </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 34.6. MONITOR</td></tr></table></div><script xmlns="">
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+			ga('create', 'UA-11694057-1', 'auto');
+			ga('send', 'pageview');
+
+		</script><script xmlns="" async="async">
+			var _hmt = _hmt || [];
+			(function() {
+			var hm = document.createElement("script");
+			hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(hm, s);
+			})();
+</script><script xmlns="" async="async">
+			(function(){
+			var bp = document.createElement('script');
+			var curProtocol = window.location.protocol.split(':')[0];
+			if (curProtocol === 'https') {
+			bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+			}
+			else {
+			bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+			}
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(bp, s);
+			})();
+</script></body></html>
