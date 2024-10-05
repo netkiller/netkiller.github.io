@@ -12,6 +12,39 @@
 				
 [root@huawei ~]# zcat watch.sql.gz | mysql -h huawei.netkiller.cn -uroot -p development
 				
+			</pre><p>使用非root用户，迁移RDS会提示</p><pre class="screen">
+			
+[root@testing ~]# mysqldump -h rm-wz92171y2sukacse6co.mysql.rds.aliyuncs.com -unetkiller -p netkiller | gzip &gt; netkiller.sql.gz
+Enter password: 
+Warning: A partial dump from a server that has GTIDs will by default include the GTIDs of all transactions, even those that changed suppressed parts of the database. If you don't want to restore GTIDs, pass --set-gtid-purged=OFF. To make a complete dump, pass --all-databases --triggers --routines --events. 
+Warning: A dump from a server that has GTIDs enabled will by default include the GTIDs of all transactions, even those that were executed during its extraction and might not be represented in the dumped data. This might result in an inconsistent data dump. 
+In order to ensure a consistent backup of the database, pass --single-transaction or --lock-all-tables or --master-data. 
+(failed reverse-i-search)`scp': dnf install -y bzip2 tree psmi^C telnet wget rsync vim-enhanced net-tools bind-utils  			
+			
+			</pre><p>如果强行恢复数据库会提示</p><pre class="screen">
+			
+[root@testing ~]# zcat netkiller.sql.gz | mysql -h 192.168.0.219 -uroot -p production
+Enter password: 
+ERROR 1227 (42000) at line 18: Access denied; you need (at least one of) the SUPER, SYSTEM_VARIABLES_ADMIN or SESSION_VARIABLES_ADMIN privilege(s) for this operation
+			
+			</pre><p>解决方法，使用 --set-gtid-purged=OFF 参数备份数据库</p><pre class="screen">
+			
+[root@testing ~]# mysqldump -h rm-wz92171y2sukacse6co.mysql.rds.aliyuncs.com -unetkiller -p netkiller --set-gtid-purged=OFF | gzip &gt; netkiller.sql.gz
+Enter password: 
+[root@testing ~]# 			
+			
+			</pre><p>恢复数据正常</p><pre class="screen">
+			
+[root@testing ~]# scp netkiller.sql.gz root@api.netkiller.cn:/root/
+root@api.netkiller.cn's password: 
+netkiller.sql.gz                                                                                                                                                                                              100%   18MB 219.8MB/s   00:00    
+[root@testing ~]# 		
+			
+			</pre><pre class="screen">
+			
+[root@testing ~]# zcat netkiller.sql.gz | mysql -h 192.168.0.219 -uroot -p production
+Enter password: 
+			
 			</pre></div></div><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="../../database/index.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 4 章 Huawei Cloud Service </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 5 章 数据库设计</td></tr></table></div><script xmlns="">
 			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
 		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
