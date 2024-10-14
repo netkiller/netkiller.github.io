@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>5.7. Longhorn</title><link rel="stylesheet" type="text/css" href="../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="qmeu,kvm,xen,openvz, docker, coreos,docker-compose, kubernetes,kubeadmin,kubectl, netkiller-devops" /><link rel="home" href="../index.html" title="Netkiller Container 手札" /><link rel="up" href="index.html" title="第 5 章 Rancher - Multi-Cluster Kubernetes Management" /><link rel="prev" href="ch05s06.html" title="5.6. Rancher Demo" /><link rel="next" href="rancher.faq.html" title="5.8. FAQ" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
+		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">5.7. Longhorn</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ch05s06.html">上一页</a> </td><th width="60%" align="center">第 5 章 Rancher - Multi-Cluster Kubernetes Management</th><td width="20%" align="right"> <a accesskey="n" href="rancher.faq.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id1194"></a>5.7. Longhorn</h2></div></div></div>
+	
+	<p>https://longhorn.io/docs/</p>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1137"></a>5.7.1. 安装 Longhorn </h3></div></div></div>
+		
+		
+		<p></p>
+		<pre class="screen">
+		
+[root@master ~]# dnf install -y jq
+[root@master ~]# dnf install -y iscsi-initiator-utils
+		
+kubectl apply -f https://raw.githubusercontent.com/longhorn/longhorn/v1.3.1/deploy/longhorn.yaml		
+		
+		</pre>
+		<p>检查环境</p>
+		<pre class="screen">
+		
+[root@master ~]# curl -sSfL https://raw.githubusercontent.com/longhorn/longhorn/v1.3.1/scripts/environment_check.sh | bash
+[INFO]  Required dependencies are installed.
+[INFO]  Waiting for longhorn-environment-check pods to become ready (0/3)...
+[INFO]  All longhorn-environment-check pods are ready (3/3).
+[ERROR] nfs-utils is not found in agent-2.
+[ERROR] nfs-utils is not found in agent-1.
+[ERROR] nfs-utils is not found in master.
+[ERROR] Please install missing packages.
+[INFO]  Cleaning up longhorn-environment-check pods...
+[INFO]  Cleanup completed.	
+		
+		</pre>
+		<p>由于我不需要 NFS 所以没有安装 nfs-utils</p>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1138"></a>5.7.2. 选择磁盘类型</h3></div></div></div>
+		
+		<p>首先要给磁盘打上标签，才能使用这个功能</p>
+		<pre class="screen">
+		
+[root@master ~]# lsblk 
+NAME        MAJ:MIN RM   SIZE RO TYPE MOUNTPOINTS
+sda           8:0    0 931.5G  0 disk 
+`-sda1        8:1    0 931.5G  0 part /opt
+nvme0n1     259:0    0 238.5G  0 disk 
+|-nvme0n1p1 259:1    0   600M  0 part /boot/efi
+|-nvme0n1p2 259:2    0     1G  0 part /boot
+|-nvme0n1p3 259:3    0    64G  0 part [SWAP]
+`-nvme0n1p4 259:4    0 172.9G  0 part /		
+
+[root@master ~]# ls /opt/longhorn/
+longhorn-disk.cfg  replicas
+		
+		</pre>
+		<p>/opt/longhorn/ 被打了 HDD 标签</p>
+		
+		<pre class="screen">
+		
+allowVolumeExpansion: true
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  annotations:
+    field.cattle.io/description: 硬盘存储
+  name: longhorn-storage
+parameters:
+  diskSelector: hdd
+  numberOfReplicas: "3"
+  staleReplicaTimeout: "2880"
+provisioner: driver.longhorn.io
+reclaimPolicy: Delete
+volumeBindingMode: Immediate
+		
+		</pre>
+		<p>选择多个标签 diskSelector: "ssd,fast"</p>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1139"></a>5.7.3. 节点选择</h3></div></div></div>
+		
+		<pre class="screen">
+		
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: longhorn
+provisioner: driver.longhorn.io
+allowVolumeExpansion: true
+parameters:
+  numberOfReplicas: "2"
+  staleReplicaTimeout: "2880"
+  fromBackup: ""
+#  diskSelector: "ssd,fast"
+  nodeSelector: "storage,fast"
+#  recurringJobs: '[{"name":"snap", "task":"snapshot", "cron":"*/1 * * * *", "retain":1},
+#                   {"name":"backup", "task":"backup", "cron":"*/2 * * * *", "retain":1,
+#                    "labels": {"interval":"2m"}}]'		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1141"></a>5.7.4. FAQ</h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1140"></a>5.7.4.1. FailedAttachVolume</h4></div></div></div>
+			
+			<pre class="screen">
+			
+Type 	Reason 	Updated 	Message 
+Warning	FailedAttachVolume	8 hours ago	AttachVolume.Attach failed for volume "pvc-03796772-abeb-4042-8e5e-63a9b21da0f7" : rpc error: code = DeadlineExceeded desc = volume pvc-03796772-abeb-4042-8e5e-63a9b21da0f7 failed to attach to node master			
+			
+			</pre>
+		</div>
+	</div>
+</div><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ch05s06.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="rancher.faq.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">5.6. Rancher Demo </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 5.8. FAQ</td></tr></table></div><script xmlns="">
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+			ga('create', 'UA-11694057-1', 'auto');
+			ga('send', 'pageview');
+
+		</script><script xmlns="" async="async">
+			var _hmt = _hmt || [];
+			(function() {
+			var hm = document.createElement("script");
+			hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(hm, s);
+			})();
+</script><script xmlns="" async="async">
+			(function(){
+			var bp = document.createElement('script');
+			var curProtocol = window.location.protocol.split(':')[0];
+			if (curProtocol === 'https') {
+			bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+			}
+			else {
+			bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+			}
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(bp, s);
+			})();
+</script></body></html>
