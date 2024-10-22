@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>4.3. 容器中如何优雅关闭 Springboot</title><link rel="stylesheet" type="text/css" href="../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config" /><link rel="home" href="../index.html" title="Netkiller Spring Cloud 手札" /><link rel="up" href="spring.boot.shutdown.html" title="第 4 章 如何优雅停止 Springboot 运行" /><link rel="prev" href="ch04s02.html" title="4.2. kill 命令演示" /><link rel="next" href="ch04s04.html" title="4.4. 写入PID文件" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
-		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">4.3. 容器中如何优雅关闭 Springboot</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ch04s02.html">上一页</a> </td><th width="60%" align="center">第 4 章 如何优雅停止 Springboot 运行</th><td width="20%" align="right"> <a accesskey="n" href="ch04s04.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1515"></a>4.3. 容器中如何优雅关闭 Springboot</h3></div></div></div><p>容器与进程模式并没有什么区别，我们给容器发送终止信号，容器会转发给 Springboot。</p><p>理论归理论，我们还是需要亲自实践，这样才能理解更深刻。</p><p>准备实验环境和素材，下面是 docker-compose.yaml 编排文件</p><pre class="screen">
+		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">4.3. 容器中如何优雅关闭 Springboot</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ch04s02.html">上一页</a> </td><th width="60%" align="center">第 4 章 如何优雅停止 Springboot 运行</th><td width="20%" align="right"> <a accesskey="n" href="ch04s04.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1519"></a>4.3. 容器中如何优雅关闭 Springboot</h3></div></div></div>
+		
+		<p>容器与进程模式并没有什么区别，我们给容器发送终止信号，容器会转发给 Springboot。</p>
+		<p>理论归理论，我们还是需要亲自实践，这样才能理解更深刻。</p>
+		<p>准备实验环境和素材，下面是 docker-compose.yaml 编排文件</p>
+		<pre class="screen">
 		
 version: '3.9'
   
@@ -22,12 +27,17 @@ services:
       --spring.profiles.active=dev
       --server.port=8080
 		
-		</pre><div class="itemizedlist"><p class="title"><strong>实验步骤</strong></p><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem">运行容器：docker-compose up</li><li class="listitem">观察容器：docker-compose logs -f</li><li class="listitem">停止容器：</li></ul></div><p>运行容器</p><pre class="screen">
+		</pre>
+		<div class="itemizedlist"><p class="title"><strong>实验步骤</strong></p><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem">运行容器：docker-compose up</li><li class="listitem">观察容器：docker-compose logs -f</li><li class="listitem">停止容器：</li></ul></div>
+		<p>运行容器</p>
+		<pre class="screen">
 		
 [root@localhost netkiller.cn]# docker-compose up -d
 Starting spring ... done
 		
-		</pre><p>观察容器日志</p><pre class="screen">
+		</pre>
+		<p>观察容器日志</p>
+		<pre class="screen">
 		
 [root@localhost netkiller.cn]# docker-compose logs -f
 spring    | Starting...
@@ -53,7 +63,9 @@ spring    | 2021-07-29 11:29:36.511  INFO 1 --- [           main] org.jboss.thre
 spring    | 2021-07-29 11:29:36.547  INFO 1 --- [           main] o.s.b.w.e.undertow.UndertowWebServer     : Undertow started on port(s) 8080 (http)
 spring    | 2021-07-29 11:29:36.560  INFO 1 --- [           main] cn.netkiller.Application                 : Started Application in 2.48 seconds (JVM running for 2.923)
 		
-		</pre><p>停止容器</p><pre class="screen">
+		</pre>
+		<p>停止容器</p>
+		<pre class="screen">
 		
 [root@localhost netkiller.cn]# docker ps | grep spring
 8901384d1973   openjdk:latest                "java -jar /app/test…"   3 minutes ago   Up About a minute   0.0.0.0:8099-&gt;8080/tcp, :::8099-&gt;8080/tcp                                              spring
@@ -61,7 +73,9 @@ spring    | 2021-07-29 11:29:36.560  INFO 1 --- [           main] cn.netkiller.A
 spring
 [root@localhost netkiller.cn]# docker ps | grep spring		
 		
-		</pre><p>在观察日志</p><pre class="screen">
+		</pre>
+		<p>在观察日志</p>
+		<pre class="screen">
 		
 spring    | 2021-07-29 11:31:31.807  INFO 1 --- [ionShutdownHook] io.undertow                              : stopping server: Undertow - 2.2.9.Final
 spring    | ==============================
@@ -69,7 +83,10 @@ spring    | Destroying Spring
 spring    | ==============================
 spring exited with code 143		
 		
-		</pre><p>现在可以看到 Springboot 是正常退出的</p><p>下面我们再做一个实验 docker kill</p><pre class="screen">
+		</pre>
+		<p>现在可以看到 Springboot 是正常退出的</p>
+		<p>下面我们再做一个实验 docker kill</p>
+		<pre class="screen">
 		
 [root@localhost netkiller.cn]# docker-compose start
 Starting spring ... done
@@ -79,11 +96,16 @@ Starting spring ... done
 [root@localhost netkiller.cn]# docker kill spring
 spring		
 		
-		</pre><p>此时再观察日志，只输出了一行。</p><pre class="screen">
+		</pre>
+		<p>此时再观察日志，只输出了一行。</p>
+		<pre class="screen">
 		
 spring exited with code 137
 		
-		</pre><p>结论，docker kill = kill -9</p><p>现在你应该明白什么时候该使用什么命令终止程序了吧，同时我们在写程序的时候，也应该将程序的运行状态反应出来，在我们停止程序运行的时候，可以去观察进程的状态，而不是半天没有反应，只能怀疑进程死了，必须执行B计划（kill -9）这会造成很多数据丢失的问题。</p></div><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ch04s02.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="spring.boot.shutdown.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ch04s04.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">4.2. kill 命令演示 </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 4.4. 写入PID文件</td></tr></table></div><script xmlns="">
+		</pre>
+		<p>结论，docker kill = kill -9</p>
+		<p>现在你应该明白什么时候该使用什么命令终止程序了吧，同时我们在写程序的时候，也应该将程序的运行状态反应出来，在我们停止程序运行的时候，可以去观察进程的状态，而不是半天没有反应，只能怀疑进程死了，必须执行B计划（kill -9）这会造成很多数据丢失的问题。</p>
+	</div><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ch04s02.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="spring.boot.shutdown.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ch04s04.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">4.2. kill 命令演示 </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 4.4. 写入PID文件</td></tr></table></div><script xmlns="">
 			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
 		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
 		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
