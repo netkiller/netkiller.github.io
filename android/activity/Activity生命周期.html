@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>4.3. 生命周期</title><link rel="stylesheet" type="text/css" href="../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="Android, Google Play" /><link rel="home" href="../index.html" title="Netkiller Android 手札" /><link rel="up" href="index.html" title="第 4 章 Activity" /><link rel="prev" href="显式四种跳转方式.html" title="4.2. 显式四种跳转方式" /><link rel="next" href="Intent.html" title="4.4. Activity 间数据传递" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
+		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">4.3. 生命周期</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="显式四种跳转方式.html">上一页</a> </td><th width="60%" align="center">第 4 章 Activity</th><td width="20%" align="right"> <a accesskey="n" href="Intent.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="Activity生命周期"></a>4.3. 生命周期</h2></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="定时关闭"></a>4.3.1. 定时关闭</h3></div></div></div>
+			
+			<pre class="programlisting">
+		
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        Toast.makeText(getApplicationContext(), "5秒后关闭", Toast.LENGTH_SHORT).show();
+        final Timer timer = new Timer();
+        timer.schedule(new TimerTask() {
+            public void run() {
+                //结束本界面并跳转到收派员列表的界面
+                finish();
+            }
+        }, 5000);
+
+    }
+		
+			</pre>
+			<p></p>
+			<pre class="programlisting">
+		
+	new Handler().postDelayed(new Runnable() {
+        @Override
+        public void run() {
+            view.close();
+        }
+    }, 10000);		
+		
+			</pre>
+		</div>
+
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="恢复触发"></a>4.3.2. 恢复触发</h3></div></div></div>
+			
+			<p>程序回到桌面，例如设置WI-FI，让步在回到程序，安卓会调用 onResume()</p>
+			<pre class="programlisting">
+		
+    @Override
+    public void onResume() {
+        super.onResume();
+        this.other();
+    }		
+		
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="返回触发"></a>4.3.3. 返回触发</h3></div></div></div>
+			
+			<pre class="programlisting">
+		
+    @Override
+    public void onBackPressed() {
+        // code here to show dialog
+        super.onBackPressed();  // optional depending on your needs
+        ...
+    }		
+		
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="Activity.finish()"></a>4.3.4. Activity 关闭</h3></div></div></div>
+			
+			<pre class="programlisting">
+		
+package cn.netkiller.album;
+
+import android.os.Bundle;
+import android.view.View;
+import android.widget.TextView;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+public class HotelActivity extends AppCompatActivity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_hotel);
+
+        TextView hotelClose = (TextView) findViewById(R.id.hotelClose);
+
+        hotelClose.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
+
+    }
+}		
+		
+			</pre>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id799"></a>4.3.4.1. 退出 App</h4></div></div></div>
+				
+				<p>AndroidManifest.xml 中 activity 添加
+					android:launchMode="singleTask"
+				</p>
+				<pre class="programlisting">
+			
+        &lt;activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask"&gt;
+            &lt;intent-filter&gt;
+                &lt;action android:name="android.intent.action.MAIN" /&gt;
+
+                &lt;category android:name="android.intent.category.HOME" /&gt;
+                &lt;category android:name="android.intent.category.DEFAULT" /&gt;
+                &lt;category android:name="android.intent.category.LAUNCHER" /&gt;
+            &lt;/intent-filter&gt;
+        &lt;/activity&gt;			
+			
+				</pre>
+				<p>MainActivity 中添加 onNewIntent(Intent intent)</p>
+				<pre class="programlisting">
+			
+  	@Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        if (intent != null) {
+            boolean isExit = intent.getBooleanExtra("QUIT", false);
+            if (isExit) {
+                this.finish();
+            }
+        }
+    }			
+			
+				</pre>
+				<p>调用 quit 方法即可正常退出主程序</p>
+				<pre class="programlisting">
+			
+    public void quit(View v) {
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.putExtra("QUIT", true);
+        startActivity(intent);
+    }			
+			
+				</pre>
+			</div>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id800"></a>4.3.5. 重启自己</h3></div></div></div>
+			
+			<pre class="programlisting">
+		
+    private boolean privacyAgreement() {
+        String key = "PrivacyAgreement";
+        Cache cache = new Cache();
+//        cache.remove(key);
+        boolean status = cache.isCache("PrivacyAgreement");
+        Log.d(TAG, "PrivacyAgreement: " + status);
+        if (status) {
+            return false;
+        }
+
+        setContentView(R.layout.activity_privacy_agreement);
+        WebView webView = findViewById(R.id.webView);
+        webView.loadUrl("http://oss.netkiller.cn/neo/docs/PrivacyAgreement.html");
+
+        Button no = findViewById(R.id.buttonNo);
+        no.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
+        Button yes = findViewById(R.id.buttonYes);
+        yes.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                cache.set(key, true);
+                Intent intent = new Intent(MainActivity.this, MainActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+//                    System.exit(0);
+
+//                    Intent intent = getPackageManager().getLaunchIntentForPackage(getPackageName());
+//                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+//                    startActivity(intent);
+                android.os.Process.killProcess(android.os.Process.myPid());
+
+//                    ActivityManager activityManager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+//                    activityManager.restartPackage(getPackageName());
+            }
+        });
+        return true;
+
+
+    }		
+		
+			</pre>
+		</div>
+	</div><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="显式四种跳转方式.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="Intent.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">4.2. 显式四种跳转方式 </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 4.4. Activity 间数据传递</td></tr></table></div><script xmlns="">
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+			ga('create', 'UA-11694057-1', 'auto');
+			ga('send', 'pageview');
+
+		</script><script xmlns="" async="async">
+			var _hmt = _hmt || [];
+			(function() {
+			var hm = document.createElement("script");
+			hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(hm, s);
+			})();
+</script><script xmlns="" async="async">
+			(function(){
+			var bp = document.createElement('script');
+			var curProtocol = window.location.protocol.split(':')[0];
+			if (curProtocol === 'https') {
+			bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+			}
+			else {
+			bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+			}
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(bp, s);
+			})();
+</script></body></html>
