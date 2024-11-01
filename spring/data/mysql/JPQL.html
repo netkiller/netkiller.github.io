@@ -14,8 +14,14 @@ void updateStateByMoney(Long money, Byte state);
 			</pre>
 			<pre class="programlisting">
 			
-
   @Modifying(clearAutomatically=true, flushAutomatically = true)			
+			
+			</pre>
+			<pre class="programlisting">
+			
+    @Modifying
+    @Query(value = "INSERT INTO notification_status(consumer_id,notification_id) VALUES( :consumerId, :notificationId)", nativeQuery = true)
+    void read(@Param("consumerId") int consumerId, @Param("notificationId") int notificationId);			
 			
 			</pre>
 		</div>
@@ -1359,6 +1365,33 @@ public class RoleService {
 				
 				</pre>
 			</div>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="jpql.in"></a>48.8.10. IN / NOT 子查询</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+package cn.netkiller.repository;
+
+
+import cn.netkiller.domain.device.NotificationStatus;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface NotificationStatusRepository extends CrudRepository&lt;NotificationStatus, Integer&gt; {
+
+    @Query(value = "SELECT count(n) FROM Notification n WHERE n.id NOT IN (SELECT ns.notification.id FROM NotificationStatus ns, Consumer c WHERE ns.consumer.id = c.id AND c.wechat = :wechat)")
+    int queryCountByWechat(@Param("wechat") String wechat);
+
+    @Modifying
+    @Query(value = "INSERT INTO notification_status(consumer_id,notification_id) VALUES( :consumerId, :notificationId)", nativeQuery = true)
+    void read(@Param("consumerId") int consumerId, @Param("notificationId") int notificationId);
+}			
+			
+			</pre>
 		</div>
 	</div><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="TransactionTemplate.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="jpa.mysql.faq.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">48.7. TransactionTemplate </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 48.9. FAQ 常见问题</td></tr></table></div><script xmlns="">
 			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
