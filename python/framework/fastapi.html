@@ -2,15 +2,15 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>5.4. FastAPI</title><link rel="stylesheet" type="text/css" href="../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="php,pear,pecl,phar, python, , " /><link rel="home" href="../index.html" title="Netkiller Python 手札" /><link rel="up" href="uvicorn.html" title="第 5 章 Uvicorn" /><link rel="prev" href="ch05s03.html" title="5.3. 日志" /><link rel="next" href="robotframework.html" title="第 6 章 Robot Framework 测试框架" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
 		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">5.4. FastAPI</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ch05s03.html">上一页</a> </td><th width="60%" align="center">第 5 章 Uvicorn</th><td width="20%" align="right"> <a accesskey="n" href="robotframework.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="fastapi"></a>5.4. FastAPI</h2></div></div></div>
 	
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="app.post"></a>5.4.1. Post Request</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="app.post"></a>5.4.1. Post 请求</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id924"></a>5.4.1.1. From 数据</h4></div></div></div>
-			
-			<pre class="screen">
-			
+		<pre class="screen">
+		
 pip install python-multipart
+		
+		</pre>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id928"></a>5.4.1.1. From 数据</h4></div></div></div>
 			
-			</pre>
 			<pre class="programlisting">
             	
 from fastapi import FastAPI, Form
@@ -104,6 +104,33 @@ async def notification(request: Request):
 			
 			</pre>
 		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="fastapi.post.upload"></a>5.4.1.5. 上传文件</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+@app.post("/file/")
+async def create_file(file: bytes = File()):
+    filename = f"tmp/{uuid.uuid4()}.png"
+    print(filename)
+    # filename = uuid.uuid4()
+    with open(filename, "wb") as f:
+        f.write(file)
+    return {"file": filename,"size": len(file)}
+
+@app.post("/uploadfile")
+async def create_upload_file(file: UploadFile):
+    # uuid5 = uuid.uuid5(uuid.NAMESPACE_DNS, 'netkiller.cn')
+    # filename, extension = os.path.splitext(file.filename)
+    filename = f"tmp/{file.filename}"
+    file_content = await file.read()  # 读取文件
+    with open(filename, "wb") as f:
+        f.write(file_content)
+
+    return {"filename": file.filename,"content_type": file.content_type}
+			
+			
+			</pre>
+		</div>
 	</div>
 	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="app.api_route"></a>5.4.2. api_route</h3></div></div></div>
 		
@@ -115,7 +142,7 @@ async def handler():
 		
 		</pre>
 	</div>
-	
+
 	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="fastapi.slowapi"></a>5.4.3. slowapi 流向控制</h3></div></div></div>
 		
 		<pre class="programlisting">
@@ -224,7 +251,7 @@ async def startup():
     FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")		
 		
 		</pre>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id925"></a>5.4.5.1. 缓存 Json 数据结构</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id929"></a>5.4.5.1. 缓存 Json 数据结构</h4></div></div></div>
 			
 			<pre class="programlisting">
 			
@@ -235,7 +262,7 @@ async def index():
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id926"></a>5.4.5.2. 自定义 key</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id930"></a>5.4.5.2. 自定义 key</h4></div></div></div>
 			
 			<pre class="programlisting">
 			
@@ -378,7 +405,7 @@ if __name__ == "__main__":
     test()		
 		
 		</pre>
-		
+
 	</div>
 	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="jsonable_encoder"></a>5.4.8. 解决 Sqlalchemy 返回模型无法打印的问题</h3></div></div></div>
 		
@@ -459,7 +486,7 @@ async def device_bind_qrcode(android_id: str):
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id927"></a>5.4.10. Fief 认证框架</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id931"></a>5.4.10. Fief 认证框架</h3></div></div></div>
 		
 		<a class="ulink" href="https://docs.fief.dev/integrate/python/fastapi/" target="_top">https://docs.fief.dev/integrate/python/fastapi/</a>
 	</div>
