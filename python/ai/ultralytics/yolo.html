@@ -4,7 +4,49 @@
 	
 	<div class="orderedlist"><p class="title"><strong>目标检测任务</strong></p><ol class="orderedlist" type="1"><li class="listitem">YOLO11：用于经典的目标检测任务。</li><li class="listitem">YOLO11-seg：用于实例分割，识别和分割图像中的对象。</li><li class="listitem">YOLO11-pose：用于关键点姿态估计，即确定人体的关键点（如关节位置）。</li><li class="listitem">YOLO11-obb：用于定向检测，可以识别并确定具有方向性物体的边界框（例如倾斜的目标物体）。</li><li class="listitem">YOLO11-cls：用于分类，负责对图像中的对象进行类别识别。</li></ol></div>
 	<div class="orderedlist"><p class="title"><strong>模型规格</strong></p><ol class="orderedlist" type="1"><li class="listitem">YOLOv8 Nano	非常小	YOLOv8n</li><li class="listitem">YOLOv8 Small	小	YOLOv8s</li><li class="listitem">YOLOv8 Medium	中	YOLOv8m</li><li class="listitem">YOLOv8 Large	大	YOLOv8l</li><li class="listitem">YOLOv8 X（Extra Large）	非常大	YOLOv8x</li></ol></div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1037"></a>11.4.1. 模型训练</h3></div></div></div>
+	
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1047"></a>11.4.1. labels 文件格式</h3></div></div></div>
+		
+		<p>x,y是目标的中心坐标，width,height是目标的宽和高。</p>
+		<pre class="screen">
+		
+&lt;object-class&gt; &lt;x&gt; &lt;y&gt; &lt;width&gt; &lt;height&gt;		
+		
+		</pre>
+		<p>VOC与YOLO之间的格式转换</p>
+		<pre class="programlisting">
+		
+# size是原图的（w,h), box是坐标
+
+def voc_to_yolo(size, box):
+    dw = 1./size[0]
+    dh = 1./size[1]
+    x = (box[0] + box[1])/2.0
+    y = (box[2] + box[3])/2.0
+    w = box[1] - box[0]
+    h = box[3] - box[2]
+    x = x*dw
+    w = w*dw
+    y = y*dh
+    h = h*dh
+    return (x,y,w,h)
+ 
+def yolo_to_voc(size, box):
+    x = box[0] * size[0]
+    w = box[2] * size[0]
+    y = box[1] * size[1]
+    h = box[3] * size[1]
+    xmin = int(x - w/2)
+    xmax = int(x + w/2)
+    ymin = int(y - h/2)
+    ymax = int(y + h/2)
+    return (xmin, ymin, xmax, ymax)
+		
+		
+		</pre>
+	</div>
+	
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1048"></a>11.4.2. 模型训练</h3></div></div></div>
 		
 		<pre class="programlisting">
 		
@@ -18,7 +60,7 @@ mode.val()
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1038"></a>11.4.2. 模型评估</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1049"></a>11.4.3. 模型评估</h3></div></div></div>
 		
 		<pre class="programlisting">
 		
@@ -31,7 +73,7 @@ model.val(data='captcha/images/YOLODataset/dataset.yaml')
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1043"></a>11.4.3. 模型预测</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1054"></a>11.4.4. 模型预测</h3></div></div></div>
 		
 		<pre class="programlisting">
 		
@@ -70,7 +112,7 @@ for result in results:
 		
 		</pre>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1039"></a>11.4.3.1. predict 参数</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1050"></a>11.4.4.1. predict 参数</h4></div></div></div>
 			
 			<pre class="programlisting">
 			
@@ -109,7 +151,7 @@ print(results)
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1040"></a>11.4.3.2. 返回结果</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1051"></a>11.4.4.2. 返回结果</h4></div></div></div>
 			
 			<p>返回结果通常包含以下主要属性和方法：</p>
 			<div class="literallayout"><p><br />
@@ -132,7 +174,7 @@ print(results)
 			<br />
 			</p></div>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1041"></a>11.4.3.3. 提取标签</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1052"></a>11.4.4.3. 提取标签</h4></div></div></div>
 			
 			<pre class="programlisting">
 			
@@ -162,7 +204,7 @@ for result in results:
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1042"></a>11.4.3.4. 保存识别图像</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1053"></a>11.4.4.4. 保存识别图像</h4></div></div></div>
 			
 			<pre class="programlisting">
 			
@@ -208,9 +250,9 @@ async def netkiller(file: bytes = File()):
 			</pre>
 		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1046"></a>11.4.4. 模型导出</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1057"></a>11.4.5. 模型导出</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1044"></a>11.4.4.1. onnx 格式</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1055"></a>11.4.5.1. onnx 格式</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -231,7 +273,7 @@ results[0].show()
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1045"></a>11.4.4.2. engine 格式</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1056"></a>11.4.5.2. engine 格式</h4></div></div></div>
 			
 			<pre class="programlisting">
 			
