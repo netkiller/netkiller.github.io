@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>12.2. 鸢尾花数据集</title><link rel="stylesheet" type="text/css" href="../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="php,pear,pecl,phar, python, , " /><link rel="home" href="../index.html" title="Netkiller Python 手札" /><link rel="up" href="index.html" title="第 12 章 Sklearn" /><link rel="prev" href="index.html" title="第 12 章 Sklearn" /><link rel="next" href="../transformer/index.html" title="第 13 章 Transformer" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
+		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">12.2. 鸢尾花数据集</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><th width="60%" align="center">第 12 章 Sklearn</th><td width="20%" align="right"> <a accesskey="n" href="../transformer/index.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id3759"></a>12.2. 鸢尾花数据集</h2></div></div></div>
+		
+		<pre class="programlisting">
+		
+# -*- coding:utf-8 -*-
+import torch                        # 导入 PyTorch 库
+from torch import nn                # 导入 PyTorch 的神经网络模块
+from sklearn import datasets        # 导入 scikit-learn 库中的 dataset 模块
+from sklearn.model_selection import train_test_split  # 从 scikit-learn 的 model_selection 模块导入 split 方法用于分割训练集和测试集
+from sklearn.preprocessing import StandardScaler      # 从 scikit-learn 的 preprocessing 模块导入方法，用于数据缩放
+
+# 加载鸢尾花数据集"
+iris = datasets.load_iris()
+X = iris.data           # 对应输入变量或属性（features），含有4个属性：花萼长度、花萼宽度、花瓣长度 和 花瓣宽度
+y = iris.target         # 对应目标变量（target），也就是类别标签，总共有3种分类
+
+# 拆分训练集和测试，按照80:20的比例来划分为训练集和测试集
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+
+# 数据缩放，对训练集和测试集进行归一化处理，常用方法之一是StandardScaler
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# 数据转tensor类型，将训练集和测试集转换为PyTorch的张量对象并设置数据类型
+X_train = torch.tensor(X_train).float()
+y_train = torch.tensor(y_train).long()
+X_test = torch.tensor(X_test).float()
+y_test = torch.tensor(y_test).long()
+
+# 定义 Transformer 模型
+class TransformerModel(nn.Module):
+    def __init__(self, input_size, num_classes):
+        super(TransformerModel, self).__init__()
+        # 定义 Transformer 编码器，并指定输入维数和头数
+        self.encoder_layer = nn.TransformerEncoderLayer(d_model=input_size, nhead=1)
+        self.encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=1)
+        # 定义全连接层，将 Transformer 编码器的输出映射到分类空间
+        self.fc = nn.Linear(input_size, num_classes)
+
+    def forward(self, x):
+        # 在序列的第2个维度（也就是时间步或帧）上添加一维以适应 Transformer 的输入格式
+        x = x.unsqueeze(1)
+        # 将输入数据流经 Transformer 编码器进行特征提取
+        x = self.encoder(x)
+        # 通过压缩第2个维度将编码器的输出恢复到原来的形状
+        x = x.squeeze(1)
+        # 将编码器的输出传入全连接层，获得最终的输出结果
+        x = self.fc(x)
+        return x
+
+# 初始化 Transformer 模型
+model = TransformerModel(input_size=4, num_classes=3)
+
+# 定义损失函数和优化器，损失函数（交叉熵损失）和优化器（Adam）
+criterion = nn.CrossEntropyLoss()
+optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
+
+# 训练模型，对数据集进行多次迭代学习，更新模型的参数
+num_epochs = 100
+for epoch in range(num_epochs):
+    # 前向传播计算输出结果
+    outputs = model(X_train)
+    loss = criterion(outputs, y_train)
+
+    # 反向传播，更新梯度并优化模型参数
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+
+    # 打印每10个epoch的loss值
+    if (epoch + 1) % 10 == 0:
+        print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {loss.item():.4f}')
+
+# 测试模型的准确率
+with torch.no_grad():
+    # 对测试数据集进行预测，并与真实标签进行比较，获得预测
+    outputs = model(X_test)
+    _, predicted = torch.max(outputs.data, 1)
+    accuracy = (predicted == y_test).sum().item() / y_test.size(0)
+    print(f'Test Accuracy: {accuracy:.2f}')
+		
+		
+		</pre>
+	</div><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="../transformer/index.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 12 章 Sklearn </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 13 章 Transformer</td></tr></table></div><script xmlns="">
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+			ga('create', 'UA-11694057-1', 'auto');
+			ga('send', 'pageview');
+
+		</script><script xmlns="" async="async">
+			var _hmt = _hmt || [];
+			(function() {
+			var hm = document.createElement("script");
+			hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(hm, s);
+			})();
+</script><script xmlns="" async="async">
+			(function(){
+			var bp = document.createElement('script');
+			var curProtocol = window.location.protocol.split(':')[0];
+			if (curProtocol === 'https') {
+			bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+			}
+			else {
+			bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+			}
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(bp, s);
+			})();
+</script></body></html>
