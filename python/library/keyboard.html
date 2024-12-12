@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>2.18. keyboard</title><link rel="stylesheet" type="text/css" href="../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="php,pear,pecl,phar, python, , " /><link rel="home" href="../index.html" title="Netkiller Python 手札" /><link rel="up" href="index.html" title="第 2 章 Library" /><link rel="prev" href="dbm.html" title="2.17. dbm Key-Value 数据库" /><link rel="next" href="gps.html" title="2.19. GPS" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
+		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">2.18. keyboard</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="dbm.html">上一页</a> </td><th width="60%" align="center">第 2 章 Library</th><td width="20%" align="right"> <a accesskey="n" href="gps.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="keyboard"></a>2.18. keyboard</h2></div></div></div>
+	
+	<pre class="screen">
+	
+pip install keyboard	
+	
+	</pre>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id944"></a>2.18.1. 读取键盘值</h3></div></div></div>
+		
+		<p>读取键盘值</p>
+		<pre class="programlisting">
+		
+root@debian:~# cat test.py
+import keyboard
+
+while True:
+    k = keyboard.read_key()
+    print(k)
+		
+		</pre>
+		<p>按键按下时触发</p>
+		<pre class="programlisting">
+		
+root@debian:~# cat test.py
+import keyboard
+
+def callback(x):
+    print(x)
+    print()
+
+keyboard.on_press(callback)
+keyboard.wait()		
+		
+		</pre>
+		<p>按键释放触发</p>
+		<pre class="programlisting">
+		
+root@debian:~# cat test.py
+import keyboard
+
+def callback(x):
+    print(x)
+    print()
+
+keyboard.on_release(callback)
+keyboard.wait()		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id945"></a>2.18.2. 功能键</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+&gt;&gt;&gt; keyboard.get_hotkey_name(['+', 'left ctrl', 'shift'])
+'ctrl+shift+plus'
+
+&gt;&gt;&gt; keyboard.get_hotkey_name(['+', 'left ctrl', 'f13'])
+'ctrl+f13+plus'		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id946"></a>2.18.3. 上下索道缆车开关门</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+##############################################
+# Home	: https://www.netkiller.cn
+# Author: Neo &lt;netkiller@msn.com&gt;
+# Upgrade: 2023-07-28
+##############################################
+try:
+    import random, os, sys
+    import logging, logging.handlers
+    import keyboard
+    from paho.mqtt import publish, client
+    from datetime import datetime
+    from optparse import OptionParser
+
+    # from queue import Queue
+
+    module = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/common"
+    sys.path.insert(0, ".")
+    sys.path.insert(0, module)
+    from config import ConfigFile
+except ImportError as err:
+    print("ImportError: %s" % (err))
+    exit()
+
+
+class Door(ConfigFile):
+    sensor = {}
+    # sensor["up"] = "欢迎乘坐华山缆车"
+    # sensor["down"] = "缆车加速运行，请坐稳扶好"
+    sensor["up"] = "亲爱的游客朋友们，感谢您选择乘坐华山北峰缆车，与我们一同领略华山的壮丽景色！在您的旅程结束之际，我们衷心祝愿您带着美好的回忆离开。华山北峰的壮丽山川和丰富的历史文化将永远留在您心中。再次感谢您的光临，祝您一路顺风，期待与您再次相会！"
+    sensor["down"] = "尊敬的游客，欢迎您踏上华山北峰缆车之旅！这是一段令人心驰神往的征程，将带您登上壮丽的北峰，领略壮丽的自然风光和宏伟的山峰。让我们一起享受这段难忘的缆车之旅吧！祝您旅途愉快！你还有什么问题要问我吗？你可以这么问，华少华少，华山有几座山峰。"
+
+    mutex = False
+
+    def __init__(self, debug=False) -&gt; None:
+        usage = "usage: %prog [options] start|stop|restart"
+        self.parser = OptionParser(usage)
+        self.parser.add_option(
+            "-c",
+            "--config",
+            dest="config",
+            help="config file",
+            default="/srv/config.ini",
+            metavar="/srv/config.ini",
+        )
+        self.parser.add_option(
+            "-l",
+            "--logfile",
+            dest="logfile",
+            help="log file",
+            default=None,
+            metavar="/tmp/" + os.path.basename(__file__).replace(".py", ".log"),
+        )
+        self.parser.add_option("", "--debug", action="store_true", dest="debug", help="debug mode")
+        self.parser.add_option("-d", "--daemon", dest="daemon", action="store_true", help="run as daemon")
+        self.parser.add_option("", "--demo", dest="demo", action="store_true", help="run as demo")
+        (self.options, self.args) = self.parser.parse_args()
+        super().__init__(cfgfile=self.options.config, logfile=self.options.logfile)
+
+        if self.options.logfile:
+            logging.basicConfig(level=logging.NOTSET, format="%(asctime)s %(levelname)-8s %(message)s", datefmt="%Y-%m-%d %H:%M:%S", filename=self.options.logfile, filemode="w")
+        else:
+            logging.basicConfig(stream=sys.stdout, level=logging.DEBUG, format="%(asctime)s %(levelname)-8s %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
+        self.logging = logging.getLogger()
+
+        self.host = self.option("door", "host")
+        self.port = 1883
+        self.username = self.option("door", "username")
+        self.password = self.option("door", "password")
+        self.topic = self.option("door", "topic")
+
+        # self.queue = Queue(maxsize=10)
+
+    def broadcast(self, msg):
+        try:
+            client_id = f"{__name__}-{random.randint(0, 1000)}"
+            auth = {"username": self.username, "password": self.password}
+            publish.single(self.topic, payload=msg, qos=2, retain=False, hostname=self.host, port=self.port, client_id=client_id, keepalive=60, will=None, auth=auth, tls=None, protocol=client.MQTTv5, transport="tcp")
+            self.logging.info(f"Broadcast topic: {self.topic}, msg: {msg}")
+        except Exception as err:
+            self.logging.error(f"MQTT {repr(err)}")
+            exit()
+
+    def press(self, x):
+        if self.mutex:
+            self.broadcast(self.sensor["down"])
+            self.mutex = False
+            self.logging.info("release %s" % x)
+
+    def release(self, x):
+        self.mutex = True
+        self.broadcast(self.sensor["up"])
+        self.logging.info("press %s" % x)
+
+    def run(self):
+        self.broadcast("缆车门传感器准备就绪")
+        try:
+            # keyboard.on_press(press)
+            # keyboard.on_release(release)
+
+            keyboard.on_press_key("menu", self.press)
+            keyboard.on_release_key("menu", self.release)
+
+            keyboard.wait()
+
+        except Exception as err:
+            self.logging.error("Run %s" % err)
+            exit()
+
+    def daemon(self):
+        pid = os.fork()
+        if pid &gt; 0:
+            sys.exit(0)
+
+    def main(self):
+        if self.options.debug:
+            print("=" * 50)
+            print(self.options, self.args)
+            print("=" * 50)
+
+        if self.options.daemon:
+            self.daemon()
+        # print(self.args)
+        # if not self.args:
+        #     self.parser.print_help()
+        #     exit()
+        # else:
+
+        self.run()
+
+
+if __name__ == "__main__":
+    try:
+        door = Door()
+        door.main()
+
+    except KeyboardInterrupt:
+        print("Crtl+C Pressed. Shutting down.")
+		
+		
+		</pre>
+	</div>
+
+</div><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="dbm.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="gps.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">2.17. dbm Key-Value 数据库 </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 2.19. GPS</td></tr></table></div><script xmlns="">
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+			ga('create', 'UA-11694057-1', 'auto');
+			ga('send', 'pageview');
+
+		</script><script xmlns="" async="async">
+			var _hmt = _hmt || [];
+			(function() {
+			var hm = document.createElement("script");
+			hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(hm, s);
+			})();
+</script><script xmlns="" async="async">
+			(function(){
+			var bp = document.createElement('script');
+			var curProtocol = window.location.protocol.split(':')[0];
+			if (curProtocol === 'https') {
+			bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+			}
+			else {
+			bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+			}
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(bp, s);
+			})();
+</script></body></html>
