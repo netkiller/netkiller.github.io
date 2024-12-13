@@ -2,7 +2,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>11.6. 自动标注</title><link rel="stylesheet" type="text/css" href="../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="php,pear,pecl,phar, python, , " /><link rel="home" href="../index.html" title="Netkiller Python 手札" /><link rel="up" href="index.html" title="第 11 章 Ultralytics" /><link rel="prev" href="ch11s05.html" title="11.5. ONNX(Open Neural Network Exchange) 开放神经网络交换格式" /><link rel="next" href="yolo.example.html" title="11.7. 案例" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
 		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">11.6. 自动标注</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ch11s05.html">上一页</a> </td><th width="60%" align="center">第 11 章 Ultralytics</th><td width="20%" align="right"> <a accesskey="n" href="yolo.example.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="ultralytics.utils"></a>11.6. 自动标注</h2></div></div></div>
 	
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1093"></a>11.6.1. 背景</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1097"></a>11.6.1. 背景</h3></div></div></div>
 		
 		<p>做人工智能机器学习，给学习图片做标签是个体力活。动不动就需要标准上千张图片。</p>
 		<p>有没有更好的方法呢？</p>
@@ -14,7 +14,7 @@
 			train 训练集, val 验证集。</p>
 		<p>最后输出 data.yaml 文件</p>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1094"></a>11.6.2. 尺寸裁剪工具</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1098"></a>11.6.2. 尺寸裁剪工具</h3></div></div></div>
 		
 		<pre class="programlisting">
 		
@@ -222,7 +222,7 @@ if __name__ == "__main__":
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1095"></a>11.6.3. 转换程序</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1099"></a>11.6.3. 转换程序</h3></div></div></div>
 		
 		<p>代码讲训练数据转换为 YOLO 数据库集</p>
 		<pre class="programlisting">
@@ -528,7 +528,191 @@ options:
 			
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="LabelimgToYolo"></a>11.6.4. LabelimgToYolo</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1100"></a>11.6.4. 自动标注工具</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+##############################################
+# Home	: https://www.netkiller.cn
+# Author: Neo &lt;netkiller@msn.com&gt;
+# Upgrade: 2024-12-13
+##############################################
+try:
+    import uuid,hashlib
+    import glob
+    import shutil
+    import os,sys,random,argparse
+    import yaml
+    from tqdm import tqdm
+    from PIL import Image
+    from ultralytics import YOLO
+
+except ImportError as err:
+    print("Import Error: %s" % (err))
+    exit()
+
+class AutoLabel():
+    classes = []
+    labels = {}
+
+    def __init__(self):
+
+        self.basedir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        sys.path.append(self.basedir)
+        # print(basedir)
+
+        self.parser = argparse.ArgumentParser(description='自动标注数据')
+        self.parser.add_argument('--source', type=str, default=None, help='图片来源地址')
+        self.parser.add_argument('--target', default=None, type=str, help='图片目标地址')
+        self.parser.add_argument('--model', type=str, default=None, help='模型',metavar="")
+        self.parser.add_argument('--output', type=str, default=None, help='输出识别图像', metavar="")
+        self.parser.add_argument('--clean', action="store_true", default=False, help='清理之前的数据')
+        self.parser.add_argument('--verbose', action="store_true", default=False, help='过程输出')
+        # self.parser.add_argument('--uuid', action="store_true", default=False, help='重命名图片为UUID')
+        self.args = self.parser.parse_args()
+
+    def mkdirs(self,path):
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+    def scanfile(self,path):
+        files = []
+        for name in os.listdir(path):
+            if os.path.isfile(os.path.join(path, name)):
+                files.append(name)
+
+        return (files)
+    def scandir(self,path):
+        files = []
+        for name in os.listdir(path):
+            if os.path.isdir(os.path.join(path, name)):
+                files.append(name)
+
+        return (files)
+
+    def walkdir(self,path):
+        for dirpath, dirnames, filenames in os.walk(path):
+            print(f"dirpath={dirpath}, dirnames={dirnames}, filenames={filenames}")
+            # print(filenames)
+
+    def label(self, source:str):
+        # print(source)
+        if not os.path.exists(source):
+            return None
+
+        try:
+            results = self.model(source,verbose=self.args.verbose)
+            # print(results)
+            for result in results:
+                boxes = result.boxes  # 获取边界框信息
+                # probs = result.probs  # 获取分类概率
+                # names = result.names
+                # print(boxes)
+                # print(probs)
+                # print(names)
+                # if boxes is not None:
+                #     print(boxes.cls.tolist())
+                #     print(boxes.xywhn.tolist())
+                if not self.classes:
+                    for index,name in result.names.items():
+                        self.classes.append(name)
+                if self.args.output:
+                    result.save(filename=os.path.join(self.args.output,os.path.basename(source)))
+
+                lines = []
+                for n in range(len(boxes.cls)):
+                    index = int(boxes.cls[n])
+                    xywhn = boxes.xywhn[n]
+                    line = f"{index} {xywhn[0]} {xywhn[1]} {xywhn[2]} {xywhn[3]}"
+                    # print(line)
+                #     label = names[int(box.cls)]
+                    lines.append(line)
+            name, extension = os.path.splitext(os.path.basename(source))
+            self.labels[name] = "\r\n".join(lines)
+        except Exception as e:
+            # log.error(e)
+            print("annotation: ",e)
+            exit()
+        return None
+
+    def input(self):
+        try:
+            if self.args.clean:
+                shutil.rmtree(self.args.target)
+                shutil.rmtree(self.args.output)
+                # if os.path.exists(self.args.target):
+                #     files = glob.glob(os.path.join(self.args.target,'*.txt'))
+                #     for file in files:
+                #         os.remove(file)
+            self.mkdirs(self.args.target)
+            self.mkdirs(self.args.output)
+            # self.files = self.scanfile(os.path.join(self.args.source))
+            self.files =glob.glob(os.path.join(self.args.source, '*.jpg'))
+            # print(self.files)
+        except Exception as e:
+            # log.error(e)
+            print("input: ", e)
+            exit()
+
+    def process(self):
+        with tqdm(total=len(self.files), ncols=150) as progress:
+            for source in self.files:
+                progress.set_description(os.path.basename(source))
+                target = os.path.join(self.args.target, os.path.basename(source))
+                # print(f"copy source={source}, target={target}")
+                try:
+                    shutil.copyfile(source, target)
+                    self.label(source)
+                except Exception as e:
+                    # log.error(e)
+                    progress.close()
+                    print("process: ", e)
+                    exit()
+                progress.update(1)
+
+    def output(self):
+        # print(content)
+        for name, label in self.labels.items():
+            target = os.path.join(self.args.target, f"{name}.txt")
+            with open(target, "w") as file:
+                file.write(label)
+
+        with open(os.path.join(self.args.target,'classes.txt'), "w") as file:
+            # for line in self.classes:
+            #     file.write(line)
+            file.writelines([line+'\n' for line in self.classes])
+        pass
+
+    def main(self):
+
+        if self.args.model :
+            self.model = YOLO(self.args.model)
+        else:
+            self.model = YOLO(f"{self.basedir}/model/tongue/best.pt")
+        # print(self.args)
+
+        if self.args.source and self.args.target:
+
+            self.input()
+            self.process()
+            self.output()
+
+        else:
+            self.parser.print_help()
+            exit()
+
+if __name__ == "__main__":
+    try:
+        run = AutoLabel()
+        run.main()
+    except KeyboardInterrupt as e:
+        print(e)		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="LabelimgToYolo"></a>11.6.5. LabelimgToYolo</h3></div></div></div>
 		
 		<pre class="programlisting">
 		
