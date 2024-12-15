@@ -5,7 +5,7 @@
 	<div class="orderedlist"><p class="title"><strong>目标检测任务</strong></p><ol class="orderedlist" type="1"><li class="listitem">YOLO11：用于经典的目标检测任务。</li><li class="listitem">YOLO11-seg：用于实例分割，识别和分割图像中的对象。</li><li class="listitem">YOLO11-pose：用于关键点姿态估计，即确定人体的关键点（如关节位置）。</li><li class="listitem">YOLO11-obb：用于定向检测，可以识别并确定具有方向性物体的边界框（例如倾斜的目标物体）。</li><li class="listitem">YOLO11-cls：用于分类，负责对图像中的对象进行类别识别。</li></ol></div>
 	<div class="orderedlist"><p class="title"><strong>模型规格</strong></p><ol class="orderedlist" type="1"><li class="listitem">YOLOv8 Nano 非常小 YOLOv8n</li><li class="listitem">YOLOv8 Small 小 YOLOv8s</li><li class="listitem">YOLOv8 Medium 中 YOLOv8m</li><li class="listitem">YOLOv8 Large 大 YOLOv8l</li><li class="listitem">YOLOv8 X（Extra Large） 非常大 YOLOv8x</li></ol></div>
 
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1076"></a>11.4.1. labels 文件格式</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1078"></a>11.4.1. labels 文件格式</h3></div></div></div>
 		
 		<p>x,y是目标的中心坐标，width,height是目标的宽和高。</p>
 		<pre class="screen">
@@ -59,8 +59,105 @@ mode.train(data='dataset.yaml',workers=0,epochs=10,batch=10)
 mode.val()		
 		
 		</pre>
-
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1077"></a>11.4.2.1. 输出结果</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1079"></a>11.4.2.1. 训练参数</h4></div></div></div>
+			
+			<p>训练设置所有参数详解</p>
+			<p>YOLO 模型的训练设置包括在训练过程中使用的各种超参数和配置。这些设置会影响模型的性能、速度和准确性。关键的训练设置包括批量大小、学习率、动量和权重衰减。此外，优化器的选择、损失函数和训练数据集的组成也会影响训练过程。仔细调整和实验这些设置对于优化性能至关重要。</p>
+			<div class="literallayout"><p><br />
+			<br />
+参数				默认值	描述<br />
+model			None	指定训练模型文件。接受 .pt 预训练模型或 .yaml 配置文件的路径。对定义模型结构或初始化权重至关重要。<br />
+data			None	数据集配置文件的路径（如 coco8.yaml）。该文件包含数据集特定参数，包括训练和验证数据的路径、类别名称和类别数量。注意：该yaml文件中必须至少包含训练集和验证集数据路径。<br />
+epochs			100		总训练 epochs 数。每个 epoch 代表完整遍历整个数据集一次。调整此值会影响训练时长和模型性能。<br />
+time			None	最大训练时间（小时）。如果设置，将覆盖 epochs 参数，允许在指定时间后自动停止训练。适用于时间受限的训练场景。<br />
+patience		100		在验证指标没有改进的情况下等待的 epochs 数，之后提前停止训练。通过在性能停滞时停止训练来防止过拟合。<br />
+batch			16		批量大小，有三种模式：设置为整数（如 batch=16），自动模式为 GPU 内存利用率的 60%（batch=-1），或指定利用率分数的自动模式（batch=0.70）。当你不会根据图像大小计算所需内存时，后面两种模式很有用。<br />
+imgsz			640		训练的目标图像大小。所有图像在输入模型前都将调整为此尺寸。影响模型准确性和计算复杂性。<br />
+save			True	启用训练检查点和最终模型权重的保存。对于恢复训练或模型部署非常有用。<br />
+save_period		-1		模型检查点保存频率，以 epochs 为单位。值为 -1 禁用此功能。在长时间训练期间保存中间模型非常有用。<br />
+cache			False	启用数据集图像缓存到内存（True/ram）、磁盘（disk）或禁用（False）。通过减少磁盘 I/O 提高训练速度，但增加内存使用。<br />
+device			None	指定训练的计算设备：单个 GPU（device=0），多个 GPU（device=0,1），CPU（device=cpu），或 Apple 芯片的 MPS（device=mps）。<br />
+workers			8		数据加载的工作线程数（如果是多 GPU 训练，则按 RANK 计算）。影响数据预处理和输入模型的速度，尤其在多 GPU 设置中。<br />
+project			None	保存训练输出的项目目录名称。允许有组织地存储不同实验。<br />
+name			None	训练运行的名称。用于在项目文件夹内创建子目录，保存训练日志和输出。<br />
+exist_ok		False	如果为 True，允许覆盖现有的项目/名称目录。适用于无需手动清理先前输出的迭代实验。<br />
+pretrained		True	决定是否从预训练模型开始训练。可以是布尔值或字符串路径，指定从哪个模型加载权重。增强训练效率和模型性能。<br />
+optimizer		'auto'	训练的优化器选择。选项包括 SGD、Adam、AdamW、NAdam、RAdam、RMSProp 等，或根据模型配置自动选择。影响收敛速度和稳定性。<br />
+verbose			False	启用详细输出，在训练期间提供详细日志和进度更新。适用于调试和密切监控训练过程。<br />
+seed			0		设置训练的随机种子，确保在相同配置下结果的可重复性。<br />
+deterministic	True	强制使用确定性算法，确保可重复性，但可能因限制非确定性算法而影响性能和速度。<br />
+single_cls		False	在训练期间将多类数据集中的所有类视为单一类。适用于二分类任务或专注于对象存在而非分类时。<br />
+rect			False	启用矩形训练，优化批次组成以最小化填充。可以提高效率和速度，但可能影响模型准确性。<br />
+cos_lr			False	使用余弦学习率调度器，按余弦曲线调整学习率。帮助更好地管理学习率以实现更好的收敛。<br />
+close_mosaic	10		在最后 N 个 epochs 中禁用马赛克数据增强，以在完成前稳定训练。设置为 0 禁用此功能。<br />
+resume			False	从上次保存的检查点恢复训练。自动加载模型权重、优化器状态和 epoch 计数，继续无缝训练。<br />
+amp				True	启用自动混合精度（AMP）训练，减少内存使用并可能加快训练速度，对准确性的影响最小。<br />
+fraction		1.0		指定用于训练的数据集的比例。允许在数据集的子集中进行训练，适用于实验或资源有限时。<br />
+profile			False	启用训练期间 ONNX 和 TensorRT 速度的分析，优化模型部署。<br />
+freeze			None	冻结模型的前 N 层或按索引指定的层，减少可训练参数数量。适用于微调或迁移学习。<br />
+lr0				0.01	初始学习率（如 SGD=1E-2，Adam=1E-3）。调整此值对优化过程至关重要，影响模型权重的更新速度。<br />
+lrf				0.01	最终学习率作为初始率的分数 = (lr0 * lrf)，与调度器一起使用以随时间调整学习率。<br />
+momentum		0.937	SGD 的动量因子或 Adam 的 beta1，影响当前更新中过去梯度的合并。<br />
+weight_decay	0.0005	L2 正则化项，惩罚大权重以防止过拟合。<br />
+warmup_epochs	3.0		学习率预热的 epochs 数，从低值逐渐增加到初始学习率，以在早期稳定训练。<br />
+warmup_momentum	0.8		预热阶段的初始动量，在预热期内逐渐调整到设定动量。<br />
+warmup_bias_lr	0.1		预热阶段偏置参数的学习率，有助于在初始 epochs 中稳定模型训练。<br />
+box				7.5		损失函数中 box 损失组件的权重，影响准确预测边界框坐标的重要性。<br />
+cls				0.5		总损失函数中分类损失的权重，影响正确类别预测相对于其他组件的重要性。<br />
+dfl				1.5		分布焦点损失的权重，用于某些 YOLO 版本的细粒度分类。<br />
+pose			12.0	在姿态估计训练的模型中姿态损失的权重，影响准确预测姿态关键点的重要性。<br />
+kobj			2.0		姿态估计模型中关键点对象性的损失权重，平衡检测置信度与姿态准确性。<br />
+label_smoothing	0.0		应用标签平滑，将硬标签软化为目标标签和标签间的均匀分布的混合，可以改善泛化。<br />
+nbs				64		用于损失归一化的名义批大小。<br />
+overlap_mask	True	决定在训练期间分割掩码是否应重叠，适用于实例分割任务。<br />
+mask_ratio		4		分割掩码的下采样率，影响训练期间使用的掩码分辨率。<br />
+dropout			0.0		分类任务的正则化丢弃率，通过在训练期间随机忽略单元来防止过拟合。<br />
+val				True	启用训练期间的验证，允许定期评估模型在单独数据集上的性能。<br />
+plots			False	生成并保存训练和验证指标的图表以及预测示例，为模型性能和学习进展提供视觉洞察。<br />
+			<br />
+			</p></div>
+			
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1080"></a>11.4.2.2. 图像增强设置</h4></div></div></div>
+			
+			<div class="literallayout"><p><br />
+			<br />
+参数		类型		默认值	范围				描述<br />
+hsv_h	float	0.015	0.0 - 1.0		调整图像的色调，增加颜色变化，有助于模型在不同光照条件下泛化。<br />
+hsv_s	float	0.7		0.0 - 1.0		改变图像的饱和度，影响颜色的强度。用于模拟不同的环境条件。<br />
+hsv_v	float	0.4		0.0 - 1.0		修改图像的亮度，有助于模型在各种光照条件下表现良好。<br />
+degrees	float	0.0		-180 - +180		随机旋转图像，提升模型识别不同方向物体的能力。<br />
+translate	float	0.1	0.0 - 1.0		水平和垂直平移图像，帮助模型学会检测部分可见的物体。<br />
+scale	float	0.5		&gt;=0.0			按比例缩放图像，模拟不同距离的物体。<br />
+shear	float	0.0		-180 - +180		按指定角度剪切图像，模拟从不同角度观看物体的效果。<br />
+perspective	float	0.0	0.0 - 0.001		对图像应用随机透视变换，增强模型理解三维空间中物体的能力。<br />
+flipud	float	0.0		0.0 - 1.0		以指定概率上下翻转图像，增加数据多样性而不影响物体特性。<br />
+fliplr	float	0.5		0.0 - 1.0		以指定概率左右翻转图像，有助于学习对称物体，并增加数据集多样性。<br />
+bgr		float	0.0		0.0 - 1.0		以指定概率将图像通道从 RGB 翻转为 BGR，提高对错误通道顺序的鲁棒性。<br />
+mosaic	float	1.0		0.0 - 1.0		将四张训练图像组合成一张，模拟不同场景构图和物体交互。非常有效的复杂场景理解。<br />
+mixup	float	0.0		0.0 - 1.0		将两张图像及其标签混合，创建复合图像。通过引入标签噪声和视觉变化，提高模型的泛化能力。<br />
+copy_paste	float	0.0	0.0 - 1.0		将一个图像中的物体复制并粘贴到另一个图像中，有助于增加物体实例并学习物体遮挡。<br />
+auto_augment	str		randaugment	-	自动应用预定义的增强策略（randaugment、autoaugment、augmix），通过多样化视觉特征优化分类任务。<br />
+erasing	float	0.4		0.0 - 0.9		在分类训练期间随机擦除图像的一部分，鼓励模型关注较不明显的特征。<br />
+crop_fraction	float	1.0	0.1 - 1.0	将分类图像裁剪为其大小的一部分，以强调中心特征并适应物体尺度，减少背景干扰。<br />
+			<br />
+			</p></div>
+			<p>用户可以根据自身的需求，设置数据集和任务的具体参数。通过不同值的调整，找到最佳的策略，从而达到最佳的模型训练效果。</p>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1081"></a>11.4.2.3. </h4></div></div></div>
+			
+			<pre class="screen">
+			
+			
+			
+			</pre>
+			<pre class="programlisting">
+			
+			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1082"></a>11.4.2.4. 输出结果</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -77,16 +174,16 @@ mode.val()
 			<div class="glosslist"><p class="title"><strong></strong></p><dl><dt><span class="glossterm">Class</span></dt><dd class="glossdef"></dd><dt><span class="glossterm">Images</span></dt><dd class="glossdef"></dd><dt><span class="glossterm">Instances</span></dt><dd class="glossdef"></dd><dt><span class="glossterm">P</span></dt><dd class="glossdef"></dd><dt><span class="glossterm">R</span></dt><dd class="glossdef"></dd><dt><span class="glossterm">mAP50</span></dt><dd class="glossdef"></dd><dt><span class="glossterm">mAP50-95</span></dt><dd class="glossdef"></dd></dl></div>
 
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1087"></a>11.4.2.2. 训练结果</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1091"></a>11.4.2.5. 训练结果</h4></div></div></div>
 			
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="id1078"></a>weights 文件夹</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="id1083"></a>weights 文件夹</h5></div></div></div>
 				
 				<p>打开 weights 文件夹里面有两个文件，分别是：best.pt和last.pt。</p>
 				<p>best.pt 是整个训练过程中，性能最好的模型权重文件。</p>
 				<p>last.pt 是最后一次训练的模型权重文件。</p>
 				<p>一般我们选择 best.pt 文件，用于生产环境。</p>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="id1079"></a>args.yaml 文件</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="id1084"></a>args.yaml 文件</h5></div></div></div>
 				
 				<pre class="screen">
 				
@@ -199,25 +296,25 @@ save_dir: D:\workspace\netkiller\runs\detect\train
 				
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="id1080"></a>confusion_matrix.png / confusion_matrix_normalized.png
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="id1085"></a>confusion_matrix.png / confusion_matrix_normalized.png
 				</h5></div></div></div>
 				
 				<p>混淆矩阵的归一化版本</p>
 			</div>
 
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="id1081"></a>P_curve.png / R_curve.png/ PR_curve.png /F1_curve.png</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="id1086"></a>P_curve.png / R_curve.png/ PR_curve.png /F1_curve.png</h5></div></div></div>
 				
 				<div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem">P_curve.png 每个 label 的精度</li><li class="listitem">R_curve.png 每个 label 的召回率</li><li class="listitem">PR_curve.png 精度与召回互相妥协的曲线。范围 0.0 ~ 1.0 越接近 1.0 效果越好。
 					</li></ol></div>
 			</div>
 
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="id1082"></a>labels.jpg / labels_correlogram.jpg</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="id1087"></a>labels.jpg / labels_correlogram.jpg</h5></div></div></div>
 				
 				<p>labels.jpg 分类标签的分布</p>
 				<p></p>
 			</div>
 
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="id1083"></a>results.png / results.csv</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="id1088"></a>results.png / results.csv</h5></div></div></div>
 				
 				<p>先看前三列是 loss
 					损失率图表，X轴表示训练轮次，Y轴表示损失值。推理结果和人工标注的答案之间的差异，称为“损失”。损失越小越好，损失为0则说明推理和正确答案之间没有差异，即预测100%命中。
@@ -227,16 +324,32 @@ save_dir: D:\workspace\netkiller\runs\detect\train
 				<p>mAP50是重合度以50%为界限的平均精度。而mAP50-95则是IoU阈值从50%到95%范围内的平均值</p>
 				<p>X轴是训练轮次，Y表示精度，取值0.0 ~ 1.0（100%）越接近1.0效果越好。</p>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="id1084"></a>train_batch0.jpg</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="id1089"></a>train_batch0.jpg</h5></div></div></div>
 				
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="id1085"></a>val_batch0_labels.jpg</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="id1090"></a>val_batch0_labels.jpg / val_batch0_pred.jpg</h5></div></div></div>
 				
-			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="id1086"></a>val_batch0_pred.jpg</h5></div></div></div>
-				
+				<p>评估对照组，对比两个图片，可以看到训练结果，标签是否都正确预测。</p>
 			</div>
 		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1092"></a>11.4.2.6. 恢复中断的训练</h4></div></div></div>
+			
+			<p>如果训练过程异常中断，可以通过设置 resume=True 选项，读取训练过程，断点信息存储在 ‘path/to/last.pt’ 文件中，启动后会从之前的断点恢复训练，</p>
+			<pre class="programlisting">
+			
+from ultralytics import YOLO
+
+# 加载模型
+model = YOLO("path/to/last.pt")  # 加载训练的模型
+
+# 恢复训练
+results = model.train(resume=True)
+			
+			
+			</pre>
+
+		</div>
+
 	</div>
 	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="yolo.val"></a>11.4.3. 模型评估</h3></div></div></div>
 		
@@ -250,7 +363,7 @@ model.val(data='captcha/images/YOLODataset/dataset.yaml')
 		
 		
 		</pre>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1088"></a>11.4.3.1. 选择数据集</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1093"></a>11.4.3.1. 选择数据集</h4></div></div></div>
 			
 			<p>split='test' 可以选择数据集，默认是 val</p>
 			<pre class="programlisting">
@@ -310,7 +423,7 @@ for result in results:
 		
 		</pre>
 
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1089"></a>11.4.4.1. predict 参数</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1094"></a>11.4.4.1. predict 参数</h4></div></div></div>
 			
 			<pre class="programlisting">
 			
@@ -349,7 +462,7 @@ print(results)
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1090"></a>11.4.4.2. 返回结果</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1095"></a>11.4.4.2. 返回结果</h4></div></div></div>
 			
 			<p>返回结果通常包含以下主要属性和方法：</p>
 			<div class="literallayout"><p><br />
@@ -372,7 +485,7 @@ print(results)
 			<br />
 			</p></div>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1091"></a>11.4.4.3. 提取标签</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1096"></a>11.4.4.3. 提取标签</h4></div></div></div>
 			
 			<pre class="programlisting">
 			
@@ -402,7 +515,7 @@ for result in results:
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1092"></a>11.4.4.4. 保存识别图像</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1097"></a>11.4.4.4. 保存识别图像</h4></div></div></div>
 			
 			<pre class="programlisting">
 			
@@ -447,16 +560,16 @@ async def netkiller(file: bytes = File()):
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1093"></a>11.4.4.5. boxes</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1098"></a>11.4.4.5. boxes</h4></div></div></div>
 			
-			<p>tensor([ 59.0264,  88.7340, 367.5180, 420.6993]) 转 list [ 59.0264,  88.7340, 367.5180, 420.6993]</p>
+			<p>tensor([ 59.0264, 88.7340, 367.5180, 420.6993]) 转 list [ 59.0264, 88.7340, 367.5180, 420.6993]</p>
 			<pre class="programlisting">
 			
 xyxy = boxes.xyxy[0].tolist()			
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1094"></a>11.4.4.6. verbose 打印详细输出</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1099"></a>11.4.4.6. verbose 打印详细输出</h4></div></div></div>
 			
 			<p>默认会输出</p>
 			<pre class="screen">
@@ -471,11 +584,11 @@ Speed: 0.5ms preprocess, 11.2ms inference, 0.5ms postprocess per image at shape 
 model(img, save=True, verbose=False)			
 			
 			</pre>
-		</div>		
+		</div>
 	</div>
 	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="model.export"></a>11.4.5. 模型导出</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1095"></a>11.4.5.1. onnx 格式</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1100"></a>11.4.5.1. onnx 格式</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -496,7 +609,7 @@ results[0].show()
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1096"></a>11.4.5.2. engine 格式</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1101"></a>11.4.5.2. engine 格式</h4></div></div></div>
 			
 			<pre class="programlisting">
 			
