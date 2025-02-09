@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>21.4. Webrtc/Ortc</title><link rel="stylesheet" type="text/css" href="../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="php,pear,pecl,phar, python, , " /><link rel="home" href="../index.html" title="Netkiller Python 手札" /><link rel="up" href="../av.html" title="第 21 章 音频和视频" /><link rel="prev" href="../moviepy/index.html" title="21.3. MoviePy" /><link rel="next" href="../pt04.html" title="部分 IV. Python 数据分析" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
+		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">21.4. Webrtc/Ortc</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="../moviepy/index.html">上一页</a> </td><th width="60%" align="center">第 21 章 音频和视频</th><td width="20%" align="right"> <a accesskey="n" href="../pt04.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="index"></a>21.4. Webrtc/Ortc</h2></div></div></div>
+	
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="coturn"></a>21.4.1. coturn - ICE Server</h3></div></div></div>
+		
+		<p>coturn 主要有两个包，分别是 coturn 和 coturn-utils，coturn-client-devel 我们用不到</p>
+		<pre class="screen">
+			
+[root@netkiller ~]# dnf search coturn
+Last metadata expiration check: 1:40:06 ago on Fri 07 Feb 2025 10:27:51 PM CST.
+========================================= Name Exactly Matched: coturn =========================================
+coturn.x86_64 : TURN/STUN &amp; ICE Server
+======================================== Name &amp; Summary Matched: coturn ========================================
+coturn-client-devel.x86_64 : Coturn client development headers
+coturn-utils.x86_64 : Coturn utils
+============================================= Name Matched: coturn =============================================
+coturn-client-libs.x86_64 : TURN client static library			
+			
+		</pre>
+		<p>安装 coturn 服务器</p>
+		<pre class="screen">
+			
+[root@netkiller ~]# dnf install coturn coturn-utils -y			
+			
+		</pre>
+		<p>查看一下包内有那些工具</p>
+		<pre class="screen">
+			
+[root@netkiller ~]# rpm -ql coturn | egrep "bin|etc"
+/etc/coturn
+/etc/coturn/turnserver.conf
+/etc/logrotate.d/coturn
+/etc/pki/coturn
+/etc/pki/coturn/private
+/etc/pki/coturn/public
+/usr/bin/turnadmin
+/usr/bin/turnserver
+/usr/share/doc/coturn/etc
+/usr/share/doc/coturn/etc/turnserver.conf
+
+[root@netkiller ~]# rpm -ql coturn-utils | grep bin
+/usr/bin/turnutils_natdiscovery
+/usr/bin/turnutils_oauth
+/usr/bin/turnutils_peer
+/usr/bin/turnutils_stunclient
+/usr/bin/turnutils_uclient	
+			
+		</pre>
+		<p>备份配置文件</p>
+		<pre class="screen">
+			
+cp /etc/coturn/turnserver.conf{,.original}
+			
+		</pre>
+		<p>生成证书</p>
+		<pre class="screen">
+			
+openssl req -x509 -newkey rsa:2048 -keyout /etc/pki/coturn/private/turn_server_pkey.pem -out /etc/pki/coturn/public/turn_server_cert.pem -days 365 -nodes			
+			
+		</pre>
+		<p>创建用户和密码</p>
+		<pre class="screen">
+			
+turnadmin -a -u netkiller -p 123456 -r rtc.netkiller.cn
+			
+		</pre>
+		<p>也可以通过配置文件 /etc/coturn/turnserver.conf 创建静态用户和密码</p>
+		<pre class="screen">
+			
+user=netkiller:123456
+realm=rtc.netkiller.cn		
+			
+		</pre>
+		<p>开放防火墙端口</p>
+		<pre class="screen">
+			
+firewall-cmd --zone=public --add-port=3478/udp --permanent
+firewall-cmd --zone=public --add-port=5349/udp --permanent
+firewall-cmd --reload			
+			
+		</pre>
+		<p>/etc/coturn/turnserver.conf 配置文件</p>
+		<pre class="screen">
+			
+listening-ip=0.0.0.0 	# 配置为0.0.0.0即可，会监听所有ip请求
+listening-port=3478 	# STUN服务端口为3478
+tls-listening-port=5349	# STUN的 TLS 监听端口
+relay-ip		配置为服务器的外网ip地址
+external-ip 	配置为服务器的外网ip地址			
+			
+		</pre>
+		<p>启动服务</p>
+		<pre class="screen">
+			
+systemctl enable coturn
+systemctl start coturn			
+			
+		</pre>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1258"></a>21.4.1.1. Javascript 连接 ICE Server 例子</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+var iceServers = {
+    iceServers: [
+        {
+            urls: 'turn:your-external-ip-address:3478',
+            username: 'netkiller',
+            credential: '123456'
+        }]
+};
+
+connection = new RTCPeerConnection(iceServers);
+			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1259"></a>21.4.1.2. 测试</h4></div></div></div>
+			
+			<p>确认端口状态</p>
+			<pre class="screen">
+			
+[root@netkiller ~]# lsof -i :3478
+COMMAND       PID   USER   FD   TYPE   DEVICE SIZE/OFF NODE NAME
+turnserve 2003533 coturn   24u  IPv4 25225693      0t0  TCP localhost:stun (LISTEN)
+turnserve 2003533 coturn   25u  IPv4 25231980      0t0  TCP localhost:stun (LISTEN)
+turnserve 2003533 coturn   26u  IPv4 25225694      0t0  TCP netkiller:stun (LISTEN)
+turnserve 2003533 coturn   27u  IPv4 25225695      0t0  TCP netkiller:stun (LISTEN)			
+			
+			</pre>
+			<p>测试程序 turnutils_uclient</p>
+			<pre class="screen">
+			
+接着对使用coturn搭建的STUN/TURN服务使用turnutils_uclient程序测试其TURN服务是否正常。
+直接连接服务测试服务是否正常。为保证测试使用的服务是TURN服务，在TURN服务启动时，关掉STUN服务。
+在TURN服务启动时，如果是命令行，加入"--no-stun"配置；如果使用配置文件的话，加入"no-stun"选项。
+使用coTurn服务启动TURN服务后，执行以下命令即可：
+
+turnutils_uclient -v -t -T -u &lt;user&gt; -w &lt;password&gt; xxx.xxx.xxx.xxx
+
+参数说明：
+
+-v 表示给出详细提示
+-t 使用TCP协议（默认使用UDP）
+-T TCP协议中继传输（默认是UDP）
+-u TURN的用户名
+-w TURN服务对应用户的密码
+xxx.xxx.xxx.xxx TURN服务的IP地址
+			
+			</pre>
+			<pre class="screen">
+			
+[root@netkiller ~]# turnutils_uclient -v -t -T -u neo -w netkiller 127.0.0.1
+0: (2003881): INFO: IPv4. Connected from: 127.0.0.1:58632
+0: (2003881): INFO: IPv4. Connected to: 127.0.0.1:3478
+0: (2003881): INFO: allocate sent
+0: (2003881): INFO: allocate response received: 
+0: (2003881): INFO: allocate sent
+0: (2003881): INFO: allocate response received: 
+0: (2003881): INFO: success
+0: (2003881): INFO: IPv4. Received relay addr: 139.9.54.21:64324
+0: (2003881): INFO: clnet_allocate: rtv=0
+0: (2003881): INFO: refresh sent
+0: (2003881): INFO: refresh response received: 
+0: (2003881): INFO: success
+0: (2003881): INFO: IPv4. Connected from: 127.0.0.1:58642
+0: (2003881): INFO: IPv4. Connected to: 127.0.0.1:3478
+0: (2003881): INFO: IPv4. Connected from: 127.0.0.1:58644
+0: (2003881): INFO: IPv4. Connected to: 127.0.0.1:3478
+0: (2003881): INFO: allocate sent
+0: (2003881): INFO: allocate response received: 
+0: (2003881): INFO: allocate sent
+0: (2003881): INFO: allocate response received: 
+0: (2003881): INFO: success
+0: (2003881): INFO: IPv4. Received relay addr: 139.9.54.21:60677
+0: (2003881): INFO: clnet_allocate: rtv=0
+0: (2003881): INFO: refresh sent
+0: (2003881): INFO: refresh response received: 
+0: (2003881): INFO: success
+0: (2003881): INFO: allocate sent
+0: (2003881): INFO: allocate response received: 
+0: (2003881): INFO: allocate sent
+0: (2003881): INFO: allocate response received: 
+0: (2003881): INFO: success
+0: (2003881): INFO: IPv4. Received relay addr: 139.9.54.21:57197
+0: (2003881): INFO: clnet_allocate: rtv=0
+0: (2003881): INFO: refresh sent
+0: (2003881): INFO: refresh response received: 
+0: (2003881): INFO: success
+0: (2003881): INFO: create perm sent: 139.9.54.21:57197
+0: (2003881): INFO: cp response received: 
+0: (2003881): INFO: success
+0: (2003881): INFO: create perm sent: 139.9.54.21:60677
+0: (2003881): INFO: cp response received: 
+0: (2003881): INFO: success
+0: (2003881): INFO: tcp connect sent
+0: (2003881): INFO: connection bind sent
+0: (2003881): INFO: connect bind response received: 
+0: (2003881): INFO: success
+0: (2003881): INFO: IPv4. TCP data network connected to: 127.0.0.1:3478
+0: (2003881): INFO: connection bind sent
+0: (2003881): INFO: connect bind response received: 
+0: (2003881): INFO: success
+0: (2003881): INFO: IPv4. TCP data network connected to: 127.0.0.1:3478
+0: (2003881): INFO: Total connect time is 0
+0: (2003881): INFO: 2 connections are completed
+1: (2003881): INFO: start_mclient: msz=2, tot_send_msgs=0, tot_recv_msgs=0, tot_send_bytes ~ 0, tot_recv_bytes ~ 0
+2: (2003881): INFO: start_mclient: msz=2, tot_send_msgs=5, tot_recv_msgs=5, tot_send_bytes ~ 500, tot_recv_bytes ~ 500
+3: (2003881): INFO: start_mclient: msz=2, tot_send_msgs=5, tot_recv_msgs=5, tot_send_bytes ~ 500, tot_recv_bytes ~ 500
+3: (2003881): INFO: done, connection 0x7f009c80e010 closed.
+3: (2003881): INFO: done, connection 0x7f009c82f010 closed.
+3: (2003881): INFO: start_mclient: tot_send_msgs=10, tot_recv_msgs=10
+3: (2003881): INFO: start_mclient: tot_send_bytes ~ 1000, tot_recv_bytes ~ 1000
+3: (2003881): INFO: Total transmit time is 3
+3: (2003881): INFO: Total lost packets 0 (0.000000%), total send dropped 0 (0.000000%)
+3: (2003881): INFO: Average round trip delay 4.300000 ms; min = 0 ms, max = 21 ms
+3: (2003881): INFO: Average jitter 8.400000 ms; min = 0 ms, max = 21 ms			
+			
+			</pre>
+
+			<pre class="screen">
+			
+[root@netkiller ~]# turnutils_stunclient -p 3478 127.0.0.1
+0: (2004030): INFO: IPv4. UDP reflexive addr: 127.0.0.1:45826				
+			
+			</pre>
+
+			<pre class="screen">
+			
+[root@netkiller ~]# turnutils_natdiscovery -m 127.0.0.1
+
+-= Mapping Behavior Discovery =-
+0: (2003693): INFO: IPv4. UDP reflexive addr: 127.0.0.1:39570
+0: (2003693): INFO: IPv4. Local addr: : 0.0.0.0:39570
+
+[root@netkiller ~]# turnutils_natdiscovery -f 127.0.0.1
+
+-= Filtering Behavior Discovery =-
+0: (2003696): INFO: IPv4. UDP reflexive addr: 127.0.0.1:57186
+0: (2003696): INFO: IPv4. Local addr: : 0.0.0.0:57186			
+			
+			</pre>
+			<pre class="screen">
+			
+[root@netkiller ~]# turnutils_peer -v
+0: (2003645): INFO: Start
+0: (2003645): INFO: End
+0: (2003645): INFO: Start
+0: (2003645): INFO: End
+0: (2003645): INFO: Start
+0: (2003645): INFO: End
+0: (2003645): INFO: Start
+0: (2003645): INFO: End			
+			
+			</pre>
+			<p></p>
+			<pre class="screen">
+			
+[root@netkiller ~]# journalctl -f -u coturn.service
+Feb 09 12:17:58 netkiller systemd[1]: Stopping coturn...
+Feb 09 12:17:58 netkiller systemd[1]: coturn.service: Deactivated successfully.
+Feb 09 12:17:58 netkiller systemd[1]: Stopped coturn.
+Feb 09 12:17:58 netkiller systemd[1]: Starting coturn...
+Feb 09 12:17:58 netkiller systemd[1]: Started coturn.
+Feb 09 12:29:50 netkiller systemd[1]: Stopping coturn...
+Feb 09 12:29:53 netkiller systemd[1]: coturn.service: Deactivated successfully.
+Feb 09 12:29:53 netkiller systemd[1]: Stopped coturn.
+Feb 09 12:29:53 netkiller systemd[1]: Starting coturn...
+Feb 09 12:29:53 netkiller systemd[1]: Started coturn.			
+			
+			</pre>
+		</div>
+	</div>
+</div><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="../moviepy/index.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="../av.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="../pt04.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">21.3. MoviePy </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 部分 IV. Python 数据分析</td></tr></table></div><script xmlns="">
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+			ga('create', 'UA-11694057-1', 'auto');
+			ga('send', 'pageview');
+
+		</script><script xmlns="" async="async">
+			var _hmt = _hmt || [];
+			(function() {
+			var hm = document.createElement("script");
+			hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(hm, s);
+			})();
+</script><script xmlns="" async="async">
+			(function(){
+			var bp = document.createElement('script');
+			var curProtocol = window.location.protocol.split(':')[0];
+			if (curProtocol === 'https') {
+			bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+			}
+			else {
+			bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+			}
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(bp, s);
+			})();
+</script></body></html>

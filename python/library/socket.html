@@ -4,7 +4,7 @@
 	
 	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="simplehttpserver"></a>2.5.1. SimpleHTTPServer</h3></div></div></div>
 		
-		<div class="example"><a id="id1471"></a><p class="title"><strong>例 2.1. SimpleHTTPServer</strong></p><div class="example-contents">
+		<div class="example"><a id="id1487"></a><p class="title"><strong>例 2.1. SimpleHTTPServer</strong></p><div class="example-contents">
 			
 			<pre class="screen">
 			
@@ -18,9 +18,9 @@ curl http://localhost:8000/
 			</pre>
 		</div></div><br class="example-break" />
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id915"></a>2.5.2. UDP</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id922"></a>2.5.2. UDP</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id913"></a>2.5.2.1. UDP Server</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id920"></a>2.5.2.1. UDP Server</h4></div></div></div>
 			
 			<pre class="programlisting">
 			
@@ -52,7 +52,7 @@ asyncore.loop()
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id914"></a>2.5.2.2. UDP Clinet</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id921"></a>2.5.2.2. UDP Clinet</h4></div></div></div>
 			
 			<pre class="programlisting">
 			
@@ -100,9 +100,231 @@ while 1:
 			</pre>
 		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="python.network"></a>2.5.3. Network</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id926"></a>2.5.3. Websocket</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="gevent"></a>2.5.3.1. gevent - A coroutine-based network library for Python</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id923"></a>2.5.3.1. Server 服务器端例子</h4></div></div></div>
+			
+			<p>服务器端分成三块，启动程序，Websocket 服务，网络协议处理</p>
+			<p>protocol.py 是网络协议处理程序，主要定义自己私有网络协议，对用户请求做出响应。</p>
+			<pre class="programlisting">
+			
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+##############################################
+# Home	: https://www.netkiller.cn
+# Author: Neo &lt;netkiller@msn.com&gt;
+# Upgrade: 2025-01-07
+##############################################
+			
+import os
+class Protocol:
+    def __init__(self, request = None):
+        pass
+    def request(self,message):
+        self.message = message
+
+    def response(self):
+        if self.message == 'listdir':
+            return os.listdir("/tmp")
+        else:
+            return self.message
+			
+			
+			</pre>
+			<p>websoket.py 是 Websocket 核心服务，用于处理 Websocket 端口监听，客户端与服务器心跳检测，维护Online在线用户列表，等等</p>
+			<pre class="programlisting">
+			
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+##############################################
+# Home	: https://www.netkiller.cn
+# Author: Neo &lt;netkiller@msn.com&gt;
+# Upgrade: 2025-01-07
+##############################################
+			
+import asyncio
+import websockets
+
+from protocol import Protocol
+
+
+class WebSocketServer:
+    def __init__(self, host="localhost", port=8765):
+        self.host = host
+        self.port = port
+        # 存储所有连接的客户端
+        self.clients = set()
+        self.protocol = Protocol()
+
+    async def handle_client(self, websocket):
+        # 新的客户端连接
+        self.clients.add(websocket)
+        try:
+            async for message in websocket:
+                print(f"收到消息: {message}")
+
+                self.protocol.request(message)
+                response = self.protocol.response()
+                # 回显消息给客户端
+                await websocket.send(f"已收到: {response}")
+
+        except websockets.ConnectionClosed as e:
+            print(f"客户端断开连接: {e}")
+        # finally:
+            # 移除断开的客户端
+            # self.clients.remove(websocket)
+
+    async def send(self, message):
+        """向所有连接的客户端发送消息"""
+        if self.clients:
+            disconnected = set()
+            for client in self.clients:
+                try:
+                    await client.send(message)
+                except websockets.ConnectionClosed:
+                    disconnected.add(client)
+            # 清理已断开的客户端
+            self.clients -= disconnected
+
+    async def start(self):
+        print(f"启动 WebSocket 服务器: ws://{self.host}:{self.port}")
+        async with websockets.serve(self.handle_client, self.host, self.port):
+            await asyncio.Future()  # 持续运行直到手动停止
+
+			
+			</pre>
+			<p>最后 main.py 是主程序入口，负责启动 Websocket 转为守护进程在后台运行</p>
+			<pre class="programlisting">
+			
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+##############################################
+# Home	: https://www.netkiller.cn
+# Author: Neo &lt;netkiller@msn.com&gt;
+# Upgrade: 2025-01-07
+##############################################
+			
+import asyncio,os,sys
+from websocket import WebSocketServer
+
+
+async def main():
+    # 创建 WebSocket 服务器实例
+    server = WebSocketServer()
+    # 启动 WebSocket 服务器
+    task = asyncio.create_task(server.start())
+
+    # 每 5 秒发送一次心跳数据
+    async def periodically():
+        while True:
+            await asyncio.sleep(5)
+            await server.send("ping")
+
+    periodic_task = asyncio.create_task(periodically())
+
+    # 并发运行所有任务
+    await asyncio.gather(task, periodic_task)
+
+
+if __name__ == "__main__":
+
+    try:
+        pid = os.fork()
+        if pid &gt; 0:
+            # exit first parent
+            sys.exit(0)
+    except OSError as e:
+        print("fork #1 failed: %d (%s)" % e.errno, e.strerror)
+        sys.exit(1)
+
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt as e:
+        print(e)
+			
+			</pre>	
+			<p>下面演示一下启动过程</p>
+			<pre class="screen">
+			
+(.venv) neo@Neo-Mac-mini-M4 netkiller % python main.py
+启动 WebSocket 服务器: ws://localhost:8765
+
+(.venv) neo@Neo-Mac-mini-M4 netkiller % ps ax | grep main.py
+39326 s001  S      0:00.03 /opt/homebrew/Cellar/python@3.13/3.13.0_1/Frameworks/Python.framework/Versions/3.13/Resources/Python.app/Contents/MacOS/Python main.py
+39331 s001  R+     0:00.00 grep main.py
+
+(.venv) neo@Neo-Mac-mini-M4 netkiller % kill 39326
+
+(.venv) neo@Neo-Mac-mini-M4 netkiller % ps ax | grep main.py
+39373 s001  S+     0:00.00 grep main.py
+(.venv) neo@Neo-Mac-mini-M4 netkiller % 
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id924"></a>2.5.3.2. Client 客户端例子</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+#!/usr/bin/env python
+
+import asyncio
+
+from websockets.asyncio.client import connect
+
+async def hello():
+    uri = "ws://localhost:8765"
+    async with connect(uri) as websocket:
+        name = input("What's your name?\n&gt; ")
+
+        await websocket.send(name)
+        print(f"&gt;&gt;&gt; {name}")
+
+        greeting = await websocket.recv()
+        print(f"&lt;&lt;&lt; {greeting}")
+
+if __name__ == "__main__":
+    asyncio.run(hello())			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id925"></a>2.5.3.3. 健康检查例子</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+#!/usr/bin/env python
+
+import asyncio
+from http import HTTPStatus
+from websockets.asyncio.server import serve
+
+def health_check(connection, request):
+    if request.path == "/status":
+        return connection.respond(HTTPStatus.OK, "OK\n")
+
+async def echo(websocket):
+    async for message in websocket:
+        await websocket.send(message)
+
+async def main():
+    async with serve(echo, "localhost", 8765, process_request=health_check):
+        await asyncio.get_running_loop().create_future()  # run forever
+
+asyncio.run(main())			
+			
+			</pre>
+			<p></p>
+			<pre class="screen">
+			
+(.venv) neo@Neo-Mac-mini-M4 netkiller % curl http://localhost:8765/status
+OK			
+			
+			</pre>
+		</div>
+		
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="python.network"></a>2.5.4. Network</h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="gevent"></a>2.5.4.1. gevent - A coroutine-based network library for Python</h4></div></div></div>
 			
 			<p>http://www.gevent.org/</p>
 		</div>

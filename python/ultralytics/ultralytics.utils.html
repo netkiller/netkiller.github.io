@@ -2,7 +2,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>11.6. 自动标注</title><link rel="stylesheet" type="text/css" href="../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="php,pear,pecl,phar, python, , " /><link rel="home" href="../index.html" title="Netkiller Python 手札" /><link rel="up" href="index.html" title="第 11 章 Ultralytics" /><link rel="prev" href="ch11s05.html" title="11.5. ONNX(Open Neural Network Exchange) 开放神经网络交换格式" /><link rel="next" href="yolo.example.html" title="11.7. 案例" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
 		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">11.6. 自动标注</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ch11s05.html">上一页</a> </td><th width="60%" align="center">第 11 章 Ultralytics</th><td width="20%" align="right"> <a accesskey="n" href="yolo.example.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="ultralytics.utils"></a>11.6. 自动标注</h2></div></div></div>
 	
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1114"></a>11.6.1. 背景</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1126"></a>11.6.1. 背景</h3></div></div></div>
 		
 		<p>做人工智能机器学习，给学习图片做标签是个体力活。动不动就需要标准上千张图片。</p>
 		<p>有没有更好的方法呢？</p>
@@ -1015,9 +1015,136 @@ if __name__ == "__main__":
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="utils.Classify"></a>11.6.6. 图像分类数据处理</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1127"></a>11.6.6. 标签管理，标签删除工具</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1115"></a>11.6.6.1. 1.0</h4></div></div></div>
+		<pre class="programlisting">
+		
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+##############################################
+# Home	: https://www.netkiller.cn
+# Author: Neo &lt;netkiller@msn.com&gt;
+# Upgrade: 2025-01-07
+##############################################
+import glob
+import hashlib
+
+from texttable import Texttable
+
+try:
+    import uuid,shutil,yaml,cv2
+    import os,sys,random,argparse
+    from tqdm import tqdm
+    from PIL import Image, ImageOps
+    from ultralytics import YOLO
+
+except ImportError as err:
+    print("Import Error: %s" % (err))
+    exit()
+
+class YoloLabelRemove():
+    count = 0
+
+    def __init__(self):
+
+        self.basedir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        sys.path.append(self.basedir)
+
+        self.parser = argparse.ArgumentParser(description='YOLO标签删除工具')
+        self.parser.add_argument('--source', type=str, default=None, help='左侧目录',metavar="/tmp/dir1")
+        self.parser.add_argument('--label', type=int, default=-1, help='长边尺寸',metavar=0)
+        self.parser.add_argument('--output', type=str, default=None, help='输出目录', metavar="/tmp/output")
+        self.parser.add_argument('--clean', action="store_true", default=False, help='清理之前的数据')
+        self.args = self.parser.parse_args()
+
+    def scanfile(self,path):
+        files = []
+        files = glob.glob(path)
+
+        return (files)
+    def scandir(self,path):
+        files = []
+        for name in os.listdir(path):
+            if os.path.isdir(os.path.join(path, name)):
+                files.append(name)
+
+        return (files)
+
+    def input(self):
+        try:
+            if self.args.clean:
+                if os.path.exists(self.args.output):
+                    shutil.rmtree(self.args.output)
+            os.makedirs(self.args.output,exist_ok=True)
+
+            self.files = self.scanfile(os.path.join(self.args.source,"*.txt"))
+
+            # print(self.files)
+        except Exception as e:
+            # log.error(e)
+            print("input: ", e)
+            exit()
+
+    def process(self):
+        with tqdm(total=len(self.files), ncols=100) as progress:
+            for file in self.files:
+                progress.set_description(file)
+                filename = os.path.basename(file)
+                try:
+                    if filename.lower() == 'classes.txt':
+                        continue
+                    else:
+                        # print(file)
+                        output = os.path.join(self.args.output, filename)
+                        with open(file, "r") as original, open(output, "w") as file:
+                            for line in original.readlines():
+                                # print(line)
+                                if line.startswith(f"{self.args.label} "):
+                                    self.count += 1
+                                    continue
+                                file.write(line)
+
+                            # print(f"txt1={txt1}, txt2={txt2}")
+
+                except FileNotFoundError as e:
+                    print(str(e))
+                    exit()
+
+                progress.update(1)
+
+    def output(self):
+        tables = [["输出","处理"]]
+        tables.append([len(self.files),self.count])
+        table = Texttable(max_width=100)
+        table.add_rows(tables)
+        print(table.draw())
+        pass
+
+    def main(self):
+        print(self.args)
+        if self.args.source and self.args.output:
+            self.input()
+            self.process()
+            self.output()
+
+        else:
+            self.parser.print_help()
+            exit()
+
+if __name__ == "__main__":
+    try:
+        run = YoloLabelRemove()
+        run.main()
+    except KeyboardInterrupt as e:
+        print(e)		
+		
+		</pre>
+	</div>
+	
+	
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="utils.Classify"></a>11.6.7. 图像分类数据处理</h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1128"></a>11.6.7.1. 1.0</h4></div></div></div>
 			
 			<pre class="programlisting">
 		
@@ -1242,7 +1369,7 @@ if __name__ == "__main__":
 		
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1116"></a>11.6.6.2. 2.0</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1129"></a>11.6.7.2. 2.0</h4></div></div></div>
 			
 			<pre class="programlisting">
 			
@@ -1496,7 +1623,7 @@ if __name__ == "__main__":
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1117"></a>11.6.6.3. 检验工具</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1130"></a>11.6.7.3. 检验工具</h4></div></div></div>
 			
 			<pre class="programlisting">
 			
@@ -1596,7 +1723,154 @@ if __name__ == "__main__":
 			</pre>
 		</div>
 	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1131"></a>11.6.8. 合并 YOLO txt 文件</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+##############################################
+# Home	: https://www.netkiller.cn
+# Author: Neo &lt;netkiller@msn.com&gt;
+# Upgrade: 2024-12-31
+##############################################
+import glob
+import hashlib
 
+from texttable import Texttable
+
+try:
+    import uuid,shutil,yaml,cv2
+    import os,sys,random,argparse
+    from tqdm import tqdm
+    from PIL import Image, ImageOps
+    from ultralytics import YOLO
+
+except ImportError as err:
+    print("Import Error: %s" % (err))
+    exit()
+
+class YoloMerge():
+    lose = []
+
+    def __init__(self):
+
+        self.basedir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        sys.path.append(self.basedir)
+        # print(basedir)
+
+        self.parser = argparse.ArgumentParser(description='合并YOLO标签工具')
+        self.parser.add_argument('--left', type=str, default=None, help='左侧目录',metavar="/tmp/dir1")
+        self.parser.add_argument('--right', default=None, type=str, help='右侧目录',metavar="/tmp/dir2")
+        # self.parser.add_argument('--imgsz', type=int, default=640, help='长边尺寸',metavar=640)
+        self.parser.add_argument('--output', type=str, default=None, help='最终输出目录', metavar="/tmp/output")
+        self.parser.add_argument('--clean', action="store_true", default=False, help='清理之前的数据')
+        # self.parser.add_argument('--md5sum', action="store_true", default=False, help='使用md5作为文件名')
+        # self.parser.add_argument('--uuid', action="store_true", default=False, help='重命名图片为UUID')
+        # self.parser.add_argument('--crop', action="store_true", default=False, help='裁剪')
+        self.args = self.parser.parse_args()
+
+    def scanfile(self,path):
+        files = []
+        # for name in os.listdir(path):
+        #     if os.path.isfile(os.path.join(path, name)):
+        #         files.append(name)
+        files = glob.glob(path)
+
+        return (files)
+    def scandir(self,path):
+        files = []
+        for name in os.listdir(path):
+            if os.path.isdir(os.path.join(path, name)):
+                files.append(name)
+
+        return (files)
+
+    def input(self):
+        try:
+            if self.args.clean:
+                    if os.path.exists(self.args.output):
+                        shutil.rmtree(self.args.output)
+            os.makedirs(self.args.output,exist_ok=True)
+
+            self.lefts = self.scanfile(os.path.join(self.args.left,"*.txt"))
+            self.rights = self.scanfile(os.path.join(self.args.right, "*.txt"))
+            # print(self.files)
+        except Exception as e:
+            # log.error(e)
+            print("input: ", e)
+            exit()
+
+    def process(self):
+        with tqdm(total=len(self.lefts), ncols=100) as progress:
+            for file in self.lefts:
+                progress.set_description(file)
+                filename = os.path.basename(file)
+                try:
+                    if filename.lower() == 'classes.txt':
+                        shutil.copyfile(file, os.path.join(self.args.output,filename))
+                    else:
+                        left = os.path.join(self.args.left, filename)
+                        right = os.path.join(self.args.right, filename.replace('_0.','.'))
+                        output = os.path.join(self.args.output, filename)
+                        image = filename.replace('.txt','.jpg')
+                        # print(f"left={left}, right={right}, output={output}")
+
+                        shutil.copyfile(os.path.join(self.args.left, image), os.path.join(self.args.output, image))
+
+                        if not os.path.isfile(right):
+                            shutil.copyfile(left, output)
+                            # print(f"test={os.path.isdir(right)} right={right}")
+                        else:
+                            with open(left, "r") as file1, open(right, "r") as file2, open(output, "w") as file:
+                                txt1 = file1.read()
+                                txt2 = file2.read()
+
+                                file.write(txt1)
+                                file.write(txt2)
+                                # print(f"txt1={txt1}, txt2={txt2}")
+
+                except FileNotFoundError as e:
+                    print(str(e))
+                    self.lose.append(e.filename)
+                    exit()
+
+                progress.update(1)
+
+    def output(self):
+        if not self.lose:
+            return
+        tables = [["丢失文件"]]
+        for file in self.lose:
+            tables.append([file])
+        tables.append([f"合计：{len(self.lose)}"])
+        table = Texttable(max_width=100)
+        table.add_rows(tables)
+        print(table.draw())
+        pass
+
+    def main(self):
+        # print(self.args)
+        if self.args.left and self.args.right:
+            if self.args.left == self.args.right:
+                print("目标文件夹不能与原始图片文件夹相同")
+            self.input()
+            self.process()
+            self.output()
+
+        else:
+            self.parser.print_help()
+            exit()
+
+if __name__ == "__main__":
+    try:
+        run = YoloMerge()
+        run.main()
+    except KeyboardInterrupt as e:
+        print(e)
+		
+		</pre>
+	</div>
 </div><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ch11s05.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="yolo.example.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">11.5. ONNX(Open Neural Network Exchange) 开放神经网络交换格式 </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 11.7. 案例</td></tr></table></div><script xmlns="">
 			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
 		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
