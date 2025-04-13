@@ -8,10 +8,10 @@
 		<p>安装编译工具</p>
 		<pre class="screen">
 		
-dnf install automake g++
+dnf install -y automake g++
 			
 		</pre>
-		
+
 		<pre class="screen">
 		
 cd /usr/local/src/
@@ -23,10 +23,10 @@ make
 make install-noapi
 		
 		</pre>
-		<p>安装 Yate 服务器</p>
+		<p>安装 Yate 服务</p>
 		<pre class="screen">
 		
-[root@testing yate]# cp packing/rpm/yate.service /etc/systemd/system/		
+[root@netkiller yate]# cp packing/rpm/yate.service /etc/systemd/system/		
 
 vim /etc/systemd/system/yate.service
 
@@ -40,17 +40,17 @@ ExecStart=/usr/local/bin/yate -d -p /var/run/yate.pid $OPTS
 		<p>配置动态链接库</p>
 		<pre class="screen">
 		
-[root@testing yate]# echo "/usr/local/lib" &gt; /etc/ld.so.conf.d/local.conf
-[root@testing yate]# ldconfig
-[root@testing yate]# yate -V
+[root@netkiller yate]# echo "/usr/local/lib" &gt; /etc/ld.so.conf.d/local.conf
+[root@netkiller yate]# ldconfig
+[root@netkiller yate]# yate -V
 Yate 6.4.1 devel1 re137d739519b25cc146bd5d9568238072be1b386
 		
 		</pre>
 		<p>启动 Yate 服务</p>
 		<pre class="screen">
 		
-[root@testing yate]# systemctl enable yate			
-[root@testing yate]# systemctl status yate
+[root@netkiller yate]# systemctl enable yate			
+[root@netkiller yate]# systemctl status yate
 ● yate.service - YATE Telephony Server
      Loaded: loaded (/etc/systemd/system/yate.service; disabled; preset: disabled)
      Active: active (running) since Fri 2025-03-07 08:36:01 CST; 5s ago
@@ -64,90 +64,26 @@ Yate 6.4.1 devel1 re137d739519b25cc146bd5d9568238072be1b386
              ├─3465510 /usr/local/bin/yate -d -p /var/run/yate.pid -F -s -r -l /var/log/yate -vvv -DF
              └─3465511 /usr/local/bin/yate -d -p /var/run/yate.pid -F -s -r -l /var/log/yate -vvv -DF
 
-Mar 07 08:36:01 testing systemd[1]: Starting YATE Telephony Server...
-Mar 07 08:36:01 testing systemd[1]: Started YATE Telephony Server.
+Mar 07 08:36:01 netkiller systemd[1]: Starting YATE Telephony Server...
+Mar 07 08:36:01 netkiller systemd[1]: Started YATE Telephony Server.
 		
 		</pre>
+		<pre class="screen">
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id2945"></a>168.3.1.1. </h4></div></div></div>
-			
-			<pre class="screen">
-			
-[root@testing ~]# cd /usr/local/etc/yate/
-[root@testing yate]# cp /usr/local/etc/yate/regfile.conf{,.original} 
+[root@netkiller yate]# ss -lnp | grep yate
+udp   UNCONN 0      0                         0.0.0.0:4569             0.0.0.0:*    users:(("yate",pid=3466166,fd=6))
 
+udp   UNCONN 0      0                         0.0.0.0:5060             0.0.0.0:*    users:(("yate",pid=3466166,fd=3))
 
-[root@testing yate]# systemctl restart yate
-
-[root@testing yate]# ss -lnp | grep yate
-udp   UNCONN 0      0                                                                                 0.0.0.0:4569             0.0.0.0:*    users:(("yate",pid=3466166,fd=6))
-
-udp   UNCONN 0      0                                                                                 0.0.0.0:5060             0.0.0.0:*    users:(("yate",pid=3466166,fd=3))
-
-tcp   LISTEN 0      2                                                                               127.0.0.1:5038             0.0.0.0:*    users:(("yate",pid=3466166,fd=5))
+tcp   LISTEN 0      2                         127.0.0.1:5038             0.0.0.0:*    users:(("yate",pid=3466166,fd=5))		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="yate.conf.sample"></a>168.3.2. 配置文件样本</h3></div></div></div>
+		
+		<pre class="screen">
 			
-			</pre>
-		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id2946"></a>168.3.1.2. regexroute.conf</h4></div></div></div>
-			
-			<pre class="screen">
-			
-[root@testing ~]# cd /usr/local/etc/yate/
-[root@testing yate]# cp /usr/local/etc/yate/regexroute.conf{,.original} 
-
-[root@testing yate]# cp /usr/local/etc/yate/regexroute.conf
-
-加入一行
-
-${username}^$=-;error=noauth
-
-[root@testing yate]# grep -v "^;" regexroute.conf | grep -v "^$"
-[priorities]
-[$once]
-[$init]
-[extra]
-[contexts]
-[default]
-^99991001$=tone/dial
-^99991002$=tone/busy
-^99991003$=tone/ring
-^99991004$=tone/specdial
-^99991005$=tone/congestion
-^99991006$=tone/outoforder
-^99991007$=tone/milliwatt
-^99991008$=tone/info
-${username}^$=-;error=noauth                                                                            127.0.0.1:5038             0.0.0.0:*    users:(("yate",pid=3466166,fd=5))
-			
-			</pre>
-		</div>
-		 
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id2947"></a>168.3.1.3. 5038 端口</h4></div></div></div>
-			
-			<p></p>
-			<pre class="screen">
-			
-[root@testing yate]# telnet localhost 5038
-Trying ::1...
-telnet: connect to address ::1: Connection refused
-Trying 127.0.0.1...
-Connected to localhost.
-Escape character is '^]'.
-YATE 6.4.1-devel1 re137d739519b25cc146bd5d9568238072be1b386 (http://YATE.null.ro) ready on testing.			
-			
-			</pre>
-			<p>开启 DEBUG</p>
-			<pre class="screen">
-			
-debug on 
-color on			
-			
-			</pre>
-		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id2948"></a>168.3.1.4. 配置文件样本</h4></div></div></div>
-			
-			<pre class="screen">
-			
-[root@testing yate]# ls /usr/local/src/yate/conf.d/
+[root@netkiller yate]# ls /usr/local/src/yate/conf.d/
 accfile.conf.sample       filetransfer.conf.sample  openssl.conf.sample       users.conf.sample
 amrnbcodec.conf.sample    gvoice.conf.sample        pbxassist.conf.sample     wiresniff.conf.sample
 analog.conf.sample        h323chan.conf.sample      pgsqldb.conf.sample       wpcard.conf.sample
@@ -169,36 +105,119 @@ eventlogs.conf.sample     monitoring.conf.sample    subscription.conf.sample
 extmodule.conf.sample     mux.conf.sample           tdmcard.conf.sample
 fileinfo.conf.sample      mysqldb.conf.sample       tonegen.conf.sample			
 			
-			</pre>
-		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id2949"></a>168.3.1.5. SBC(SIP Session Border Controller) 会话边界控制器</h4></div></div></div>
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="regfile.conf"></a>168.3.3. 添加用户</h3></div></div></div>
+		
+		<pre class="screen">
 			
-			<p>启用 SBC</p>
-			<pre class="screen">
+[root@netkiller ~]# cd /usr/local/etc/yate/
+[root@netkiller yate]# cp /usr/local/etc/yate/regfile.conf{,.original} 
+[root@netkiller yate]# cat &gt;&gt; /usr/local/etc/yate/regfile.conf &lt;&lt;EOF
+
+[100]
+password=001
+
+[200]
+password=002
+EOF
+
+[root@netkiller yate]# egrep -v "^;|^$" /usr/local/etc/yate/regfile.conf
+[general]
+[100]
+password=001
+[200]
+password=002
+
+[root@netkiller yate]# systemctl restart yate
+			
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="regexroute.conf"></a>168.3.4. regexroute.conf</h3></div></div></div>
+		
+		<pre class="screen">
+			
+[root@netkiller ~]# cd /usr/local/etc/yate/
+[root@netkiller yate]# cp /usr/local/etc/yate/regexroute.conf{,.original} 
+
+[root@netkiller yate]# vim /usr/local/etc/yate/regexroute.conf
+
+加入一行
+
+${username}^$=-;error=noauth
+
+[root@netkiller yate]# egrep -v "^;|^$" /usr/local/etc/yate/regexroute.conf
+[priorities]
+[$once]
+[$init]
+[extra]
+[contexts]
+[default]
+^99991001$=tone/dial
+^99991002$=tone/busy
+^99991003$=tone/ring
+^99991004$=tone/specdial
+^99991005$=tone/congestion
+^99991006$=tone/outoforder
+^99991007$=tone/milliwatt
+^99991008$=tone/info
+${username}^$=-;error=noauth                                                                            127.0.0.1:5038             0.0.0.0:*    users:(("yate",pid=3466166,fd=5))
+			
+		</pre>
+	</div>
+
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="yate.test"></a>168.3.5. 测试</h3></div></div></div>
+		
+		<p></p>
+		<pre class="screen">
+			
+[root@netkiller yate]# telnet localhost 5038
+Trying ::1...
+telnet: connect to address ::1: Connection refused
+Trying 127.0.0.1...
+Connected to localhost.
+Escape character is '^]'.
+YATE 6.4.1-devel1 re137d739519b25cc146bd5d9568238072be1b386 (http://YATE.null.ro) ready on netkiller.			
+			
+		</pre>
+		<p>开启 DEBUG</p>
+		<pre class="screen">
+			
+debug on 
+color on			
+			
+		</pre>
+	</div>
+
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id2954"></a>168.3.6. SBC(SIP Session Border Controller) 会话边界控制器</h3></div></div></div>
+		
+		<p>启用 SBC</p>
+		<pre class="screen">
 			
 cp /usr/local/etc/yate/ysipchan.conf{,.original}
 cp /usr/local/etc/yate/regexroute.conf{,.original}
 			
-			</pre>
-			<pre class="screen">
+		</pre>
+		<pre class="screen">
 			
-[root@testing ~]# vim /usr/local/etc/yate/ysipchan.conf
-[root@testing ~]# egrep -v "^;|^$" /usr/local/etc/yate/ysipchan.conf
+[root@netkiller ~]# vim /usr/local/etc/yate/ysipchan.conf
+[root@netkiller ~]# egrep -v "^;|^$" /usr/local/etc/yate/ysipchan.conf
 [general]
 ignorevia=enable			
 			
-			</pre>
-			<pre class="screen">
+		</pre>
+		<p> /usr/local/etc/yate/regexroute.conf 配置文件加入一行</p>
+		<pre class="screen">
 			
+${rtp_forward}possible=;rtp_forward=yes			
 			
+		</pre>
+		<p>regexroute.conf 配置转发策略</p>
+		<pre class="screen">
 			
-			</pre>
-			<p>regexroute.conf 配置转发策略</p>
-			<pre class="screen">
-			
-[root@testing ~]# vim /usr/local/etc/yate/regexroute.conf
-[root@testing ~]#			
-[root@testing ~]# egrep -v "^;|^$" /usr/local/etc/yate/regexroute.conf
+[root@netkiller ~]# vim /usr/local/etc/yate/regexroute.conf
+[root@netkiller ~]#			
+[root@netkiller ~]# egrep -v "^;|^$" /usr/local/etc/yate/regexroute.conf
 [priorities]
 [$once]
 [$init]
@@ -216,10 +235,196 @@ ignorevia=enable
 ${username}^$=-;error=noauth
 ${rtp_forward}possible=;rtp_forward=yes
 			
-			</pre>
+		</pre>
+
+		<p></p>
+		<pre class="screen">
+		
+[root@netkiller yate]# cp /usr/local/etc/yate/yrtpchan.conf{,.backup}
+[root@netkiller yate]# vim /usr/local/etc/yate/yrtpchan.conf
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id2959"></a>168.3.7. 配置路由</h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id2958"></a>168.3.7.1. 外拨网关</h4></div></div></div>
+			
+
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="id2955"></a>配置网关</h5></div></div></div>
+				
+				<p></p>
+				<pre class="screen">
+				
+[root@netkiller yate]# cp /usr/local/etc/yate/accfile.conf{,.backup}
+[root@netkiller yate]# vim /usr/local/etc/yate/accfile.conf
+				
+				</pre>
+				<pre class="screen">
+				
+[test_sip]
+enabled=yes
+protocol=sip
+username=6002
+description=Test SIP account
+interval=600
+authname=6002
+password=6002
+domain=sip.netkiller.cn
+registrar=sip.netkiller.cn:5060			
+				
+				</pre>
+			</div>
+
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="id2956"></a>在 regexroute.conf 文件中加入拨号规则</h5></div></div></div>
+				
+				<pre class="screen">
+			
+^177$=line/177;line=test_sip			
+			
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="id2957"></a>查看日志</h5></div></div></div>
+				
+				<pre class="screen">
+			
+2025-04-13_10:41:53.727273 &lt;INFO&gt; Creating first 1 message dispatching threads
+2025-04-13_10:41:53.949674 &lt;sip:ALL&gt; Set party trans_name=(null) proto=UDP local=:0 remote=sip.netkiller.cn:5060 [0x7f9a9c6fe690]
+2025-04-13_10:41:53.950591 &lt;sip:INFO&gt; 'udp:0.0.0.0:5066' sending 462 bytes 'REGISTER sip:sip.netkiller.cn:5060' 0x7f9a80002ed0 to 139.9.54.211:5060 [0x1761e10]
+-----
+REGISTER sip:sip.netkiller.cn:5060 SIP/2.0
+Contact: "Test SIP account" &lt;sip:6002@192.168.0.230:5066&gt;
+Expires: 600
+To: &lt;sip:6002@sip.netkiller.cn&gt;
+Via: SIP/2.0/UDP 192.168.0.230:5066;rport;branch=z9hG4bK640589934
+From: "Test SIP account" &lt;sip:6002@sip.netkiller.cn&gt;;tag=1024580135
+Call-ID: 1863147204@sip.netkiller.cn
+CSeq: 1 REGISTER
+User-Agent: YATE/6.4.1
+Max-Forwards: 70
+Allow: ACK, INVITE, BYE, CANCEL, REGISTER, REFER, OPTIONS, INFO
+Content-Length: 0
+
+-----
+2025-04-13_10:41:53.954645 &lt;sip:INFO&gt; 'udp:0.0.0.0:5066' received 488 bytes SIP message from 139.9.54.211:5060 [0x1761e10]
+-----
+SIP/2.0 401 Unauthorized
+To: &lt;sip:6002@sip.netkiller.cn&gt;;tag=19db6516a6b774c682ff0634f6a75b73.c67d1b36
+Via: SIP/2.0/UDP 192.168.0.230:5066;rport=5066;received=121.37.215.251;branch=z9hG4bK640589934
+From: "Test SIP account" &lt;sip:6002@sip.netkiller.cn&gt;;tag=1024580135
+Call-ID: 1863147204@sip.netkiller.cn
+CSeq: 1 REGISTER
+WWW-Authenticate: Digest realm="sip.netkiller.cn", nonce="Z/uWHWf7lPGFwDSFrH630CWoTEwIugwM", algorithm=MD5
+Server: kamailio (6.0.1 (x86_64/linux))
+Content-Length: 0
+
+-----
+2025-04-13_10:41:53.956454 &lt;sip:INFO&gt; 'udp:0.0.0.0:5066' sending 658 bytes 'REGISTER sip:sip.netkiller.cn:5060' 0x7f9a8c02fd80 to 139.9.54.211:5060 [0x1761e10]
+-----
+REGISTER sip:sip.netkiller.cn:5060 SIP/2.0
+Contact: "Test SIP account" &lt;sip:6002@192.168.0.230:5066&gt;
+Expires: 600
+To: &lt;sip:6002@sip.netkiller.cn&gt;
+Via: SIP/2.0/UDP 192.168.0.230:5066;rport;branch=z9hG4bK641722837
+From: "Test SIP account" &lt;sip:6002@sip.netkiller.cn&gt;;tag=1024580135
+Call-ID: 1863147204@sip.netkiller.cn
+User-Agent: YATE/6.4.1
+Max-Forwards: 70
+Allow: ACK, INVITE, BYE, CANCEL, REGISTER, REFER, OPTIONS, INFO
+CSeq: 2 REGISTER
+Authorization: Digest username="6002", realm="sip.netkiller.cn", nonce="Z/uWHWf7lPGFwDSFrH630CWoTEwIugwM", uri="sip:sip.netkiller.cn:5060", response="71f8d782a165c3fa40dcf7801ddee299", algorithm=MD5
+Content-Length: 0
+
+-----
+2025-04-13_10:41:53.963424 &lt;sip:INFO&gt; 'udp:0.0.0.0:5066' received 459 bytes SIP message from 139.9.54.211:5060 [0x1761e10]
+-----
+SIP/2.0 200 OK
+To: &lt;sip:6002@sip.netkiller.cn&gt;;tag=19db6516a6b774c682ff0634f6a75b73.514a1b36
+Via: SIP/2.0/UDP 192.168.0.230:5066;rport=5066;received=121.37.215.251;branch=z9hG4bK641722837
+From: "Test SIP account" &lt;sip:6002@sip.netkiller.cn&gt;;tag=1024580135
+Call-ID: 1863147204@sip.netkiller.cn
+CSeq: 2 REGISTER
+Contact: &lt;sip:6002@192.168.0.230:5066&gt;;expires=600;received="sip:121.37.215.251:5066"
+Server: kamailio (6.0.1 (x86_64/linux))
+Content-Length: 0
+
+-----
+2025-04-13_10:41:53.967334 &lt;sip:INFO&gt; Detected local address 121.37.215.251:5066 for SIP line 'test_sip'
+2025-04-13_10:41:53.968079 &lt;sip:CALL&gt; SIP line 'test_sip' logon success to 139.9.54.211:5060
+2025-04-13_10:41:56.003924 &lt;sip:INFO&gt; 'udp:0.0.0.0:5066' sending 464 bytes 'REGISTER sip:sip.netkiller.cn:5060' 0x7f9a80006780 to 139.9.54.211:5060 [0x1761e10]
+-----
+REGISTER sip:sip.netkiller.cn:5060 SIP/2.0
+Contact: "Test SIP account" &lt;sip:6002@121.37.215.251:5066&gt;
+Expires: 600
+To: &lt;sip:6002@sip.netkiller.cn&gt;
+Call-ID: 1863147204@sip.netkiller.cn
+Via: SIP/2.0/UDP 121.37.215.251:5066;rport;branch=z9hG4bK712598825
+From: "Test SIP account" &lt;sip:6002@sip.netkiller.cn&gt;;tag=1708696019
+CSeq: 3 REGISTER
+User-Agent: YATE/6.4.1
+Max-Forwards: 70
+Allow: ACK, INVITE, BYE, CANCEL, REGISTER, REFER, OPTIONS, INFO
+Content-Length: 0
+
+-----
+2025-04-13_10:41:56.007306 &lt;sip:INFO&gt; 'udp:0.0.0.0:5066' received 489 bytes SIP message from 139.9.54.211:5060 [0x1761e10]
+-----
+SIP/2.0 401 Unauthorized
+To: &lt;sip:6002@sip.netkiller.cn&gt;;tag=19db6516a6b774c682ff0634f6a75b73.ac65cb6c
+Call-ID: 1863147204@sip.netkiller.cn
+Via: SIP/2.0/UDP 121.37.215.251:5066;rport=5066;received=121.37.215.251;branch=z9hG4bK712598825
+From: "Test SIP account" &lt;sip:6002@sip.netkiller.cn&gt;;tag=1708696019
+CSeq: 3 REGISTER
+WWW-Authenticate: Digest realm="sip.netkiller.cn", nonce="Z/uWIGf7lPSNcfm5ONYrypxF8zjHlh1S", algorithm=MD5
+Server: kamailio (6.0.1 (x86_64/linux))
+Content-Length: 0
+
+-----
+2025-04-13_10:41:56.009037 &lt;sip:INFO&gt; 'udp:0.0.0.0:5066' sending 661 bytes 'REGISTER sip:sip.netkiller.cn:5060' 0x7f9a8c0300e0 to 139.9.54.211:5060 [0x1761e10]
+-----
+REGISTER sip:sip.netkiller.cn:5060 SIP/2.0
+Contact: "Test SIP account" &lt;sip:6002@121.37.215.251:5066&gt;
+Expires: 600
+To: &lt;sip:6002@sip.netkiller.cn&gt;
+Call-ID: 1863147204@sip.netkiller.cn
+Via: SIP/2.0/UDP 121.37.215.251:5066;rport;branch=z9hG4bK1464071456
+From: "Test SIP account" &lt;sip:6002@sip.netkiller.cn&gt;;tag=1708696019
+User-Agent: YATE/6.4.1
+Max-Forwards: 70
+Allow: ACK, INVITE, BYE, CANCEL, REGISTER, REFER, OPTIONS, INFO
+CSeq: 4 REGISTER
+Authorization: Digest username="6002", realm="sip.netkiller.cn", nonce="Z/uWIGf7lPSNcfm5ONYrypxF8zjHlh1S", uri="sip:sip.netkiller.cn:5060", response="0bd902738a75ca30a59875397828e064", algorithm=MD5
+Content-Length: 0
+
+-----
+2025-04-13_10:41:56.014974 &lt;sip:INFO&gt; 'udp:0.0.0.0:5066' received 505 bytes SIP message from 139.9.54.211:5060 [0x1761e10]
+-----
+SIP/2.0 200 OK
+To: &lt;sip:6002@sip.netkiller.cn&gt;;tag=19db6516a6b774c682ff0634f6a75b73.93ebcb6c
+Call-ID: 1863147204@sip.netkiller.cn
+Via: SIP/2.0/UDP 121.37.215.251:5066;rport=5066;received=121.37.215.251;branch=z9hG4bK1464071456
+From: "Test SIP account" &lt;sip:6002@sip.netkiller.cn&gt;;tag=1708696019
+CSeq: 4 REGISTER
+Contact: &lt;sip:6002@192.168.0.230:5066&gt;;expires=597;received="sip:121.37.215.251:5066", &lt;sip:6002@121.37.215.251:5066&gt;;expires=600
+Server: kamailio (6.0.1 (x86_64/linux))
+Content-Length: 0
+
+-----
+2025-04-13_10:41:56.019182 &lt;sip:CALL&gt; SIP line 'test_sip' logon success to 139.9.54.211:5060
+2025-04-13_10:42:22.004753 &lt;sip:ALL&gt; Sending UDP keepalive to 139.9.54.211:5060 for 'test_sip'
+2025-04-13_10:42:48.000599 &lt;sip:ALL&gt; Sending UDP keepalive to 139.9.54.211:5060 for 'test_sip'
+2025-04-13_10:43:14.002343 &lt;sip:ALL&gt; Sending UDP keepalive to 139.9.54.211:5060 for 'test_sip'
+2025-04-13_10:43:40.000544 &lt;sip:ALL&gt; Sending UDP keepalive to 139.9.54.211:5060 for 'test_sip'
+2025-04-13_10:44:06.000610 &lt;sip:ALL&gt; Sending UDP keepalive to 139.9.54.211:5060 for 'test_sip'			
+			
+				</pre>
+			</div>
 		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="yate.client"></a>168.3.2. Yate Client</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="yate.conference"></a>168.3.8. 配置会议室</h3></div></div></div>
+		
+		<a class="ulink" href="https://docs.yate.ro/wiki/Conference_room_module" target="_top">https://docs.yate.ro/wiki/Conference_room_module</a>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="yate.client"></a>168.3.9. Yate Client</h3></div></div></div>
 		
 		<p>http://yateclient.yate.ro/</p>
 	</div>
