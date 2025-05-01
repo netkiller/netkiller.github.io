@@ -189,7 +189,7 @@ color on
 		</pre>
 	</div>
 
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id2954"></a>168.3.6. SBC(SIP Session Border Controller) 会话边界控制器</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="yate.sbc"></a>168.3.6. SBC(SIP Session Border Controller) 会话边界控制器</h3></div></div></div>
 		
 		<p>启用 SBC</p>
 		<pre class="screen">
@@ -203,7 +203,23 @@ cp /usr/local/etc/yate/regexroute.conf{,.original}
 [root@netkiller ~]# vim /usr/local/etc/yate/ysipchan.conf
 [root@netkiller ~]# egrep -v "^;|^$" /usr/local/etc/yate/ysipchan.conf
 [general]
-ignorevia=enable			
+; nat_address: ipaddress: IP address to advertise in SDP, empty to use the local RTP
+; This parameter is applied on reload
+; Set this parameter when you know your RTP is behind a NAT
+nat_address=121.37.215.21
+
+; nat: bool: Enable automatic NAT support
+nat=enable
+
+; ignorevia: bool: Ignore Via headers and send answer back to the source
+;  This violates RFC 3261 but is required to support NAT over UDP transport.
+; This parameter can be overridden in listener sections
+ignorevia=enable
+
+; rtp_start: bool: Start RTP when sending 200 on incoming instead of receiving ACK
+;rtp_start=disable
+改为
+rtp_start=enable
 			
 		</pre>
 		<p> /usr/local/etc/yate/regexroute.conf 配置文件加入一行</p>
@@ -245,20 +261,21 @@ ${rtp_forward}possible=;rtp_forward=yes
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id2959"></a>168.3.7. 配置路由</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="yate.route"></a>168.3.7. 配置路由</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id2958"></a>168.3.7.1. 外拨网关</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id2962"></a>168.3.7.1. 外拨网关</h4></div></div></div>
 			
 
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="id2955"></a>配置网关</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="id2959"></a>配置网关</h5></div></div></div>
 				
-				<p></p>
+				<p>备份配置文件</p>
 				<pre class="screen">
 				
 [root@netkiller yate]# cp /usr/local/etc/yate/accfile.conf{,.backup}
 [root@netkiller yate]# vim /usr/local/etc/yate/accfile.conf
 				
 				</pre>
+				<p>SIP 网关账号</p>
 				<pre class="screen">
 				
 [test_sip]
@@ -270,20 +287,21 @@ interval=600
 authname=6002
 password=6002
 domain=sip.netkiller.cn
-registrar=sip.netkiller.cn:5060			
+registrar=sip.netkiller.cn:5060
 				
 				</pre>
 			</div>
 
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="id2956"></a>在 regexroute.conf 文件中加入拨号规则</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="id2960"></a>在 regexroute.conf 文件中加入拨号规则</h5></div></div></div>
 				
+				<p>路由规则</p>
 				<pre class="screen">
 			
 ^177$=line/177;line=test_sip			
 			
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="id2957"></a>查看日志</h5></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="id2961"></a>查看日志</h5></div></div></div>
 				
 				<pre class="screen">
 			
