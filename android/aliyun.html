@@ -2,7 +2,465 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>27.2. 阿里云</title><link rel="stylesheet" type="text/css" href="docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="Android, Google Play" /><link rel="home" href="index.html" title="Netkiller Android 手札" /><link rel="up" href="cloud.html" title="第 27 章 云服务" /><link rel="prev" href="cloud.html" title="第 27 章 云服务" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
 		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">27.2. 阿里云</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="cloud.html">上一页</a> </td><th width="60%" align="center">第 27 章 云服务</th><td width="20%" align="right"> </td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="aliyun"></a>27.2. 阿里云</h2></div></div></div>
 	
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id962"></a>27.2.1. CosyVoice 语音合成</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id983"></a>27.2.1. nuisdk-release.aar 版本问题</h3></div></div></div>
+		
+		<p>阿里开发团队就是个草台班子，官方供的很多demo中携带的 nuisdk-release.aar 但是没有标明版本号码。有一种方法可以知道他的版本。</p>
+		<pre class="programlisting">
+		
+		NativeNui nui_instance = new NativeNui();
+        String version = nui_instance.GetVersion();
+        Log.d(TAG, version);
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id984"></a>27.2.2. </h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+package cn.netkiller.conference.ai.aliyun;
+
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.media.AudioFormat;
+import android.media.AudioRecord;
+import android.media.MediaRecorder;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.util.Log;
+
+import androidx.core.app.ActivityCompat;
+
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONException;
+import com.alibaba.fastjson.JSONObject;
+import com.alibaba.idst.nui.AsrResult;
+import com.alibaba.idst.nui.CommonUtils;
+import com.alibaba.idst.nui.Constants;
+import com.alibaba.idst.nui.INativeNuiCallback;
+import com.alibaba.idst.nui.KwsResult;
+import com.alibaba.idst.nui.NativeNui;
+
+import cn.netkiller.conference.MainApplication;
+import cn.netkiller.conference.ai.aliyun.wakup.Auth;
+import cn.netkiller.conference.config.Config;
+
+public class AliyunSpeechWakup {
+    private final static int SAMPLE_RATE = 16000;
+    private final static int WAVE_FRAM_SIZE = 20 * 2 * SAMPLE_RATE / 1000; //20ms audio for 16k/16bit/mono
+    private static final String TAG = AliyunSpeechWakup.class.getSimpleName();
+    private final String defaultSdkCode = "只有使用离线功能才需要填写";
+    private final String defaultWakupWord = "小云小云";
+
+    private final String g_sdk_code = "software_nls_tts_offline_standard"; // 精品版为software_nls_tts_offline， 标准版为software_nls_tts_offline_standard
+    NativeNui nui_instance = new NativeNui();
+    private AudioRecord mAudioRecorder = null;
+    private Handler mHandler;
+    INativeNuiCallback callback = new INativeNuiCallback() {
+        @Override
+        public void onNuiEventCallback(Constants.NuiEvent nuiEvent, int i, int i1, KwsResult kwsResult, AsrResult asrResult) {
+            Log.i(TAG, "event=" + nuiEvent);
+            if (nuiEvent == Constants.NuiEvent.EVENT_WUW_TRUSTED) {
+                JSONObject jsonObject = JSON.parseObject(kwsResult.kws);
+                String result = jsonObject.getString("word");
+                if (!result.isEmpty()) {
+                    Log.d(TAG, "EVENT_WUW_TRUSTED 激活词: " + result);
+                }
+            } else if (nuiEvent == Constants.NuiEvent.EVENT_ASR_RESULT) {
+                JSONObject jsonObject = JSON.parseObject(asrResult.allResponse);
+                JSONObject payload = jsonObject.getJSONObject("payload");
+                String result = payload.getString("result");
+                if (!result.isEmpty()) {
+                    Log.d(TAG, result);
+                }
+                Log.d(TAG, asrResult.asrResult);
+
+                // 获得task_id，并保存音频
+/// /                if (mSaveAudioSwitch.isChecked()) {
+/// /                    JSONObject header = jsonObject.getJSONObject("header");
+/// /                    curTaskId = header.getString("task_id");
+/// /                    if (!curTaskId.isEmpty() &amp;&amp; tmpAudioQueue.size() &gt; 0) {
+/// /                        try {
+/// /                            mRecordingAudioFilePath = mDebugPath + "/" + "wakeupSR_task_id_" + curTaskId + ".pcm";
+/// /                            Log.i(TAG, "save recorder data into " + mRecordingAudioFilePath);
+/// /                            mRecordingAudioFile = new FileOutputStream(mRecordingAudioFilePath, true);
+/// /                            try {
+/// /                                byte[] audioData = tmpAudioQueue.take();
+/// /                                try {
+/// /                                    mRecordingAudioFile.write(audioData);
+/// /                                    mRecordingAudioFile.close();
+/// /                                    mRecordingAudioFile = null;
+/// /                                    String show = "存储录音音频到 " + mRecordingAudioFilePath;
+/// /                                    appendText(detailView, show);
+/// /                                    ToastText(show, Toast.LENGTH_SHORT);
+/// /                                } catch (IOException e) {
+/// /                                    e.printStackTrace();
+/// /                                }
+/// /                            } catch (InterruptedException e) {
+/// /                                e.printStackTrace();
+/// /                            }
+/// /                        } catch (IOException e) {
+/// /                            e.printStackTrace();
+/// /                        }
+/// /                    }
+/// /                    curTaskId = "";
+/// /                    mRecordingAudioFilePath = "";
+/// /                    tmpAudioQueue.clear();
+/// /                }
+
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        nui_instance.startDialog(Constants.VadMode.TYPE_KWS, genDialogParams());
+                    }
+                });
+
+            } else if (nuiEvent == Constants.NuiEvent.EVENT_ASR_PARTIAL_RESULT) {
+                JSONObject jsonObject = JSON.parseObject(asrResult.allResponse);
+                JSONObject payload = jsonObject.getJSONObject("payload");
+                String result = payload.getString("result");
+                if (!result.isEmpty()) {
+                    Log.d(TAG, result);
+                }
+            } else if (nuiEvent == Constants.NuiEvent.EVENT_ASR_ERROR ||
+                    nuiEvent == Constants.NuiEvent.EVENT_MIC_ERROR) {
+                // asrResult在EVENT_ASR_ERROR中为错误信息，搭配错误码resultCode和其中的task_id更易排查问题，请用户进行记录保存。
+                Log.d(TAG, asrResult.asrResult);
+
+//                Log.d(TAG,"ERROR with " + resultCode);
+//                final String msg_text = Utils.getMsgWithErrorCode(resultCode, "start");
+//                ToastText(msg_text, Toast.LENGTH_SHORT);
+
+                if (nuiEvent == Constants.NuiEvent.EVENT_MIC_ERROR) {
+                    // EVENT_MIC_ERROR表示2s未传入音频数据，请检查录音相关代码、权限或录音模块是否被其他应用占用。
+                    // 此处也可重新启动录音模块
+                }
+            } else if (nuiEvent == Constants.NuiEvent.EVENT_DIALOG_EX) { /* unused */
+                Log.i(TAG, "dialog extra message = " + asrResult.asrResult);
+            }
+        }
+
+        @Override
+        public int onNuiNeedAudioData(byte[] bytes, int i) {
+            if (mAudioRecorder == null) {
+                return -1;
+            }
+            if (mAudioRecorder.getState() != AudioRecord.STATE_INITIALIZED) {
+                Log.e(TAG, "audio recorder not init");
+                return -1;
+            }
+
+            // 送入SDK
+            int audio_size = mAudioRecorder.read(bytes, 0, i);
+            return audio_size;
+        }
+
+        @Override
+        public void onNuiAudioStateChanged(Constants.AudioState audioState) {
+            Log.i(TAG, "onNuiAudioStateChanged");
+            if (audioState == Constants.AudioState.STATE_OPEN) {
+                Log.i(TAG, "audio recorder start");
+                if (mAudioRecorder != null) {
+                    mAudioRecorder.startRecording();
+                }
+                Log.i(TAG, "audio recorder start done");
+            } else if (audioState == Constants.AudioState.STATE_CLOSE) {
+                Log.i(TAG, "audio recorder close");
+                if (mAudioRecorder != null) {
+                    mAudioRecorder.release();
+                }
+            } else if (audioState == Constants.AudioState.STATE_PAUSE) {
+                Log.i(TAG, "audio recorder pause");
+                if (mAudioRecorder != null) {
+                    mAudioRecorder.stop();
+                }
+            }
+        }
+
+        @Override
+        public void onNuiAudioRMSChanged(float v) {
+//        Log.i(TAG, "onNuiAudioRMSChanged vol " + val);
+        }
+
+        @Override
+        public void onNuiVprEventCallback(Constants.NuiVprEvent nuiVprEvent) {
+//            Log.i(TAG, "onNuiVprEventCallback event " + event);
+        }
+//        @Override
+//        public void onNuiLogTrackCallback(Constants.LogLevel level, String log) {
+//            Log.i(TAG, "onNuiLogTrackCallback log level:" + level + ", message -&gt; " + log);
+//        }
+    };
+    private HandlerThread mHanderThread;
+
+
+    public void startSpeechWakup() {
+
+//        String version = nui_instance.GetVersion();
+//        final String sdk_ver = Utils.extractVersion(version);
+//        Log.i(TAG, "current sdk version: " + version + " sdk_ver: " + sdk_ver);
+
+        doInit();
+
+        mHanderThread = new HandlerThread("process_thread");
+        mHanderThread.start();
+        mHandler = new Handler(mHanderThread.getLooper());
+        boolean ret = startDialog();
+
+    }
+
+    public void stopSpeechWakup() {
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                long ret = nui_instance.stopDialog();
+                Log.i(TAG, "cancel dialog " + ret + " end");
+            }
+        });
+    }
+
+
+    protected void onStart() {
+        Log.i(TAG, "onStart");
+        doInit();
+    }
+
+
+    protected void onStop() {
+        Log.i(TAG, "onStop");
+        nui_instance.release();
+    }
+
+
+    private void doInit() {
+
+        //这里主动调用完成SDK配置文件的拷贝, 即将nuisdk.aar中assets中资源文件拷贝到cache目录
+        if (CommonUtils.copyAssetsData(MainApplication.getContext())) {
+            Log.i(TAG, "copy assets data done");
+        } else {
+            Log.e(TAG, "copy assets failed");
+            return;
+        }
+
+        //如果需要使用外置的唤醒模型，把文件放在assets存储的cache目录，通过以下接口设置
+//        CommonUtils.setExternalAssetFile(this, "pack_kws.bin");
+
+        //获取工作路径, 即获得拷贝后资源文件存储的cache路径, 作为workspace
+//        String asset_path = CommonUtils.getModelPath(MainApplication.getContext());
+        String asset_path = "/data/data/cn.netkiller.conference/files/asr_my";
+        Log.i(TAG, "use workspace " + asset_path);
+
+        String mDebugPath = MainApplication.getContext().getExternalCacheDir().getAbsolutePath() + "/debug";
+        Utils.createDir(mDebugPath);
+
+        //初始化SDK，注意用户需要在Auth.getAliYunTicket中填入相关ID信息才可以使用。
+        //由于唤醒功能为本地功能, 涉及鉴权, 故genInitParams中需要填写ak_id、ak_secret
+        int ret = nui_instance.initialize(callback, genInitParams(asset_path, mDebugPath),
+                Constants.LogLevel.LOG_LEVEL_VERBOSE, true);
+
+        if (ret == Constants.NuiResultCode.SUCCESS) {
+            Log.i(TAG, "initialize result = " + ret);
+        } else {
+            final String msg_text = Utils.getMsgWithErrorCode(ret, "init");
+            Log.d(TAG, msg_text);
+        }
+    }
+
+    private String genParams() {
+        String params = "";
+        try {
+            JSONObject nls_config = new JSONObject();
+
+            // 是否返回中间识别结果，默认值：False。
+            nls_config.put("enable_intermediate_result", true);
+            // 是否在后处理中添加标点，默认值：False。
+            nls_config.put("enable_punctuation_prediction", true);
+
+            //参数可根据实际业务进行配置
+//            nls_config.put("enable_inverse_text_normalization", true);
+//            nls_config.put("enable_voice_detection", true);
+//            nls_config.put("customization_id", "test_id");
+//            nls_config.put("vocabulary_id", "test_id");
+//            nls_config.put("max_start_silence", 10000);
+//            nls_config.put("max_end_silence", 800);
+            nls_config.put("sample_rate", SAMPLE_RATE);
+//            nls_config.put("sr_format", "opus");
+
+            /*若文档中不包含某些参数，但是此功能支持这个参数，可以用如下万能接口设置参数*/
+//            JSONObject extend_config = new JSONObject();
+//            extend_config.put("custom_test", true);
+//            nls_config.put("extend_config", extend_config);
+
+            JSONObject parameters = new JSONObject();
+
+            parameters.put("nls_config", nls_config);
+            parameters.put("service_type", Constants.kServiceTypeASR);
+
+            //可以通过以下方式设置自定义唤醒词进行体验，如果需要更好的唤醒效果请进行唤醒词定制
+            //注意：动态唤醒词只有在设置了唤醒模型的前提下才可以使用
+            JSONArray dynamic_wuw = new JSONArray();
+
+            JSONObject wuw = new JSONObject();
+            wuw.put("name", "小白小白");
+            wuw.put("type", "main");
+            dynamic_wuw.add(wuw);
+
+//                for (String part : allWakeupWords) {
+//                    JSONObject wuw = new JSONObject();
+//                    wuw.put("name", part.trim());
+//                    wuw.put("type", "main");
+//                    dynamic_wuw.add(wuw);
+//                }
+
+            parameters.put("wuw", dynamic_wuw);
+
+            //如果有HttpDns则可进行设置
+//            parameters.put("direct_ip", Utils.getDirectIp());
+            params = parameters.toString();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        Log.d(TAG, "genParams() " + params);
+        return params;
+    }
+
+    private boolean startDialog() {
+
+        if (ActivityCompat.checkSelfPermission(
+                MainApplication.getContext(), Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+            if (mAudioRecorder == null) {
+                //录音初始化，录音参数中格式只支持16bit/单通道，采样率支持8K/16K
+                //使用者请根据实际情况选择Android设备的MediaRecorder.AudioSource
+                //录音麦克风如何选择,可查看https://developer.android.google.cn/reference/android/media/MediaRecorder.AudioSource
+                mAudioRecorder = new AudioRecord(MediaRecorder.AudioSource.DEFAULT, SAMPLE_RATE,
+                        AudioFormat.CHANNEL_IN_MONO,
+                        AudioFormat.ENCODING_PCM_16BIT,
+                        WAVE_FRAM_SIZE * 4);
+            } else {
+                Log.w(TAG, "AudioRecord has been new ...");
+            }
+        } else {
+            Log.e(TAG, "未获得录音权限 RECORD_AUDIO permission!");
+            return false;
+        }
+
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                //设置相关识别参数，具体参考API文档
+                nui_instance.setParams(genParams());
+                //唤醒后进行识别模式
+                int ret = nui_instance.startDialog(Constants.VadMode.TYPE_KWS, genDialogParams());
+                Log.i(TAG, "start done with " + ret);
+                if (ret != 0) {
+                    final String msg_text = Utils.getMsgWithErrorCode(ret, "start");
+                    Log.d(TAG, msg_text);
+                } else {
+                    Log.d(TAG, "等待唤醒 ...");
+                }
+            }
+        });
+
+        return true;
+    }
+
+    private String genInitParams(String workpath, String debugpath) {
+        String str = "";
+        try {
+            // 需要特别注意：ak_id/ak_secret/app_key/sdk_code/device_id等参数必须传入SDK
+            // 离线语音合成sdk_code取值：精品版为software_nls_tts_offline， 标准版为software_nls_tts_offline_standard
+            // 离线语音合成账户的sdk_code也可用于唤醒
+            // 鉴权信息获取参：https://help.aliyun.com/document_detail/69835.htm
+
+            Log.d(TAG, "Wakup token: " + Config.Aliyun.token);
+
+            //获取账号访问凭证：
+            // 注意！此activity是唤醒+一句话识别的功能演示，包含离线唤醒功能和在线识别功能，
+            // 所以账号方案需要mixed方案，或者创建两个Appkey分别用户唤醒功能和在线功能。
+//            Auth.GetTicketMethod method = Auth.GetTicketMethod.GET_STS_ACCESS_FROM_SERVER_FOR_MIXED_FEATURES;
+            Auth.GetTicketMethod method = Auth.GetTicketMethod.GET_ACCESS_IN_CLIENT_FOR_MIXED_FEATURES;
+            Auth.setAppKey(Config.Aliyun.Wakup.appKey);
+            Auth.setToken(Config.Aliyun.token);
+            Auth.setAccessKey(Config.Aliyun.accessKeyId);
+            Auth.setAccessKeySecret(Config.Aliyun.accessKeySecret);
+//            Auth.setStsToken("");
+            Auth.setSdkCode("software_nls_tts_offline_standard");
+
+            Log.i(TAG, "Use method:" + method);
+            JSONObject object = Auth.getTicket(method);
+            object.put("url", "wss://nls-gateway.cn-shanghai.aliyuncs.com:443/ws/v1");
+            //工作目录路径，SDK从该路径读取配置文件
+            object.put("workspace", workpath); // 必填
+            object.put("debug_path", debugpath);
+
+            //过滤SDK内部日志通过回调送回到用户层
+            object.put("log_track_level", String.valueOf(Constants.LogLevel.toInt(Constants.LogLevel.LOG_LEVEL_INFO)));
+
+            // FullMix = 0   // 选用此模式开启本地功能并需要进行鉴权注册
+            // FullCloud = 1
+            // FullLocal = 2 // 选用此模式开启本地功能并需要进行鉴权注册
+            // AsrMix = 3    // 选用此模式开启本地功能并需要进行鉴权注册
+            // AsrCloud = 4
+            // AsrLocal = 5  // 选用此模式开启本地功能并需要进行鉴权注册
+            object.put("service_mode", Constants.ModeFullMix);
+
+            // 特别说明: 鉴权所用的id是由device_id，与手机内部的一些唯一码进行组合加密生成的。
+            //   更换手机或者更换device_id都会导致重新鉴权计费。
+            //   此外, 以下device_id请设置有意义且具有唯一性的id, 比如用户账号(手机号、IMEI等),
+            //   传入相同或随机变换的device_id会导致鉴权失败或重复收费。
+            //   Utils.getDeviceId() 并不能保证生成不变的device_id，请不要使用
+//            object.put("device_id", "empty_device_id"); // 必填, 推荐填入具有唯一性的id, 方便定位问题。
+            object.put("device_id", Config.Android.androidId); // 必填, 推荐填入具有唯一性的id, 方便定位问题。
+
+
+            //如果使用外置唤醒资源，可以进行设置文件路径。通过upgrade_file参数传入唤醒模型文件的绝对路径。
+
+            // 举例1：模型文件kws.bin可以放在assets，这里需要主动拷贝到App的data目录，并获得绝对路径。
+            String kws_bin_name = "kws.bin";
+//            String kws_bin_dest_name = CommonUtils.getModelPath(MainApplication.getContext()) + "/" + kws_bin_name;
+//            CommonUtils.copyAsset(MainApplication.getContext(), kws_bin_name, kws_bin_dest_name);
+
+            // 举例2：模型文件kws.bin放在/sdcard/目录，请确认读写权限
+//            kws_bin_name = "kws.bin";
+            String kws_bin_dest_name = "/data/data/cn.netkiller.conference/files/asr_my/" + kws_bin_name;
+
+            object.put("upgrade_file", kws_bin_dest_name);
+            str = object.toString();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        // 注意! str中包含ak_id ak_secret token app_key等敏感信息, 实际产品中请勿在Log中输出这类信息！
+        Log.i(TAG, "InsideUserContext:" + str);
+        return str;
+    }
+
+    private String genDialogParams() {
+        String params = "";
+        try {
+            JSONObject dialog_param = new JSONObject();
+            // 运行过程中可以在startDialog时更新临时参数，尤其是更新过期token
+            // 注意: 若下一轮对话不再设置参数，则继续使用初始化时传入的参数
+            long distance_expire_time_5m = 300;
+            dialog_param = Auth.refreshTokenIfNeed(dialog_param, distance_expire_time_5m);
+
+            // 注意: 若需要更换appkey和token，可以直接传入参数
+//            dialog_param.put("app_key", "");
+//            dialog_param.put("token", "");
+            params = dialog_param.toString();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        Log.i(TAG, "dialog params: " + params);
+        return params;
+    }
+}
+		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id985"></a>27.2.3. CosyVoice 语音合成</h3></div></div></div>
 		
 		<pre class="programlisting">
 		
@@ -20,7 +478,7 @@ import com.alibaba.dashscope.common.ResultCallback;
 import java.io.FileNotFoundException;
 import java.util.concurrent.CountDownLatch;
 
-import cn.aigcsst.conference.ai.aigc.AigcSpeechSynthesizer;
+import cn.netkiller.conference.ai.aigc.AigcSpeechSynthesizer;
 
 public class AliyunCosyVoiceSpeechSynthesizer implements AigcSpeechSynthesizer {
     private static final String TAG = AliyunCosyVoiceSpeechSynthesizer.class.getSimpleName();
@@ -121,7 +579,12 @@ public class AliyunCosyVoiceSpeechSynthesizer implements AigcSpeechSynthesizer {
 		
 		</pre>
 	</div>
-</div><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="cloud.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="cloud.html">上一级</a></td><td width="40%" align="right"> </td></tr><tr><td width="40%" align="left" valign="top">第 27 章 云服务 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> </td></tr></table></div><script xmlns="">
+</div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
+			window.changyan.api.config({
+			appid: 'cyvwjQUG3',
+			conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
+			});
+</script><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="cloud.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="cloud.html">上一级</a></td><td width="40%" align="right"> </td></tr><tr><td width="40%" align="left" valign="top">第 27 章 云服务 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> </td></tr></table></div><script xmlns="">
 			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
 		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
 		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
