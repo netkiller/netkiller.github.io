@@ -277,7 +277,140 @@ https://www.netkiller.cn⏎
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="Filter"></a>41.9.3. 过滤器</h3></div></div></div>
+	
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="Authorization.Bearer"></a>41.9.3. Authorization Bearer</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+package cn.aigcsst.config;
+
+
+import cn.aigcsst.annotation.TokenPass;
+import cn.aigcsst.component.JwtTokenComponent;
+import com.auth0.jwt.interfaces.DecodedJWT;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.springframework.web.method.HandlerMethod;
+import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.web.servlet.ModelAndView;
+
+import java.lang.reflect.Method;
+import java.util.Base64;
+
+@Slf4j
+@Component
+public class TokenHandlerInterceptor implements HandlerInterceptor {
+    @Autowired
+    private JwtTokenComponent jwtTokenComponent;
+
+//    @Autowired
+//    private DeviceService deviceService;
+
+    // 返回 true 表示继续向下执行，返回 false 表示中断后续操作
+    @Override
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+
+
+        Class clazz = handler.getClass();
+//        log.info(clazz.getSimpleName());
+        // 如果不是映射到方法直接通过
+        if (!(handler instanceof HandlerMethod handlerMethod)) {
+            return true;
+        }
+
+        Method method = handlerMethod.getMethod();
+
+        if (method.getDeclaringClass().isAnnotationPresent(TokenPass.class)) {
+            TokenPass tokenPass = method.getDeclaringClass().getAnnotation(TokenPass.class);
+            if (tokenPass.required()) {
+                return true;
+            }
+            //        h.getMethod().getDeclaringClass().getAnnotation(MyOperation.class);
+        }
+
+        //检查方法是否有TokenPass注解，有则跳过认证，直接通过
+        if (method.isAnnotationPresent(TokenPass.class)) {
+            TokenPass tokenPass = method.getAnnotation(TokenPass.class);
+            if (tokenPass.required()) {
+                return true;
+            }
+        }
+        //检查 TokenVerification 需要用户权限的注解
+//        if (method.isAnnotationPresent(TokenVerification.class)) {
+//            TokenVerification tokenVerification = method.getAnnotation(TokenVerification.class);
+//            if (tokenVerification.required()) {
+//                //
+//            }
+//        }
+
+
+        String authorization = request.getHeader("Authorization");// 从 http 请求头中取出 token
+        log.info("Authorization: " + authorization);
+
+        if (authorization != null &amp;&amp; authorization.startsWith("Bearer ")) {
+            String jwtToken = authorization.substring(7);
+
+            // token 校验逻辑写在这里
+            try {
+                // Validate or process the JWT token here
+                DecodedJWT jwt = jwtTokenComponent.verifier(jwtToken);
+//                log.debug("JWT Token: " + jwtToken);
+                log.debug("Token decode Header: " + new String(Base64.getDecoder().decode(jwt.getHeader())) + " Payload: " + new String(Base64.getDecoder().decode(jwt.getPayload())));
+            } catch (Exception e) {
+                e.printStackTrace();
+//                throw new AigcException.AigcTokenException(e.getMessage());
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid JWT");
+            }
+
+        } else {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Missing or invalid Authorization header");
+//            throw new AigcException.AigcTokenException("token error");
+            //            log.info("Token: " + token);
+        }
+
+//            Map&lt;String, String&gt; pathVariable = (Map&lt;String, String&gt;) request.getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE);
+//            if (!pathVariable.isEmpty() &amp;&amp; pathVariable.containsKey("device")) {
+////                log.debug("pathVariable: " + pathVariable);
+//                Optional&lt;Device&gt; device = deviceService.findByName(pathVariable.get("device"));
+//                device.orElseThrow(() -&gt; new AigcException.AigcDeviceException(String.format("设备 %s 不存在", pathVariable.get("device"))));
+//            }
+
+//            Set&lt;GrantedAuthority&gt; authorities = new HashSet&lt;&gt;();
+//            authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+//            authorities.add(new SimpleGrantedAuthority("ROLE_WATCH"));
+//            authorities.add(new SimpleGrantedAuthority("ROLE_PICTURE"));
+//
+//            UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken("netkiller", null, authorities);
+//            if (!authenticationToken.isAuthenticated()) {
+//                throw new RuntimeException("没有权限");
+//            }
+//            authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+//            SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+
+        return true;
+
+    }
+
+    // 目标方法执行后, 该方法在控制器处理请求方法调用之后、解析视图之前执行, 可以通过此方法对请求域中的模型和视图做进一步修改
+    @Override
+    public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) throws Exception {
+//        log.debug("postHandle");
+    }
+
+    // 页面渲染后, 该方法在视图渲染结束后执行, 可以通过此方法实现资源清理、记录日志信息等工作
+    @Override
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
+//        log.debug("afterCompletion");
+    }
+
+}		
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="Filter"></a>41.9.4. 过滤器</h3></div></div></div>
 		
 		<pre class="programlisting">
 		
@@ -310,7 +443,7 @@ public class MyFilter implements Filter {
 		
 		
 		</pre>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="OncePerRequestFilter"></a>41.9.3.1. </h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="OncePerRequestFilter"></a>41.9.4.1. </h4></div></div></div>
 			
 			<pre class="programlisting">
 			
@@ -348,7 +481,7 @@ public class CustomExceptionFilter extends OncePerRequestFilter {
 			</pre>
 		</div>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1045"></a>41.9.4. 拦截器获取PathVariable变量</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="URI_TEMPLATE_VARIABLES_ATTRIBUTE"></a>41.9.5. 拦截器获取PathVariable变量</h3></div></div></div>
 		
 		<pre class="programlisting">
 		
@@ -357,7 +490,12 @@ public class CustomExceptionFilter extends OncePerRequestFilter {
 		
 		</pre>
 	</div>
-</div><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="validation.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="RestTemplate/index.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">41.8. 校验器(Validator) </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 41.10. String boot with RestTemplate</td></tr></table></div><script xmlns="">
+</div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
+			window.changyan.api.config({
+			appid: 'cyvwjQUG3',
+			conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
+			});
+</script><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="validation.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="RestTemplate/index.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">41.8. 校验器(Validator) </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 41.10. String boot with RestTemplate</td></tr></table></div><script xmlns="">
 			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
 		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
 		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
