@@ -98,7 +98,7 @@ public class MyReceiver extends BroadcastReceiver {
 		
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id940"></a>16.2.2. 接收不到消息</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id950"></a>16.2.2. 接收不到消息</h3></div></div></div>
 			
 			<p>Android 8 以上，静态广播必须指定包名 intent.setPackage(context.getPackageName());</p>
 			<pre class="programlisting">
@@ -115,6 +115,123 @@ public class MyReceiver extends BroadcastReceiver {
 			
 			</pre>
 		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id951"></a>16.2.3. StaticBroadcastReceiver 完整的例子</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+        &lt;receiver
+            android:name="com.netkiller.conference.receiver.StaticBroadcastReceiver"
+            android:enabled="true"
+            android:exported="true"&gt;
+            &lt;intent-filter android:priority="1000"&gt;
+                &lt;action android:name="android.intent.action.BOOT_COMPLETED" /&gt;
+                &lt;action android:name="android.intent.action.ACTION_BATTERY_CHANGED" /&gt;
+                &lt;action android:name="android.intent.action.ACTION_BATTERY_LOW" /&gt;
+                &lt;action android:name="android.intent.action.ACTION_BATTERY_OKAY" /&gt;
+                &lt;action android:name="android.intent.action.ACTION_POWER_CONNECTED" /&gt;
+                &lt;action android:name="android.intent.action.ACTION_POWER_DISCONNECTED" /&gt;
+                &lt;action android:name="android.intent.action.DOWNLOAD_COMPLETE" /&gt;
+                &lt;action android:name="android.intent.action.ACTION_CLOSE_SYSTEM_DIALOGS" /&gt;
+                &lt;action android:name="android.intent.action" /&gt;
+
+                &lt;category android:name="android.intent.category.DEFAULT" /&gt;
+            &lt;/intent-filter&gt;
+        &lt;/receiver&gt;
+			
+			</pre>
+			
+			<pre class="programlisting">
+			
+package com.netkiller.conference.receiver;
+
+import android.app.DownloadManager;
+import android.bluetooth.BluetoothDevice;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.util.Log;
+
+import com.netkiller.conference.MainActivity;
+import com.netkiller.conference.ai.aigc.AigcSpeech;
+import com.netkiller.conference.ai.aigc.Cache;
+//import cn.aigcsst.aigc.education.skill.PictureSkillComponent;
+
+public class StaticBroadcastReceiver extends BroadcastReceiver {
+    private static final String TAG = StaticBroadcastReceiver.class.getSimpleName();
+    private final Cache cache = new Cache();
+    private final AigcSpeech aigcSpeech = AigcSpeech.getInstance();
+
+    @Override
+    public void onReceive(Context context, Intent intent) {
+
+        String action = intent.getAction();
+        Log.d(TAG, "Static broadcast Action: " + intent.getAction());
+
+        try {
+            switch (action) {
+                case Intent.ACTION_BOOT_COMPLETED:
+                    Log.d(TAG, "自启动了 ！！！！！");
+                    intent = new Intent(context, MainActivity.class);  // 要启动的Activity
+                    //1.如果自启动APP，参数为需要自动启动的应用包名
+                    //Intent intent = getPackageManager().getLaunchIntentForPackage(packageName);
+                    //这句话必须加上才能开机自动运行app的界面
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    //2.如果自启动Activity
+                    context.startActivity(intent);
+                    //3.如果自启动服务
+                    //context.startService(newIntent);
+                case Intent.ACTION_BATTERY_CHANGED://电量发生改变
+//                    aigcSpeech.say("电量发生改变");
+                    Log.e(TAG, "BatteryBroadcastReceiver --&gt; ACTION_BATTERY_CHANGED");
+                    break;
+                case Intent.ACTION_BATTERY_LOW://电量低
+//                    aigcSpeech.say("电量低");
+                    Log.e(TAG, "BatteryBroadcastReceiver --&gt; ACTION_BATTERY_LOW");
+                    break;
+                case Intent.ACTION_BATTERY_OKAY://电量充满
+//                    aigcSpeech.say("电量充满");
+                    Log.e(TAG, "BatteryBroadcastReceiver --&gt; ACTION_BATTERY_OKAY");
+                    break;
+                case Intent.ACTION_POWER_CONNECTED://接通电源
+//                    aigcSpeech.say("接通电源");
+                    Log.e(TAG, "BatteryBroadcastReceiver --&gt; ACTION_POWER_CONNECTED");
+                    break;
+                case Intent.ACTION_POWER_DISCONNECTED://拔出电源
+//                    aigcSpeech.say("拔出电源");
+                    Log.e(TAG, "BatteryBroadcastReceiver --&gt; ACTION_POWER_DISCONNECTED");
+                    break;
+                case DownloadManager.ACTION_DOWNLOAD_COMPLETE:
+//                    aigcSpeech.say("文件下载完成");
+                    long id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, 0);
+                    cache.setDownloadCache(id);
+//                    Log.d(TAG, "文件下载：" + id);
+                    break;
+                case Intent.ACTION_CLOSE_SYSTEM_DIALOGS:
+                    // 监听home键
+//                    String reason = intent.getStringExtra(SYSTEM_REASON);
+                    Log.d(TAG, "Home");
+                    // 表示按了home键,程序到了后台
+                    break;
+                case BluetoothDevice.ACTION_ACL_CONNECTED:
+                    Log.d(TAG, "Bluetooth connected");
+                    break;
+                case BluetoothDevice.ACTION_ACL_DISCONNECTED:
+                    Log.d(TAG, "Bluetooth disconnected");
+                    break;
+                case "main.screen":
+                    context.startActivity(new Intent(context, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                    break;
+            }
+        } catch (Exception e) {
+            Log.d(TAG, e.toString());
+        }
+
+    }
+}
+			
+			</pre>
+		</div>
+		
 	</div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
 			window.changyan.api.config({
 			appid: 'cyvwjQUG3',

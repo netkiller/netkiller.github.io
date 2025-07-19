@@ -33,7 +33,24 @@ new Thread () {
 		
 		
 		</pre>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id946"></a>18.3.1. 发送消息</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="Handler.post"></a>18.3.1. Handler post</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+		mHanderThread = new HandlerThread(TAG);
+        mHanderThread.start();
+        mHandler = new Handler(mHanderThread.getLooper());
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+
+
+            }
+        });
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="Handler.SendMessage"></a>18.3.2. 发送消息</h3></div></div></div>
 			
 			<pre class="programlisting">
 			
@@ -78,7 +95,7 @@ new Thread () {
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id947"></a>18.3.2. 完整例子</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id958"></a>18.3.3. 完整例子</h3></div></div></div>
 			
 			<pre class="programlisting">
 			
@@ -213,7 +230,7 @@ public class MainActivity extends AppCompatActivity {
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id948"></a>18.3.3. 获取线程名称</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id959"></a>18.3.4. 获取线程名称</h3></div></div></div>
 			
 			<pre class="programlisting">
 			
@@ -225,6 +242,94 @@ Handler handler = new Handler(handlerThread.getLooper());
 
 // 获取线程名称
 String threadName = handlerThread.getName(); // "MyHandlerThread"			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="HandlerThread.post.sleep"></a>18.3.5. HandlerThread 队列</h3></div></div></div>
+			
+			<p></p>
+			<pre class="programlisting">
+			
+HandlerThread handerThread = new HandlerThread(TAG);
+        handerThread.start();
+        Handler handler = new Handler(handerThread.getLooper());
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+
+                try {
+                    Thread.sleep(10000);
+                    Log.d(TAG, "handerThread 1 " + handerThread.getThreadId());
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+
+            }
+        });
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+
+                try {
+                    Thread.sleep(1000);
+                    Log.d(TAG, "handerThread 2 " + handerThread.getThreadId());
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+
+            }
+        });
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                Log.d(TAG, "handerThread 3 " + handerThread.getThreadId());
+            }
+        });
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                Log.d(TAG, "handerThread 4 " + handerThread.getThreadId());
+            }
+        });			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id960"></a>18.3.6. Token 应用</h3></div></div></div>
+			
+			<p>Token 用来标识线程，通过 Token取消任务</p>
+			<pre class="programlisting">
+			
+// 发送带 Token 的延时任务
+handler.postDelayed(runnable, token, delayMillis);
+
+// 取消所有关联该 Token 的任务
+handler.removeCallbacksAndMessages(token);			
+			
+			</pre>
+			<p>使用 null 作为 Token：</p>
+			<pre class="programlisting">
+			
+handler.postDelayed(task, null, 2000); // 不推荐
+handler.removeCallbacksAndMessages(null); // 会取消所有未指定 Token 的任务
+			
+			</pre>
+			<p>混用 Token 和非 Token 方法：</p>
+			<pre class="programlisting">
+			
+handler.postDelayed(task1, 2000); // 未指定 Token
+handler.postDelayed(task2, TOKEN, 2000); // 指定 Token
+
+handler.removeCallbacksAndMessages(TOKEN); // 只取消 task2，不影响 task1				
+			
+			</pre>
+			<pre class="programlisting">
+			
+			
 			
 			</pre>
 		</div>

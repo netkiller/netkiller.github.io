@@ -632,10 +632,110 @@ proxy_pass_request_headers on;
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="proxy.example"></a>35.7.19. example</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1409"></a>35.7.19. Proxy SSE(Server-Sent Events)</h3></div></div></div>
+		
+		<p>代理走 SSE 需要配置 proxy_buffering off; 和 proxy_cache off;</p>
+		<pre class="screen">
+		
+server {
+    listen       80;
+    listen       443 ssl;
+    server_name  api.netkiller.cn;
+
+    access_log  /var/log/nginx/api.netkiller.cn.access.log;
+    error_log   /var/log/nginx/api.netkiller.cn.error.log;
+
+    include /etc/nginx/ssl.conf;
+
+    #error_page 497 https://$host$uri?$args;
+    if ($scheme = http) {
+         return 301 https://$server_name$request_uri;
+    }
+
+    #error_page  404              /404.html;
+
+    # redirect server error pages to the static page /50x.html
+    #
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html;
+    }
+    location / {
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header REMOTE-HOST $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_connect_timeout 120;
+        proxy_send_timeout 120;
+        proxy_read_timeout 120;
+        proxy_buffering off;
+        proxy_cache off;
+        proxy_pass http://api:8080/;
+    }
+
+    # wechat
+    location /wechat/miniprogram/bind/i2VsUGp64m.txt {
+        charset utf-8;
+        default_type    text/plain;
+        return 200 "c535ea6844f77acf98ea166a160913ee";
+    }
+    location /wechat/miniprogram/voucher/i2VsUGp64m.txt {
+        charset utf-8;
+        default_type    text/plain;
+        return 200 "c535ea6844f77acf98ea166a160913ee";
+    }
+
+#     location /wechat/ {
+#         proxy_http_version 1.1;
+#         proxy_set_header Host $host;
+#         proxy_set_header X-Real-IP $remote_addr;
+#         proxy_set_header REMOTE-HOST $remote_addr;
+#         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+#         proxy_connect_timeout 120;
+#         proxy_send_timeout 120;
+#         proxy_read_timeout 120;
+#         proxy_pass http://wechat:8080/;
+#     }
+
+    # location /ws/ {
+    #     proxy_set_header Upgrade $http_upgrade;
+    #     proxy_set_header Connection "Upgrade";
+    #     proxy_connect_timeout 30s;
+    #     proxy_read_timeout 7200s;
+    #     proxy_send_timeout 30s;
+    #     proxy_pass http://admin;
+    # }
+
+    location /markdown/ {
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header REMOTE-HOST $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_connect_timeout 120;
+        proxy_send_timeout 120;
+        proxy_read_timeout 120;
+        proxy_pass http://document:8080;
+    }
+
+    location /.well-known/ {
+        root   /usr/share/nginx/html;
+        try_files $uri $uri/ /index.html;
+        index  index.html index.htm;
+    }
+
+    location ~ /swagger-ui/ {
+       deny  all;
+    }
+}
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="proxy.example"></a>35.7.20. example</h3></div></div></div>
 		
 		<p>/api/ 走代理，其他页面走 Nginx</p>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1408"></a>35.7.19.1. 代理特定目录</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1410"></a>35.7.20.1. 代理特定目录</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -683,7 +783,7 @@ server {
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1409"></a>35.7.19.2. upstream 实例</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1411"></a>35.7.20.2. upstream 实例</h4></div></div></div>
 			
 			<pre class="screen">
 127.0.0.1 		api.example.com
@@ -728,7 +828,7 @@ server {
 }
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1410"></a>35.7.19.3. Tomcat 实例</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1412"></a>35.7.20.3. Tomcat 实例</h4></div></div></div>
 			
 			<pre class="screen">
 server {
@@ -796,7 +896,7 @@ server {
 			<p>上面的jsessionid处理方式</p>
 		</div>
 
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="proxy.live800"></a>35.7.19.4. Nginx -&gt; Nginx -&gt; Tomcat</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="proxy.live800"></a>35.7.20.4. Nginx -&gt; Nginx -&gt; Tomcat</h4></div></div></div>
 			
 			<p>背景各种原因需要再Nginx前面再增加一层Nginx虽然需求很变态，本着学习的目的试了试。</p>
 			<p>这里还使用了 http2 加速 nginx ssl http2 -&gt; nginx ssl http2 -&gt; Tomcat 8080</p>
@@ -837,7 +937,7 @@ server {
 			<p>如果是443你需要挂在证书，需要透传cookie给目的主机，否则你将无法支持Session，应用程序需要从 X-Forwarded-For 获取IP地址。</p>
 		</div>
 	
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1411"></a>35.7.19.5. Proxy 处理 Cookie</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1413"></a>35.7.20.5. Proxy 处理 Cookie</h4></div></div></div>
 			
 			<p>下面是一个通过 proxy_pass 代理live800的案例，我们需要处理几个地方：</p>
 			<p>Host头处理，Cookie传递，替换原因页面中的域名，替换文件有html,css,xml,css,js</p>
@@ -860,7 +960,7 @@ server {
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1412"></a>35.7.19.6. Proxy 添加 CORS 头</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1414"></a>35.7.20.6. Proxy 添加 CORS 头</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -892,7 +992,7 @@ server {
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1413"></a>35.7.19.7. 通过 Proxy 汉化 restful 接口</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1415"></a>35.7.20.7. 通过 Proxy 汉化 restful 接口</h4></div></div></div>
 			
 			<p>通过 proxy 汉化 restful 接口返回的 json 字符串。</p>
 			<p>背景，有这样一个需求，前端HTML5通过ajax与restful交互，ajax会显示接口返回json数据，由于js做了混淆无法修改与restful交互的逻辑，但是json反馈结果需要汉化。</p>
@@ -938,7 +1038,7 @@ neo@netkiller ~/workspace/Developer/Python % curl http://api.netkiller.cn/restfu
 			</pre>
 			<p>现在我们看到效果是 "message":"用户验证错误"</p>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="http2.proxy_pass"></a>35.7.19.8. HTTP2 proxy_pass http://</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="http2.proxy_pass"></a>35.7.20.8. HTTP2 proxy_pass http://</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -1008,7 +1108,7 @@ server {
 			
 			</pre>
 		</div>	
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="nginx.ipfs"></a>35.7.19.9. IPFS</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="nginx.ipfs"></a>35.7.20.9. IPFS</h4></div></div></div>
 			
 			<pre class="screen">
 			
@@ -1064,7 +1164,7 @@ server {
 			</pre>
 		</div>	
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1414"></a>35.7.20. HTTP Auth 认证冲突</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="proxy.httpauth"></a>35.7.21. HTTP Auth 认证冲突</h3></div></div></div>
 		
 		<p>nginx 代理 springboot，Springboot 使用了 JWT 认证，HTTP头为 Authorization: Bearer {BASE64}</p>
 		<p>admin.netkiller.cn 后台需要限制登陆，公司没有固定IP地址，尝试了 VPN 方案，被封。最终决定使用 HTTP Auth，HTTP Auth 使用 HTTP Authorization: Basic {BASE64}。</p>
