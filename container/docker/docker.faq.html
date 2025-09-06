@@ -116,13 +116,65 @@ I/O size (minimum/optimal): 4096 bytes / 4096 bytes
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id928"></a>2.15.5. Bitnami</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id928"></a>2.15.5. 从现有镜像提取 Dockerfile</h3></div></div></div>
 		
-		<p>
-			<a class="ulink" href="https://github.com/bitnami" target="_top">https://github.com/bitnami</a>
-		</p>
+		<p>从现有镜像提取 Dockerfile</p>
+		<pre class="screen">
+		
+neo@netkiller:~/RCT$ sudo docker history nginx:latest --format "{{.CreatedBy}}" --no-trunc
+/bin/sh -c #(nop)  CMD ["nginx" "-g" "daemon off;"]
+/bin/sh -c #(nop)  STOPSIGNAL SIGQUIT
+/bin/sh -c #(nop)  EXPOSE 80
+/bin/sh -c #(nop)  ENTRYPOINT ["/docker-entrypoint.sh"]
+/bin/sh -c #(nop) COPY file:e57eef017a414ca793499729d80a7b9075790c9a804f930f1417e56d506970cf in /docker-entrypoint.d 
+/bin/sh -c #(nop) COPY file:36429cfeeb299f9913b84ea136b004be12fbe4bb4f975a977a3608044e8bfa91 in /docker-entrypoint.d 
+/bin/sh -c #(nop) COPY file:d4375883ed5db364232ccf781e8ad28514cd005edb385d43dbfb984f2c63edb9 in /docker-entrypoint.d 
+/bin/sh -c #(nop) COPY file:5c18272734349488bd0c94ec8d382c872c1a0a435cca13bd4671353d6021d2cb in /docker-entrypoint.d 
+/bin/sh -c #(nop) COPY file:7b307b62e82255f040c9812421a30090bf9abf3685f27b02d77fcca99f997911 in / 
+/bin/sh -c set -x     &amp;&amp; groupadd --system --gid 101 nginx     &amp;&amp; useradd --system --gid nginx --no-create-home --home /nonexistent --comment "nginx user" --shell /bin/false --uid 101 nginx     &amp;&amp; apt-get update     &amp;&amp; apt-get install --no-install-recommends --no-install-suggests -y gnupg1 ca-certificates     &amp;&amp;     NGINX_GPGKEY=573BFD6B3D8FBC641079A6ABABF5BD827BD9BF62;     NGINX_GPGKEY_PATH=/usr/share/keyrings/nginx-archive-keyring.gpg;     export GNUPGHOME="$(mktemp -d)";     found='';     for server in         hkp://keyserver.ubuntu.com:80         pgp.mit.edu     ; do         echo "Fetching GPG key $NGINX_GPGKEY from $server";         gpg1 --keyserver "$server" --keyserver-options timeout=10 --recv-keys "$NGINX_GPGKEY" &amp;&amp; found=yes &amp;&amp; break;     done;     test -z "$found" &amp;&amp; echo &gt;&amp;2 "error: failed to fetch GPG key $NGINX_GPGKEY" &amp;&amp; exit 1;     gpg1 --export "$NGINX_GPGKEY" &gt; "$NGINX_GPGKEY_PATH" ;     rm -rf "$GNUPGHOME";     apt-get remove --purge --auto-remove -y gnupg1 &amp;&amp; rm -rf /var/lib/apt/lists/*     &amp;&amp; dpkgArch="$(dpkg --print-architecture)"     &amp;&amp; nginxPackages="         nginx=${NGINX_VERSION}-${PKG_RELEASE}         nginx-module-xslt=${NGINX_VERSION}-${PKG_RELEASE}         nginx-module-geoip=${NGINX_VERSION}-${PKG_RELEASE}         nginx-module-image-filter=${NGINX_VERSION}-${PKG_RELEASE}         nginx-module-njs=${NGINX_VERSION}+${NJS_VERSION}-${PKG_RELEASE}     "     &amp;&amp; case "$dpkgArch" in         amd64|arm64)             echo "deb [signed-by=$NGINX_GPGKEY_PATH] https://nginx.org/packages/mainline/debian/ bookworm nginx" &gt;&gt; /etc/apt/sources.list.d/nginx.list             &amp;&amp; apt-get update             ;;         *)             echo "deb-src [signed-by=$NGINX_GPGKEY_PATH] https://nginx.org/packages/mainline/debian/ bookworm nginx" &gt;&gt; /etc/apt/sources.list.d/nginx.list                         &amp;&amp; tempDir="$(mktemp -d)"             &amp;&amp; chmod 777 "$tempDir"                         &amp;&amp; savedAptMark="$(apt-mark showmanual)"                         &amp;&amp; apt-get update             &amp;&amp; apt-get build-dep -y $nginxPackages             &amp;&amp; (                 cd "$tempDir"                 &amp;&amp; DEB_BUILD_OPTIONS="nocheck parallel=$(nproc)"                     apt-get source --compile $nginxPackages             )                         &amp;&amp; apt-mark showmanual | xargs apt-mark auto &gt; /dev/null             &amp;&amp; { [ -z "$savedAptMark" ] || apt-mark manual $savedAptMark; }                         &amp;&amp; ls -lAFh "$tempDir"             &amp;&amp; ( cd "$tempDir" &amp;&amp; dpkg-scanpackages . &gt; Packages )             &amp;&amp; grep '^Package: ' "$tempDir/Packages"             &amp;&amp; echo "deb [ trusted=yes ] file://$tempDir ./" &gt; /etc/apt/sources.list.d/temp.list             &amp;&amp; apt-get -o Acquire::GzipIndexes=false update             ;;     esac         &amp;&amp; apt-get install --no-install-recommends --no-install-suggests -y                         $nginxPackages                         gettext-base                         curl     &amp;&amp; apt-get remove --purge --auto-remove -y &amp;&amp; rm -rf /var/lib/apt/lists/* /etc/apt/sources.list.d/nginx.list         &amp;&amp; if [ -n "$tempDir" ]; then         apt-get purge -y --auto-remove         &amp;&amp; rm -rf "$tempDir" /etc/apt/sources.list.d/temp.list;     fi     &amp;&amp; ln -sf /dev/stdout /var/log/nginx/access.log     &amp;&amp; ln -sf /dev/stderr /var/log/nginx/error.log     &amp;&amp; mkdir /docker-entrypoint.d
+/bin/sh -c #(nop)  ENV PKG_RELEASE=1~bookworm
+/bin/sh -c #(nop)  ENV NJS_VERSION=0.7.12
+/bin/sh -c #(nop)  ENV NGINX_VERSION=1.25.1
+/bin/sh -c #(nop)  LABEL maintainer=NGINX Docker Maintainers &lt;docker-maint@nginx.com&gt;
+/bin/sh -c #(nop)  CMD ["bash"]
+/bin/sh -c #(nop) ADD file:ba1250b6ecd5dd09d4914189d72741c2817988994e7da514bf62be439a34bdb5 in / 
+ubuntu@VM-0-13-ubuntu:~/RCT$ 		
+		
+		</pre>		
 	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id929"></a>2.15.6. Nginx 配吹 autoindex on 出现 403 Forbidden</h3></div></div></div>
+		
+		<pre class="screen">
+		
+server {
+    listen       80;
+    listen       443 ssl;
+    server_name  sip.aigcsst.cn 139.9.54.211;
 
+    access_log  /dev/stdout;
+    error_log   /dev/stdout;
+
+    # RSA certificate
+    # certbot certonly --webroot -w /opt/nginx/html/ -d api.aigcsst.cn
+    ssl_certificate /etc/letsencrypt/live/aigcsst.cn/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/aigcsst.cn/privkey.pem;
+
+    location / {
+        root /usr/share/nginx/avaya;
+        autoindex on;
+    }
+}
+		
+		</pre>
+		<p>问题出在卷映射</p>
+		<pre class="screen">
+		
+"/opt/nginx/avaya:/usr/share/nginx/avaya:ro"
+改为
+"/opt/nginx/avaya:/usr/share/nginx/avaya"
+		
+		</pre>
+	</div>
 </div><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="docker.example.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="../podman/index.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">2.14. Docker Example </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 3 章 Podman</td></tr></table></div><script xmlns="">
 			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
 		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),

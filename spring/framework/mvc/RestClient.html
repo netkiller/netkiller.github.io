@@ -144,7 +144,7 @@ ResponseEntity&lt;List&gt; responseEntity = restClient.get()
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1054"></a>41.11.6. Timeout 超时设置</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="RestClient.Timeout"></a>41.11.6. Timeout 超时设置</h3></div></div></div>
 		
 		<pre class="programlisting">
 		
@@ -217,6 +217,40 @@ ResponseEntity&lt;List&gt; responseEntity = restClient.get()
         }
         return Optional.empty();
     }
+		
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="RestClient.upload"></a>41.11.8. 上传文件</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+public ResponseEntity&lt;String&gt; file(String key, String filepath) {
+
+        File file = new File(filepath);
+        
+        // 构建 Multipart 请求体
+        HttpEntity httpEntity = MultipartEntityBuilder.create()
+                .addBinaryBody("file", file)
+                .build();
+
+        RestClient restClient = RestClient.create();
+        ResponseEntity&lt;WeChatResponse&gt; weChatResponse = restClient.post()
+                .uri("https://qyapi.weixin.qq.com/cgi-bin/webhook/upload_media?key={key}&amp;type={type}", Map.of("key", key, "type", "file"))
+                .contentType(MediaType.MULTIPART_FORM_DATA)
+                .body(httpEntity::writeTo)
+                .retrieve()
+                .toEntity(WeChatResponse.class);
+        log.debug("file() =&gt; media_id=", weChatResponse.getBody().media_id());
+        FileMessage fileMessage = new FileMessage();
+        fileMessage.file = Map.of("media_id", weChatResponse.getBody().media_id());
+        Gson gson = new Gson();
+        String jsonString = gson.toJson(fileMessage);
+        log.debug(jsonString);
+
+        ResponseEntity&lt;String&gt; response = restClient.post().uri("https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key={key}", Map.of("key", key)).contentType(MediaType.APPLICATION_JSON).body(fileMessage).retrieve().toEntity(String.class);
+        return response;
+
+    }		
 		
 		</pre>
 	</div>

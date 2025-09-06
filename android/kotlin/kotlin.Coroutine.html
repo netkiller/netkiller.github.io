@@ -1,0 +1,418 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>27.10. 协程</title><link rel="stylesheet" type="text/css" href="../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="Android, Google Play" /><link rel="home" href="../index.html" title="Netkiller Android 手札" /><link rel="up" href="index.html" title="第 27 章 从 Java 到 Kotlin" /><link rel="prev" href="kotlin.Flow.html" title="27.9. Flow" /><link rel="next" href="../cloud.html" title="第 28 章 云服务" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
+		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">27.10. 协程</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="kotlin.Flow.html">上一页</a> </td><th width="60%" align="center">第 27 章 从 Java 到 Kotlin</th><td width="20%" align="right"> <a accesskey="n" href="../cloud.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="kotlin.Coroutine"></a>27.10. 协程</h2></div></div></div>
+		
+		<pre class="screen">
+		
+GlobeScope：全局范围，不会自动结束执行。
+MainScope：	主线程的作用域，全局范围
+lifecycleScope：生命周期范围，用于activity等有生命周期的组件，在onDestroy的时候会自动结束。
+viewModelScope：viewModel范围，用于ViewModel中，在ViewModel被回收时会自动结束		
+		
+		</pre>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="GlobalScope"></a>27.10.1. GlobalScope</h3></div></div></div>
+			
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1015"></a>27.10.1.1. DefaultDispatcher</h4></div></div></div>
+				
+				<p></p>
+				<pre class="programlisting">
+				
+GlobalScope.launch {
+    while (true) {
+        delay(1000)
+        println("每秒执行一次")
+    }
+}
+				
+				</pre>
+				<p></p>
+				<pre class="programlisting">
+				
+	GlobalScope.launch {
+        //GlobalScope开启协程：DefaultDispatcher-worker-1
+        Log.d(TAG, "GlobalScope开启协程：" + Thread.currentThread().name)
+		//子线程中此处不可以做UI操作
+		withContext(Dispatchers.Main){
+            Toast.makeText(this@MainActivity, "协程中切换线程", Toast.LENGTH_SHORT).show()
+        }
+    }				
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1016"></a>27.10.1.2. Dispatchers.Main</h4></div></div></div>
+				
+				<pre class="programlisting">
+				
+	GlobalScope.launch(Dispatchers.Main) {
+        	//GlobalScope开启协程：main
+            Log.d(TAG, "GlobalScope开启协程：" + Thread.currentThread().name)
+            //可以做UI操作
+            Toast.makeText(this@MainActivity, "GlobalScope开启协程", Toast.LENGTH_SHORT).show()
+    }				
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1017"></a>27.10.1.3. Dispatchers.IO</h4></div></div></div>
+				
+				<pre class="programlisting">
+				
+GlobalScope.launch(Dispatchers.IO) {
+    if (AndroidManager.Device.scanMicrophone() &amp;&amp; !State.usbMicrophone.get()) {
+        aigcSpeech.speaking("蓝牙麦克风连接")
+    }
+    Log.d(TAG, "Bluetooth connected")
+}				
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1018"></a>27.10.1.4. 手动开始协程</h4></div></div></div>
+				
+				<pre class="programlisting">
+				
+val job = GlobalScope.launch(start = CoroutineStart.LAZY) {
+
+    Log.w("执行在协程中...")
+
+    delay(1000L)
+
+    Log.w("执行完毕...")
+}
+
+
+job.start()				
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1019"></a>27.10.1.5. 取消协程</h4></div></div></div>
+				
+				<pre class="programlisting">
+				
+var job: Job = Job()
+
+...
+
+ GlobalScope.launch(job) {
+
+   Log.w("执行协程...")
+
+    delay(1000L)
+
+    Log.w("执行完毕...")
+}
+
+
+override fun onDestroy() {
+    job.cancel()
+    super.onDestroy()
+}				
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1020"></a>27.10.1.6. 完成回调</h4></div></div></div>
+				
+				<pre class="programlisting">
+				
+		val exceptionHandler = CoroutineExceptionHandler { coroutineContext, throwable -&gt;
+            Log.e(throwable.message ?: "Unkown Error")
+        }
+
+        val job = GlobalScope.launch(Dispatchers.Main + exceptionHandler) {
+            Log.w("执行协程...")
+
+            delay(1000L)
+
+            val num = 9/0
+
+            Log.w("协程执行完毕...")
+        }
+
+        job.invokeOnCompletion {
+            Log.w("完成或异常的回调")
+        }				
+				
+				</pre>
+			</div>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="MainScope"></a>27.10.2. MainScope</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+	MainScope().launch {
+            Log.w("执行协程")
+
+            val result = OtherTask {
+                async(Dispatchers.IO) {
+                    "netkiller"
+                }.await()
+            }
+
+            Log.w("程执行完毕 $result")
+    }
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="lifecycleScope"></a>27.10.3. lifecycleScope</h3></div></div></div>
+			
+			<p>lifecycleScope只能在Activity、Fragment中使用，会绑定Activity和Fragment的生命周期。使用的时候需要导</p>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1021"></a>27.10.3.1. launch</h4></div></div></div>
+				
+				<p>lifecycleScope默认主线程，可以通过withContext来指定线程</p>
+				<pre class="programlisting">
+				
+lifecycleScope.launch {
+    // do
+    withContext(Dispatchers.IO) {
+        // do
+    }
+}
+ 
+// or
+ 
+lifecycleScope.launch(Dispatchers.IO){
+    // do
+}
+ 
+// or
+ 
+lifecycleScope.launch {
+    whenResumed {
+        // do
+    }
+}
+ 
+// or
+ 
+lifecycleScope.launchWhenResumed {
+    // do
+}
+				
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1022"></a>27.10.3.2. launchWhenResumed</h4></div></div></div>
+				
+				<pre class="programlisting">
+				
+	lifecycleScope.launch{
+        
+        delay(1000L)
+        
+    }
+
+    lifecycleScope.launchWhenResumed {
+        
+        delay(3000L)
+        
+    }
+				
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1023"></a>27.10.3.3. 协程中串行任务</h4></div></div></div>
+				
+				<pre class="programlisting">
+			
+	private fun serialExecution() {
+        lifecycleScope.launch {
+            val startTime = System.currentTimeMillis()
+            val a = getDataA()
+            val b = getDataB()
+            val sum = a + b
+            //D/MainActivity: serialExecution: sum = 3，耗时：3008
+            Log.d(TAG, "serialExecution: sum = $sum，耗时：${System.currentTimeMillis() - startTime}")
+        }
+    }
+
+    private suspend fun getDataA(): Int {
+        delay(1000)
+        return 1
+    }
+
+    private suspend fun getDataB(): Int {
+        delay(2000)
+        return 2
+    }
+			
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1024"></a>27.10.3.4. 携程并行执行任务</h4></div></div></div>
+				
+				<pre class="programlisting">
+			
+private fun parallelExecution(){
+        lifecycleScope.launch {
+            val startTime = System.currentTimeMillis()
+            val a = lifecycleScope.async { getDataA() }
+            val b = lifecycleScope.async { getDataB() }
+            val sum = a.await() + b.await()
+            //D/MainActivity: parallelExecution: sum = 3，耗时：2009
+            Log.d(TAG, "parallelExecution: sum = $sum，耗时：${System.currentTimeMillis() - startTime}")
+        }
+    }
+    
+    private suspend fun getDataA(): Int {
+        delay(1000)
+        return 1
+    }
+
+    private suspend fun getDataB(): Int {
+        delay(2000)
+        return 2
+    }			
+			
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1025"></a>27.10.3.5. 取消携程</h4></div></div></div>
+				
+				<pre class="programlisting">
+			
+private var job: Job? = null
+    
+job = lifecycleScope.launch {
+    ...
+}
+job?.cancel()
+    			
+			
+				</pre>
+			</div>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1026"></a>27.10.4. </h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+CoroutineScope(Dispatchers.IO).launch {
+}			
+			
+			</pre>
+			
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="viewModelScope"></a>27.10.5. viewModelScope</h3></div></div></div>
+			
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="viewModelScope.await()"></a>27.10.5.1. await()</h4></div></div></div>
+				
+				<pre class="programlisting">
+				
+fun getMessageByViewModel() {
+    viewModelScope.launch {
+        val deferred = async(Dispatchers.IO) { getMessage("netkiller") }
+        mMessage.value = deferred.await()
+    }
+}				
+				
+				</pre>
+			</div>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1027"></a>27.10.6. 协程上下文与继承关系</h3></div></div></div>
+			
+			<p>协程嵌套时取消协程，GlobalScope与MainScope 并不会杯取消。</p>
+			<pre class="programlisting">
+			
+	val job = CoroutineScope(Dispatchers.Main).launch {
+
+	    async(Dispatchers.IO) {
+	        Log.w("协程async开始")
+	        delay(5000)
+	        Log.w("协程async执行完毕")
+	    }
+	
+	    launch {
+	        Log.w("协程launch开始")
+	        delay(2000)
+	        Log.w("协程launch执行完毕")
+	    }
+	
+	    GlobalScope.launch {
+	        Log.w("协程GlobalScope开始")
+	        delay(3000)
+	        Log.w("协程GlobalScope执行完毕")
+	    }
+	
+	    MainScope().launch {
+	        Log.w("协程MainScope开始")
+	        delay(4000)
+	        Log.w("协程MainScope执行完毕")
+	    }
+	
+	}
+
+    override fun onDestroy() {
+        super.onDestroy()
+        job.cancel()
+    }			
+			
+			</pre>
+			<p></p>
+			<pre class="programlisting">
+			
+	val job = CoroutineScope(Dispatchers.Main).launch {
+
+        async(Dispatchers.IO) {
+	        Log.w("协程async开始")
+	        delay(5000)
+	        Log.w("协程async执行完毕")
+	    }
+	
+	    launch {
+	        Log.w("协程launch开始")
+	        delay(2000)
+	        Log.w("协程launch执行完毕")
+	    }
+	
+	    GlobalScope.launch {
+	        Log.w("协程GlobalScope开始")
+	        delay(3000)
+	        Log.w("协程GlobalScope执行完毕")
+	    }
+
+        MainScope().launch(job!!) {
+            Log.w("协程MainScope开始")
+            delay(4000)
+            Log.w("协程MainScope执行完毕")
+        }
+
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        job.cancel()
+    } 			
+			
+			</pre>
+		</div>
+	</div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
+			window.changyan.api.config({
+			appid: 'cyvwjQUG3',
+			conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
+			});
+</script><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="kotlin.Flow.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="../cloud.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">27.9. Flow </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 28 章 云服务</td></tr></table></div><script xmlns="">
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+			ga('create', 'UA-11694057-1', 'auto');
+			ga('send', 'pageview');
+
+		</script><script xmlns="" async="async">
+			var _hmt = _hmt || [];
+			(function() {
+			var hm = document.createElement("script");
+			hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(hm, s);
+			})();
+</script><script xmlns="" async="async">
+			(function(){
+			var bp = document.createElement('script');
+			var curProtocol = window.location.protocol.split(':')[0];
+			if (curProtocol === 'https') {
+			bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+			}
+			else {
+			bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+			}
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(bp, s);
+			})();
+</script></body></html>

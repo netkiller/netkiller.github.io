@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>28.5. pypandoc</title><link rel="stylesheet" type="text/css" href="docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="docbook, latex, epub" /><link rel="home" href="index.html" title="Netkiller Docbook 手札" /><link rel="up" href="pandoc.html" title="第 28 章 pandoc - general markup converter" /><link rel="prev" href="pandoc.markdown.html" title="28.4. Markdown 转 Office 文档" /><link rel="next" href="hugo/index.html" title="第 29 章 Hugo" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
+		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">28.5. pypandoc</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="pandoc.markdown.html">上一页</a> </td><th width="60%" align="center">第 28 章 pandoc - general markup converter</th><td width="20%" align="right"> <a accesskey="n" href="hugo/index.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="pypandoc"></a>28.5. pypandoc</h2></div></div></div>
+		
+		<pre class="screen">
+		
+pip install pypandoc
+pip install pypandoc_binary		
+		
+		</pre>
+		<pre class="programlisting">
+		
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+##############################################
+# Home	: https://www.netkiller.cn
+# Author: Neo &lt;netkiller@msn.com&gt;
+# Upgrade: 2025-06-20
+##############################################
+import os.path
+
+try:
+    import uvicorn, logging
+    from typing import Union
+    from fastapi import FastAPI
+    from fastapi.params import Form
+    from fastapi.responses import FileResponse
+    import uuid
+    import pypandoc
+    # import os
+    # os.environ.setdefault('PYPANDOC_PANDOC', '/home/x/whatever/pandoc')
+except ImportError as err:
+    print("Import Error: %s" % (err))
+    exit()
+
+app = FastAPI()
+
+workdir = "/tmp/doc"
+if not os.path.exists(workdir):
+    os.makedirs(workdir)
+
+@app.get("/")
+def read_root():
+    return {"Hello": "World"}
+
+@app.post("/markdown/{appid}/{device}/word")
+async def word(markdown: str = Form()):
+
+    filename = uuid.uuid1()
+    input_file=f"/{workdir}/{filename}.md"
+    output_file = f"/{workdir}/{filename}.docx"
+    with open(input_file,'w') as file:
+        file.write(markdown)
+
+    pypandoc.convert_file(input_file, 'docx', format="markdown", outputfile=output_file)
+    # media_type = "application/msword"
+    media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    return FileResponse(output_file,media_type=media_type, filename=os.path.basename(output_file))
+
+@app.post("/markdown/{appid}/{device}/ppt")
+async def powerpoint(markdown: str = Form()):
+
+    filename = uuid.uuid1()
+    input_file=f"/{workdir}/{filename}.md"
+    output_file = f"/{workdir}/{filename}.pptx"
+    with open(input_file,'w') as file:
+        file.write(markdown)
+
+    pypandoc.convert_file(input_file, 'pptx', format="markdown", outputfile=output_file)
+    # media_type = "application/vnd.ms-powerpoint"
+    media_type = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+    return FileResponse(output_file,media_type=media_type, filename=os.path.basename(output_file))
+
+# Press the green button in the gutter to run the script.
+if __name__ == '__main__':
+    try:
+        # uvicorn.run('main:app', port=8000, reload=True)
+        uvicorn.run(app="main:app", host="0.0.0.0", port=8080, log_level="info")
+    except KeyboardInterrupt:
+        print("Crtl+C Pressed. Shutting down.")		
+		
+		</pre>
+		<p></p>
+		<pre class="screen">
+		
+uvicorn main:app --reload 		
+		
+		</pre>
+	</div><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="pandoc.markdown.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="pandoc.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="hugo/index.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">28.4. Markdown 转 Office 文档 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 29 章 Hugo</td></tr></table></div><script xmlns="">
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+			ga('create', 'UA-11694057-1', 'auto');
+			ga('send', 'pageview');
+
+		</script><script xmlns="" async="async">
+			var _hmt = _hmt || [];
+			(function() {
+			var hm = document.createElement("script");
+			hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(hm, s);
+			})();
+</script><script xmlns="" async="async">
+			(function(){
+			var bp = document.createElement('script');
+			var curProtocol = window.location.protocol.split(':')[0];
+			if (curProtocol === 'https') {
+			bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+			}
+			else {
+			bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+			}
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(bp, s);
+			})();
+</script></body></html>
