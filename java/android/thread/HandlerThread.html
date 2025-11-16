@@ -1,0 +1,371 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>115.3. HandlerThread</title><link rel="stylesheet" type="text/css" href="../../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><link rel="home" href="../../index.html" title="Netkiller Java 手札（版）" /><link rel="up" href="index.html" title="第 115 章 Android 多线程" /><link rel="prev" href="android.Handler.html" title="115.2. Handler" /><link rel="next" href="android.queue.html" title="115.4. 消息队列" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
+		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">115.3. HandlerThread</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="android.Handler.html">上一页</a> </td><th width="60%" align="center">第 115 章 Android 多线程</th><td width="20%" align="right"> <a accesskey="n" href="android.queue.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="HandlerThread"></a>115.3. HandlerThread</h2></div></div></div>
+		
+		<pre class="programlisting">
+		
+// 实例对象，参数为线程名字
+HandlerThread handlerThread = new HandlerThread("handlerThread");
+// 启动线程
+handlerThread.start();
+
+// 参数为 HandlerThread 内部的一个 looper
+    Handler handler = new Handler(handlerThread.getLooper()) {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+        }
+    };
+		
+		</pre>
+		<p>HandlerThread 与 Thread 有什么不同？</p>
+		<pre class="programlisting">
+		
+// HandlerThread 相当于下面代码
+new Thread () {
+    @Override
+    public void run() {
+        Looper.prepare();
+        Hnadler handler = new Handler();
+        Looper.loop();
+    } 
+}
+		
+		
+		</pre>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="Handler.post"></a>115.3.1. Handler post</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+		mHanderThread = new HandlerThread(TAG);
+        mHanderThread.start();
+        mHandler = new Handler(mHanderThread.getLooper());
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+
+
+            }
+        });
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="Handler.SendMessage"></a>115.3.2. 发送消息</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+// 步骤1：创建HandlerThread实例对象
+// 传入参数 = 线程名字，作用 = 标记该线程
+   HandlerThread mHandlerThread = new HandlerThread("handlerThread");
+
+// 步骤2：启动线程
+   mHandlerThread.start();
+
+// 步骤3：创建工作线程Handler &amp; 复写handleMessage（）
+// 作用：关联HandlerThread的Looper对象、实现消息处理操作 &amp; 与其他线程进行通信
+// 注：消息处理操作（HandlerMessage（））的执行线程 = mHandlerThread所创建的工作线程中执行
+  Handler workHandler = new Handler( mHandlerThread.getLooper() ) {
+            @Override
+            public boolean handleMessage(Message msg) {
+				switch (msg.what) {
+                    case DownloadThread.TYPE_START:
+                        Log.e(TAG, "TYPE_START");
+                        break;
+                    case DownloadThread.TYPE_FINISHED:
+                        Log.e(TAG, "TYPE_FINISHED");
+                        break;
+                    default:
+                        break;
+                }
+                return true;
+            }
+        });
+
+// 步骤4：使用工作线程Handler向工作线程的消息队列发送消息
+// 在工作线程中，当消息循环时取出对应消息 &amp; 在工作线程执行相关操作
+  // a. 定义要发送的消息
+  Message msg = Message.obtain();
+  msg.what = 2; //消息的标识
+  msg.obj = "B"; // 消息的存放
+  // b. 通过Handler发送消息到其绑定的消息队列
+  workHandler.sendMessage(msg);
+
+// 步骤5：结束线程，即停止线程的消息循环
+  mHandlerThread.quit();			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1876"></a>115.3.3. 完整例子</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+public class MainActivity extends AppCompatActivity {
+
+    Handler mainHandler,workHandler;
+    HandlerThread mHandlerThread;
+    TextView text;
+    Button button1,button2,button3;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        // 显示文本
+        text = (TextView) findViewById(R.id.text1);
+
+        // 创建与主线程关联的Handler
+        mainHandler = new Handler();
+
+        /**
+          * 步骤1：创建HandlerThread实例对象
+          * 传入参数 = 线程名字，作用 = 标记该线程
+          */
+        mHandlerThread = new HandlerThread("handlerThread");
+
+        /**
+         * 步骤2：启动线程
+         */
+        mHandlerThread.start();
+
+        /**
+         * 步骤3：创建工作线程Handler &amp; 复写handleMessage（）
+         * 作用：关联HandlerThread的Looper对象、实现消息处理操作 &amp; 与其他线程进行通信
+         * 注：消息处理操作（HandlerMessage（））的执行线程 = mHandlerThread所创建的工作线程中执行
+         */
+
+        workHandler = new Handler(mHandlerThread.getLooper()){
+            @Override
+            // 消息处理的操作
+            public void handleMessage(Message msg)
+            {
+                //设置了两种消息处理操作,通过msg来进行识别
+                switch(msg.what){
+                    // 消息1
+                    case 1:
+                        try {
+                            //延时操作
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        // 通过主线程Handler.post方法进行在主线程的UI更新操作
+                        mainHandler.post(new Runnable() {
+                            @Override
+                            public void run () {
+                                text.setText("我爱学习");
+                            }
+                        });
+                        break;
+
+                    // 消息2
+                    case 2:
+                        try {
+                            Thread.sleep(3000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        mainHandler.post(new Runnable() {
+                            @Override
+                            public void run () {
+                                text.setText("我不喜欢学习");
+                            }
+                        });
+                        break;
+                    default:
+                        break;
+                }
+            }
+        };
+
+        /**
+         * 步骤4：使用工作线程Handler向工作线程的消息队列发送消息
+         * 在工作线程中，当消息循环时取出对应消息 &amp; 在工作线程执行相关操作
+         */
+        // 点击Button1
+        button1 = (Button) findViewById(R.id.button1);
+        button1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                // 通过sendMessage（）发送
+                // a. 定义要发送的消息
+                Message msg = Message.obtain();
+                msg.what = 1; //消息的标识
+                msg.obj = "A"; // 消息的存放
+                // b. 通过Handler发送消息到其绑定的消息队列
+                workHandler.sendMessage(msg);
+            }
+        });
+
+        // 点击Button2
+        button2 = (Button) findViewById(R.id.button2);
+        button2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                // 通过sendMessage（）发送
+                // a. 定义要发送的消息
+                Message msg = Message.obtain();
+                msg.what = 2; //消息的标识
+                msg.obj = "B"; // 消息的存放
+                // b. 通过Handler发送消息到其绑定的消息队列
+                workHandler.sendMessage(msg);
+            }
+        });
+
+        // 点击Button3
+        // 作用：退出消息循环
+        button3 = (Button) findViewById(R.id.button3);
+        button3.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mHandlerThread.quit();
+            }
+        });
+
+    }
+    
+}			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1877"></a>115.3.4. 获取线程名称</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+HandlerThread handlerThread = new HandlerThread("MyHandlerThread");
+handlerThread.start();
+
+// 获取 HandlerThread 的 Looper 并创建 Handler
+Handler handler = new Handler(handlerThread.getLooper());
+
+// 获取线程名称
+String threadName = handlerThread.getName(); // "MyHandlerThread"			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="HandlerThread.post.sleep"></a>115.3.5. HandlerThread 队列</h3></div></div></div>
+			
+			<p></p>
+			<pre class="programlisting">
+			
+HandlerThread handerThread = new HandlerThread(TAG);
+        handerThread.start();
+        Handler handler = new Handler(handerThread.getLooper());
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+
+                try {
+                    Thread.sleep(10000);
+                    Log.d(TAG, "handerThread 1 " + handerThread.getThreadId());
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+
+            }
+        });
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+
+                try {
+                    Thread.sleep(1000);
+                    Log.d(TAG, "handerThread 2 " + handerThread.getThreadId());
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+
+            }
+        });
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                Log.d(TAG, "handerThread 3 " + handerThread.getThreadId());
+            }
+        });
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                Log.d(TAG, "handerThread 4 " + handerThread.getThreadId());
+            }
+        });			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1878"></a>115.3.6. Token 应用</h3></div></div></div>
+			
+			<p>Token 用来标识线程，通过 Token取消任务</p>
+			<pre class="programlisting">
+			
+// 发送带 Token 的延时任务
+handler.postDelayed(runnable, token, delayMillis);
+
+// 取消所有关联该 Token 的任务
+handler.removeCallbacksAndMessages(token);			
+			
+			</pre>
+			<p>使用 null 作为 Token：</p>
+			<pre class="programlisting">
+			
+handler.postDelayed(task, null, 2000); // 不推荐
+handler.removeCallbacksAndMessages(null); // 会取消所有未指定 Token 的任务
+			
+			</pre>
+			<p>混用 Token 和非 Token 方法：</p>
+			<pre class="programlisting">
+			
+handler.postDelayed(task1, 2000); // 未指定 Token
+handler.postDelayed(task2, TOKEN, 2000); // 指定 Token
+
+handler.removeCallbacksAndMessages(TOKEN); // 只取消 task2，不影响 task1				
+			
+			</pre>
+			<pre class="programlisting">
+			
+			
+			
+			</pre>
+		</div>
+	</div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
+			window.changyan.api.config({
+			appid: 'cyvwjQUG3',
+			conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
+			});
+</script><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="android.Handler.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="android.queue.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">115.2. Handler </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 115.4. 消息队列</td></tr></table></div><script xmlns="">
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+			ga('create', 'UA-11694057-1', 'auto');
+			ga('send', 'pageview');
+
+		</script><script xmlns="" async="async">
+			var _hmt = _hmt || [];
+			(function() {
+			var hm = document.createElement("script");
+			hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(hm, s);
+			})();
+</script><script xmlns="" async="async">
+			(function(){
+			var bp = document.createElement('script');
+			var curProtocol = window.location.protocol.split(':')[0];
+			if (curProtocol === 'https') {
+			bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+			}
+			else {
+			bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+			}
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(bp, s);
+			})();
+</script></body></html>

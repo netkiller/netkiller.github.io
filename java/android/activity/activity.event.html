@@ -1,0 +1,294 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>101.11. 自定义事件</title><link rel="stylesheet" type="text/css" href="../../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><link rel="home" href="../../index.html" title="Netkiller Java 手札（版）" /><link rel="up" href="index.html" title="第 101 章 Activity" /><link rel="prev" href="InputMethodManager.html" title="101.10. 软键盘控制" /><link rel="next" href="ch101s12.html" title="101.12. Res 资源" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
+		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">101.11. 自定义事件</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="InputMethodManager.html">上一页</a> </td><th width="60%" align="center">第 101 章 Activity</th><td width="20%" align="right"> <a accesskey="n" href="ch101s12.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="activity.event"></a>101.11. 自定义事件</h2></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1742"></a>101.11.1. 按钮点击事件</h3></div></div></div>
+			
+			<p>按钮点击自定义事件，增加防止连续点击逻辑</p>
+			<pre class="programlisting">
+			
+package cn.netkiller.view;
+
+import android.util.Log;
+import android.view.View;
+
+public abstract class CustomOnClickListener implements View.OnClickListener {
+    private static final String TAG = CustomOnClickListener.class.getSimpleName();
+    private long mLastClickTime;
+    private long timeInterval = 1000L;
+
+    public CustomOnClickListener() {
+
+    }
+
+    public CustomOnClickListener(long interval) {
+        this.timeInterval = interval;
+    }
+
+    @Override
+    public void onClick(View v) {
+        long nowTime = System.currentTimeMillis();
+        if (nowTime - mLastClickTime &gt; timeInterval) {
+            // 单次点击事件
+            onSingleClick(v);
+            mLastClickTime = nowTime;
+            Log.d(TAG, "onSingleClick");
+        } else {
+            // 快速点击事件
+            onFastClick();
+            Log.d(TAG, "onFastClick");
+        }
+    }
+
+    protected abstract void onSingleClick(View v);
+
+    protected abstract void onFastClick();
+
+}			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1743"></a>101.11.2. OnCheckedChangeListener</h3></div></div></div>
+			
+			<p></p>
+			<pre class="programlisting">
+			
+package cn.netkiller.view;
+
+import android.widget.CompoundButton;
+
+public abstract class CustomOnCheckedChangeListener implements CompoundButton.OnCheckedChangeListener {
+    @Override
+    public void onCheckedChanged(CompoundButton compoundButton, boolean status) {
+        if (!compoundButton.isPressed()) return;
+        if (status) {
+            on();
+        } else {
+            off();
+        }
+        onCheckedChanged(status);
+    }
+
+    protected abstract void on();
+
+    protected abstract void off();
+
+    protected abstract void onCheckedChanged(boolean status);
+}
+
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1744"></a>101.11.3. CustomOnItemSelectedListener</h3></div></div></div>
+			
+			<p>防止连续性点击</p>
+			<pre class="programlisting">
+			
+package cn.netkiller.view;
+
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
+import android.view.MenuItem;
+
+import androidx.annotation.NonNull;
+
+import com.google.android.material.navigation.NavigationView;
+
+public abstract class CustomOnItemSelectedListener implements NavigationView.OnNavigationItemSelectedListener {
+    private static final String TAG = CustomOnItemSelectedListener.class.getSimpleName();
+    private boolean isSelected = false;
+
+    @Override
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+        if (isSelected) {
+            Log.d(TAG, "连续点击");
+
+        } else {
+            isSelected = true;
+
+            new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+                public void run() {
+                    isSelected = false;
+                }
+            }, 1500);
+
+            onOnceNavigationItemSelected(item);
+
+            return true;
+        }
+        return false;
+    }
+
+    protected abstract void onOnceNavigationItemSelected(@NonNull MenuItem item);
+}
+
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1745"></a>101.11.4. CustomOnScrollListener</h3></div></div></div>
+			
+			<p></p>
+			<pre class="programlisting">
+			
+package cn.netkiller.view;
+
+import android.widget.AbsListView;
+
+public abstract class CustomOnScrollListener implements AbsListView.OnScrollListener {
+    private static final String TAG = CustomOnScrollListener.class.getSimpleName();
+    private final int getLastVisiblePosition = 0;
+    private final int lastVisiblePositionY = 0;
+    private int state = -1;
+    private boolean isLoading = false;
+    private int itemCount = 0;
+
+    public CustomOnScrollListener() {
+
+    }
+
+    public CustomOnScrollListener(int itemCount) {
+        this.itemCount = itemCount;
+
+    }
+
+    @Override
+    public void onScrollStateChanged(AbsListView absListView, int scrollState) {
+        state = scrollState;
+
+//        Log.d(TAG, "onScrollStateChanged " + scrollState);
+
+        if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_IDLE &amp;&amp; isLoading) {
+//            Log.e(TAG, "onScrollStateChanged: " + scrollState + " getLastVisiblePosition: " + absListView.getLastVisiblePosition() + " getCount: " + absListView.getCount() + " itemCount: " + itemCount);
+            onLoading();
+            isLoading = false;
+//            if (absListView.getLastVisiblePosition() == (absListView.getCount() - 1)) {
+//                itemCount = onLoading();
+//                Log.e(TAG, "onScrollStateChanged 滑动到底部 " + itemCount);
+//
+//            }
+        }
+    }
+
+    @Override
+//    public void onScroll(AbsListView absListView, int i, int i1, int i2) {
+    public void onScroll(AbsListView absListView, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+//        if (state == AbsListView.OnScrollListener.SCROLL_STATE_IDLE) {
+////        if (isLoading) {
+//        Log.d(TAG, "onScroll " + "firstVisibleItem:" + firstVisibleItem + ", visibleItemCount:" + visibleItemCount + ", totalItemCount:" + totalItemCount + " State: " + state);
+//            if (firstVisibleItem + visibleItemCount == totalItemCount &amp;&amp; totalItemCount &gt; 0) {
+//                Log.e(TAG, "onScroll 滑动到底部");
+//                Toast.makeText(absListView.getContext(), "数据加载中...", Toast.LENGTH_SHORT).show();
+//                onLoading();
+//                state = -1;
+//                isLoading = false;
+//            }
+//        }
+        isLoading = (totalItemCount == firstVisibleItem + visibleItemCount);
+        if (firstVisibleItem == 0) {
+            onRefresh();
+        }
+    }
+
+
+//    protected abstract void onDown();
+//
+//    protected abstract void onUp();
+
+    protected abstract void onRefresh();
+
+    protected abstract int onLoading();
+}
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1746"></a>101.11.5. CustomOnTabSelectedListener</h3></div></div></div>
+			
+			<p></p>
+			<pre class="programlisting">
+			
+package cn.netkiller.view;
+
+import android.util.Log;
+
+import com.google.android.material.tabs.TabLayout;
+
+public class CustomOnTabSelectedListener implements TabLayout.OnTabSelectedListener {
+    private static final String TAG = CustomOnTabSelectedListener.class.getSimpleName();
+    private final long timeInterval = 1000L;
+    private long lastClickTime;
+
+    @Override
+    public void onTabSelected(TabLayout.Tab tab) {
+        long nowTime = System.currentTimeMillis();
+        if (nowTime - lastClickTime &gt; timeInterval) {
+            // 单次点击事件
+            onSingleTabSelected(tab);
+            lastClickTime = nowTime;
+            Log.d(TAG, "onSingleTabSelected");
+        } else {
+            // 快速点击事件
+            onFastTabSelected(tab);
+            Log.d(TAG, "onFastTabSelected");
+        }
+    }
+
+    @Override
+    public void onTabUnselected(TabLayout.Tab tab) {
+
+    }
+
+    @Override
+    public void onTabReselected(TabLayout.Tab tab) {
+
+    }
+
+    protected void onSingleTabSelected(TabLayout.Tab tab) {
+        
+    }
+
+    protected void onFastTabSelected(TabLayout.Tab tab) {
+
+    }
+}
+
+			
+			</pre>
+		</div>
+	
+	</div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
+			window.changyan.api.config({
+			appid: 'cyvwjQUG3',
+			conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
+			});
+</script><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="InputMethodManager.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ch101s12.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">101.10. 软键盘控制 </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 101.12. Res 资源</td></tr></table></div><script xmlns="">
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+			ga('create', 'UA-11694057-1', 'auto');
+			ga('send', 'pageview');
+
+		</script><script xmlns="" async="async">
+			var _hmt = _hmt || [];
+			(function() {
+			var hm = document.createElement("script");
+			hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(hm, s);
+			})();
+</script><script xmlns="" async="async">
+			(function(){
+			var bp = document.createElement('script');
+			var curProtocol = window.location.protocol.split(':')[0];
+			if (curProtocol === 'https') {
+			bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+			}
+			else {
+			bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+			}
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(bp, s);
+			})();
+</script></body></html>

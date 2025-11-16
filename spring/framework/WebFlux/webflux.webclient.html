@@ -1082,7 +1082,7 @@ webClient.get()
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1109"></a>43.14.18. 解决 WebClient 截断 URI的问题</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="webclient.uri"></a>43.14.18. 解决 WebClient 截断 URI的问题</h3></div></div></div>
 		
 		<pre class="screen">
 		
@@ -1128,6 +1128,122 @@ https://prod-tingwu-paas-common-beijing.oss-cn-beijing.aliyuncs.com/tingwu/outpu
     }
 		
 		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="webclient.error"></a>43.14.19. 异常处理</h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1109"></a>43.14.19.1. 使用 onStatus() 处理 HTTP 响应异常（推荐）</h4></div></div></div>
+			
+			<p>针对特定 HTTP 状态码自定义处理逻辑，避免直接抛出异常。</p>
+			<p>WebClientResponseException：HTTP 响应状态码为 4xx 或 5xx 时抛出，包含响应状态码、 headers、响应体等信息。子类：HttpClientErrorException（4xx）、HttpServerErrorException（5xx）。</p>
+			<pre class="programlisting">
+			
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+import reactor.core.publisher.Mono;
+
+public class WebClientExceptionExample {
+    private final WebClient webClient = WebClient.create("https://api.example.com");
+
+    public Mono&lt;String&gt; fetchData() {
+        return webClient.get()
+                .uri("/data")
+                .retrieve()
+                // 处理 4xx 客户端错误
+                .onStatus(status -&gt; status.is4xxClientError(), response -&gt; {
+                    // 可获取响应体、状态码等信息
+                    return response.bodyToMono(String.class)
+                            .flatMap(body -&gt; Mono.error(
+                                    new RuntimeException("客户端错误: " + response.statusCode() + ", 响应体: " + body)
+                            ));
+                })
+                // 处理 5xx 服务端错误
+                .onStatus(status -&gt; status.is5xxServerError(), response -&gt; {
+                    return Mono.error(new RuntimeException("服务端错误: " + response.statusCode()));
+                })
+                .bodyToMono(String.class);
+    }
+}			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1110"></a>43.14.19.2. 使用 doOnError() 记录异常（不改变流的处理）</h4></div></div></div>
+			
+			<p>仅用于日志记录，不影响异常的传播（异常仍会向上抛出）。</p>
+			<pre class="programlisting">
+			
+public Mono&lt;String&gt; fetchData() {
+    return webClient.get()
+            .uri("/data")
+            .retrieve()
+            .bodyToMono(String.class)
+            .doOnError(WebClientResponseException.class, e -&gt; 
+                log.error("HTTP 错误: 状态码={}, 响应体={}", e.getStatusCode(), e.getResponseBodyAsString())
+            )
+            .doOnError(IOException.class, e -&gt; 
+                log.error("网络异常: {}", e.getMessage(), e)
+            );
+}			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1111"></a>43.14.19.3. 使用 onErrorResume() 捕获所有异常</h4></div></div></div>
+			
+			<p>对所有可能的异常统一处理（包括网络异常、解析异常等）。			</p>
+			<pre class="programlisting">
+			
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
+import java.io.IOException;
+
+public class WebClientExceptionExample {
+    public Mono&lt;String&gt; fetchData() {
+        return webClient.get()
+                .uri("/data")
+                .retrieve()
+                .bodyToMono(String.class)
+                // 捕获特定异常并返回默认值或转换异常
+                .onErrorResume(WebClientResponseException.class, e -&gt; {
+                    System.err.println("HTTP 错误: " + e.getStatusCode());
+                    return Mono.just("默认数据（因HTTP错误）"); // 返回默认值
+                })
+                .onErrorResume(IOException.class, e -&gt; {
+                    System.err.println("网络异常: " + e.getMessage());
+                    return Mono.error(new RuntimeException("网络连接失败，请重试", e)); // 转换异常
+                })
+                .onErrorResume(Exception.class, e -&gt; {
+                    System.err.println("其他异常: " + e.getMessage());
+                    return Mono.empty(); // 返回空结果
+                });
+    }
+}			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1112"></a>43.14.19.4. 同步调用时的异常处理（block() 场景）</h4></div></div></div>
+			
+			<p>如果使用 block() 将响应转为同步结果，需用 try-catch 捕获异常：</p>
+			<pre class="programlisting">
+			
+public String fetchDataSync() {
+    try {
+        return webClient.get()
+                .uri("/data")
+                .retrieve()
+                .bodyToMono(String.class)
+                .block(); // 同步阻塞获取结果
+    } catch (WebClientResponseException e) {
+        // 处理 HTTP 响应异常
+        log.error("HTTP 错误: {}", e.getStatusCode());
+        return "默认值";
+    } catch (Exception e) {
+        // 处理其他异常（网络、解析等）
+        log.error("调用失败", e);
+        throw new RuntimeException("服务调用异常", e);
+    }
+}			
+			
+			</pre>
+		</div>
 	</div>
 </div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
 			window.changyan.api.config({

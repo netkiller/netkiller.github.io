@@ -1,0 +1,349 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>16.3. HttpURLConnection</title><link rel="stylesheet" type="text/css" href="../../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><link rel="home" href="../../index.html" title="Netkiller Java 手札（版）" /><link rel="up" href="index.html" title="第 16 章 Network" /><link rel="prev" href="URLConnection.html" title="16.2. URLConnection" /><link rel="next" href="InetAddress.html" title="16.4. 获取IP地址何机器名" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
+		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">16.3. HttpURLConnection</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="URLConnection.html">上一页</a> </td><th width="60%" align="center">第 16 章 Network</th><td width="20%" align="right"> <a accesskey="n" href="InetAddress.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="HttpURLConnection"></a>16.3. HttpURLConnection</h2></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id932"></a>16.3.1. GET 请求</h3></div></div></div>
+			
+			<p>GET 请求</p>
+			<p>BufferedReader 方案</p>
+			<pre class="programlisting">
+			
+package cn.netkiller.test;
+
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
+@Data
+@Slf4j
+public class Test {
+
+
+    public static void main(String[] args) throws IOException {
+
+        try {
+            // 访问URL地址的
+            URL url = new URL("https://www.netkiller.cn/index.html");
+            // java.net.HttpURLConnection 网络访问对象
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            // 设置是否向HttpURLConnection输出
+            connection.setDoOutput(false);
+            // 设置是否从HttpUrlConnection读入
+            connection.setDoInput(true);
+            // 设置请求方式
+            connection.setRequestMethod("GET");
+            // 设置是否使用缓存
+            connection.setUseCaches(true);
+            // 否应该自动执行 HTTP 重定向
+            connection.setInstanceFollowRedirects(true);
+            // 设置超时时间
+            connection.setConnectTimeout(3000);
+            // 连接
+            connection.connect();
+            // 如果返回值正常，数据在网络中是以流的形式得到服务端返回的数据
+            String msg = "";
+            // 得到响应状态码的返回值
+            if (connection.getResponseCode() == 200) { // 正常响应
+                // 从流中读取响应信息
+                BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                String line = null;
+                while ((line = reader.readLine()) != null) { // 循环从流中读取
+                    msg += line + "\n";
+                }
+                reader.close(); // 关闭流
+            }
+            // 断开连接，释放资源
+            connection.disconnect();
+
+            // 显示响应结果
+            System.out.println(msg);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+}		
+			
+			</pre>
+			<p>ByteArrayOutputStream 方案</p>
+			<pre class="programlisting">
+			
+package cn.netkiller.test;
+
+import io.netty.handler.codec.http.HttpMethod;
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+
+@Data
+@Slf4j
+public class Test {
+
+
+    public static void main(String[] args) throws IOException {
+
+        try {
+            // 访问URL地址的
+            URL url = new URL("https://www.netkiller.cn/index.html");
+            // java.net.HttpURLConnection 网络访问对象
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            // 设置是否向HttpURLConnection输出
+            connection.setDoOutput(false);
+            // 设置是否从HttpUrlConnection读入
+            connection.setDoInput(true);
+            // 设置请求方式
+            connection.setRequestMethod(HttpMethod.GET.name());
+            // 设置是否使用缓存
+            connection.setUseCaches(true);
+            // 否应该自动执行 HTTP 重定向
+            connection.setInstanceFollowRedirects(true);
+            // 设置超时时间
+            connection.setConnectTimeout(3000);
+            connection.setReadTimeout(60000);
+            // 连接
+            connection.connect();
+            // 如果返回值正常，数据在网络中是以流的形式得到服务端返回的数据
+            String msg = "";
+
+            // 定义一个临时字节输出流
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            // 得到响应状态码的返回值
+            if (connection.getResponseCode() == 200) { // 正常响应
+                // 获取输入流
+                InputStream inputStream = connection.getInputStream();
+                try {
+                    // 开始读取数据
+                    byte[] buffer = new byte[256];
+                    int len = 0;
+                    while ((len = inputStream.read(buffer)) &gt; 0) {
+                        baos.write(buffer, 0, len);
+                    }
+                    msg = baos.toString(StandardCharsets.UTF_8);
+                } finally {
+                    // 关闭输入、输出流
+                    inputStream.close();
+                    baos.close();
+                }
+
+            }
+            // 断开连接，释放资源
+            connection.disconnect();
+
+            // 显示响应结果
+            System.out.println(msg);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+	}		
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id933"></a>16.3.2. POST 请求</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+package cn.netkiller.test;
+
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+
+@Data
+@Slf4j
+public class Test {
+
+
+    public static void main(String[] args) throws IOException {
+
+        try {
+            // 获取访问URL地址
+            URL url = new URL("https://www.netkiller.cn/test/");
+            // 创建HttpURLConnection对象
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            // POST 请求方式
+            connection.setRequestMethod("POST");
+            // 设置连接超时时间
+            connection.setConnectTimeout(3000);
+            // 设置是否向 HttpUrlConnection 输出，对于post请求，参数要放在 http 正文内，因此需要设为true，默认为false。
+            connection.setDoOutput(true);
+            // 设置是否从 HttpUrlConnection读入，默认为true
+            connection.setDoInput(true);
+            // 设置是否使用缓存
+            connection.setUseCaches(false);
+            // 设置此 HttpURLConnection 实例是否应该自动执行 HTTP 重定向
+            connection.setInstanceFollowRedirects(true);
+            // 设置使用标准编码 application/x-www-form-urlencoded 格式参数编码
+            connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+            // 添加 HTTP HEAD 中的一些参数。
+            connection.setRequestProperty("Connection", "Keep-Alive");
+            // 连接
+            connection.connect();
+            // POST 参数
+            String params = "username=neo&amp;password=netkiller";
+            OutputStream out = connection.getOutputStream();
+            out.write(params.getBytes());
+            out.flush();
+            out.close();
+            // 从连接中读取响应信息
+            String msg = "";
+            int code = connection.getResponseCode();
+            if (code == 200) {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    msg += line + "\n";
+                }
+                reader.close();
+            }
+            // 断开连接
+            connection.disconnect();
+
+            // 处理结果
+            System.out.println(msg);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+}			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id934"></a>16.3.3. POST JSON</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+package cn.netkiller.test;
+
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+
+@Data
+@Slf4j
+public class Test {
+    
+    public static void main(String[] args) throws IOException {
+
+        try {
+            // 获取访问URL地址
+            URL url = new URL("https://www.netkiller.cn/test/");
+            // 创建HttpURLConnection对象
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            // POST 请求方式
+            connection.setRequestMethod("POST");
+            // 设置连接超时时间
+            connection.setConnectTimeout(3000);
+            // 设置是否向 HttpUrlConnection 输出，对于post请求，参数要放在 http 正文内，因此需要设为true，默认为false。
+            connection.setDoOutput(true);
+            // 设置是否从 HttpUrlConnection读入，默认为true
+            connection.setDoInput(true);
+            // 设置是否使用缓存
+            connection.setUseCaches(false);
+            // 设置此 HttpURLConnection 实例是否应该自动执行 HTTP 重定向
+            connection.setInstanceFollowRedirects(true);
+            // 设置使用 JSON 编码 application/json 格式参数编码
+            connection.setRequestProperty("Content-Type", "application/json");
+            // 添加 HTTP HEAD 中的一些参数。
+            connection.setRequestProperty("Connection", "Keep-Alive");
+            // 连接
+            connection.connect();
+            // POST 参数
+            String jsonString = "{}";
+            OutputStream out = connection.getOutputStream();
+            out.write(jsonString.getBytes());
+            out.flush();
+            out.close();
+            // 从连接中读取响应信息
+            String msg = "";
+            int code = connection.getResponseCode();
+            if (code == 200) {
+                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+
+                String line;
+                while ((line = bufferedReader.readLine()) != null) {
+                    msg += line + "\n";
+                }
+                bufferedReader.close();
+            }
+            // 断开连接
+            connection.disconnect();
+
+            // 处理结果
+            System.out.println(msg);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+}			
+			
+			</pre>
+		</div>
+	</div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
+			window.changyan.api.config({
+			appid: 'cyvwjQUG3',
+			conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
+			});
+</script><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="URLConnection.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="InetAddress.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">16.2. URLConnection </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 16.4. 获取IP地址何机器名</td></tr></table></div><script xmlns="">
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+			ga('create', 'UA-11694057-1', 'auto');
+			ga('send', 'pageview');
+
+		</script><script xmlns="" async="async">
+			var _hmt = _hmt || [];
+			(function() {
+			var hm = document.createElement("script");
+			hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(hm, s);
+			})();
+</script><script xmlns="" async="async">
+			(function(){
+			var bp = document.createElement('script');
+			var curProtocol = window.location.protocol.split(':')[0];
+			if (curProtocol === 'https') {
+			bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+			}
+			else {
+			bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+			}
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(bp, s);
+			})();
+</script></body></html>

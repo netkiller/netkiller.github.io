@@ -144,7 +144,7 @@ ResponseEntity&lt;List&gt; responseEntity = restClient.get()
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1260"></a>66.11.6. Timeout 超时设置</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="RestClient.Timeout"></a>66.11.6. Timeout 超时设置</h3></div></div></div>
 		
 		<pre class="programlisting">
 		
@@ -220,7 +220,46 @@ ResponseEntity&lt;List&gt; responseEntity = restClient.get()
 		
 		</pre>
 	</div>
-</div><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="RestTemplate/index.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="faq/index.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">66.10. String boot with RestTemplate </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 67 章 FAQ</td></tr></table></div><script xmlns="">
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="RestClient.upload"></a>66.11.8. 上传文件</h3></div></div></div>
+		
+		<pre class="programlisting">
+		
+public ResponseEntity&lt;String&gt; file(String key, String filepath) {
+
+        File file = new File(filepath);
+        
+        // 构建 Multipart 请求体
+        HttpEntity httpEntity = MultipartEntityBuilder.create()
+                .addBinaryBody("file", file)
+                .build();
+
+        RestClient restClient = RestClient.create();
+        ResponseEntity&lt;WeChatResponse&gt; weChatResponse = restClient.post()
+                .uri("https://qyapi.weixin.qq.com/cgi-bin/webhook/upload_media?key={key}&amp;type={type}", Map.of("key", key, "type", "file"))
+                .contentType(MediaType.MULTIPART_FORM_DATA)
+                .body(httpEntity::writeTo)
+                .retrieve()
+                .toEntity(WeChatResponse.class);
+        log.debug("file() =&gt; media_id=", weChatResponse.getBody().media_id());
+        FileMessage fileMessage = new FileMessage();
+        fileMessage.file = Map.of("media_id", weChatResponse.getBody().media_id());
+        Gson gson = new Gson();
+        String jsonString = gson.toJson(fileMessage);
+        log.debug(jsonString);
+
+        ResponseEntity&lt;String&gt; response = restClient.post().uri("https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key={key}", Map.of("key", key)).contentType(MediaType.APPLICATION_JSON).body(fileMessage).retrieve().toEntity(String.class);
+        return response;
+
+    }		
+		
+		</pre>
+	</div>
+</div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
+			window.changyan.api.config({
+			appid: 'cyvwjQUG3',
+			conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
+			});
+</script><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="RestTemplate/index.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="faq/index.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">66.10. String boot with RestTemplate </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 67 章 FAQ</td></tr></table></div><script xmlns="">
 			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
 		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
 		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)

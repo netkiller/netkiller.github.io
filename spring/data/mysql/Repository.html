@@ -104,7 +104,7 @@ void delete(Iterable&lt;? extends T&gt; entities);		//删除一个实体的集�
 void deleteAll();								//删除所有实体,不用或慎用! 		
 			
 			</pre>
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1166"></a>48.6.2.1. 批量保存</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1169"></a>48.6.2.1. 批量保存</h4></div></div></div>
 				
 				<pre class="programlisting">
 				
@@ -122,7 +122,7 @@ void deleteAll();								//删除所有实体,不用或慎用!
 		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="PagingAndSortingRepository"></a>48.6.3. PagingAndSortingRepository</h3></div></div></div>
 			
 
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1167"></a>48.6.3.1. Pageable</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1170"></a>48.6.3.1. Pageable</h4></div></div></div>
 				
 				<p>接口实现 PagingAndSortingRepository</p>
 				<pre class="programlisting">
@@ -160,7 +160,7 @@ public interface GatherRepository extends PagingAndSortingRepository&lt;User, In
 				</pre>
 
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1168"></a>48.6.3.2. 解决 PagingAndSortingRepository 没有 save 等方法的问题</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1171"></a>48.6.3.2. 解决 PagingAndSortingRepository 没有 save 等方法的问题</h4></div></div></div>
 				
 				<p>如果 Repository 继承了 PagingAndSortingRepository 你会发
 					CrudRepository 中的 save 等方法不能使用了，我的解决方法是写两个 Repository
@@ -286,7 +286,7 @@ Spring提供了@PageableDefault帮助我们个性化的设置pageable的默认�
 	}
 		
 			</pre>
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1169"></a>48.6.4.1. 传 Boolean 参数</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1172"></a>48.6.4.1. 传 Boolean 参数</h4></div></div></div>
 				
 				<pre class="programlisting">
 			
@@ -680,7 +680,7 @@ curl -X 'GET' \
 				
 			</pre>
 
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1170"></a>48.6.16.1. PageRequest.of</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1173"></a>48.6.16.1. PageRequest.of</h4></div></div></div>
 				
 				<pre class="programlisting">
 				
@@ -730,7 +730,7 @@ List&lt;Fcoin&gt; fcoins = fcoinRepository.findByAirdrop(false, PageRequest.of(0
 			<p>@DynamicUpdate 只更新修改的字段</p>
 
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1171"></a>48.6.18. 继承已存在的 Repository</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1174"></a>48.6.18. 继承已存在的 Repository</h3></div></div></div>
 			
 			<pre class="programlisting">
 			
@@ -740,7 +740,7 @@ public interface MemberRepository extends JpaRepository&lt;User, Integer&gt;, Us
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1172"></a>48.6.19. 自定义返回字段</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1175"></a>48.6.19. 自定义返回字段</h3></div></div></div>
 			
 			<p>我们并不希望每次返回所有字段，JPA默认查询等价 “SELECT * FROM TABLE”</p>
 			<pre class="programlisting">
@@ -978,7 +978,103 @@ public class UserPersona implements Serializable {
 			
 			</pre>
 		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="JPA.Optional"></a>48.6.20. Optional</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+package payroll;
 
+import java.util.List;
+
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+class EmployeeController {
+
+  private final EmployeeRepository repository;
+
+  EmployeeController(EmployeeRepository repository) {
+    this.repository = repository;
+  }
+
+
+  // Aggregate root
+  // tag::get-aggregate-root[]
+  @GetMapping("/employees")
+  List&lt;Employee&gt; all() {
+    return repository.findAll();
+  }
+  // end::get-aggregate-root[]
+
+  @PostMapping("/employees")
+  Employee newEmployee(@RequestBody Employee newEmployee) {
+    return repository.save(newEmployee);
+  }
+
+  // Single item
+  
+  @GetMapping("/employees/{id}")
+  Employee one(@PathVariable Long id) {
+    
+    return repository.findById(id)
+      .orElseThrow(() -&gt; new EmployeeNotFoundException(id));
+  }
+
+  @PutMapping("/employees/{id}")
+  Employee replaceEmployee(@RequestBody Employee newEmployee, @PathVariable Long id) {
+    
+    return repository.findById(id)
+      .map(employee -&gt; {
+        employee.setName(newEmployee.getName());
+        employee.setRole(newEmployee.getRole());
+        return repository.save(employee);
+      })
+      .orElseGet(() -&gt; {
+        return repository.save(newEmployee);
+      });
+  }
+
+  @DeleteMapping("/employees/{id}")
+  void deleteEmployee(@PathVariable Long id) {
+    repository.deleteById(id);
+  }
+}			
+			
+			</pre>
+			<pre class="programlisting">
+			
+// 从数据库查询实体，返回 Optional
+Optional&lt;User&gt; userOptional = userRepository.findById(1L);
+
+// 方法1：使用 ifPresent() 处理存在的情况
+userOptional.ifPresent(user -&gt; {
+    // 处理用户存在的逻辑
+    System.out.println("找到用户: " + user.getName());
+});
+
+// 方法2：使用 orElse() 提供默认值
+User user = userOptional.orElse(new User("默认用户"));
+
+// 方法3：使用 orElseGet() 延迟提供默认值（更高效）
+User user = userOptional.orElseGet(() -&gt; new User("默认用户"));
+
+// 方法4：使用 orElseThrow() 当值不存在时抛出异常
+try {
+    User user = userOptional.orElseThrow(() -&gt; 
+        new ResourceNotFoundException("用户不存在，ID: 1"));
+} catch (ResourceNotFoundException e) {
+    // 处理异常
+    log.error(e.getMessage());
+}			
+			
+			</pre>
+		</div>
 	</div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
 			window.changyan.api.config({
 			appid: 'cyvwjQUG3',
