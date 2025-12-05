@@ -2,7 +2,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>73.2. 声明实体</title><link rel="stylesheet" type="text/css" href="../../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><link rel="home" href="../../index.html" title="Netkiller Java 手札（版）" /><link rel="up" href="index.html" title="第 73 章 Spring Data with MySQL" /><link rel="prev" href="index.html" title="第 73 章 Spring Data with MySQL" /><link rel="next" href="@ElementCollection.html" title="73.3. 映射集合属性" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
 		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">73.2. 声明实体</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><th width="60%" align="center">第 73 章 Spring Data with MySQL</th><td width="20%" align="right"> <a accesskey="n" href="@ElementCollection.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="@Entity"></a>73.2. 声明实体</h2></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1373"></a>73.2.1. @Entity 声明实体</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1372"></a>73.2.1. @Entity 声明实体</h3></div></div></div>
 			
 			<p>声明 Class 即是数据库表</p>
 			<pre class="programlisting">
@@ -306,6 +306,218 @@ CREATE TABLE `member` (
 		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="@Transient"></a>73.2.5. 非数据库字段</h3></div></div></div>
 			
 			<p>@Transient 该注解标注的字段不会被应射到数据库当中</p>
+			<p>settings 不会在数据库中出现，只用于JSON传值</p>
+			<pre class="programlisting">
+			
+	@Transient
+    private Map&lt;String, Object&gt; settings;			
+			
+			</pre>
+			<p>应用举例</p>
+			<pre class="programlisting">
+			
+package cn.netkiller.domain.device;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import lombok.Data;
+import org.hibernate.annotations.Comment;
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
+import org.springframework.format.annotation.DateTimeFormat;
+
+import java.io.Serial;
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.Map;
+
+@Entity
+@Table(
+//        uniqueConstraints = {@UniqueConstraint(columnNames = {"name", "business_id"})}
+//        indexes = {
+//        @Index(name = "key_device_unique", columnList = "name"),
+//        @Index(name = "key_device_unique", columnList = "business_id")
+//}
+)
+@DynamicUpdate
+@DynamicInsert
+@Data
+//@Builder
+@Comment("设备表")
+public class Device implements Serializable {
+    @Serial
+    public static final long serialVersionUID = 1L;
+    @Column(columnDefinition = "int unsigned")
+    @Comment("存储容量")
+    private final Integer capacity = null;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", unique = true, nullable = false, insertable = false, updatable = false, columnDefinition = "int unsigned")
+    @Comment("主键")
+    private Integer id;
+
+    @Column(nullable = false, insertable = true, updatable = true, length = 32)
+    @Comment("设备名称")
+    private String name;
+
+    @Column(unique = true, nullable = false, insertable = true, updatable = false, length = 32)
+    @Comment("序列号")
+    private String sn;
+
+    @Comment("型号")
+    @Column(length = 32)
+    private String model;
+
+    @Comment("固件版本")
+    @Column(length = 32)
+    private String fireware;
+
+    @Comment("软件版本")
+    @Column(length = 32)
+    private String version;
+
+//    @Column(columnDefinition = "int unsigned")
+//    @Comment("内存容量")
+//    private Integer memory;
+//
+//    @Comment("移动网络提供商")
+//    @Column(columnDefinition = "enum('中国移动','中国电信','中国联通','中国广电','其他') DEFAULT NULL")
+//    private String provider;
+
+//    @Comment("IMEI")
+//    @Column(length = 15)
+//    private String imei;
+//
+//    @Comment("IMSI(International Mobile Subscriber Identity)国际移动用户识别码")
+//    @Column(length = 15)
+//    private String imsi;
+//
+//    @Comment("MEID")
+//    @Column(length = 15)
+//    private String meid;
+//
+//    @Comment("ICCID")
+//    @Column(length = 20)
+//    private String iccid;
+
+    @Comment("品牌")
+    private String brand;
+
+    @Comment("CPU")
+    private String cpu;
+
+    @Comment("设备驱动")
+    private String device;
+
+    @Comment("显示屏")
+    private String display;
+
+    @Comment("设备标识")
+    private String fingerprint;
+
+    @Comment("硬件")
+    private String hardware;
+
+    @Comment("制造商")
+    private String manufacturer;
+
+    @Comment("产品")
+    private String product;
+
+    @Comment("App 版本")
+    @Column(length = 8)
+    private String app;
+
+    @Comment("企业微信群")
+//    @Column(length = 11, insertable = false, updatable = false)
+    @Column(length = 36)
+    private String weComGroup;
+
+    //    @Column(insertable = false, updatable = false, columnDefinition = "int unsigned DEFAULT '0'")
+    @Comment("微信小程序")
+    @Column(length = 11)
+    private String wechat;
+
+    @Comment("email")
+    @Column(length = 64)
+    private String email;
+
+    @Column(length = 32)
+    @Comment("手机号码")
+    private String mobile;
+
+    @Column(columnDefinition = "DATETIME DEFAULT NULL")
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    @Comment("到期时间")
+    private LocalDateTime expired;
+
+    @Column(nullable = false, updatable = false, columnDefinition = "enum('Y','N') DEFAULT 'N'")
+    @Comment("设备状态，Y=正常，N=禁用，冻结，description 会描述冻结原因")
+    private String status;
+
+    @Comment("设备状态原因")
+    @Column(nullable = false, updatable = false, columnDefinition = "enum('未激活','激活','禁用','冻结','过期','演示') DEFAULT '未激活'")
+    private String reason;
+
+    @Comment("设备状态描述")
+    private String description;
+
+    @Comment("设备状态描述")
+    private String wechatOpenId;
+
+    @Comment("密码")
+    @Column(length = 40)
+    private String password;
+
+//    @CreatedDate
+//    @Column(nullable = true, insertable = true, updatable = true)
+//    @Temporal(TemporalType.TIMESTAMP)
+//    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+//    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+//    @Comment("访问时间")
+//    private Date atime;
+
+    @Transient
+//    @JsonProperty
+//    @JsonInclude(JsonInclude.Include.ALWAYS)
+    private Map&lt;String, Object&gt; settings;
+
+    @Comment("设备归属")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "business_id", updatable = false)
+    @JsonIgnore
+    private Business business;
+
+    @Column(insertable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    //    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @Comment("创建时间")
+    private LocalDateTime ctime;
+
+    @Column(nullable = true, insertable = false, updatable = false, columnDefinition = "TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP")
+    //    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @Comment("修改时间")
+    private LocalDateTime mtime;
+
+    public Device() {
+
+    }
+
+//    @OneToOne(mappedBy = "device")
+//    private Consumer consumer;
+
+//    public enum Status{
+//        Y,N,TRUE,FLASE,ENABLED,DISABLED
+//    }
+//    public enum reason{
+//        "未激活","余额不足","禁用","正常"
+//    }
+}			
+			
+			</pre>
 		</div>
 		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="@Lob"></a>73.2.6. @Lob 注解属性将被持久化为 Blog 或 Clob 类型</h3></div></div></div>
 			
@@ -340,6 +552,7 @@ public String getContent() {
 
 		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="@Temporal"></a>73.2.8. @Temporal 日期定义</h3></div></div></div>
 			
+			<p>@Temporal 已经被废弃</p>
 			<pre class="programlisting">
 			
 @Entity
@@ -358,6 +571,15 @@ public class Article {
     @Temporal(TemporalType.TIMESTAMP)
     Date creationDateTime;
 }			
+			
+			</pre>
+			<p>@Temporal(TemporalType.DATE) 替换 private LocalDate birthday;</p>
+			<pre class="programlisting">
+			
+    @Comment("生日")
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    private LocalDate birthday;
 			
 			</pre>
 		</div>
@@ -383,7 +605,7 @@ public class Article {
 				
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1374"></a>73.2.9.2. 与时间日期有关的 hibernate 注解</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1373"></a>73.2.9.2. 与时间日期有关的 hibernate 注解</h4></div></div></div>
 				
 
 				<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="hibernate.time"></a>设置默认时间</h5></div></div></div>
@@ -431,7 +653,7 @@ org.hibernate.annotations.GenerationTime.ALWAYS
 					</pre>
 				</div>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1375"></a>73.2.9.3. 数据库级别的默认创建日期时间定义</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1374"></a>73.2.9.3. 数据库级别的默认创建日期时间定义</h4></div></div></div>
 				
 				<pre class="programlisting">
 				
@@ -483,7 +705,7 @@ CREATE TABLE `elasticsearch_trash` (
 				
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1376"></a>73.2.9.4. 数据库级别的默认创建日期与更新时间定义</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1375"></a>73.2.9.4. 数据库级别的默认创建日期与更新时间定义</h4></div></div></div>
 				
 				<p>需求是这样的：</p>
 				<p>1.
@@ -560,7 +782,7 @@ CREATE TABLE `elasticsearch_trash` (
 				
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1377"></a>73.2.9.5. 最后修改时间</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1376"></a>73.2.9.5. 最后修改时间</h4></div></div></div>
 				
 				<p>需求：记录最后一次修改时间</p>
 				<pre class="programlisting">
@@ -912,7 +1134,7 @@ SELECT * FROM test.statistics;
 				</pre>
 
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1378"></a>73.2.11.3. 数据库枚举类型</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1377"></a>73.2.11.3. 数据库枚举类型</h4></div></div></div>
 				
 				<p>在枚举中处理类型虽然可以适用于所有数据库，但有时我们希望适用数据库的枚举类型（例如MySQL），数据库中得枚举类型要比字符串效率更高
 				</p>
@@ -966,7 +1188,7 @@ CREATE TABLE `netkiller_trash` (
 				
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1379"></a>73.2.11.4. 自定义枚举value属性</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1378"></a>73.2.11.4. 自定义枚举value属性</h4></div></div></div>
 				
 				<pre class="programlisting">
 				
@@ -1311,9 +1533,119 @@ mysql&gt; select options from item_pool;
 1 row in set (0.00 sec)			
 			
 			</pre>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1379"></a>73.2.13.1. List 与 Json</h4></div></div></div>
+				
+				<p>用 MySQL json 类型保存 List 数据</p>
+				<pre class="programlisting">
+				
+	@Column(columnDefinition = "json")
+    private List&lt;String&gt; whitelist;
+				
+				
+				</pre>
+				<pre class="programlisting">
+				
+package cn.netkiller.domain.device;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.persistence.*;
+import lombok.Data;
+import org.hibernate.annotations.Comment;
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
+import org.springframework.format.annotation.DateTimeFormat;
+
+import java.io.Serial;
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Entity
+@Table
+@DynamicUpdate
+@DynamicInsert
+@Data
+@Comment("版本表")
+public class Version implements Serializable {
+    @Serial
+    public static final long serialVersionUID = 1L;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", unique = true, nullable = false, insertable = false, updatable = false, columnDefinition = "int unsigned")
+    @Comment("主键")
+    private Integer id;
+
+    @Comment("商户ID")
+    private String appId;
+
+    @Comment("型号")
+    @Column(length = 16)
+    private String model;
+
+    @Comment("版本")
+    @Column(length = 8)
+    private String version;
+
+    @Comment("下载地址")
+    private String url;
+
+    @Comment("编译类型")
+    @Column(columnDefinition = "enum('release','debug','dev','beta') DEFAULT 'debug'")
+    private String buildTypes;
+
+    @Comment("Checksum 校验")
+    @Column(length = 32)
+    private String md5sum;
+
+    @Comment("描述")
+    private String description;
+
+    @Comment("状态")
+    @Column(columnDefinition = "enum('Stable','Unstable','BUG','Gray') DEFAULT 'Stable'")
+    private String status;
+
+    @Comment("灰度白名单，状态为Gray时有效")
+    @Basic(fetch = FetchType.LAZY)
+    @Column(columnDefinition = "json")
+    private List&lt;String&gt; whitelist;
+
+    @Column(insertable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    @Comment("创建时间")
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    private LocalDateTime ctime;
+
+    @Column(nullable = true, insertable = false, updatable = false, columnDefinition = "TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP")
+    @Comment("修改时间")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime mtime;
+
+}
+				
+				
+				</pre>
+				<p>用法与普通 list 没有任何区别 version.getWhitelist().contains(device)</p>
+				<pre class="programlisting">
+				
+    public Optional&lt;Version&gt; version(String device, String buildTypes) {
+        Optional&lt;Version&gt; optional = versionRepository.findFirstByBuildTypesOrderByIdDesc(buildTypes);
+        return optional.map(version -&gt; {
+            if (version.getStatus().equals("Gray")) {
+                if (version.getWhitelist() == null) {
+                    return null;
+                } else if (!version.getWhitelist().contains(device)) {
+                    return null;
+                }
+            }
+            return version;
+        });
+    }
+				
+				
+				</pre>
+			</div>
 		</div>
-
-
 
 		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="@Embeddable"></a>73.2.14. 嵌入</h3></div></div></div>
 			
