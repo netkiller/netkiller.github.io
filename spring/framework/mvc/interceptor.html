@@ -4,7 +4,7 @@
 	
 	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="interceptor.session"></a>41.9.1. Session 拦截</h3></div></div></div>
 		
-		
+
 		<p>WebMvcConfigurerAdapter</p>
 		<pre class="programlisting">
 		
@@ -101,7 +101,7 @@ public @interface TokenVerification {
 		
 		
 		</pre>
-			<pre class="programlisting">
+		<pre class="programlisting">
 		
 package cn.netkiller.component;
 
@@ -173,7 +173,7 @@ public class TokenHandlerInterceptor implements HandlerInterceptor {
 		
 		
 		</pre>
-			<pre class="programlisting">
+		<pre class="programlisting">
 		
 package cn.netkiller.config;
 
@@ -277,16 +277,16 @@ https://www.netkiller.cn⏎
 		
 		</pre>
 	</div>
-	
+
 	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="Authorization.Bearer"></a>41.9.3. Authorization Bearer</h3></div></div></div>
 		
 		<pre class="programlisting">
 		
-package cn.aigcsst.config;
+package cn.netkiller.config;
 
 
-import cn.aigcsst.annotation.TokenPass;
-import cn.aigcsst.component.JwtTokenComponent;
+import cn.netkiller.annotation.TokenPass;
+import cn.netkiller.component.JwtTokenComponent;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -443,7 +443,53 @@ public class MyFilter implements Filter {
 		
 		
 		</pre>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="OncePerRequestFilter"></a>41.9.4.1. </h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="Filter.Cors"></a>41.9.4.1. Cors 过滤处理</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+package cn.netkiller.config;
+
+
+import jakarta.servlet.*;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
+import org.springframework.stereotype.Component;
+
+import java.io.IOException;
+
+@Component
+@Slf4j
+@Order(Ordered.HIGHEST_PRECEDENCE)
+public class GlobalCorsFilter implements Filter {
+
+    @Override
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+        HttpServletResponse res = (HttpServletResponse) response;
+        HttpServletRequest req = (HttpServletRequest) request;
+
+        // 配置CORS响应头
+        res.setHeader("Access-Control-Allow-Origin", "*");
+        res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        res.setHeader("Access-Control-Max-Age", "3600");
+
+        // 处理预检请求
+        if ("OPTIONS".equalsIgnoreCase(req.getMethod())) {
+            res.setStatus(HttpServletResponse.SC_OK);
+            return;
+        }
+
+        chain.doFilter(request, response);
+
+    }
+}			
+			
+			</pre>
+		</div>
+
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="OncePerRequestFilter"></a>41.9.4.2. </h4></div></div></div>
 			
 			<pre class="programlisting">
 			
@@ -489,6 +535,97 @@ public class CustomExceptionFilter extends OncePerRequestFilter {
     log.info(pathVars.toString());		
 		
 		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="webmvc.WebMvcConfigurer"></a>41.9.6. WebMvcConfigurer 拦截</h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="cors"></a>41.9.6.1. CORS 跨域请求</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+@Configuration
+public class CorsConfiguration
+{
+    @Bean
+    public WebMvcConfigurer corsConfigurer()
+    {
+        return new WebMvcConfigurerAdapter() {
+            @Override
+            public void addCorsMappings(CorsRegistry registry) {
+                registry.addMapping("/**");
+            }
+        };
+    }
+}		
+			
+			</pre>
+			<pre class="programlisting">
+			
+ 	@Bean
+    public WebMvcConfigurer corsConfigurer() {
+        return new WebMvcConfigurerAdapter() {
+            @Override
+            public void addCorsMappings(CorsRegistry registry) {
+                registry.addMapping("/**").allowedOrigins("*");
+            }
+        };
+    }			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1051"></a>41.9.6.2. Spring MVC CORS with WebMvcConfigurerAdapter</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+@Configuration
+@EnableWebMvc
+public class CorsConfiguration extends WebMvcConfigurerAdapter
+{
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/**").allowedMethods("GET", "POST");
+    }
+}
+			
+			</pre>
+			<pre class="programlisting">
+			
+@Configuration
+@EnableWebMvc
+public class AppConfig extends WebMvcConfigurerAdapter {
+	@Override
+	public void addCorsMappings(CorsRegistry registry) {
+	  registry.addMapping("/info/**")
+	   	  .allowedOrigins("http://localhost:8080", "http://localhost:8000")
+		  .allowedMethods("POST", "GET",  "PUT", "OPTIONS", "DELETE")
+		  .allowedHeaders("X-Auth-Token", "Content-Type")
+		  .exposedHeaders("custom-header1", "custom-header2")
+		  .allowCredentials(false)
+		  .maxAge(4800);
+	}
+}			
+			
+			</pre>
+			<pre class="programlisting">
+			
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        // 为所有路径配置跨域（也可指定具体路径如/token/**）
+        registry.addMapping("/**")
+                // 允许的跨域源（生产环境指定具体域名，如https://example.com）
+                .allowedOriginPatterns("*") // Spring 5.3+推荐用allowedOriginPatterns，替代allowedOrigins
+                // .allowedOrigins("https://example.com") // Spring 5.3前的写法，不支持*且携带Cookie时需指定具体域名
+                // 允许的请求方法
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                // 允许的请求头
+                .allowedHeaders("*")
+                // 允许携带Cookie
+                .allowCredentials(false)
+                // 预检请求缓存时间
+                .maxAge(3600);
+    }			
+			
+			</pre>
+		</div>
 	</div>
 </div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
 			window.changyan.api.config({

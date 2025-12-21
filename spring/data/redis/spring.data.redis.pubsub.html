@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>49.12. Redis Pub/Sub</title><link rel="stylesheet" type="text/css" href="../../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config" /><link rel="home" href="../../index.html" title="Netkiller Spring 手札" /><link rel="up" href="index.html" title="第 49 章 Spring Data with Redis" /><link rel="prev" href="RedisRepository.html" title="49.11. Spring Data Redis - Repository Examples" /><link rel="next" href="CacheService.html" title="49.13. CacheService" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
+		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">49.12. Redis Pub/Sub</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="RedisRepository.html">上一页</a> </td><th width="60%" align="center">第 49 章 Spring Data with Redis</th><td width="20%" align="right"> <a accesskey="n" href="CacheService.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="spring.data.redis.pubsub"></a>49.12. Redis Pub/Sub</h2></div></div></div>
+		
+		<p>Redis Pub/Sub 基于以下核心角色：</p>
+		<pre class="screen">
+		
+发布者（Publisher）：发送消息到指定频道（Channel）。
+订阅者（Subscriber）：订阅一个或多个频道，接收频道中的消息。
+频道（Channel）：消息的传输媒介，发布者向频道发送消息，订阅者从频道接收消息。		
+		
+		</pre>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1257"></a>49.12.1. MessageListener 方案</h3></div></div></div>
+			
+			<p>配置 Redis</p>
+			<pre class="programlisting">
+			
+import org.springframework.data.redis.listener.ChannelTopic;
+import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
+
+@Configuration
+public class RedisConfig {
+
+    @Bean
+    public RedisMessageListenerContainer redisMessageListenerContainer(
+            RedisConnectionFactory connectionFactory,
+            RedisMessageListener redisMessageListener) {
+        RedisMessageListenerContainer container = new RedisMessageListenerContainer();
+        container.setConnectionFactory(connectionFactory);
+        
+        // 订阅 "my-channel" 频道
+        container.addMessageListener(redisMessageListener, new ChannelTopic("my-channel"));
+        
+        return container;
+    }
+}			
+			
+			</pre>
+			<p>使用 PatternTopic("*") 订阅所有频道</p>
+			<pre class="programlisting">
+			
+        container.addMessageListener(redisMessageListener, new PatternTopic("*"));			
+			
+			</pre>
+			<pre class="programlisting">
+			
+import org.springframework.data.redis.connection.Message;
+import org.springframework.data.redis.connection.MessageListener;
+import org.springframework.stereotype.Component;
+
+@Component
+public class RedisMessageListener implements MessageListener {
+
+    @Override
+    public void onMessage(Message message, byte[] pattern) {
+        // 解析消息内容
+        String channel = new String(message.getChannel());
+        String messageBody = new String(message.getBody());
+        System.out.println("接收到消息：频道=" + channel + "，内容=" + messageBody);
+    }
+}			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1262"></a>49.12.2. @RedisListener 注解方案</h3></div></div></div>
+			
+
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1258"></a>49.12.2.1. 配置 Redis 消息监听器容器</h4></div></div></div>
+				
+				<pre class="programlisting">
+			
+package cn.netkiller.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.listener.RedisMessageListenerContainer;
+import org.springframework.integration.redis.util.RedisLockRegistry;
+
+@Configuration
+public class RedisConfiguration {
+    @Bean
+    public RedisLockRegistry redisLockRegistry(RedisConnectionFactory redisConnectionFactory) {
+        return new RedisLockRegistry(redisConnectionFactory, "lock", 300000L);
+    }
+
+    @Bean
+    public RedisMessageListenerContainer redisMessageListenerContainer(RedisConnectionFactory connectionFactory) {
+        RedisMessageListenerContainer container = new RedisMessageListenerContainer();
+        container.setConnectionFactory(connectionFactory);
+        return container;
+    }
+}
+			
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1259"></a>49.12.2.2. 订阅者（Subscriber）：订阅一个或多个频道，接收频道中的消息。</h4></div></div></div>
+				
+				<pre class="programlisting">
+				
+import org.springframework.data.redis.listener.annotation.RedisListener;
+import org.springframework.stereotype.Component;
+
+@Component
+public class RedisMessageListener {
+
+    // 订阅单个频道
+    @RedisListener(channel = "my-channel")
+    public void onMessage(String message) {
+        System.out.println("接收到消息：" + message);
+    }
+
+    // 订阅多个频道
+    @RedisListener(channels = {"channel1", "channel2"})
+    public void onMultiChannelMessage(String message) {
+        System.out.println("多频道消息：" + message);
+    }
+
+    // 订阅匹配模式的频道（如以 "user-" 开头的所有频道）
+    @RedisListener(pattern = "user-*")
+    public void onPatternMessage(String message) {
+        System.out.println("模式匹配消息：" + message);
+    }
+}				
+				
+				</pre>
+				<p>使用通配符订阅频道</p>
+				<pre class="programlisting">
+				
+import org.springframework.data.redis.listener.annotation.RedisListener;
+import org.springframework.stereotype.Component;
+
+@Component
+public class RedisAnnotationListener {
+
+    // 注解方式订阅所有频道
+    @RedisListener(pattern = "*")
+    public void onAllChannelMessage(String message, String channel) {
+        System.out.println("注解方式接收：频道=" + channel + "，内容=" + message);
+    }
+}				
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1260"></a>49.12.2.3. 发布者（Publisher）：发送消息到指定频道（Channel）</h4></div></div></div>
+				
+				<pre class="programlisting">
+				
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.stereotype.Component;
+
+@Component
+public class RedisMessagePublisher {
+
+    private final StringRedisTemplate stringRedisTemplate;
+
+    public RedisMessagePublisher(StringRedisTemplate stringRedisTemplate) {
+        this.stringRedisTemplate = stringRedisTemplate;
+    }
+
+    // 发布消息到指定频道
+    public void publish(String channel, String message) {
+        stringRedisTemplate.convertAndSend(channel, message);
+        System.out.println("发布消息：频道=" + channel + "，内容=" + message);
+    }
+}
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1261"></a>49.12.2.4. 测试演示</h4></div></div></div>
+				
+				<p></p>
+				<pre class="programlisting">
+				
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class RedisPubSubController {
+
+    private final RedisMessagePublisher publisher;
+
+    public RedisPubSubController(RedisMessagePublisher publisher) {
+        this.publisher = publisher;
+    }
+
+    // 访问 http://localhost:8080/publish/my-channel/hello 测试发布消息
+    @GetMapping("/publish/{channel}/{message}")
+    public String publish(@PathVariable String channel, @PathVariable String message) {
+        publisher.publish(channel, message);
+        return "消息已发布：频道=" + channel + "，内容=" + message;
+    }
+}			
+				
+				</pre>
+			</div>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1263"></a>49.12.3. 线程池</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+package cn.netkiller.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.listener.RedisMessageListenerContainer;
+import org.springframework.integration.redis.util.RedisLockRegistry;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+
+@Configuration
+public class RedisConfiguration {
+    @Bean
+    public RedisLockRegistry redisLockRegistry(RedisConnectionFactory redisConnectionFactory) {
+        return new RedisLockRegistry(redisConnectionFactory, "lock", 300000L);
+    }
+
+    @Bean
+    public RedisMessageListenerContainer redisMessageListenerContainer(RedisConnectionFactory connectionFactory) {
+        RedisMessageListenerContainer container = new RedisMessageListenerContainer();
+        container.setConnectionFactory(connectionFactory);
+
+        // 配置线程池
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setThreadNamePrefix("RedisMessageListenerContainer-");
+        executor.setThreadGroupName("Redis");
+        executor.setCorePoolSize(5);
+        executor.setMaxPoolSize(10);
+        executor.setQueueCapacity(25);
+        executor.initialize();
+        container.setTaskExecutor(executor);
+
+        return container;
+    }
+}
+			
+			
+			</pre>
+		</div>
+		
+	</div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
+			window.changyan.api.config({
+			appid: 'cyvwjQUG3',
+			conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
+			});
+</script><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="RedisRepository.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="CacheService.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">49.11. Spring Data Redis - Repository Examples </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 49.13. CacheService</td></tr></table></div><script xmlns="">
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+			ga('create', 'UA-11694057-1', 'auto');
+			ga('send', 'pageview');
+
+		</script><script xmlns="" async="async">
+			var _hmt = _hmt || [];
+			(function() {
+			var hm = document.createElement("script");
+			hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(hm, s);
+			})();
+</script><script xmlns="" async="async">
+			(function(){
+			var bp = document.createElement('script');
+			var curProtocol = window.location.protocol.split(':')[0];
+			if (curProtocol === 'https') {
+			bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+			}
+			else {
+			bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+			}
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(bp, s);
+			})();
+</script></body></html>
