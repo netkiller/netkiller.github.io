@@ -70,7 +70,7 @@ public interface PersonRepository extends JpaRepository&lt;Person, Long&gt; {
 		</div>
 		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="Query.nativeQuery"></a>73.8.3. 原生 SQL 操作</h3></div></div></div>
 			
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1420"></a>73.8.3.1. 查询</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1421"></a>73.8.3.1. 查询</h4></div></div></div>
 				
 
 				<pre class="programlisting">
@@ -83,7 +83,7 @@ public interface UserRepository extends JpaRepository&lt;User, Long&gt; {
 				
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1421"></a>73.8.3.2. 忽略插入</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1422"></a>73.8.3.2. 忽略插入</h4></div></div></div>
 				
 				<p>insert ignore</p>
 				<pre class="programlisting">
@@ -293,7 +293,245 @@ public interface TransactionHistoryRepository extends CrudRepository&lt;Transact
 				
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="返回指定字段"></a>73.8.5. 返回指定字段</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1423"></a>73.8.5. 自定义返回字段</h3></div></div></div>
+			
+			<p>我们并不希望每次返回所有字段，JPA默认查询等价 “SELECT * FROM TABLE”</p>
+			<pre class="programlisting">
+			
+package cn.netkiller.repository.model;
+
+public interface PictureGroupList {
+    Integer getId();
+
+    String getImage();
+
+    String getThumbnail();
+
+    String getAudio();
+
+    String getStory();
+}
+
+    public Iterable&lt;PictureGroupList&gt; findByPictureGroupId(int pictureGroupId) {
+        return pictureRepository.findByPictureGroupId(pictureGroupId);
+    }			
+			
+			</pre>
+			<pre class="programlisting">
+			
+package cn.netkiller.domain;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import lombok.Data;
+import org.hibernate.annotations.Comment;
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
+
+import java.io.Serializable;
+
+@Entity
+@Table(uniqueConstraints = {@UniqueConstraint(name = "UK_device_hobby", columnNames = {"device_id", "hobby"})})
+@DynamicUpdate
+@DynamicInsert
+@Data
+@Comment("用户画像")
+public class UserPersona implements Serializable {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", unique = true, nullable = false, insertable = false, updatable = false, columnDefinition = "int unsigned")
+    @Comment("主键")
+    private Integer id;
+
+    @ManyToOne
+    @Comment("设备")
+    @JoinColumn(name = "device_id", unique = false, nullable = false, insertable = true, updatable = false)
+    @JsonIgnore
+    private Device device;
+
+    @Comment("兴趣爱好")
+    private String hobby;
+
+    @Comment("权重")
+    private Integer weight;
+
+    public interface UserPersonaNativeQuery {
+        // String getId();
+
+        String getHobby();
+
+        String getWeight();
+    }
+}
+			
+			
+			</pre>
+			<p>解放方法是，定一个接口 UserPersonaNativeQuery</p>
+			<pre class="programlisting">
+			
+package cn.netkiller.repository;
+
+import cn.netkiller.domain.UserPersona;
+import jakarta.transaction.Transactional;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface UserPersonaRepository extends CrudRepository&lt;UserPersona, Integer&gt; {
+    @Transactional
+    @Modifying
+    @Query(nativeQuery = true, value = "INSERT INTO user_persona (device_id, hobby,weight) VALUES ((SELECT id FROM device where sn=:device) , :hobby, 1) ON DUPLICATE KEY UPDATE weight = weight + 1;")
+    int updateUserPersona(@Param("device") String device, @Param("hobby") String hobby);
+
+    List&lt;UserPersona.UserPersonaNativeQuery&gt; findByDeviceId(Integer id);
+}
+			
+			</pre>
+			<p>在仓库中指定该接口</p>
+			<pre class="programlisting">
+			
+[
+    {
+      "weight": "10",
+      "hobby": "小朋友"
+    },
+    {
+      "weight": "10",
+      "hobby": "妈妈"
+    },
+    {
+      "weight": "10",
+      "hobby": "自行车"
+    },
+    {
+      "weight": "5",
+      "hobby": "校园"
+    },
+    {
+      "weight": "5",
+      "hobby": "欢声笑语"
+    },
+    {
+      "weight": "6",
+      "hobby": "雪景"
+    },
+    {
+      "weight": "4",
+      "hobby": "皮筋"
+    },
+    {
+      "weight": "4",
+      "hobby": "同学们"
+    },
+    {
+      "weight": "4",
+      "hobby": "爬杆"
+    },
+    {
+      "weight": "4",
+      "hobby": "女同学"
+    },
+    {
+      "weight": "4",
+      "hobby": "羽毛球"
+    },
+    {
+      "weight": "4",
+      "hobby": "歌曲"
+    },
+    {
+      "weight": "1",
+      "hobby": "冰雪"
+    },
+    {
+      "weight": "1",
+      "hobby": "包饺子"
+    },
+    {
+      "weight": "1",
+      "hobby": "哈尔滨"
+    },
+    {
+      "weight": "1",
+      "hobby": "冻梨"
+    },
+    {
+      "weight": "1",
+      "hobby": "冰雕"
+    }
+  ]			
+			
+			</pre>
+			<p>@ManyToOne 字段的巧妙处理，正常情况 @ManyToOne
+				会返回一个对象，如果我们返回List列表，这个对象就会重复出现，首先使用 @JsonIgnore 将其屏蔽，然后创建两个方法
+				private void setDeviceId(Integer deviceId) 和 private Integer
+				getDeviceId()
+			</p>
+			<pre class="programlisting">
+			
+package cn.netkiller.domain;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import lombok.Data;
+import org.hibernate.annotations.Comment;
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
+
+import java.io.Serializable;
+
+@Entity
+@Table(uniqueConstraints = {@UniqueConstraint(name = "UK_device_hobby", columnNames = {"device_id", "hobby"})})
+@DynamicUpdate
+@DynamicInsert
+@Data
+@Comment("用户画像")
+public class UserPersona implements Serializable {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", unique = true, nullable = false, insertable = false, updatable = false, columnDefinition = "int unsigned")
+    @Comment("主键")
+    private Integer id;
+
+    @ManyToOne
+    @Comment("设备")
+    @JoinColumn(name = "device_id", unique = false, nullable = false, insertable = true, updatable = false)
+    @JsonIgnore
+    private Device device;
+
+    @Comment("兴趣爱好")
+    private String hobby;
+
+    @Comment("权重")
+    private Integer weight;
+
+    private void setDeviceId(Integer deviceId) {
+        this.setDevice(Device.builder().id(deviceId).build());
+    }
+
+    private Integer getDeviceId() {
+        return this.getDevice().getId();
+    }
+
+    public interface UserPersonaNativeQuery {
+        String getId();
+
+        String getHobby();
+
+        Integer getWeight();
+
+        Integer getDeviceId();
+    }
+}
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="返回指定字段"></a>73.8.6. 返回指定字段</h3></div></div></div>
 			
 			<p>通过实体返回数据有时结果集非常庞大，可能会影响性能，这时我们只需要返回指定字段即可。</p>
 			<pre class="programlisting">
@@ -308,8 +546,34 @@ public List&lt;Object&gt; getCustomField();
 public List&lt;Map&lt;String, Object&gt;&gt; getCustomField();			
 			
 			</pre>
+			<pre class="programlisting">
+			
+package cn.netkiller.repository;
+
+
+import cn.netkiller.domain.meeting.Token;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.Map;
+
+@Repository
+public interface TokenRepository extends CrudRepository&lt;Token, Integer&gt; {
+    @Query(value = "SELECT sum(completion_tokens) as completion_tokens, sum(prompt_tokens) as prompt_tokens,sum(total_tokens) as total_tokens FROM token where YEAR(ctime) = YEAR(CURDATE()) AND MONTH(ctime) = MONTH(CURDATE())", nativeQuery = true)
+    Map&lt;String, Object&gt; monitorToken();
+}			
+			
+			</pre>
+			<p>nativeQuery</p>
+			<pre class="programlisting">
+			
+    @Query(value = "SELECT d.reason,count(1) as count FROM Device d group by d.reason", nativeQuery = true)
+    List&lt;Map&lt;String, Object&gt;&gt; monitorDevice();			
+			
+			</pre>			
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="返回指定的模型"></a>73.8.6. 返回指定的模型</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="返回指定的模型"></a>73.8.7. 返回指定的模型</h3></div></div></div>
 			
 			<p>临时写一个新的模型</p>
 			<pre class="programlisting">
@@ -341,7 +605,7 @@ public List&lt;MyModel&gt; getAllRecord();
 			</pre>
 
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="通过定义接口返回指定字段"></a>73.8.7. 通过定义接口，返回指定字段</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="通过定义接口返回指定字段"></a>73.8.8. 通过定义接口，返回指定字段</h3></div></div></div>
 			
 			<pre class="programlisting">
 			
@@ -413,7 +677,7 @@ public interface DiscoveryPictureGroup {
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1425"></a>73.8.8. 修改返回数据</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1427"></a>73.8.9. 修改返回数据</h3></div></div></div>
 			
 			<pre class="programlisting">
 			
@@ -435,7 +699,7 @@ public interface DiscoveryPictureGroup {
     }			
 			
 			</pre>
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1422"></a>73.8.8.1. @Query 与 @ManyToOne</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1424"></a>73.8.9.1. @Query 与 @ManyToOne</h4></div></div></div>
 				
 				<pre class="programlisting">
 			
@@ -705,7 +969,7 @@ public interface FollowRepository extends CrudRepository&lt;Follow, Integer&gt; 
 				</p>
 				<p>两种写法结果相同</p>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="Query.Collection"></a>73.8.8.2. Collection</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="Query.Collection"></a>73.8.9.2. Collection</h4></div></div></div>
 				
 				<p>返回集合</p>
 				<pre class="programlisting">
@@ -723,7 +987,7 @@ List&lt;User&gt; findUserByNameList(@Param("names") Collection&lt;String&gt; nam
 				</pre>
 			</div>
 
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="Sort"></a>73.8.8.3. Sort</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="Sort"></a>73.8.9.3. Sort</h4></div></div></div>
 				
 				<pre class="programlisting">
 		
@@ -732,7 +996,7 @@ List&lt;User&gt; findUserByNameList(@Param("names") Collection&lt;String&gt; nam
 		
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1423"></a>73.8.8.4. 更新数据，返回值</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1425"></a>73.8.9.4. 更新数据，返回值</h4></div></div></div>
 				
 				<p>返回 0 表示更新失败，返回 1 表示更新成功</p>
 				<pre class="programlisting">
@@ -743,7 +1007,7 @@ List&lt;User&gt; findUserByNameList(@Param("names") Collection&lt;String&gt; nam
 			
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="@Lock"></a>73.8.8.5. 锁 @Lock</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="@Lock"></a>73.8.9.5. 锁 @Lock</h4></div></div></div>
 				
 				<pre class="programlisting">
 			
@@ -755,7 +1019,7 @@ interface UserRepository extends Repository&lt;User, Long&gt; {
 			
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="JPQL.SUM"></a>73.8.8.6. Sum 求和</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="JPQL.SUM"></a>73.8.9.6. Sum 求和</h4></div></div></div>
 				
 				<pre class="programlisting">
 			
@@ -793,7 +1057,7 @@ public interface PictureClickRepository extends CrudRepository&lt;PictureClick, 
 			
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1424"></a>73.8.8.7. IFNULL</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1426"></a>73.8.9.7. IFNULL</h4></div></div></div>
 				
 				<pre class="programlisting">
 			
@@ -803,7 +1067,7 @@ public interface PictureClickRepository extends CrudRepository&lt;PictureClick, 
 				</pre>
 			</div>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="@Transactional"></a>73.8.9. 事务 @Transactional</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="@Transactional"></a>73.8.10. 事务 @Transactional</h3></div></div></div>
 			
 			<div class="literallayout"><p><br />
 			<br />
@@ -838,7 +1102,7 @@ Spring团队的建议是你在具体的类（或类的方法）上使用 @Trans
 <br />
 			<br />
 			</p></div>
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1426"></a>73.8.9.1. save() 不需要开启 @Transactional </h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1428"></a>73.8.10.1. save() 不需要开启 @Transactional </h4></div></div></div>
 				
 				<p>在SimpleJpaRepository中save()已经帮我们实现</p>
 				<pre class="programlisting">
@@ -1099,7 +1363,7 @@ public class SimpleJpaRepository&lt;T, ID&gt; implements JpaRepositoryImplementa
 					
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1427"></a>73.8.9.2. SERIALIZABLE</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1429"></a>73.8.10.2. SERIALIZABLE</h4></div></div></div>
 				
 				<pre class="programlisting">
 					
@@ -1107,7 +1371,7 @@ public class SimpleJpaRepository&lt;T, ID&gt; implements JpaRepositoryImplementa
 					
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1428"></a>73.8.9.3. readOnly</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1430"></a>73.8.10.3. readOnly</h4></div></div></div>
 				
 				<pre class="programlisting">
 					
@@ -1115,7 +1379,7 @@ public class SimpleJpaRepository&lt;T, ID&gt; implements JpaRepositoryImplementa
 					
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1429"></a>73.8.9.4. 删除更新需要 @Transactional 注解</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1431"></a>73.8.10.4. 删除更新需要 @Transactional 注解</h4></div></div></div>
 				
 				<pre class="programlisting">
 				
@@ -1156,7 +1420,7 @@ public interface RecentReadRepostitory extends CrudRepository&lt;RecentRead, Int
 				
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1430"></a>73.8.9.5. 回滚操作</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1432"></a>73.8.10.5. 回滚操作</h4></div></div></div>
 				
 				<pre class="programlisting">
 				
@@ -1206,7 +1470,7 @@ public class UserService {
 				
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1431"></a>73.8.9.6. private、default、protected 和 final 不支持事物 </h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1433"></a>73.8.10.6. private、default、protected 和 final 不支持事物 </h4></div></div></div>
 				
 				<p>@Transactional 必须与 public 一起使用，不能定义为 private、default、protected
 				</p>
@@ -1222,7 +1486,7 @@ public class UserService {
 				
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1432"></a>73.8.9.7. Service 注意事项</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1434"></a>73.8.10.7. Service 注意事项</h4></div></div></div>
 				
 				<p>this 调用不支持事物</p>
 				<pre class="programlisting">
@@ -1271,7 +1535,7 @@ public class UserService {
 				
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1433"></a>73.8.9.8. 需要 @Service 注解配合使用</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1435"></a>73.8.10.8. 需要 @Service 注解配合使用</h4></div></div></div>
 				
 				<p>@Transactional 需要在 @Controller、@Service、@Component、@Repository
 					等注解下才能使用
@@ -1322,7 +1586,7 @@ public class RoleService {
 				
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1434"></a>73.8.9.9. 事务回滚</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1436"></a>73.8.10.9. 事务回滚</h4></div></div></div>
 				
 				<pre class="programlisting">
 				
@@ -1366,7 +1630,7 @@ public class RoleService {
 				</pre>
 			</div>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="jpql.in"></a>73.8.10. IN / NOT 子查询</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="jpql.in"></a>73.8.11. IN / NOT 子查询</h3></div></div></div>
 			
 			<pre class="programlisting">
 			

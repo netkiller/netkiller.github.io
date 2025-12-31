@@ -573,7 +573,8 @@ public class Article {
 }			
 			
 			</pre>
-			<p>@Temporal(TemporalType.DATE) 替换 private LocalDate birthday;</p>
+			<p>@Temporal(TemporalType.DATE) 替换 private LocalDate birthday;
+			</p>
 			<pre class="programlisting">
 			
     @Comment("生日")
@@ -1245,6 +1246,129 @@ private Gender gender;
 				
 				</pre>
 			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1157"></a>48.2.11.5. 使用枚举做主键</h4></div></div></div>
+				
+				<pre class="programlisting">
+				
+package cn.netkiller.domain.meeting;
+
+import cn.netkiller.enums.Department;
+import cn.netkiller.enums.Industry;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.persistence.*;
+import lombok.Data;
+import org.hibernate.annotations.Comment;
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
+
+import java.util.Date;
+
+@Entity
+@Table
+@DynamicUpdate
+@DynamicInsert
+@Data
+@Comment("提示词")
+public class Prompt {
+    @Id
+    @Enumerated(EnumType.STRING)
+    @Comment("行业")
+    @Column(nullable = false, columnDefinition = "enum('Hospital')")
+    private Industry industry;
+
+    @Comment("使用部门")
+    // 枚举字段：存储枚举序号（如0/1/2）
+    @Enumerated(EnumType.ORDINAL)
+    @Column(columnDefinition = "enum('General','HumanResources','Marketing','Sales','PublicRelations','Government') DEFAULT 'General'")
+    private Department department;
+
+    @Comment("提示词")
+    @Column(columnDefinition = "json")
+    private String messages;
+
+    @Column(insertable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    //    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @Comment("创建时间")
+    private Date ctime;
+
+    @Column(nullable = true, insertable = false, updatable = false, columnDefinition = "TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP")
+    //    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @Comment("修改时间")
+    private Date mtime;
+}				
+				
+				</pre>
+				<pre class="programlisting">
+				
+package cn.netkiller.repository;
+
+
+import cn.netkiller.domain.meeting.Prompt;
+import cn.netkiller.enums.Industry;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+
+@Repository
+public interface PromptRepository extends CrudRepository&lt;Prompt, Industry&gt; {
+    Optional&lt;Prompt&gt; findByIndustry(Industry industry);
+}
+				
+				</pre>
+				<pre class="programlisting">
+				
+    public Optional&lt;Prompt&gt; findByIndustry(Industry industry) {
+        return promptRepository.findByIndustry(industry);
+    }
+				
+				</pre>
+				<pre class="programlisting">
+				
+package cn.netkiller.controller.debug;
+
+import cn.netkiller.annotation.TokenPass;
+import cn.netkiller.domain.meeting.Prompt;
+import cn.netkiller.enums.Industry;
+import cn.netkiller.service.AiService;
+import cn.netkiller.service.prompt.PromptService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Optional;
+
+@Slf4j
+@RestController
+@TokenPass
+@RequestMapping("/debug/prompt")
+public class PromptDebugController {
+    @Autowired
+    private AiService aiService;
+
+    @Autowired
+    private PromptService promptService;
+
+    @PostMapping("industry")
+    public Industry industry(@RequestParam("content") String content) {
+        Industry industry = aiService.industry(null, content);
+        return industry;
+    }
+
+    @GetMapping("test")
+    public Optional&lt;Prompt&gt; test() {
+        log.info(Industry.Hospital.toString());
+        return promptService.findByIndustry(Industry.Hospital);
+
+    }
+
+}
+
+				
+				</pre>
+			</div>
 		</div>
 		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="set"></a>48.2.12. SET 数据结构</h3></div></div></div>
 			
@@ -1533,7 +1657,7 @@ mysql&gt; select options from item_pool;
 1 row in set (0.00 sec)			
 			
 			</pre>
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1157"></a>48.2.13.1. List 与 Json</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1158"></a>48.2.13.1. List 与 Json</h4></div></div></div>
 				
 				<p>用 MySQL json 类型保存 List 数据</p>
 				<pre class="programlisting">
@@ -1625,7 +1749,8 @@ public class Version implements Serializable {
 				
 				
 				</pre>
-				<p>用法与普通 list 没有任何区别 version.getWhitelist().contains(device)</p>
+				<p>用法与普通 list 没有任何区别 version.getWhitelist().contains(device)
+				</p>
 				<pre class="programlisting">
 				
     public Optional&lt;Version&gt; version(String device, String buildTypes) {
@@ -1649,7 +1774,7 @@ public class Version implements Serializable {
 
 		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="@Embeddable"></a>48.2.14. 嵌入</h3></div></div></div>
 			
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1158"></a>48.2.14.1. @Embeddable / @Embedded</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1159"></a>48.2.14.1. @Embeddable / @Embedded</h4></div></div></div>
 				
 				<pre class="programlisting">
 				
@@ -1701,7 +1826,7 @@ CREATE TABLE `company` (
 				
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1159"></a>48.2.14.2. @AttributeOverrides 定义字段名称</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1160"></a>48.2.14.2. @AttributeOverrides 定义字段名称</h4></div></div></div>
 				
 				<pre class="programlisting">
 				
@@ -1742,7 +1867,7 @@ public class Company {
 				
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1160"></a>48.2.14.3. 创建复合主键</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1161"></a>48.2.14.3. 创建复合主键</h4></div></div></div>
 				
 
 				<p>定义实体</p>
@@ -2031,12 +2156,7 @@ public class C extends A{
 			
 			</pre>
 		</div>
-	</div><div xmlns="" id="SOHUCS"></div><script xmlns="" charset="utf-8" type="text/javascript" src="https://cy-cdn.kuaizhan.com/upload/changyan.js"></script><script xmlns="" type="text/javascript">
-			window.changyan.api.config({
-			appid: 'cyvwjQUG3',
-			conf: 'prod_ef966242df3d8b5acb1e0ee9fc01cafe'
-			});
-</script><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="@ElementCollection.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 48 章 Spring Data with MySQL </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 48.3. 映射集合属性</td></tr></table></div><script xmlns="">
+	</div><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="index.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="@ElementCollection.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 48 章 Spring Data with MySQL </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 48.3. 映射集合属性</td></tr></table></div><script xmlns="">
 			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
 		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
 		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
