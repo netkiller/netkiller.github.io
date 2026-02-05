@@ -1,32 +1,98 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>15.5. Automatic Speech Recognition</title><link rel="stylesheet" type="text/css" href="../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="php,pear,pecl,phar, python, , " /><link rel="home" href="../index.html" title="Netkiller Python 手札" /><link rel="up" href="index.html" title="第 15 章 语音处理" /><link rel="prev" href="ch15s04.html" title="15.4. AI文字转语音模型Bark" /><link rel="next" href="../face_recognition.html" title="第 16 章 人脸识别" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
 		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">15.5. Automatic Speech Recognition</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ch15s04.html">上一页</a> </td><th width="60%" align="center">第 15 章 语音处理</th><td width="20%" align="right"> <a accesskey="n" href="../face_recognition.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="asr"></a>15.5. Automatic Speech Recognition</h2></div></div></div>
-    
-    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1187"></a>15.5.1. kaldi</h3></div></div></div>
-        
-        <pre class="screen">
+	
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1187"></a>15.5.1. kaldi</h3></div></div></div>
+		
+		<pre class="screen">
          
 docker run -it kaldiasr/kaldi:latest bash
 docker run -it --runtime=nvidia kaldiasr/kaldi:gpu-latest bash
         
-        </pre>
-        <pre class="screen">
+		</pre>
+		<pre class="screen">
          
 docker run -it kaldiasr/kaldi:latest bash        
         
-        </pre>
-    </div>
-    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1188"></a>15.5.2. OpenAI Whisper</h3></div></div></div>
-        
-        <p>https://github.com/openai/whisper</p>
-        <pre class="programlisting">
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1188"></a>15.5.2. OpenAI Whisper</h3></div></div></div>
+		
+		<p>https://github.com/openai/whisper</p>
+		<pre class="programlisting">
          
 import openai
 audio_file= open("/path/to/file/audio.mp3", "rb")
 transcript = openai.Audio.transcribe("whisper-1", audio_file)                
         
-        </pre>
-    </div>
+		</pre>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="FunASR"></a>15.5.3. FunASR - 语音识别</h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1189"></a>15.5.3.1. 安装与演示</h4></div></div></div>
+			
+
+			<pre class="programlisting">
+    	
+pip install --upgrade pip    	
+pip install -U funasr modelscope
+    	
+			</pre>
+			<pre class="programlisting">
+    	
+from funasr import AutoModel
+from funasr.utils.postprocess_utils import rich_transcription_postprocess
+
+model_dir = "iic/SenseVoiceSmall"
+
+
+model = AutoModel(
+    model=model_dir,
+    # trust_remote_code=True,
+    # remote_code="./model.py",
+    vad_model="fsmn-vad",
+    vad_kwargs={"max_single_segment_time": 30000},
+    # device="cuda:0",
+    disable_update=True
+)
+
+# en
+res = model.generate(
+    input=f"{model.model_path}/example/zh.mp3",
+    cache={},
+    language="auto",  # "zn", "en", "yue", "ja", "ko", "nospeech"
+    use_itn=True,
+    batch_size_s=60,
+    merge_vad=True,  #
+    merge_length_s=15,
+)
+text = rich_transcription_postprocess(res[0]["text"])
+print(text)
+    	
+			</pre>
+			<pre class="screen">
+    		
+/Users/neo/tmp/social/.venv/bin/python /Users/neo/tmp/social/test.py 
+funasr version: 1.3.0.
+Downloading Model from https://www.modelscope.cn to directory: /Users/neo/.cache/modelscope/hub/models/iic/SenseVoiceSmall
+WARNING:root:trust_remote_code: False
+Downloading Model from https://www.modelscope.cn to directory: /Users/neo/.cache/modelscope/hub/models/iic/speech_fsmn_vad_zh-cn-16k-common-pytorch
+WARNING:root:trust_remote_code: False
+rtf_avg: 0.009: 100%|██████████| 1/1 [00:00&lt;00:00, 19.43it/s]
+  0%|          | 0/1 [00:00&lt;?, ?it/s]
+  0%|          | 0/1 [00:00&lt;?, ?it/s]
+100%|██████████| 1/1 [00:00&lt;00:00,  1.86it/s]
+{'load_data': '0.000', 'extract_feat': '0.003', 'forward': '0.538', 'batch_size': '1', 'rtf': '0.104'}, : 100%|██████████| 1/1 [00:00&lt;00:00,  1.86it/s]
+rtf_avg: 0.104: 100%|██████████| 1/1 [00:00&lt;00:00,  1.86it/s]
+rtf_avg: 0.096, time_speech:  5.616, time_escape: 0.540: 100%|██████████| 1/1 [00:00&lt;00:00,  1.77it/s]
+开放时间早上9点至下午5点。
+
+Process finished with exit code 0    	
+    		
+			</pre>
+		</div>
+		
+	</div>
 </div><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ch15s04.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="../face_recognition.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">15.4. AI文字转语音模型Bark </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 16 章 人脸识别</td></tr></table></div><script xmlns="">
 			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
 		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
