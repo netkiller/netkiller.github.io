@@ -4,7 +4,7 @@
 		
 		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="create.table.set"></a>4.2.1. 数据类型</h3></div></div></div>
 			
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id892"></a>4.2.1.1. SET 集合类型</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id893"></a>4.2.1.1. SET 集合类型</h4></div></div></div>
 				
 				<p>SET 集合类型，此类型适合用于多项选择场景，例如保存表单中的checkbox。</p>
 				<pre class="screen">
@@ -183,7 +183,8 @@ alter table cms.article ADD  COLUMN `mtime` TIMESTAMP NULL DEFAULT NULL ON UPDAT
 				</pre>
 
 				<p>更新时间</p>
-				<p>`mtime` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更改时间',</p>
+				<p>`mtime` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE
+					CURRENT_TIMESTAMP COMMENT '更改时间',</p>
 				<pre class="screen">
 				
 CREATE TABLE `bank_account` (
@@ -224,7 +225,7 @@ CREATE TABLE IF NOT EXISTS `tab_name` (
 		</div>
 		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="key"></a>4.2.8. KEY</h3></div></div></div>
 			
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id893"></a>4.2.8.1. PRIMARY KEY</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id894"></a>4.2.8.1. PRIMARY KEY</h4></div></div></div>
 				
 				<p>一般主键定义</p>
 				<pre class="screen">
@@ -239,11 +240,9 @@ PRIMARY KEY (`id`, `user_id`),
 				
 				</pre>
 			</div>
-
-		</div>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="auto_increment"></a>4.2.9. AUTO_INCREMENT 定义初始值</h3></div></div></div>
-			
-			<pre class="screen">
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="auto_increment"></a>4.2.8.2. AUTO_INCREMENT 定义初始值</h4></div></div></div>
+				
+				<pre class="screen">
 			
 DROP TABLE IF EXISTS users;
 CREATE TABLE user(
@@ -251,11 +250,63 @@ CREATE TABLE user(
 PRIMARY KEY(id)
 )ENGINE=InnoDB AUTO_INCREMENT=100 DEFAULT CHARSET=utf8;			
 			
+				</pre>
+				<p>修改 auto_incremenrt 起始值</p>
+				<pre class="screen">
+			
+alter table tab1 auto_incremenrt=n			
+			
+				</pre>
+			</div>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="table.GENERATED"></a>4.2.9. 虚拟列</h3></div></div></div>
+			
+			<p>虚拟列分为两种类型：</p>
+			<p>VIRTUAL（虚拟列）：在读取时实时计算，不占用存储空间</p>
+			<p>STORED（存储列）：在数据写入时计算并存储，会占用实际存储空间</p>
+			<p>下面是 VIRTUAL 的例子</p>
+			<pre class="screen">
+			
+CREATE TABLE member (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'ID（主键）',
+  firstname VARCHAR(10) NOT NULL COMMENT '名',
+  lastname VARCHAR(10) NOT NULL COMMENT '姓',
+  -- 计算字段：拼接姓+名，用空格分隔，设置为虚拟列（VIRTUAL）
+  name VARCHAR(30) GENERATED ALWAYS AS (CONCAT(lastname, ' ', firstname)) VIRTUAL COMMENT '完整姓名（姓+名）',
+  -- 设置主键，指定字符集和排序规则
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='会员表表';	
+			
 			</pre>
 			<p>修改 auto_incremenrt 起始值</p>
 			<pre class="screen">
 			
-alter table tab1 auto_incremenrt=n			
+INSERT INTO `test`.`member` (`firstname`, `lastname`) VALUES ('景峰','陈');	
+			
+			</pre>
+			<p>下面是 STORED 例子</p>
+			<pre class="screen">
+			
+CREATE TABLE `member` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT COMMENT 'ID（主键）',
+  `firstname` varchar(10) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '名',
+  `lastname` varchar(10) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '姓',
+  `name` varchar(30) COLLATE utf8mb4_unicode_ci GENERATED ALWAYS AS (concat(`lastname`,`firstname`)) stored COMMENT '完整姓名（姓+名）',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='会员表表'
+			
+			</pre>
+			<p>下面为 STORED 创建索引</p>
+			<pre class="programlisting">
+			
+CREATE TABLE `member` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT COMMENT 'ID（主键）',
+  `firstname` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '名',
+  `lastname` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '姓',
+  `name` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci GENERATED ALWAYS AS (concat(`lastname`,`firstname`)) STORED COMMENT '完整姓名（姓+名）',
+  PRIMARY KEY (`id`),
+  KEY `idx_member_name` (`name`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='会员表表'			
 			
 			</pre>
 		</div>

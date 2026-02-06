@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>第 32 章 Springboot with Undertow / Jetty / http2</title><link rel="stylesheet" type="text/css" href="../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><link rel="home" href="../index.html" title="Netkiller Java 手札（版）" /><link rel="up" href="index.html" title="部分 IV. Spring Boot" /><link rel="prev" href="SpringBoot.ELK.html" title="31.8. Spring boot with ELK(Elasticsearch + Logstash + Kibana)" /><link rel="next" href="jetty.html" title="32.2. Spring boot with Jetty" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
+		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">第 32 章 Springboot with Undertow / Jetty / http2</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="SpringBoot.ELK.html">上一页</a> </td><th width="60%" align="center">部分 IV. Spring Boot</th><td width="20%" align="right"> <a accesskey="n" href="jetty.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="chapter"><div class="titlepage"><div><div><h2 class="title"><a id="web"></a>第 32 章 Springboot with Undertow / Jetty / http2</h2></div></div></div><div class="toc"><p><strong>目录</strong></p><dl class="toc"><dt><span class="section"><a href="web.html#Undertow">32.1. Spring boot with Undertow</a></span></dt><dd><dl><dt><span class="section"><a href="web.html#id1063">32.1.1. Maven 依赖</a></span></dt><dt><span class="section"><a href="web.html#id1064">32.1.2. Application</a></span></dt><dt><span class="section"><a href="web.html#id1065">32.1.3. 相关配置</a></span></dt></dl></dd><dt><span class="section"><a href="jetty.html">32.2. Spring boot with Jetty</a></span></dt><dt><span class="section"><a href="springboot.https.html">32.3. Spring boot with HTTP2 SSL</a></span></dt><dd><dl><dt><span class="section"><a href="springboot.https.html#id1066">32.3.1. 生成自签名证书</a></span></dt><dt><span class="section"><a href="springboot.https.html#id1067">32.3.2. application.properties 配置文件</a></span></dt><dt><span class="section"><a href="springboot.https.html#id1068">32.3.3. 启动 Spring boot</a></span></dt><dt><span class="section"><a href="springboot.https.html#id1069">32.3.4. restTemplate 调用实例</a></span></dt><dt><span class="section"><a href="springboot.https.html#id1070">32.3.5. HTTP2</a></span></dt></dl></dd></dl></div>
+	
+
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="Undertow"></a>32.1. Spring boot with Undertow</h3></div></div></div>
+		
+		<p>Undertow 是红帽公司开发的一款基于 NIO 的高性能 Web 嵌入式服务器</p>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1063"></a>32.1.1. Maven 依赖</h4></div></div></div>
+			
+			<pre class="screen">
+		
+&lt;dependencies&gt;
+    
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+        &lt;artifactId&gt;spring-boot-starter-web&lt;/artifactId&gt;
+        &lt;exclusions&gt;
+            &lt;!-- Exclude the Tomcat dependency --&gt;
+            &lt;exclusion&gt;
+                &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+                &lt;artifactId&gt;spring-boot-starter-tomcat&lt;/artifactId&gt;
+            &lt;/exclusion&gt;
+        &lt;/exclusions&gt;
+    &lt;/dependency&gt;
+
+    &lt;!-- Use Undertow instead --&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+        &lt;artifactId&gt;spring-boot-starter-undertow&lt;/artifactId&gt;
+    &lt;/dependency&gt;
+
+&lt;/dependencies&gt;	
+		
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1064"></a>32.1.2. Application</h4></div></div></div>
+			
+			<pre class="programlisting">
+		
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@SpringBootApplication
+public class Application {
+
+    public static void main(String[] args) {
+        SpringApplication.run(Application.class);
+    }
+
+    @GetMapping(value = "/undertow/test")
+    public String undertow() {
+        return "hello undertow";
+    }
+
+}
+		
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1065"></a>32.1.3. 相关配置</h4></div></div></div>
+			
+			<p>Undertow 日志配置</p>
+			<pre class="screen">
+		
+#存放目录
+server.undertow.accesslog.dir=
+# 是否启用日志
+server.undertow.accesslog.enabled=false 
+# 日志格式
+server.undertow.accesslog.pattern=common
+# 日志文件名前缀
+server.undertow.accesslog.prefix=access_log
+# 日志文件名后缀
+server.undertow.accesslog.suffix=log
+		
+			</pre>
+			<p>HTTP 相关配置</p>
+			<pre class="screen">
+		
+# HTTP POST请求最大的大小
+server.undertow.max-http-post-size=0 
+# 设置IO线程数, 它主要执行非阻塞的任务,它们会负责多个连接, 默认设置每个CPU核心一个线程
+server.undertow.io-threads=4
+# 阻塞任务线程池, 当执行类似servlet请求阻塞操作, undertow会从这个线程池中取得线程,它的值设置取决于系统的负载
+server.undertow.worker-threads=20
+# 以下的配置会影响buffer,这些buffer会用于服务器连接的IO操作,有点类似netty的池化内存管理
+# 每块buffer的空间大小,越小的空间被利用越充分
+server.undertow.buffer-size=1024
+# 每个区分配的buffer数量 , 所以pool的大小是buffer-size * buffers-per-region
+server.undertow.buffers-per-region=1024
+# 是否分配的直接内存
+server.undertow.direct-buffers=true				
+		
+			</pre>
+		</div>
+	</div>
+
+	
+
+	
+</div><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="SpringBoot.ELK.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="index.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="jetty.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">31.8. Spring boot with ELK(Elasticsearch + Logstash + Kibana) </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 32.2. Spring boot with Jetty</td></tr></table></div><script xmlns="">
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+			ga('create', 'UA-11694057-1', 'auto');
+			ga('send', 'pageview');
+
+		</script><script xmlns="" async="async">
+			var _hmt = _hmt || [];
+			(function() {
+			var hm = document.createElement("script");
+			hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(hm, s);
+			})();
+</script><script xmlns="" async="async">
+			(function(){
+			var bp = document.createElement('script');
+			var curProtocol = window.location.protocol.split(':')[0];
+			if (curProtocol === 'https') {
+			bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+			}
+			else {
+			bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+			}
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(bp, s);
+			})();
+</script></body></html>

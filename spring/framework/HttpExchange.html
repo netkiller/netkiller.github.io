@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>40.5. 声明式 HTTP 客户端 HttpExchange</title><link rel="stylesheet" type="text/css" href="../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="Spring, Spring Boot, Spring Cloud, Spring Eureka, Spring Config" /><link rel="home" href="../index.html" title="Netkiller Spring 手札" /><link rel="up" href="framework.html" title="第 40 章 Spring 框架" /><link rel="prev" href="PathPattern.html" title="40.4. URL 路径相关" /><link rel="next" href="mvc/index.html" title="第 41 章 Spring MVC" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
+		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">40.5. 声明式 HTTP 客户端 HttpExchange</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="PathPattern.html">上一页</a> </td><th width="60%" align="center">第 40 章 Spring 框架</th><td width="20%" align="right"> <a accesskey="n" href="mvc/index.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="HttpExchange"></a>40.5. 声明式 HTTP 客户端 HttpExchange</h2></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id972"></a>40.5.1. 支持的注解类型</h3></div></div></div>
+			
+			<pre class="screen">
+			
+@HttpExchange：是用于指定 HTTP 端点的通用注释。在接口级别使用时，它适用于所有方法。
+@GetExchange：为 HTTP GET请求指定@HttpExchange。
+@PostExchange：为 HTTP POST请求指定@HttpExchange。
+@PutExchange：为 HTTP PUT请求指定@HttpExchange。
+@DeleteExchange：为 HTTP DELETE请求指定@HttpExchange。
+@PatchExchange：为 HTTP PATCH请求指定@HttpExchange。
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id973"></a>40.5.2. RestClient 例子</h3></div></div></div>
+			
+			<p>定义接口</p>
+			<pre class="programlisting">
+			
+package cn.netkiller.config;
+
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.service.annotation.GetExchange;
+import org.springframework.web.service.annotation.HttpExchange;
+
+import java.util.List;
+
+@HttpExchange(
+        url = "https://api.netkiller.cn", // 基础URL
+        contentType = MediaType.APPLICATION_JSON_VALUE, // 默认Content-Type
+        accept = MediaType.APPLICATION_JSON_VALUE // 默认Accept
+)
+public interface UserApiClient {
+
+    @GetExchange("/actuator/info")
+    String info();
+
+}			
+			
+			</pre>
+			<p>配置 RestClient</p>
+			<pre class="programlisting">
+			
+package cn.netkiller.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.support.RestClientAdapter;
+import org.springframework.web.service.invoker.HttpServiceProxyFactory;
+
+@Configuration
+public class ClientConfiguration {
+
+    @Bean
+    public RestClient restClient() {
+        return RestClient.builder()
+                .baseUrl("https://api.example.com") // 全局基础URL（可覆盖接口的@HttpExchange配置）
+                .defaultHeader("Content-Type", "application/json")
+                .build();
+    }
+
+    生成 UserApiClient 代理对象
+    @Bean
+    public UserApiClient userApiClient(RestClient restClient) {
+        // 创建 HttpServiceProxyFactory
+        HttpServiceProxyFactory factory = HttpServiceProxyFactory.builderFor(
+                RestClientAdapter.create(restClient)
+        ).build();
+        // 生成接口实现类
+        return factory.createClient(UserApiClient.class);
+    }
+}
+			
+			
+			</pre>
+			<p>调用与测试</p>
+			<pre class="programlisting">
+			
+package cn.netkiller.controller.debug;
+
+import cn.netkiller.annotation.TokenPass;
+import cn.netkiller.config.UserApiClient;
+import cn.netkiller.service.AiService;
+import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.resilience.annotation.Retryable;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@Slf4j
+@TokenPass
+@RequestMapping("/test")
+public class TestController {
+
+    @Resource
+    private UserApiClient userApiClient;
+
+    @GetMapping("info")
+    public String info() {
+        return userApiClient.info();
+    }
+}
+			
+			</pre>
+			<p>输出结果</p>
+			<pre class="screen">
+			
+neo@Mac Spring % curl http://localhost:8080/test/info
+{"status":{"COMPLETED":33,"START":3,"CLOSE":6}}
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id974"></a>40.5.3. HTTP 头设置</h3></div></div></div>
+			
+			<pre class="programlisting">
+			
+package cn.aigcsst.httpexchange;
+
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.service.annotation.HttpExchange;
+import org.springframework.web.service.annotation.PostExchange;
+
+import java.util.Map;
+
+@HttpExchange(
+        url = "http://rwa.ideasprite.com:3000", // 基础URL
+        contentType = MediaType.APPLICATION_JSON_VALUE, // 默认Content-Type
+        accept = MediaType.APPLICATION_JSON_VALUE // 默认Accept
+        headers = {
+                "x-app-id=1766326269588"
+        }
+)
+public interface PptxInterface {
+
+    @PostExchange("/ppt/gen")
+    String generator(@RequestBody Map&lt;String, String&gt; params);
+
+}			
+			
+			</pre>
+		</div>
+	</div><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="PathPattern.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="framework.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="mvc/index.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">40.4. URL 路径相关 </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 41 章 Spring MVC</td></tr></table></div><script xmlns="">
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+			ga('create', 'UA-11694057-1', 'auto');
+			ga('send', 'pageview');
+
+		</script><script xmlns="" async="async">
+			var _hmt = _hmt || [];
+			(function() {
+			var hm = document.createElement("script");
+			hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(hm, s);
+			})();
+</script><script xmlns="" async="async">
+			(function(){
+			var bp = document.createElement('script');
+			var curProtocol = window.location.protocol.split(':')[0];
+			if (curProtocol === 'https') {
+			bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+			}
+			else {
+			bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+			}
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(bp, s);
+			})();
+</script></body></html>
