@@ -1,0 +1,439 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>68.8. R2DBC</title><link rel="stylesheet" type="text/css" href="../../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><link rel="home" href="../../index.html" title="Netkiller Java 手札（版）" /><link rel="up" href="webflux.html" title="第 68 章 WebFlux framework" /><link rel="prev" href="ch68s07.html" title="68.7. Webflux 安全" /><link rel="next" href="redis-reactive.html" title="68.9. Webflux Redis" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
+		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">68.8. R2DBC</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ch68s07.html">上一页</a> </td><th width="60%" align="center">第 68 章 WebFlux framework</th><td width="20%" align="right"> <a accesskey="n" href="redis-reactive.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="webflux.r2dbc"></a>68.8. R2DBC</h2></div></div></div>
+	
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1370"></a>68.8.1. MySQL</h3></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1369"></a>68.8.1.1. </h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"&gt;
+    &lt;modelVersion&gt;4.0.0&lt;/modelVersion&gt;
+
+    &lt;groupId&gt;cn.netkiller&lt;/groupId&gt;
+    &lt;artifactId&gt;cordyceps&lt;/artifactId&gt;
+    &lt;version&gt;1.0.0&lt;/version&gt;
+    &lt;repositories&gt;
+        &lt;repository&gt;
+            &lt;id&gt;alimaven&lt;/id&gt;
+            &lt;name&gt;aliyun maven&lt;/name&gt;
+            &lt;url&gt;https://maven.aliyun.com/nexus/content/groups/public/&lt;/url&gt;
+            &lt;releases&gt;
+                &lt;enabled&gt;true&lt;/enabled&gt;
+            &lt;/releases&gt;
+            &lt;snapshots&gt;
+                &lt;enabled&gt;false&lt;/enabled&gt;
+            &lt;/snapshots&gt;
+        &lt;/repository&gt;
+    &lt;/repositories&gt;
+    &lt;pluginRepositories&gt;
+        &lt;pluginRepository&gt;
+            &lt;id&gt;aliyun-repos&lt;/id&gt;
+            &lt;url&gt;https://maven.aliyun.com/repository/public&lt;/url&gt;
+            &lt;releases&gt;
+                &lt;enabled&gt;true&lt;/enabled&gt;
+            &lt;/releases&gt;
+            &lt;snapshots&gt;
+                &lt;enabled&gt;false&lt;/enabled&gt;
+            &lt;/snapshots&gt;
+        &lt;/pluginRepository&gt;
+    &lt;/pluginRepositories&gt;
+    &lt;properties&gt;
+        &lt;java.version&gt;25&lt;/java.version&gt;
+        &lt;maven.compiler.source&gt;${java.version}&lt;/maven.compiler.source&gt;
+        &lt;maven.compiler.target&gt;${java.version}&lt;/maven.compiler.target&gt;
+        &lt;project.build.sourceEncoding&gt;UTF-8&lt;/project.build.sourceEncoding&gt;
+        &lt;spring-statemachine.version&gt;4.0.1&lt;/spring-statemachine.version&gt;
+        &lt;docker.registry&gt;http://localhost/registry&lt;/docker.registry&gt;
+    &lt;/properties&gt;
+    &lt;parent&gt;
+        &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+        &lt;artifactId&gt;spring-boot-starter-parent&lt;/artifactId&gt;
+        &lt;version&gt;4.0.3&lt;/version&gt;
+        &lt;relativePath/&gt;
+    &lt;/parent&gt;
+    &lt;dependencies&gt;
+
+        &lt;dependency&gt;
+            &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+            &lt;artifactId&gt;spring-boot-starter-webflux&lt;/artifactId&gt;
+        &lt;/dependency&gt;
+  
+        &lt;dependency&gt;
+            &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+            &lt;artifactId&gt;spring-boot-starter-data-r2dbc&lt;/artifactId&gt;
+        &lt;/dependency&gt;
+        &lt;!-- a R2DBC driver --&gt;
+        &lt;!-- https://mvnrepository.com/artifact/io.asyncer/r2dbc-mysql --&gt;
+        &lt;dependency&gt;
+            &lt;groupId&gt;io.asyncer&lt;/groupId&gt;
+            &lt;artifactId&gt;r2dbc-mysql&lt;/artifactId&gt;
+            &lt;version&gt;1.4.1&lt;/version&gt;
+        &lt;/dependency&gt;
+
+        &lt;!-- https://mvnrepository.com/artifact/org.projectlombok/lombok --&gt;
+        &lt;dependency&gt;
+            &lt;groupId&gt;org.projectlombok&lt;/groupId&gt;
+            &lt;artifactId&gt;lombok&lt;/artifactId&gt;
+            &lt;version&gt;1.18.42&lt;/version&gt;
+            &lt;scope&gt;provided&lt;/scope&gt;
+        &lt;/dependency&gt;
+
+        &lt;!-- https://mvnrepository.com/artifact/com.google.code.gson/gson --&gt;
+        &lt;dependency&gt;
+            &lt;groupId&gt;com.google.code.gson&lt;/groupId&gt;
+            &lt;artifactId&gt;gson&lt;/artifactId&gt;
+            &lt;version&gt;2.13.2&lt;/version&gt;
+        &lt;/dependency&gt;
+        &lt;!-- https://mvnrepository.com/artifact/com.aliyun.oss/aliyun-sdk-oss --&gt;
+        &lt;dependency&gt;
+            &lt;groupId&gt;com.aliyun.oss&lt;/groupId&gt;
+            &lt;artifactId&gt;aliyun-sdk-oss&lt;/artifactId&gt;
+            &lt;version&gt;3.18.3&lt;/version&gt;
+        &lt;/dependency&gt;
+
+        &lt;!-- 阿里云短信服务依赖 --&gt;
+        &lt;dependency&gt;
+            &lt;groupId&gt;com.aliyun&lt;/groupId&gt;
+            &lt;artifactId&gt;aliyun-java-sdk-dysmsapi&lt;/artifactId&gt;
+            &lt;version&gt;1.1.0&lt;/version&gt;
+        &lt;/dependency&gt;
+
+        &lt;dependency&gt;
+            &lt;groupId&gt;com.auth0&lt;/groupId&gt;
+            &lt;artifactId&gt;java-jwt&lt;/artifactId&gt;
+            &lt;version&gt;4.5.0&lt;/version&gt;
+        &lt;/dependency&gt;
+
+        &lt;dependency&gt;
+            &lt;groupId&gt;io.netty&lt;/groupId&gt;
+            &lt;artifactId&gt;netty-resolver-dns-native-macos&lt;/artifactId&gt;
+            &lt;!--            &lt;version&gt;4.1.76.Final&lt;/version&gt;--&gt;
+            &lt;classifier&gt;osx-aarch_64&lt;/classifier&gt;
+        &lt;/dependency&gt;
+    &lt;/dependencies&gt;
+    &lt;build&gt;
+        &lt;plugins&gt;
+            &lt;plugin&gt;
+                &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+                &lt;artifactId&gt;spring-boot-maven-plugin&lt;/artifactId&gt;
+                &lt;configuration&gt;
+                    &lt;mainClass&gt;cn.netkiller.Application&lt;/mainClass&gt;
+                &lt;/configuration&gt;
+            &lt;/plugin&gt;
+            &lt;plugin&gt;
+                &lt;artifactId&gt;maven-surefire-plugin&lt;/artifactId&gt;
+                &lt;configuration&gt;
+                    &lt;skip&gt;true&lt;/skip&gt;
+                &lt;/configuration&gt;
+            &lt;/plugin&gt;
+
+
+            &lt;plugin&gt;
+                &lt;groupId&gt;org.apache.maven.plugins&lt;/groupId&gt;
+                &lt;artifactId&gt;maven-compiler-plugin&lt;/artifactId&gt;
+                &lt;executions&gt;
+                    &lt;execution&gt;
+                        &lt;id&gt;default-compile&lt;/id&gt;
+                        &lt;phase&gt;none&lt;/phase&gt;
+                    &lt;/execution&gt;
+                    &lt;execution&gt;
+                        &lt;id&gt;default-testCompile&lt;/id&gt;
+                        &lt;phase&gt;none&lt;/phase&gt;
+                    &lt;/execution&gt;
+                    &lt;execution&gt;
+                        &lt;id&gt;compile&lt;/id&gt;
+                        &lt;phase&gt;compile&lt;/phase&gt;
+                        &lt;goals&gt;
+                            &lt;goal&gt;compile&lt;/goal&gt;
+                        &lt;/goals&gt;
+                    &lt;/execution&gt;
+                    &lt;execution&gt;
+                        &lt;id&gt;testCompile&lt;/id&gt;
+                        &lt;phase&gt;test-compile&lt;/phase&gt;
+                        &lt;goals&gt;
+                            &lt;goal&gt;testCompile&lt;/goal&gt;
+                        &lt;/goals&gt;
+                    &lt;/execution&gt;
+                &lt;/executions&gt;
+                &lt;configuration&gt;
+                    &lt;release&gt;${java.version}&lt;/release&gt;
+                    &lt;annotationProcessorPaths&gt;
+                        &lt;path&gt;
+                            &lt;groupId&gt;org.projectlombok&lt;/groupId&gt;
+                            &lt;artifactId&gt;lombok&lt;/artifactId&gt;
+                            &lt;version&gt;1.18.42&lt;/version&gt;
+                        &lt;/path&gt;
+                    &lt;/annotationProcessorPaths&gt;
+                &lt;/configuration&gt;
+            &lt;/plugin&gt;
+
+            &lt;plugin&gt;
+                &lt;groupId&gt;com.spotify&lt;/groupId&gt;
+                &lt;artifactId&gt;docker-maven-plugin&lt;/artifactId&gt;
+                &lt;version&gt;1.2.2&lt;/version&gt;
+                &lt;configuration&gt;
+                    &lt;imageName&gt;netkiller/${project.artifactId}&lt;/imageName&gt;
+                    &lt;baseImage&gt;openjdk:25&lt;/baseImage&gt;
+                    &lt;maintainer&gt;netkiller@msn.com&lt;/maintainer&gt;
+                    &lt;volumes&gt;/tmp&lt;/volumes&gt;
+                    &lt;workdir&gt;/srv&lt;/workdir&gt;
+                    &lt;exposes&gt;8080&lt;/exposes&gt;
+                    &lt;env&gt;
+                        &lt;JAVA_OPTS&gt;-server -Xms128m -Xmx2048m&lt;/JAVA_OPTS&gt;
+                    &lt;/env&gt;
+                    &lt;entryPoint&gt;["sh", "-c", "java ${JAVA_OPTS} -jar /srv/${project.build.finalName}.jar
+                        ${SPRING_OPTS}"]
+                    &lt;/entryPoint&gt;
+                    &lt;resources&gt;
+                        &lt;resource&gt;
+                            &lt;targetPath&gt;/srv&lt;/targetPath&gt;
+                            &lt;directory&gt;${project.build.directory}&lt;/directory&gt;
+                            &lt;include&gt;${project.build.finalName}.jar&lt;/include&gt;
+                        &lt;/resource&gt;
+                    &lt;/resources&gt;
+                    &lt;image&gt;netkiller/${project.artifactId}&lt;/image&gt;
+                    &lt;newName&gt;netkiller/${project.artifactId}:${project.version}&lt;/newName&gt;
+                    &lt;!-- &lt;serverId&gt;docker-hub&lt;/serverId&gt; --&gt;
+                    &lt;registryUrl&gt;http://${docker.registry}/v2/&lt;/registryUrl&gt;
+                    &lt;imageTags&gt;
+                        &lt;imageTag&gt;log4j2&lt;/imageTag&gt;
+                        &lt;!-- &lt;imageTag&gt;undertow&lt;/imageTag&gt; &lt;imageTag&gt;tomcat&lt;/imageTag&gt; &lt;imageTag&gt;${project.version}&lt;/imageTag&gt; &lt;imageTag&gt;latest&lt;/imageTag&gt; --&gt;
+                    &lt;/imageTags&gt;
+                &lt;/configuration&gt;
+            &lt;/plugin&gt;
+
+        &lt;/plugins&gt;
+    &lt;/build&gt;
+&lt;/project&gt;
+			
+			</pre>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="id1365"></a>数据库配置</h5></div></div></div>
+				
+				<pre class="programlisting">
+				
+spring.r2dbc.url=r2dbc:mysql://localhost:3306/beta?useUnicode=true&amp;characterEncoding=UTF-8
+spring.r2dbc.username=root
+spring.r2dbc.password=chen
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="id1366"></a>启动文件</h5></div></div></div>
+				
+				<pre class="programlisting">
+				
+package cn.netkiller;
+
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
+
+@SpringBootApplication
+@EnableR2dbcRepositories
+@EnableAutoConfiguration
+public class Application {
+    private static final Logger logger = LoggerFactory.getLogger(Application.class);
+
+    @Value("${spring.application.name}")
+    public String name;
+
+    static void main(String[] args) {
+        SpringApplication.run(Application.class, args);
+    }
+
+    @PostConstruct
+    public void init() {
+        logger.info(String.format("==================== %s 系统启动 ====================", name));
+    }
+
+    @PreDestroy
+    public void destroy() {
+        logger.info(String.format("==================== %s 系统销毁 ====================", name));
+    }
+}				
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="id1367"></a>仓库</h5></div></div></div>
+				
+				<pre class="programlisting">
+				
+package cn.netkiller.domain;
+
+import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Table;
+
+import java.io.Serial;
+import java.io.Serializable;
+import java.time.LocalDateTime;
+
+@Table()
+@Data
+public class Device implements Serializable {
+    @Serial
+    public static final long serialVersionUID = 1L;
+
+    @Id
+    private Integer id;
+    private String androidId;
+    private String model;
+    private String fireware;
+    private String version;
+    private String brand;
+    private String cpu;
+    private String device;
+    private String display;
+    private String fingerprint;
+    private String hardware;
+    private String manufacturer;
+    private String product;
+    //    private LocalDateTime expired;
+    private String status;
+    private String description;
+    private LocalDateTime ctime;
+    private LocalDateTime mtime;
+
+}				
+				
+				</pre>
+				<pre class="programlisting">
+				
+package cn.netkiller.repository;
+
+import cn.netkiller.domain.Device;
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+import org.springframework.stereotype.Repository;
+import reactor.core.publisher.Mono;
+
+@Repository
+public interface DeviceRepository extends ReactiveCrudRepository&lt;Device, Integer&gt; {
+    Mono&lt;Device&gt; findByAndroidId(String androidId);
+
+}				
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h5 class="title"><a id="id1368"></a>控制器中调用</h5></div></div></div>
+				
+				<pre class="programlisting">
+			
+    @GetMapping("count")
+    public JsonResponse count() {
+        long number = deviceRepository.count().block();
+        return JsonResponse.builder().status(true).code(String.valueOf(Code.SUCCESS)).reason("成功").data(number).build();
+    }
+
+
+    @GetMapping("query/{androidId}")
+    public JsonResponse query(@PathVariable("androidId") String androidId) {
+        Mono&lt;Device&gt; mono = deviceRepository.findByAndroidId(androidId);
+        return JsonResponse.data(mono.block());
+    }			
+			
+				</pre>
+			</div>
+		</div>
+	</div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="R2dbcEntityTemplate"></a>68.8.2. R2dbcEntityTemplate</h3></div></div></div>
+		
+		<p>通过注解跳过 Token 验证</p>
+		<pre class="programlisting">
+		
+package cn.netkiller.controller;
+
+import cn.netkiller.annotation.TokenPass;
+import cn.netkiller.component.JwtTokenComponent;
+import cn.netkiller.domain.Device;
+import lombok.extern.slf4j.Slf4j;
+import org.reactivestreams.Publisher;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
+import org.springframework.data.relational.core.query.Criteria;
+import org.springframework.data.relational.core.query.Query;
+import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
+
+import java.util.Map;
+
+@RestController
+@Slf4j
+@TokenPass
+@CrossOrigin(origins = "*", maxAge = 3600)
+@RequestMapping("/")
+public class HomeController {
+
+    private final R2dbcEntityTemplate template;
+
+    @Autowired
+    private JwtTokenComponent jwtTokenComponent;
+
+    public HomeController(R2dbcEntityTemplate template) {
+        this.template = template;
+    }
+
+    @GetMapping()
+    public String index() {
+        return "OK";
+    }
+
+    @GetMapping("/ping")
+    @TokenPass
+    public Mono&lt;String&gt; ping() {
+        return Mono.just("pong");
+    }
+
+    @PostMapping("test")
+    public Mono&lt;Device&gt; test(@RequestParam("id") String id) {
+        return template.selectOne(
+                Query.query(Criteria.where("id").is(id)),
+                Device.class
+        );
+    }
+
+}
+	
+		
+		</pre>
+	</div>
+</div><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ch68s07.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="webflux.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="redis-reactive.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">68.7. Webflux 安全 </td><td width="20%" align="center"><a accesskey="h" href="../../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 68.9. Webflux Redis</td></tr></table></div><script xmlns="">
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+			ga('create', 'UA-11694057-1', 'auto');
+			ga('send', 'pageview');
+
+		</script><script xmlns="" async="async">
+			var _hmt = _hmt || [];
+			(function() {
+			var hm = document.createElement("script");
+			hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(hm, s);
+			})();
+</script><script xmlns="" async="async">
+			(function(){
+			var bp = document.createElement('script');
+			var curProtocol = window.location.protocol.split(':')[0];
+			if (curProtocol === 'https') {
+			bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+			}
+			else {
+			bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+			}
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(bp, s);
+			})();
+</script></body></html>

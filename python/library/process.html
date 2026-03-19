@@ -4,7 +4,7 @@
 	
 	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="subprocess"></a>2.3.1. subprocess</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id923"></a>2.3.1.1. check_output</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id934"></a>2.3.1.1. check_output</h4></div></div></div>
 			
 			<pre class="programlisting">
 			
@@ -41,8 +41,9 @@ print(output.decode())
 	</div>
 	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="threading"></a>2.3.2. Python 多线程</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id924"></a>2.3.2.1. 创建线程</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id935"></a>2.3.2.1. threading 高级线程接口</h4></div><div><h5 class="subtitle">threading — Higher-level threading interface</h5></div></div></div>
 			
+			<p>创建线程</p>
 			<pre class="programlisting">
 		
 from threading import Thread
@@ -73,34 +74,30 @@ if __name__ == "__main__":
     print("Done")		
 		
 			</pre>
-		</div>
-
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id925"></a>2.3.2.2. threading 高级线程接口</h4></div><div><h5 class="subtitle">threading — Higher-level threading interface</h5></div></div></div>
-			
 			
 			<pre class="screen">
-
-				import threading
-				class MyThread(threading.Thread):
-				def
-				__init__(self, name=None):
-				threading.Thread.__init__(self)
-				self.name =
-				name
-
-				def run(self):
-				print self.name
-
-				def test():
-				for i in range(0, 100):
-				t = MyThread("thread_" + str(i))
-				t.start()
-
-				if __name__=='__main__':
-				test()
+			
+			
+import threading
+class MyThread(threading.Thread):
+	def __init__(self, name=None):
+		threading.Thread.__init__(self)
+		self.name = name
+	
+	def run(self):
+		print self.name
+	
+	def test():
+		for i in range(0, 100):
+			t = MyThread("thread_" + str(i))
+			t.start()
+	
+	if __name__=='__main__':
+		test()
+			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id926"></a>2.3.2.3. Lock 线程锁</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="threading.lock"></a>2.3.2.2. Lock 线程锁</h4></div></div></div>
 			
 			<p>这里实现了一个计数器 count 这个全局变量会被多个线程同时操作，使其能够被顺序相加，需要靠线程锁的帮助。</p>
 			<pre class="programlisting">
@@ -143,8 +140,64 @@ if __name__ == '__main__':
         t.join()
         
 			</pre>
+			<pre class="programlisting">
+			
+import threading
+
+# 共享变量
+count = 0
+# 创建锁
+lock = threading.Lock()
+
+def add():
+    global count
+    for _ in range(100000):
+        lock.acquire()  # 加锁
+        count += 1
+        lock.release()  # 释放锁
+
+# 两个线程同时修改共享变量
+t1 = threading.Thread(target=add)
+t2 = threading.Thread(target=add)
+
+t1.start()
+t2.start()
+t1.join()
+t2.join()
+
+print("最终结果：", count)  # 正确结果 200000			
+			
+			</pre>
+			<p>用 with 加锁</p>
+			<pre class="programlisting">
+			
+import threading
+
+# 共享变量
+count = 0
+# 创建锁
+lock = threading.Lock()
+
+def add():
+    global count
+    for _ in range(100000):
+        with lock:
+            count += 1
+
+# 两个线程同时修改共享变量
+t1 = threading.Thread(target=add)
+t2 = threading.Thread(target=add)
+
+t1.start()
+t2.start()
+t1.join()
+t2.join()
+
+print("最终结果：", count)  # 正确结果 200000		
+			
+			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id927"></a>2.3.2.4. Queue 队列</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="threading.queue"></a>2.3.2.3. Queue 队列</h4></div></div></div>
 			
 			<p>ref:
 				http://www.ibm.com/developerworks/aix/library/au-threadingpython/
@@ -199,6 +252,235 @@ queue.join()
 main()
 print "Elapsed Time: %s" % (time.time() - start)
 		
+			</pre>
+			<pre class="programlisting">
+			
+import threading
+
+import queue
+
+# 创建线程通信队列
+q = queue.Queue()
+
+# 生产者线程：往队列放数据
+def producer():
+    for i in range(5):
+        q.put(f"数据{i}")
+        print(f"生产：数据{i}")
+
+# 消费者线程：从队列取数据
+def consumer():
+    while True:
+        data = q.get()  # 阻塞等待数据
+        print(f"消费：{data}")
+        q.task_done()  # 标记处理完成
+
+# 创建线程
+t1 = threading.Thread(target=producer)
+t2 = threading.Thread(target=consumer, daemon=True)  # 守护线程
+
+# 启动
+t1.start()
+t2.start()
+
+# 等待生产者结束 + 队列所有数据处理完
+t1.join()
+q.join()
+print("所有通信完成")			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="threading.event"></a>2.3.2.4. 线程事件</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+import threading
+import time
+
+event = threading.Event()
+
+def waiter():
+    print("等待信号...")
+    event.wait()  # 阻塞等待
+    print("收到信号！")
+
+def sender():
+    time.sleep(2)
+    print("发送信号！")
+    event.set()
+
+t1 = threading.Thread(target=waiter)
+t2 = threading.Thread(target=sender)
+
+t1.start()
+t2.start()			
+			
+			</pre>
+			<pre class="programlisting">
+			
+from datetime import datetime
+import threading
+import time
+
+event = threading.Event()
+
+def waiter():
+    while(True):
+        print("等待信号...")
+        event.wait()  # 阻塞等待
+        print("收到信号！")
+        event.clear()
+        print("-"*20, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "-"*20)
+
+def sender():
+    while(True):
+        time.sleep(2)
+        print("发送信号！")
+        event.set()
+
+t1 = threading.Thread(target=waiter)
+t2 = threading.Thread(target=sender)
+
+t1.start()
+t2.start()			
+			
+			</pre>
+			<pre class="programlisting">
+			
+from datetime import datetime
+import threading
+import time
+
+event = threading.Event()
+
+def waiter():
+    print("等待信号...")
+    while(event.wait()): # 阻塞等待
+        print("收到信号！")
+        event.clear()
+        print("-"*20, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "-"*20)
+
+def sender():
+    while(True):
+        time.sleep(2)
+        print("发送信号！")
+        event.set()
+
+t1 = threading.Thread(target=waiter)
+t2 = threading.Thread(target=sender)
+
+t1.start()
+t2.start()		
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="threading.Condition"></a>2.3.2.5. 线程通知</h4></div></div></div>
+			
+			<pre class="programlisting">
+			
+import threading
+import time
+
+cond = threading.Condition()
+products = []
+
+def producer():
+    with cond:
+        products.append("商品")
+        print("生产完成，通知消费者")
+        cond.notify()  # 唤醒消费者
+
+def consumer():
+    with cond:
+        cond.wait()  # 等待生产
+        print("消费者拿到：", products[0])
+
+t1 = threading.Thread(target=consumer)
+t2 = threading.Thread(target=producer)
+
+t1.start()
+t2.start()			
+			
+			</pre>
+			<pre class="programlisting">
+			
+import threading
+import time
+
+cond = threading.Condition()
+count = 0
+
+def producer():
+    while True:
+        with cond:
+            # while True:
+            time.sleep(2)
+            cond.notify()  
+
+def consumer():
+    global count
+    print("开始计数器")
+    while True:
+        with cond:
+            cond.wait()
+            count += 1
+            print(count)
+
+
+t1 = threading.Thread(target=consumer)
+t2 = threading.Thread(target=producer)
+
+t1.start()
+t2.start()			
+			
+			</pre>
+			<pre class="programlisting">
+			
+import threading
+import time
+
+cond = threading.Condition()
+data = None
+
+def consumer():
+    global data
+    
+    # 手动加锁（代替 with）
+    cond.acquire()
+    
+    print("消费者：等待数据...")
+    cond.wait()  # 自动释放锁 → 阻塞 → 唤醒后自动重新拿锁
+    
+    print(f"消费者：拿到数据 -&gt; {data}")
+    
+    # 手动释放锁
+    cond.release()
+
+def producer():
+    global data
+    
+    cond.acquire()
+    
+    print("生产者：正在生产数据...")
+    time.sleep(2)
+    data = "Hello Threading!"
+    print("生产者：数据生产完成，通知消费者")
+    
+    cond.notify()  # 唤醒，但不释放锁
+    
+    cond.release()  # 这里释放锁，消费者才能真正运行
+
+
+t1 = threading.Thread(target=consumer)
+t2 = threading.Thread(target=producer)
+
+t1.start()
+time.sleep(0.1)
+t2.start()
+
+t1.join()
+t2.join()			
+			
 			</pre>
 		</div>
 	</div>
