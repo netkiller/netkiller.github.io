@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>53.3. 表</title><link rel="stylesheet" type="text/css" href="../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="MySQL, PostgreSQL, Oracle, NoSQL, ER, TokyoCabinet/Tyrant, Memcache, Membase, Redis, Flare, Voldemort, LevelDB, MongoDB, GreenSQL, RDBMS, ORDBMS" /><link rel="home" href="../index.html" title="Netkiller Database 手札" /><link rel="up" href="ddl.html" title="第 53 章 数据定义（DDL）" /><link rel="prev" href="types.html" title="53.2. Types" /><link rel="next" href="serial.html" title="53.4. 序列" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
+		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">53.3. 表</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="types.html">上一页</a> </td><th width="60%" align="center">第 53 章 数据定义（DDL）</th><td width="20%" align="right"> <a accesskey="n" href="serial.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="table"></a>53.3. 表</h2></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1187"></a>53.3.1. 默认时间与时区</h3></div></div></div>
+			
+			<p>默认时间省略时区信息</p>
+			<pre class="screen">
+			
+CREATE TABLE message
+(
+  id serial NOT NULL,
+  title character varying(250) NOT NULL,
+  message character varying(250) NOT NULL,
+  status boolean NOT NULL DEFAULT false,
+  operator character varying(5) NOT NULL,
+  ctime timestamp without time zone NOT NULL DEFAULT (now())::timestamp(0) without time zone,
+  mtime timestamp without time zone NOT NULL DEFAULT (now())::timestamp(0) without time zone,
+  CONSTRAINT message_pkey PRIMARY KEY (id)
+)
+WITH (
+  OIDS=FALSE
+);
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="field.charset"></a>53.3.2. 汉字做字段名</h3></div></div></div>
+			
+			<pre class="screen">
+			
+PostgreSQL是支持“区域”，“字符集支持”的，允许你使用本区域的字符集做为字段名。但要注意，你的终端要支持该字符集支持。我这里使用UNICODE，EUC_CN也适用。
+
+Create table "组"(
+       "序号" Serial NOT NULL UNIQUE,
+       "组名" Varchar(20) NOT NULL,
+       "描述" Varchar(255),
+       UNIQUE ("组名"),
+      PRIMARY KEY ("序号")
+);
+
+创建表：
+member=&gt; Create table "组"(
+member(&gt; "序号" Serial NOT NULL UNIQUE,
+member(&gt; "组名" Varchar(20) NOT NULL,
+member(&gt; "描述" Varchar(255),
+member(&gt; UNIQUE ("组名"),
+member(&gt;  PRIMARY KEY ("序号")
+member(&gt; );
+NOTICE:  CREATE TABLE will create implicit sequence '组_序号_seq' for SERIAL column '组.序号'
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index '组_pkey' for table '组'
+NOTICE:  CREATE TABLE / UNIQUE will create implicit index '组_组名_key' for table '组'
+CREATE TABLE
+member=&gt; \d
+               List of relations
+ Schema |        Name        |   Type   | Owner
+--------+--------------------+----------+-------
+ public | group              | table    | chen
+ public | group_id_seq       | sequence | chen
+ public | groupmember        | table    | chen
+ public | groupmember_id_seq | sequence | chen
+ public | role               | table    | chen
+ public | role_id_seq        | sequence | chen
+ public | rolemember         | table    | chen
+ public | rolemember_id_seq  | sequence | chen
+ public | system_log         | table    | chen
+ public | system_log_id_seq  | sequence | chen
+ public | trust              | table    | chen
+ public | trust_id_seq       | sequence | chen
+ public | user               | table    | chen
+ public | user_id_seq        | sequence | chen
+ public | user_log           | table    | chen
+ public | user_log_id_seq    | sequence | chen
+ public | userinfo           | table    | chen
+ public | userinfo_id_seq    | sequence | chen
+ public | vgroup             | view     | chen
+ public | vgroupmember       | view     | chen
+ public | vsystem_log        | view     | chen
+ public | vuser              | view     | chen
+ public | 组                | table    | chen
+ public | 组_序号_seq     | sequence | chen
+(24 rows)
+
+查看表结构：
+
+member=&gt; \d 组
+                                     Table "public.组"
+ Column |          Type          |                         Modifiers
+--------+------------------------+-----------------------------------------------------------
+ 序号 | integer                | not null default nextval('public."组_序号_seq"'::text)
+ 组名 | character varying(20)  | not null
+ 描述 | character varying(255) |
+Indexes: 组_pkey primary key btree ("序号"),
+         组_组名_key unique btree ("组名")
+
+插入数据：
+member=&gt; insert into 组(组名,描述) values('域用户','9812.net域内用户');
+INSERT 110971 1
+member=&gt; insert into "组"("组名","描述") values('域用户','9812.net域内用户');
+ERROR:  Cannot insert a duplicate key into unique index 组_组名_key
+member=&gt; insert into "组"("组名","描述") values('计算机维护组','维护计算机的用户用户');
+INSERT 110973 1
+
+查看数据：
+member=&gt; select * from 组;
+ 序号 |       组名       |             描述
+--------+--------------------+--------------------------------
+      1 | 域用户          | 9812.net域内用户
+      3 | 计算机维护组 | 维护计算机的用户用户
+(2 rows)
+member=&gt; select * from "组";
+ 序号 |       组名       |             描述
+--------+--------------------+--------------------------------
+      1 | 域用户          | 9812.net域内用户
+      3 | 计算机维护组 | 维护计算机的用户用户
+(2 rows)
+
+注：在操作非英文字段的表时。建议最好前，后加上“"”，“"”符号。并非所有API都支持非英文的编码。
+			
+			</pre>
+		</div>
+	</div><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="types.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="ddl.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="serial.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">53.2. Types </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 53.4. 序列</td></tr></table></div><script xmlns="">
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+			ga('create', 'UA-11694057-1', 'auto');
+			ga('send', 'pageview');
+
+		</script><script xmlns="" async="async">
+			var _hmt = _hmt || [];
+			(function() {
+			var hm = document.createElement("script");
+			hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(hm, s);
+			})();
+</script><script xmlns="" async="async">
+			(function(){
+			var bp = document.createElement('script');
+			var curProtocol = window.location.protocol.split(':')[0];
+			if (curProtocol === 'https') {
+			bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+			}
+			else {
+			bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+			}
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(bp, s);
+			})();
+</script></body></html>

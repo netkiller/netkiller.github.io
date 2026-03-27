@@ -1,0 +1,296 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>53.5. 约束</title><link rel="stylesheet" type="text/css" href="../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="MySQL, PostgreSQL, Oracle, NoSQL, ER, TokyoCabinet/Tyrant, Memcache, Membase, Redis, Flare, Voldemort, LevelDB, MongoDB, GreenSQL, RDBMS, ORDBMS" /><link rel="home" href="../index.html" title="Netkiller Database 手札" /><link rel="up" href="ddl.html" title="第 53 章 数据定义（DDL）" /><link rel="prev" href="serial.html" title="53.4. 序列" /><link rel="next" href="key.html" title="53.6. 主键/外键" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
+		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">53.5. 约束</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="serial.html">上一页</a> </td><th width="60%" align="center">第 53 章 数据定义（DDL）</th><td width="20%" align="right"> <a accesskey="n" href="key.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="constraints"></a>53.5. 约束</h2></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1192"></a>53.5.1. 检查约束</h3></div></div></div>
+			
+			<pre class="screen">
+			
+例子1：
+有这样一个需求，在很多电子商务网站上都要对用户进行诚信评估，诚信分为五级（五个星），这样就要求某字段插入的数据0，1，2，3，4，5。“0”表示该用户没用评估。
+-- ======================================================
+--  'trust'
+-- ======================================================
+Create table "trust"
+(
+       "id" Serial NOT NULL UNIQUE,
+       "uid" integer NOT NULL Default 0,
+       "rate" Varchar(20) Default '0' Check (rate in ('0','1','2','3','4','5')),
+      primary key ("id")
+);
+Alter table "trust" add  foreign key ("uid") references "user" ("id") on update restrict on delete restrict;
+member=&gt; Insert into trust (uid) values((select id from "user" where userid='netkiller'));
+INSERT 111237 1
+member=&gt; Insert into trust (uid,rate) values((select id from "user" where userid='netkiller'),5);
+INSERT 111220 1
+member=&gt; Insert into trust (uid,rate) values((select id from "user" where userid='netkiller'),2);
+INSERT 111236 1
+member=&gt; Insert into trust (uid,rate) values((select id from "user" where userid='netkiller'),6);
+ERROR:  ExecInsert: rejected due to CHECK constraint "trust_rate" on "trust"
+member=&gt; Insert into trust (uid,rate) values((select id from "user" where userid='netkiller'),10);
+ERROR:  ExecInsert: rejected due to CHECK constraint "trust_rate" on "trust"
+member=&gt; select * from trust;
+ id | uid | rate
+----+-----+------
+  1 | 257 | 2
+  4 | 257 | 0
+  5 | 257 | 5
+(3 rows)
+
+当插入数据不在枚举的范围内，提示ERROR:  ExecInsert: rejected due to CHECK constraint "trust_rate" on "trust"。
+
+例子2：
+检查某字段，不允许出现数值，使用not in 来完成。
+DROP TABLE ctoc.bid CASCADE;
+CREATE TABLE ctoc.bid(
+       id Serial NOT NULL UNIQUE,
+    salesroom_id integer DEFAULT '1' NOT NULL,  -- foreign key
+    bidder integer  DEFAULT '1' NOT NULL,  -- foreign key
+       price       numeric(8,2) DEFAULT '0.00' NOT NULL,
+       quantity Integer DEFAULT '1' NOT NULL Check (quantity not in ('0')),
+    created  timestamp DEFAULT current_timestamp::timestamp (0) without time zone,
+    status boolean DEFAULT true,
+    PRIMARY KEY (id),
+    FOREIGN KEY (salesroom_id) REFERENCES ctoc.salesroom (id) ON UPDATE CASCADE ON DELETE CASCADE,
+    FOREIGN KEY (bidder) REFERENCES person (uid) ON UPDATE CASCADE ON DELETE CASCADE
+);
+netkiller=&gt; insert into ctoc.bid(salesroom_id,bidder,price,quantity,status) values(1,8,100,0,true);
+ERROR:  ExecInsert: rejected due to CHECK constraint "bid_quantity" on "bid"
+
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1193"></a>53.5.2. 非空约束</h3></div></div></div>
+			
+			<pre class="screen">
+			
+显示的有note字段为空的记录：
+member=&gt; select * from vregion where note is null;
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1194"></a>53.5.3. 唯一约束</h3></div></div></div>
+			
+			<p>单字段约束</p>
+			<pre class="screen">
+			
+这个例子对groupname字段做唯一操作。
+-- ======================================================
+--  'group'
+-- ======================================================
+Create table "group"
+(
+       "id" Serial NOT NULL UNIQUE,
+       "groupname" Varchar(20) NOT NULL,
+       "description" Varchar(255),
+       UNIQUE (groupname),
+      PRIMARY KEY ("id")
+);
+测试：
+member=&gt; insert into "group"(groupname,description) values('Admin','xxxxxxxxxxxxxxxxxx');
+INSERT 110497 1
+member=&gt; insert into "group"(groupname,description) values('Admin','xxxxxxxxxxxxxxxxxx');
+ERROR:  Cannot insert a duplicate key into unique index group_groupname_key
+member=&gt; insert into "group"(groupname,description) values('Admin','xxxxxxxxxxxxxxxxxx');
+ERROR:  Cannot insert a duplicate key into unique index group_groupname_key
+Psql 命令行返回ERROR:  Cannot insert a duplicate key into unique index group_groupname_key唯一约束成功。
+			
+			</pre>
+			<p>多个字段组合约束</p>
+			<pre class="screen">
+			
+UNIQUE (rid,uid)中有多个参数，是对rid,uid组合约束。
+例如：
+1，1
+1，2
+是正确的
+
+1，1
+2，1
+也是正确的
+
+2，1
+1，1
+2，2
+1，2
+1，1
+不正确的不允许插入数据“1，1”，数据“1，1”出现了两次，所以要同时满足rid,uid两个条件。
+
+三个字段以上组合：
+1,1,1
+1,1,2
+1,2,1
+2,1,2
+2,1,1
+2,2,2
+正确可以插入数据
+
+1，2，1
+2，1，2
+2，2，1
+1，1，2
+2，2，1
+“2，2，1”，“2，2，1”出现两次，违反约束条件，所以不能再次插入数据“2，2，1”。
+
+-- ======================================================
+--  'rolemember'
+-- ======================================================
+-- drop table rolemember CASCADE ;
+Create table "rolemember"
+(
+       "id" Serial NOT NULL UNIQUE,
+       "rid" integer NOT NULL Default 0,
+       "uid" integer NOT NULL Default 0,
+       UNIQUE (rid,uid),
+ primary key ("id")
+);
+member=&gt; insert into rolemember(rid,uid) values((select id from role where rolename ='System'),(select id from vuser where userid='sysop'));
+INSERT 110954 1
+member=&gt; insert into rolemember(rid,uid) values((select id from role where rolename ='System'),(select id from vuser where userid='sysop'));
+ERROR:  Cannot insert a duplicate key into unique index rolemember_rid_key
+member=&gt; insert into rolemember(rid,uid) values((select id from role where rolename ='System'),(select id from vuser where userid='admin'));
+ERROR:  More than one tuple returned by a subselect used as an expression.
+member=&gt; insert into rolemember(rid,uid) values((select id from role where rolename ='System'),(select id from vuser where userid='test'));
+INSERT 110956 1
+member=&gt; insert into rolemember(rid,uid) values((select id from role where rolename ='System'),(select id from vuser where userid='test'));
+ERROR:  Cannot insert a duplicate key into unique index rolemember_rid_key
+			
+			</pre>
+			<p>唯一约束的注意事项</p>
+			<pre class="screen">
+			
+这个例子对groupname字段做唯一操作。
+-- ======================================================
+--  'group'
+-- ======================================================
+Create table "group"
+(
+       "id" Serial NOT NULL UNIQUE,
+       "groupname" Varchar(20) NOT NULL,
+       "description" Varchar(255),
+       UNIQUE (id,groupname),
+      PRIMARY KEY ("id")
+);
+仔细看这个例子没有错。
+运行结果：
+postgres=# Create table "group"
+postgres-# (
+postgres(# "id" Serial NOT NULL UNIQUE,
+postgres(# "groupname" Varchar(20) NOT NULL,
+postgres(# "description" Varchar(255),
+postgres(# UNIQUE (id,groupname),
+postgres(#  PRIMARY KEY ("id")
+postgres(# );
+NOTICE:  CREATE TABLE will create implicit sequence 'group_id_seq' for SERIAL column 'group.id'
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'group_pkey' for table 'group'
+NOTICE:  CREATE TABLE / UNIQUE will create implicit index 'group_id_key' for table 'group'
+CREATE TABLE
+
+运行结果也没有错，现在插入数据。
+insert into "group"(groupname,description) values('Admin','xxxxxxxxxxxxxxxxxx');
+insert into "group"(groupname,description) values('Guest','xxxxxxxxxxxxxxxxxx');
+insert into "group"(groupname,description) values('Domain','xxxxxxxxxxxxxxxxxx');
+postgres=# insert into "group"(groupname,description) values('Admin','xxxxxxxxxxxxxxxxxx');
+INSERT 110466 1
+postgres=# insert into "group"(groupname,description) values('Guest','xxxxxxxxxxxxxxxxxx');
+INSERT 110467 1
+postgres=# insert into "group"(groupname,description) values('Domain','xxxxxxxxxxxxxxxxxx');
+INSERT 110468 1
+postgres=#
+postgres=# insert into "group"(groupname,description) values('Admin','xxxxxxxxxxxxxxxxxx');
+INSERT 110469 1
+postgres=# insert into "group"(groupname,description) values('Guest','xxxxxxxxxxxxxxxxxx');
+INSERT 110470 1
+postgres=# insert into "group"(groupname,description) values('Domain','xxxxxxxxxxxxxxxxxx');
+INSERT 110471 1
+postgres=# insert into "group"(groupname,description) values('Admin','xxxxxxxxxxxxxxxxxx');
+INSERT 110472 1
+postgres=# insert into "group"(groupname,description) values('Guest','xxxxxxxxxxxxxxxxxx');
+INSERT 110473 1
+postgres=# insert into "group"(groupname,description) values('Domain','xxxxxxxxxxxxxxxxxx');
+INSERT 110474 1
+postgres=# insert into "group"(groupname,description) values('Admin','xxxxxxxxxxxxxxxxxx');
+INSERT 110475 1
+postgres=# insert into "group"(groupname,description) values('Guest','xxxxxxxxxxxxxxxxxx');
+INSERT 110476 1
+postgres=# insert into "group"(groupname,description) values('Domain','xxxxxxxxxxxxxxxxxx');
+INSERT 110477 1
+postgres=# insert into "group"(groupname,description) values('Admin','xxxxxxxxxxxxxxxxxx');
+INSERT 110478 1
+postgres=# insert into "group"(groupname,description) values('Guest','xxxxxxxxxxxxxxxxxx');
+INSERT 110479 1
+postgres=# insert into "group"(groupname,description) values('Domain','xxxxxxxxxxxxxxxxxx');
+INSERT 110480 1
+postgres=# select * from "group";
+ id | groupname |    description
+----+-----------+--------------------
+  1 | Admin     | xxxxxxxxxxxxxxxxxx
+  2 | Guest     | xxxxxxxxxxxxxxxxxx
+  3 | Domain    | xxxxxxxxxxxxxxxxxx
+  4 | Admin     | xxxxxxxxxxxxxxxxxx
+  5 | Guest     | xxxxxxxxxxxxxxxxxx
+  6 | Domain    | xxxxxxxxxxxxxxxxxx
+  7 | Admin     | xxxxxxxxxxxxxxxxxx
+  8 | Guest     | xxxxxxxxxxxxxxxxxx
+  9 | Domain    | xxxxxxxxxxxxxxxxxx
+ 10 | Admin     | xxxxxxxxxxxxxxxxxx
+ 11 | Guest     | xxxxxxxxxxxxxxxxxx
+ 12 | Domain    | xxxxxxxxxxxxxxxxxx
+ 13 | Admin     | xxxxxxxxxxxxxxxxxx
+ 14 | Guest     | xxxxxxxxxxxxxxxxxx
+ 15 | Domain    | xxxxxxxxxxxxxxxxxx
+(15 rows)
+
+但你会发现对groupname字段的唯一约束不起使用。失效原因：
+"id" Serial NOT NULL UNIQUE, (唯一约束)
+UNIQUE (id,groupname), (id字段又做了一次唯一约束)
+这就是它失效的原因。正确的脚本写法是：
+Create table "group"
+(
+       "id" Serial NOT NULL UNIQUE,
+       "groupname" Varchar(20) NOT NULL,
+       "description" Varchar(255),
+       UNIQUE (groupname),
+      PRIMARY KEY ("id")
+);
+member=&gt; insert into "group"(groupname,description) values('Admin','xxxxxxxxxxxxxxxxxx');
+INSERT 110497 1
+member=&gt; insert into "group"(groupname,description) values('Admin','xxxxxxxxxxxxxxxxxx');
+ERROR:  Cannot insert a duplicate key into unique index group_groupname_key
+member=&gt; insert into "group"(groupname,description) values('Admin','xxxxxxxxxxxxxxxxxx');
+ERROR:  Cannot insert a duplicate key into unique index group_groupname_key
+			
+			</pre>
+			<div class="tip" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Tip"><tr><td rowspan="2" align="center" valign="top" width="25"><img alt="[提示]" src="/graphics/tip.png" /></td><th align="left">提示</th></tr><tr><td align="left" valign="top"><p>Psql 命令行返回ERROR:  Cannot insert a duplicate key into unique index group_groupname_key 唯一约束成功。</p></td></tr></table></div>
+		</div>
+	</div><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="serial.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="ddl.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="key.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">53.4. 序列 </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 53.6. 主键/外键</td></tr></table></div><script xmlns="">
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+			ga('create', 'UA-11694057-1', 'auto');
+			ga('send', 'pageview');
+
+		</script><script xmlns="" async="async">
+			var _hmt = _hmt || [];
+			(function() {
+			var hm = document.createElement("script");
+			hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(hm, s);
+			})();
+</script><script xmlns="" async="async">
+			(function(){
+			var bp = document.createElement('script');
+			var curProtocol = window.location.protocol.split(':')[0];
+			if (curProtocol === 'https') {
+			bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+			}
+			else {
+			bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+			}
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(bp, s);
+			})();
+</script></body></html>
