@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>53.4. PostgreSQL 系统状态与管理</title><link rel="stylesheet" type="text/css" href="../docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="MySQL, PostgreSQL, Oracle, NoSQL, ER, TokyoCabinet/Tyrant, Memcache, Membase, Redis, Flare, Voldemort, LevelDB, MongoDB, GreenSQL, RDBMS, ORDBMS" /><link rel="home" href="../index.html" title="Netkiller Database 手札" /><link rel="up" href="pgsql.administration.html" title="第 53 章 数据库管理（Administration）" /><link rel="prev" href="table.html" title="53.3. 表管理（Table）" /><link rel="next" href="ddl.html" title="第 54 章 数据定义（DDL）" /></head><body><a xmlns="" href="//www.netkiller.cn/">Home</a> | <a xmlns="" href="//netkiller.github.io/">简体中文</a> | <a xmlns="" href="http://netkiller.sourceforge.net/">繁体中文</a> | <a xmlns="" href="/journal/index.html">杂文</a>
+		| <a xmlns="" href="https://github.com/netkiller">Github</a> | <a xmlns="" href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a> | <a xmlns="" href="https://www.facebook.com/bg7nyt">Facebook</a> | <a xmlns="" href="http://cn.linkedin.com/in/netkiller/">Linkedin</a> | <a xmlns="" href="https://www.youtube.com/user/bg7nyt/videos">Youtube</a> | <a xmlns="" href="//www.netkiller.cn/home/donations.html">打赏(Donations)</a> | <a xmlns="" href="//www.netkiller.cn/home/about.html">About</a><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">53.4. PostgreSQL 系统状态与管理</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="table.html">上一页</a> </td><th width="60%" align="center">第 53 章 数据库管理（Administration）</th><td width="20%" align="right"> <a accesskey="n" href="ddl.html">下一页</a></td></tr></table><hr /></div><table xmlns=""><tr><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=watch&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;repo=netkiller.github.io&amp;type=fork&amp;count=true&amp;size=large" height="30" width="170" frameborder="0" scrolling="0" style="width:170px; height: 30px;" allowTransparency="true"></iframe></td><td><iframe src="//ghbtns.com/github-btn.html?user=netkiller&amp;type=follow&amp;count=true&amp;size=large" height="30" width="240" frameborder="0" scrolling="0" style="width:240px; height: 30px;" allowTransparency="true"></iframe></td><td></td><td><a href="https://zhuanlan.zhihu.com/netkiller"><img src="/images/logo/zhihu-card-default.svg" height="25" /></a></td><td valign="middle"><a href="https://zhuanlan.zhihu.com/netkiller">知乎专栏</a></td><td></td><td></td><td></td><td></td></tr></table><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="pg_table"></a>53.4. PostgreSQL 系统状态与管理</h2></div></div></div>
+		
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1194"></a>53.4.1. 查看配置文件位置</h3></div></div></div>
+			
+			<pre class="screen">
+		
+postgres=# SHOW config_file;
+                  config_file                  
+-----------------------------------------------
+ /var/lib/postgresql/18/docker/postgresql.conf
+(1 row)
+		
+			</pre>
+		</div>
+		
+
+
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1195"></a>53.4.2. 连接数</h3></div></div></div>
+			
+			<pre class="screen">
+		
+[root@development ~]# docker exec -it postgres psql -h 127.0.0.1 -U postgres
+psql (18.3 (Debian 18.3-1.pgdg13+1))
+Type "help" for help.
+
+postgres=# SHOW max_connections;
+ max_connections 
+-----------------
+ 100
+(1 row)		
+		
+			</pre>
+			<p>连接数/使用率</p>
+			<pre class="screen">
+		
+postgres=# SELECT
+  current_setting('max_connections')::int AS max_conn,
+  count(*) AS current_conn,
+  round(count(*)::numeric / current_setting('max_connections')::numeric * 100, 1) AS usage_pct
+FROM pg_stat_activity;
+ max_conn | current_conn | usage_pct 
+----------+--------------+-----------
+      100 |           58 |      58.0
+(1 row)
+		
+			</pre>
+			<p>按用户/库连接数</p>
+			<pre class="screen">
+		
+SELECT datname, usename, count(*) FROM pg_stat_activity GROUP BY 1,2;
+		
+			</pre>
+			<p>长事务</p>
+			<pre class="screen">
+		
+SELECT pid, datname, usename, now() - xact_start AS xact_duration, query
+FROM pg_stat_activity
+WHERE state = 'idle in transaction'
+ORDER BY xact_duration DESC;
+		
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1196"></a>53.4.3. 查看总连接数</h3></div></div></div>
+			
+			<p>查看当前总连接数，可使用如下SQL语句：</p>
+			<pre class="screen">
+		
+SELECT COUNT(*) AS total_connections FROM pg_stat_activity;		
+		
+			</pre>
+			<p>查看连接状态分布</p>
+			<pre class="screen">
+		
+连接状态通常包括active（活跃）、idle（空闲）、idle in transaction（事务中空闲）等。可通过以下SQL统计各类连接状态：
+SELECT state, COUNT(*) AS count FROM pg_stat_activity GROUP BY state;
+
+State	描述
+active	当前正在执行SQL语句
+idle	连接空闲，未执行任何操作
+idle in transaction	连接处于事务中但未执行任何操作
+fastpath function call	使用快速路径调用函数		
+		
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1197"></a>53.4.4. 杀掉空闲超久的连接</h3></div></div></div>
+			
+			<pre class="screen">
+		
+-- 空闲 &gt; 5 分钟的连接
+SELECT pid, datname, usename, state, query_start, now() - query_start AS duration
+FROM pg_stat_activity
+WHERE state = 'idle' AND now() - query_start &gt; interval '5 min'
+ORDER BY duration DESC;
+
+-- 执行终止（替换 PID）
+SELECT pg_terminate_backend(PID);
+		
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1198"></a>53.4.5. 杀掉长事务 / 锁等待</h3></div></div></div>
+			
+			<pre class="screen">
+		
+-- 运行超过 1 分钟的活跃查询
+SELECT pid, datname, usename, state, query, now() - query_start AS duration
+FROM pg_stat_activity
+WHERE state IN ('active', 'idle in transaction')
+  AND now() - query_start &gt; interval '1 min'
+ORDER BY duration DESC;
+
+-- 终止
+SELECT pg_terminate_backend(PID);
+		
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="pg_available_extensions"></a>53.4.6. pg_available_extensions</h3></div></div></div>
+			
+			<pre class="screen">
+		
+SELECT * FROM pg_available_extensions;			
+		
+			</pre>
+			<pre class="screen">
+		
+postgres=# SELECT * FROM pg_available_extensions;
+  name   | default_version | installed_version |           comment
+---------+-----------------+-------------------+------------------------------
+ plpgsql | 1.0             | 1.0               | PL/pgSQL procedural language
+(1 row)
+		
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="pg_shadow"></a>53.4.7. pg_shadow</h3></div></div></div>
+			
+			<pre class="screen">
+		
+postgres=# SELECT * FROM pg_shadow;
+ usename  | usesysid | usecreatedb | usesuper | usecatupd | userepl |               passwd                | valuntil | useconfig
+----------+----------+-------------+----------+-----------+---------+-------------------------------------+----------+-----------
+ postgres |       10 | t           | t        | t         | t       |                                     |          |
+ wechat   |    16385 | f           | f        | f         | f       | md55bf335eef50073dbc3a4a2103e7b3757 |          |
+ test     |    16387 | f           | f        | f         | f       | md505a671c66aefea124cc08b76ea6d30bb |          |
+ dba      |    16384 | t           | t        | t         | f       | md5a1453e5a69943d1674eb2f7100efa04c |          |
+(4 rows)
+		
+			</pre>
+		</div>
+	</div><script xmlns="" type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?u=r5HG&amp;d=9mi5r_kkDC8uxG8HuY3p4-2qgeeVypAK9vMD-2P6BYM"></script><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="table.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="pgsql.administration.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ddl.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">53.3. 表管理（Table） </td><td width="20%" align="center"><a accesskey="h" href="../index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 54 章 数据定义（DDL）</td></tr></table></div><script xmlns="">
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+			ga('create', 'UA-11694057-1', 'auto');
+			ga('send', 'pageview');
+
+		</script><script xmlns="" async="async">
+			var _hmt = _hmt || [];
+			(function() {
+			var hm = document.createElement("script");
+			hm.src = "https://hm.baidu.com/hm.js?93967759a51cda79e49bf4e34d0b0f2c";
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(hm, s);
+			})();
+</script><script xmlns="" async="async">
+			(function(){
+			var bp = document.createElement('script');
+			var curProtocol = window.location.protocol.split(':')[0];
+			if (curProtocol === 'https') {
+			bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+			}
+			else {
+			bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+			}
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(bp, s);
+			})();
+</script></body></html>
