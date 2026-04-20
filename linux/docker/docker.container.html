@@ -103,7 +103,7 @@ uid=65534(nobody) gid=65534(nogroup)
 	</div>
 	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="container.export"></a>106.6.5. 导出和导入容器</h3></div></div></div>
 		
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id2126"></a>106.6.5.1. Ubuntu</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id2133"></a>106.6.5.1. Ubuntu</h4></div></div></div>
 			
 			<p></p>
 			<pre class="screen">
@@ -125,7 +125,7 @@ $sudo docker import http://example.com/exampleimage.tgz example/imagerepo
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id2127"></a>106.6.5.2. Mac 导出与导入</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id2134"></a>106.6.5.2. Mac 导出与导入</h4></div></div></div>
 			
 			<p>导出</p>
 			<pre class="screen">
@@ -161,9 +161,9 @@ registry            latest              7b76bd807a47        11 seconds ago      
 docker kill $(docker ps -a -q)			
 			
 		</pre>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id2128"></a>106.6.6.1. 信号处理</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id2135"></a>106.6.6.1. 信号处理</h4></div></div></div>
 			
-			<p>--signal, -s	向容器发送信号</p>
+			<p>--signal, -s 向容器发送信号</p>
 			<p>发送一个SIGHUP信号</p>
 			<pre class="screen">
 			
@@ -179,7 +179,7 @@ $ docker kill -s=1 my_container
 			
 			</pre>
 		</div>
-		
+
 	</div>
 	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="container.rm"></a>106.6.7. 删除容器</h3></div></div></div>
 		
@@ -212,14 +212,85 @@ docker rm $(docker ps -a -q)
 			
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="container.log-driver"></a>106.6.8. log-driver</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="container.log-driver"></a>106.6.8. 容器日志</h3></div></div></div>
 		
-		<p>日志发送到 fluentd</p>
-		<pre class="screen">
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id2136"></a>106.6.8.1. 日志策略配置</h4></div></div></div>
+			
+			<p>示例：创建容器时限制日志大小为100MB，最多保留3个日志文件</p>
+			<pre class="screen">
+		
+docker run -d \
+  --name my-container \
+  --log-driver json-file \
+  --log-opt max-size=100m \
+  --log-opt max-file=3 \
+  nginx  # 替换为你的容器镜像		
+		
+			</pre>
+			<p>修改 Docker 全局配置文件 /etc/docker/daemon.json</p>
+			<pre class="screen">
+		
+{
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "100m",    // 单个日志文件最大100MB
+    "max-file": "3",       // 最多保留3个日志文件
+    "compress": "true"     // 压缩旧日志文件（可选）
+  }
+}		
+		
+			</pre>
+			<p>重启 Docker 服务</p>
+			<pre class="screen">
+			
+systemctl daemon-reload
+systemctl restart docker			
+			
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id2137"></a>106.6.8.2. fluentd</h4></div></div></div>
+			
+
+			<p>日志发送到 fluentd</p>
+			<pre class="screen">
 		
 docker run --log-driver=fluentd --log-opt fluentd-address=192.168.2.5:24220 ubuntu echo "Hello world"		
 		
-		</pre>
+			</pre>
+		</div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id2138"></a>106.6.8.3. 删除日志</h4></div></div></div>
+			
+			<p>先清理已有的 Docker 日志</p>
+			<pre class="screen">
+			
+# 清理指定容器的日志（替换 &lt;容器ID/容器名&gt; 为实际值）
+truncate -s 0 /var/lib/docker/containers/*/&lt;容器ID/容器名&gt;-json.log
+
+# 清理所有容器的日志（谨慎使用，会清空所有容器日志）
+find /var/lib/docker/containers/ -name "*.log" -type f -exec truncate -s 0 {} \;			
+			
+			</pre>
+			<p>先找到占用空间最大的日志文件，再选择性删除：</p>
+			<pre class="screen">
+			
+# 1. 查看 Docker 日志文件大小（按大小排序，单位MB）
+du -sh /var/lib/docker/containers/*/*.log | sort -rh
+
+# 2. 删除指定超大日志文件（替换为实际文件路径）
+rm -rf /var/lib/docker/containers/xxxx/xxxx-json.log			
+			
+			</pre>
+			<p>验证清理效果</p>
+			<pre class="screen">
+			
+# 查看磁盘空间使用情况
+df -h
+
+# 查看 Docker 日志目录总大小
+du -sh /var/lib/docker/containers/			
+			
+			</pre>
+		</div>
 	</div>
 	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="container.system"></a>106.6.9. 操作系统</h3></div></div></div>
 		
@@ -231,7 +302,7 @@ iMac:welcome neo$ docker run 127.0.0.1:5000/netkiller/welcome -e JAVA_OPTS="-ser
 		
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id2129"></a>106.6.9.2. /etc/hosts 配置</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id2139"></a>106.6.9.2. /etc/hosts 配置</h4></div></div></div>
 			
 			<pre class="screen">
 		
@@ -269,7 +340,7 @@ docker exec centos01 sysctl -a |grep -E \
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id2130"></a>106.6.9.4. ulimits</h4></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id2140"></a>106.6.9.4. ulimits</h4></div></div></div>
 			
 			<p>查看 ulimit 设置</p>
 			<pre class="screen">
@@ -379,7 +450,7 @@ d027503bee4b        elasticsearch       2.75%               928.4MiB / 3.848GiB 
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id2131"></a>106.6.16. 重启容器</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id2141"></a>106.6.16. 重启容器</h3></div></div></div>
 		
 		<p>--time, -t 10 停止容器之前需要等待的时间(秒)</p>
 		<pre class="screen">
@@ -388,7 +459,7 @@ $ docker restart [options] container [container...]
 		
 		</pre>
 	</div>
-	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id2132"></a>106.6.17. DNS</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id2142"></a>106.6.17. DNS</h3></div></div></div>
 		
 		<p>host.docker.internal</p>
 		<p>gateway.docker.internal</p>

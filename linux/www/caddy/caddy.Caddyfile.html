@@ -5,7 +5,7 @@
 		<p>
 			<a class="ulink" href="https://caddyserver.com/docs/caddyfile" target="_top">https://caddyserver.com/docs/caddyfile</a>
 		</p>
-		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="id1468"></a>37.3.1. 导入配置文件 Caddyfile.d</h3></div></div></div>
+		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="Caddyfile.d"></a>37.3.1. 导入配置文件 Caddyfile.d</h3></div></div></div>
 			
 			<pre class="screen">
 			
@@ -91,7 +91,7 @@ localhost:8080, example.com, www.example.com
 		</div>
 		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="Caddyfile.log"></a>37.3.3. 日志</h3></div></div></div>
 			
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1469"></a>37.3.3.1. 全局日志</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1472"></a>37.3.3.1. 全局日志</h4></div></div></div>
 				
 
 				<pre class="screen">
@@ -137,7 +137,7 @@ import Caddyfile.d/*.caddyfile
 			
 				</pre>
 			</div>
-			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1470"></a>37.3.3.2. 虚拟主机日志</h4></div></div></div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1473"></a>37.3.3.2. 虚拟主机日志</h4></div></div></div>
 				
 				<pre class="screen">
 				
@@ -148,6 +148,47 @@ example.com {
             roll_size 25MB
             roll_keep 10
             roll_keep_for 24h
+        }
+    }
+}				
+				
+				</pre>
+			</div>
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1474"></a>37.3.3.3. 控制台日志</h4></div></div></div>
+				
+				<pre class="screen">
+				
+{
+    # 自动 HTTPS（填你的邮箱）
+    email netkiller@msn.com
+    
+    # 日志
+    log {
+        output stdout
+        format console
+    }
+}
+
+www.netkiller.cn {
+    root * /data/www
+    file_server
+    encode gzip zstd
+    try_files {path} {path}/ /index.html
+}
+
+test.netkiller.cn {
+    # 日志
+    log {
+        output stdout
+        format console
+    }
+    reverse_proxy http://test:8080 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        transport http {
+            read_timeout 120s
+            write_timeout 120s
         }
     }
 }				
@@ -204,9 +245,12 @@ api.netkiller.cn {
 }
 			
 			</pre>
-			<p>反向代理URL前缀问题</p>
-			<pre class="screen">
-			
+
+			<div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="id1475"></a>37.3.4.1. URL 前缀</h4></div></div></div>
+				
+				<p>反向代理URL前缀问题</p>
+				<pre class="screen">
+				
 举例：
 www.netkiller.cn {
 	reverse_proxy /api/* http://api.netkiller.cn:8080
@@ -219,19 +263,51 @@ http://api.netkiller.cn:8080/api/adduser
 
 我们需要的URL是：
 http://api.netkiller.cn:8080/adduser
-			
-			</pre>
-			<p>解决方案</p>
-			<pre class="screen">
-			
+				
+				</pre>
+				<p>解决方案</p>
+				<pre class="screen">
+				
 www.netkiller.cn {
 	route /api* {
     	uri strip_prefix /api
 		reverse_proxy api.netkiller.cn:8088
 	}
 }	
-			
-			</pre>
+				
+				</pre>
+				<p>完整的例子</p>
+				<pre class="screen">
+				
+api.netkiller.cn {
+    route /platform/* {
+        reverse_proxy localhost:8082
+    }
+
+    route /* {
+        root * /opt/caddy/www
+        file_server
+    }
+    route /78oo3JqVhU.txt {
+        respond "9923fd3daae700df0417f1e4b1b1cbd9"
+    }
+    route /a7JERONlwF.txt {
+        respond "817130c084cf9e240fc2ca63f278a387"
+    }
+
+    route /wechat/* {
+        uri strip_prefix /wechat
+        reverse_proxy 127.0.0.1:8083
+    }
+
+    log {
+        output file /var/log/caddy/access.log
+    }
+
+}				
+				
+				</pre>
+			</div>
 		</div>
 		<div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="Caddyfile.ssl"></a>37.3.5. Let's Encrypt 免费 SSL 证书</h3></div></div></div>
 			
@@ -395,7 +471,7 @@ V7-P_SdeHeXDk3qyj0HhvYrrQ2PFbZrKv4ck6FNQSys.sD2SO-myCgf0JjzYqkA9LA3nN9Pau98bk_fm
 			
 			</pre>
 		</div>
-		<div class="section"><div class="titlepage"></div> 
+		<div class="section"><div class="titlepage"></div>
 			<p>route 路由配置</p>
 			<pre class="screen">
 			
